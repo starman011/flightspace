@@ -1,0 +1,97 @@
+.globe { position: fixed; inset: 0; background: #000008; overflow: hidden; }
+.globe canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
+.globe canvas:active { cursor: grabbing; }
+/* !important beats OrbitControls inline style="cursor:grab" */
+.globe canvas.hovered { cursor: pointer !important; }
+
+/* Map style toggle — bottom-right corner */
+.mapToggle {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 3px;
+  background: rgba(0, 0, 20, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+  padding: 3px;
+  z-index: 10;
+  pointer-events: all;
+}
+.mapToggle button {
+  background: transparent;
+  border: none;
+  color: rgba(180, 210, 255, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 4px 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.mapToggle button:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255,255,255,0.85); }
+.mapToggle button.active { background: rgba(80, 160, 255, 0.20); color: #50b4ff; }
+
+/* Camera HUD — altitude + scale bar, right side above map toggle */
+.cameraHud {
+  position: absolute;
+  right: 24px;
+  bottom: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hudAlt {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.hudLabel {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(80, 160, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.hudValue {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(200, 225, 255, 0.9);
+  text-shadow: 0 0 12px rgba(50, 130, 255, 0.5);
+  min-width: 80px;
+  text-align: right;
+}
+
+.hudScaleWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.hudScaleBar {
+  height: 2px;
+  width: 80px;                          /* fixed layout width — never causes reflow */
+  background: rgba(200, 225, 255, 0.55);
+  border-left: 1px solid rgba(200, 225, 255, 0.8);
+  border-right: 1px solid rgba(200, 225, 255, 0.8);
+  transform-origin: right center;       /* shrink/grow from the right edge */
+  /* transform runs on compositor thread — no layout thrash */
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.hudScaleLabel {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(180, 210, 255, 0.65);
+}

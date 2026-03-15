@@ -1,0 +1,38 @@
+# ── GitNexus ──────────────────────────────────────────────────────────────────
+.gitnexus/
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+backend/server
+backend/backend
+backend/*.exe
+backend/tmp/
+
+# ── Node / frontend ──────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── OS & editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/settings.json
+
+# ── Test artifacts ────────────────────────────────────────────────────────────
+frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/
+
+# ── Docker volumes ────────────────────────────────────────────────────────────
+infra/postgres_data/
+infra/redis_data/

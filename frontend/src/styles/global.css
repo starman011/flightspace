@@ -1,0 +1,75 @@
+@import './theme.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000008;  /* deep space black — no flash before Three.js renders */
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100vw;
+  height: 100dvh;
+  position: relative;
+}
+
+/* Leaflet overrides — remove default chrome */
+.leaflet-control-zoom {
+  display: none !important;
+}
+
+.leaflet-control-attribution {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--text-muted) !important;
+}
+
+/* No gradients, no shadows, no border-radius > 2px */
+button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+button:hover {
+  background: var(--border);
+}
+
+input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+}
+
+input:focus {
+  border-color: var(--dot-primary);
+}

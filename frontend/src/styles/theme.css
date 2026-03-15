@@ -1,0 +1,29 @@
+:root {
+  /* Space / dark theme — matches the 3D globe */
+  --bg: rgba(0, 0, 14, 0.88);
+  --dot-primary: #a8d4ff;
+  --dot-accent: #ff7733;
+  --text: #c8e0ff;
+  --text-muted: #4a6a8a;
+  --grid: #0d1a2e;
+  --overlay-bg: rgba(0, 0, 14, 0.92);
+  --border: #1a3050;
+
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+  --dot-muted: #4a6a8a;
+  --bp-mobile: 768px;
+
+  --panel-width-desktop: 300px;
+  --panel-height-mobile: 50vh;
+}
+
+[data-theme='dark'] {
+  --bg: #1A1A1A;
+  --dot-primary: #E8E0D0;
+  --dot-accent: #FF4444;
+  --text: #D4CFC4;
+  --text-muted: #6B6B6B;
+  --grid: #2C2C2C;
+  --overlay-bg: rgba(26, 26, 26, 0.92);
+  --border: #3A3A3A;
+}

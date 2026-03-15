@@ -1,0 +1,178 @@
+/* ── Panel container ─────────────────────────────────────────────────── */
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: 300px;
+  background: var(--bg);
+  border-left: 1px solid rgba(26,26,26,0.18);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(26,26,26,0.12);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.callsign {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--dot-primary);
+  white-space: nowrap;
+}
+
+.typeCode {
+  font-size: 10px;
+  color: var(--dot-muted);
+  letter-spacing: 0.04em;
+}
+
+.trackBtn {
+  background: none;
+  border: 1px solid rgba(26,26,26,0.25);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  cursor: pointer;
+  color: var(--dot-muted);
+  padding: 3px 6px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.trackBtn:hover {
+  color: var(--dot-primary);
+  border-color: var(--dot-primary);
+}
+
+.trackBtn.tracking {
+  color: #2a8c2a;
+  border-color: #2a8c2a;
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--dot-muted);
+  line-height: 1;
+  padding: 0;
+  font-family: var(--font-mono);
+  transition: color 0.15s;
+}
+
+.close:hover {
+  color: var(--dot-accent);
+}
+
+/* ── State messages ───────────────────────────────────────────────────── */
+.state {
+  padding: 12px 14px;
+  color: var(--dot-muted);
+  font-size: 10px;
+}
+
+/* ── Aircraft photo ───────────────────────────────────────────────────── */
+.photoWrap {
+  display: block;
+  position: relative;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(26,26,26,0.10);
+}
+
+.photo {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.photoCredit {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.45);
+  padding: 1px 4px;
+  pointer-events: none;
+}
+
+/* ── Data body ────────────────────────────────────────────────────────── */
+.body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--dot-primary);
+  opacity: 0.10;
+  margin: 5px 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.label {
+  color: var(--dot-muted);
+  text-transform: lowercase;
+  font-size: 10px;
+}
+
+.value {
+  color: var(--dot-primary);
+  font-size: 11px;
+}
+
+.value.up   { color: #2a8c2a; }
+.value.down { color: #8c2a2a; }
+
+/* ── Mobile: bottom sheet ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 55dvh;
+    border-left: none;
+    border-top: 1px solid rgba(26,26,26,0.18);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+  }
+}
