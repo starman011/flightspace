@@ -19,6 +19,10 @@ type Config struct {
 	PollIntervalS  int
 	MaxWSConns     int
 	RetentionHours int
+	// TLSDomain: when set, the server binds on :443 with autocert (Let's Encrypt)
+	// and redirects :80 → HTTPS. Leave empty when running behind a TLS-terminating
+	// proxy (Railway, Cloudflare, etc.) — the proxy already handles certificates.
+	TLSDomain string
 }
 
 // LoadConfig reads configuration from environment variables with sensible defaults.
@@ -67,6 +71,7 @@ func LoadConfig() (*Config, error) {
 		PollIntervalS:  pollInterval,
 		MaxWSConns:     100,
 		RetentionHours: 6,
+		TLSDomain:      os.Getenv("TLS_DOMAIN"),
 	}, nil
 }
 

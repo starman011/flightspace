@@ -6,8 +6,18 @@
 .env.local
 .env.*.local
 backend/.env
+backend/.env.local
+backend/.env.production
 frontend/.env
 frontend/.env.local
+frontend/.env.production
+# Never commit real certs or private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+/var/cache/autocert/
 
 # ── Go ────────────────────────────────────────────────────────────────────────
 backend/server

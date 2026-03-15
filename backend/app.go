@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	dbpkg "github.com/skydot/backend/src/db"
 	"github.com/skydot/backend/src/middlewares"
 	"github.com/skydot/backend/src/routes"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // App holds all application dependencies and wires them together.
@@ -91,24 +93,66 @@ func (a *App) Start() error {
 
 	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
 
-	a.server = &http.Server{
-		Addr:         ":" + a.cfg.Port,
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
 	// Graceful shutdown on SIGINT / SIGTERM
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		log.Printf(`{"level":"info","service":"app","msg":"server starting","port":%q}`, a.cfg.Port)
-		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf(`{"level":"error","service":"app","msg":"server error","error":%q}`, err)
+	if a.cfg.TLSDomain != "" {
+		// Direct TLS mode: autocert obtains and auto-renews a Let's Encrypt certificate.
+		// Use this when the server is directly internet-facing (no TLS-terminating proxy).
+		// Set TLS_DOMAIN=skydot.app (or your domain) to activate.
+		mgr := &autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(a.cfg.TLSDomain),
+			Cache:      autocert.DirCache("/var/cache/autocert"),
 		}
-	}()
+
+		// :80 — ACME HTTP-01 challenges + redirect to HTTPS
+		httpRedirect := &http.Server{
+			Addr:         ":80",
+			Handler:      mgr.HTTPHandler(nil),
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+		}
+		go func() {
+			if err := httpRedirect.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Printf(`{"level":"warn","service":"app","msg":"http redirect error","error":%q}`, err)
+			}
+		}()
+
+		a.server = &http.Server{
+			Addr:    ":443",
+			Handler: handler,
+			TLSConfig: &tls.Config{
+				GetCertificate: mgr.GetCertificate,
+				MinVersion:     tls.VersionTLS12,
+			},
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
+		go func() {
+			log.Printf(`{"level":"info","service":"app","msg":"server starting (TLS)","domain":%q}`, a.cfg.TLSDomain)
+			if err := a.server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				log.Printf(`{"level":"error","service":"app","msg":"server error","error":%q}`, err)
+			}
+		}()
+	} else {
+		// Proxy mode: plain HTTP on configured port; TLS is handled upstream.
+		a.server = &http.Server{
+			Addr:         ":" + a.cfg.Port,
+			Handler:      handler,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
+		go func() {
+			log.Printf(`{"level":"info","service":"app","msg":"server starting","port":%q}`, a.cfg.Port)
+			if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Printf(`{"level":"error","service":"app","msg":"server error","error":%q}`, err)
+			}
+		}()
+	}
 
 	<-quit
 	log.Println(`{"level":"info","service":"app","msg":"shutting down"}`)
