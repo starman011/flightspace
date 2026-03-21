@@ -222,6 +222,92 @@ description: "Task list for SkyDot Flight Radar Core implementation"
 
 ---
 
+## Phase 14: Solar System Scene (Priority: Immediate — Platform Expansion)
+
+**Purpose**: Expand the Three.js scene from a single Earth globe to a full heliocentric solar system. Earth becomes one body among nine. All existing Globe.jsx functionality is preserved — the Earth zoom level is unchanged. This phase adds the outer scene context.
+
+**Design reference**: `design.md` Part I §1.3 Camera Behaviour, Part V Planet Texture Sources.
+
+- [ ] T052 [P] Solar system constants in `frontend/src/components/Globe/solarSystem.js`: export `SOLAR_SCALE` (1 WU = 1 Earth radius = 6371 km), `AU_IN_WU = 149597870.7 / 6371`, planet orbital radii in AU, planet physical radii in km → WU, `PLANET_NAMES` array, `PLANET_COLORS` fallback map; export `PLANET_TEXTURES` map pointing to `/textures/planets/*.jpg`; no Three.js imports in this file — pure data
+- [ ] T053 [P] Download and commit NASA/Solar System Scope planet textures to `frontend/public/textures/planets/`: `sun.jpg`, `mercury.jpg`, `venus.jpg`, `earth_day.jpg`, `earth_night.jpg`, `earth_clouds.jpg`, `moon.jpg`, `mars.jpg`, `jupiter.jpg`, `saturn.jpg`, `saturn_ring.png` (transparent), `uranus.jpg`, `neptune.jpg` — all ≤ 4096×2048; source from Solar System Scope CC BY 4.0 (`https://www.solarsystemscope.com/textures/`) or NASA Visible Earth; add a `frontend/public/textures/CREDITS.txt` attributing each source
+- [ ] T054 Add `SolarSystemScene` component in `frontend/src/components/Globe/SolarSystemScene.jsx`: renders Sun as emissive sphere (radius = `SOLAR_SCALE * 109` Earth radii), renders 8 planets as `THREE.Mesh` SphereGeometry with `MeshPhongMaterial` textured from `/textures/planets/`, applies `THREE.AmbientLight` (0.1 intensity) + `THREE.PointLight` at Sun position (2.0 intensity); planet positions computed from `planet:positions` WS message (heliocentric XYZ in AU → WU); Saturn uses `THREE.RingGeometry` child mesh; all planet meshes added to a `solarGroup` Object3D; `solarGroup` is added to the existing Globe scene alongside the Earth group — the two co-exist in the same Three.js scene
+- [ ] T055 Camera scale controller in `frontend/src/components/Globe/Globe.jsx`: add `cameraScale` state `'earth'|'solar'`; when `cameraScale === 'solar'` tween `camera.position` to `[0, AU_IN_WU * 3.5, AU_IN_WU * 2]` (isometric heliocentric view), set `controls.maxDistance = AU_IN_WU * 10`, `controls.minDistance = AU_IN_WU * 0.5`; when `cameraScale === 'earth'` tween back to current Earth distance (existing behaviour), set `controls.maxDistance = EARTH_R * 60`, `controls.minDistance = EARTH_R * 1.001`; expose `setCameraScale` via ref so FilterRail can trigger it; tween uses `TWEEN.js` or manual lerp over 1400ms with `cubic-bezier(0.16, 1, 0.3, 1)` as specified in `design.md`
+- [ ] T056 Solar system backend poller in `backend/src/controllers/solar_poller.go`: query NASA Horizons API `https://ssd.jpl.nasa.gov/api/horizons.api` every 5 minutes for all 8 planets + Pluto, parse heliocentric XYZ (AU) from response, store as JSON in Redis hash `planet:positions` (key = lowercase planet name, value = `{"name":"Mars","x":1.23,"y":0.45,"z":0.01,"r_km":3389.5}`); fallback to Le Système Solaire API `https://api.le-systeme-solaire.net/rest/bodies/` for static radius/mass data on first boot; broadcast `solar_system` WS message type on each update alongside existing delta messages
+
+**Checkpoint**: With no filter active, the default view shows the solar system. Planets orbit the Sun at correct relative distances. Switching to "Flights" filter transitions camera to Earth view.
+
+---
+
+## Phase 15: Asteroid & NEO Tracking (Priority: High)
+
+**Purpose**: Track all NASA-catalogued near-Earth objects. Show close-approach alerts. Render orbital paths in the heliocentric scene.
+
+**Design reference**: `design.md` §1.2 Scope, §4.1 Backend Data Sources.
+
+- [ ] T057 NEO backend poller in `backend/src/controllers/neo_poller.go`: call NASA NeoWs `https://api.nasa.gov/neo/rest/v1/feed?start_date=<today>&end_date=<today+7>&api_key=<NASA_API_KEY>` every hour; parse `near_earth_objects` for each asteroid: `id`, `name`, `estimated_diameter_km`, `is_potentially_hazardous`, `close_approach_data[0].miss_distance.kilometers`, `close_approach_data[0].close_approach_date_full`; also call `https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=<NASA_API_KEY>` once daily for full catalogue; store each NEO in Redis hash `asteroid:live` (key = SPK-ID), store close approaches in `asteroid:approach`; emit WS message `{"type":"neo_alert"}` for any object with miss distance < 7,500,000 km; add `NASA_API_KEY` to `backend/constants.go` with env var fallback to `DEMO_KEY`
+- [ ] T058 [P] NEO orbital path rendering in `frontend/src/components/Globe/SolarSystemScene.jsx`: for each asteroid received via WS `solar_system` message with orbital elements (`a` semi-major axis, `e` eccentricity, `i` inclination, `om` RAAN, `w` arg of perihelion), compute 360-point orbit ellipse using Keplerian elements → Cartesian; render as `THREE.Line` with `LineDashedMaterial` in amber (#ff6b35) at 30% opacity; render asteroid itself as tiny sphere (radius 0.002 WU); highlight potentially hazardous asteroids (PHA) with red orbit line; limit to 50 NEOs visible at once (closest approach first)
+- [ ] T059 NEO detail panel extension in `frontend/src/components/DetailPanel/DetailPanel.jsx`: when selected object `cat === 'asteroid'`, show: designation, diameter range (min/max km), potentially hazardous badge, closest approach date, miss distance (km and lunar distances), relative velocity (km/s), NASA NeoWs URL for more info; format all numbers in IBM Plex Mono as per `design.md`
+
+**Checkpoint**: Asteroids visible in solar system scene as small amber dots with dashed orbit paths. NEO alert fires in StatusBar for any approaching object. Clicking an asteroid opens detail panel with NASA data.
+
+---
+
+## Phase 16: Rocket & Manned Missions (Priority: High)
+
+**Purpose**: Show all active and upcoming launches, crewed missions, and live spacecraft positions.
+
+**Design reference**: `design.md` §1.2 Scope, §3.2 Filter Rail.
+
+- [ ] T060 [P] ISS live tracker in `backend/src/controllers/iss_poller.go`: poll `http://api.open-notify.org/iss-now.json` every 5s, parse `iss_position` (lat/lon), compute altitude (~408 km), store in Redis `iss:position` with 10s TTL; poll `http://api.open-notify.org/astros.json` every 1hr, store in `people:space`; ISS is included in the existing `satellite:live` hash as a special entry with `id = "ISS"`, `cat = "satellite"`, `name = "International Space Station"`, `alt_km = 408`, `crew = N` (from people API)
+- [ ] T061 Launch Library 2 poller in `backend/src/controllers/launch_poller.go`: call `https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=20&format=json` every 15 minutes (respects 15 req/hr free tier), parse: launch `id`, `name`, `net` (NET date), `rocket.configuration.name`, `launch_service_provider.name`, `mission.description`, `mission.orbit.name`, `pad.location.name`, `pad.latitude`, `pad.longitude`, `status.name`; store in Redis `launch:upcoming` as JSON array (15min TTL); also call `/launch/previous/?limit=5` for recent launches; expose via `GET /api/v1/launches` REST endpoint returning both lists
+- [ ] T062 Mission live position in `backend/src/controllers/mission_tracker.go`: for any launch whose `status.name === "In Flight"` (from LL2), use the rocket's TLE (fetched from CelesTrak by rocket name match) to compute current position via SGP4; store in Redis `mission:live` hash; if no TLE available, use launch pad lat/lon with altitude 0 (pre-launch); broadcast via WS `mission:live` alongside other entity types in WS hub
+- [ ] T063 [P] Launch manifest UI in `frontend/src/components/LaunchPanel/LaunchPanel.jsx` and `LaunchPanel.module.css`: right-anchored panel (same slot as DetailPanel, toggled by filter rail "Rockets" icon); shows upcoming launches as cards — each card: mission name in `headline`, provider + rocket in `body-md`, NET countdown timer (live `setInterval` counting down), launch site, orbit type chip, status chip (Go/Hold/TBD); design follows `design.md` — no dividers, vacuum gaps, glassmorphism background; clicking a card flies camera to launch pad on Earth globe; when a mission is "In Flight", shows live position marker on globe and track button
+- [ ] T064 People in space panel in `frontend/src/components/LaunchPanel/LaunchPanel.jsx`: add collapsible section below launch cards showing current crew in space (from `people:space`); each person: name, craft, days in space; ISS crew highlighted; collapses to "N people in space" summary line
+
+**Checkpoint**: "Rockets" filter shows launch pad markers on Earth. Upcoming launch countdown visible. ISS shows crew count in detail panel. In-flight missions show live position.
+
+---
+
+## Phase 17: Planetary Maps & Textures (Priority: Medium)
+
+**Purpose**: Each planet has a textured surface. Earth has multiple texture layers. Clicking a planet opens a detail panel with NASA fact sheet data and any active missions.
+
+- [ ] T065 [P] Multi-layer Earth textures in `frontend/src/components/Globe/Globe.jsx`: replace single `earthMesh` texture with layered approach — base layer `earth_day.jpg`, night-side layer `earth_night.jpg` (blended via custom shader using Sun direction dot product to lerp between day/night), optional cloud layer `earth_clouds.jpg` as a slightly larger sphere mesh with `alphaMap` + slow rotation (1 deg/10s); shader uniform `uSunDirection: THREE.Vector3` updated each frame from `planet:positions.sun` WS data
+- [ ] T066 [P] Planet detail panel in `frontend/src/components/DetailPanel/DetailPanel.jsx`: when selected object `cat === 'planet'`, fetch static data from `GET /api/v1/planet/:name` (returns Le Système Solaire API data cached in Redis); show: planet name in `display-md`, NASA planetary texture preview (thumbnail from `/textures/planets/`), fact sheet grid — mass (kg), diameter (km), gravity (m/s²), day length (hrs), year length (days), moons count, atmosphere composition; show "Active missions" sub-list: missions from LL2 data whose `mission.orbit` contains the planet name; current distance from Sun (live from `planet:positions`)
+- [ ] T067 Planet REST endpoint in `backend/src/controllers/planets.go`: `GET /api/v1/planet/:name` — look up Redis `planet:positions:<name>`, merge with static data from Le Système Solaire API cached at boot, include `active_missions` array filtered from `launch:upcoming` where orbit matches; return combined JSON
+
+**Checkpoint**: Clicking Mars opens detail panel with mass/gravity/moons. Earth shows day/night terminator. Saturn renders with rings.
+
+---
+
+## Phase 18: Design System Migration (Priority: Medium — ongoing alongside features)
+
+**Purpose**: Apply the "Celestial Precision" design system from `design.md` Part II across all UI components. Replaces the current ad-hoc CSS with the canonical token system.
+
+- [ ] T068 [P] Design tokens in `frontend/src/styles/tokens.css`: CSS custom properties for all colours from `design.md` §2.2 (`--surface-dim`, `--surface`, `--surface-container-low`, etc.), all typography scales (`--font-display`, `--font-headline`, etc.), spacing scale (`--space-1` through `--space-12` in 4px increments), motion tokens (`--ease-camera`, `--ease-panel`, `--duration-panel`, `--duration-camera`); import in `frontend/src/main.jsx`; no component changes yet — tokens only
+- [ ] T069 [P] Google Fonts import for Space Grotesk + IBM Plex Mono in `frontend/index.html`: add `<link>` preconnect and stylesheet for `Space+Grotesk:wght@400;600;700` and `IBM+Plex+Mono:wght@400;500`; Inter is already loaded or use system sans-serif fallback; update `frontend/src/styles/global.css` `font-family` to `'Space Grotesk', system-ui, sans-serif`; update `body` background to `var(--surface-dim)`
+- [ ] T070 Orbital HUD component in `frontend/src/components/HUD/HUD.jsx` and `HUD.module.css`: fixed position, four corners — top-left shows camera altitude (km), lat/lon of camera target, current scale label; top-right shows tracked object count, WS feed latency (ms), UTC timestamp updated every second; all text `label-sm` IBM Plex Mono; background `rgba(15, 20, 25, 0.6)` with `backdrop-filter: blur(10px)`; no border — atmospheric shift only; as per `design.md` §2.5 "Orbital HUD"
+- [ ] T071 [P] Filter rail component in `frontend/src/components/FilterRail/FilterRail.jsx` and `FilterRail.module.css`: left-edge vertical strip; 7 icon buttons (Flights ✈, Ships 🚢, Satellites 🛰, Asteroids ☄, Rockets 🚀, Planets 🪐, Earth 🌍); each button `48×48px`, `surface-container-high` background; active state: `surface-tint` border at 100% opacity + Starlight Gradient icon tint; inactive: ghost border 15%; clicking a filter dispatches to `Globe.jsx` via `onFilterChange` callback which triggers `setCameraScale` + entity visibility toggles; replaces current `Filters.jsx` horizontal bar (retain Filters.jsx for mobile breakpoint ≤768px)
+- [ ] T072 Apply tokens to DetailPanel in `frontend/src/components/DetailPanel/DetailPanel.module.css`: replace all hardcoded hex values with `var(--*)` tokens; ensure all numerical values use IBM Plex Mono (`font-family: var(--font-mono)`); panel background `var(--surface-container)` with `backdrop-filter: blur(16px)`; track button uses Starlight Gradient when active; no dividers — spacing only; verify ghost border on container edges (`border: 1px solid rgba(59, 73, 76, 0.15)`)
+- [ ] T073 [P] Apply tokens to SearchBar, StatusBar, LaunchPanel: same pattern as T072 — replace hardcoded values with tokens, enforce Mono on all data fields, glassmorphism backgrounds, no solid borders; status chip for NEO alert uses `--tertiary-container` and `--chip-glow-active`
+
+**Checkpoint**: Full UI uses token system. All numerical telemetry is IBM Plex Mono. No solid 1px borders. Background differentiation uses tonal layering only. Glassmorphism on all floating panels.
+
+---
+
+## Phase 19: Security Hardening & Production Readiness (Priority: Immediate)
+
+**Purpose**: Address all outstanding security findings before deployment. No dummy data. Complete headers. Vercel-ready.
+
+- [ ] T074 Remove all dummy/seed data from `frontend/src/App.jsx`: delete `SEED_SHIPS`, `SEED_AIRCRAFT`, `KTS_TO_DEG_PER_MS` constants; remove `demoAircraft` state + drift useEffect; remove `demoShips` state + drift useEffect; remove `issData` state + orbital simulation useEffect; simplify `aircraftWithShips` to `filteredAircraft` directly (no demo merge); remove unused imports; verify app still boots with only live API data
+- [ ] T075 [P] Security headers in `frontend/public/_headers`: add `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://a.basemaps.cartocdn.com https://server.arcgisonline.com https://*.planespotters.net https://visibleearth.nasa.gov https://www.solarsystemscope.com; connect-src 'self' wss: https://api.planespotters.net https://cdn.jsdelivr.net https://api.nasa.gov https://api.open-notify.org https://ll.thespacedevs.com; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'`; add `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`; add `Cross-Origin-Opener-Policy: same-origin`; add `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- [ ] T076 [P] Fix `backend/src/middlewares/security.go`: change HSTS condition from `r.TLS != nil` to `r.Header.Get("X-Forwarded-Proto") == "https" || r.TLS != nil` (works behind Railway/Cloudflare proxy); add `Cross-Origin-Opener-Policy: same-origin`; add `Cross-Origin-Resource-Policy: cross-origin` (API responses consumed cross-origin by frontend); update CSP `img-src` and `connect-src` to include new NASA / LL2 / Open Notify endpoints
+- [ ] T077 [P] Add `NASA_API_KEY` and `LL2_BASE_URL` to `backend/constants.go` and `backend/.env.example`; ensure all new pollers (T057, T060, T061) read from env with documented defaults; update `backend/.env.example` with all new keys
+
+**Checkpoint**: `GET /` headers show CSP in enforcement mode, HSTS, COOP. Security scanner shows 0 issues. No dummy data in browser network tab.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -238,6 +324,12 @@ description: "Task list for SkyDot Flight Radar Core implementation"
 - **US5 (Phase 10)**: Depends on US8 (aircraft state in hooks)
 - **US7 (Phase 11)**: Depends on US6 (session migration) + US3 (watchlist in panel)
 - **Polish (Phase 12)**: Depends on all stories complete
+- **Solar System (Phase 14)**: Depends on Phase 13 (Globe.jsx InstancedMesh pattern established); T052/T053 run in parallel immediately
+- **Asteroids (Phase 15)**: Depends on Phase 14 (heliocentric scene exists); T057/T058 run in parallel
+- **Missions (Phase 16)**: Depends on Phase 13 (satellite pattern for ISS); T060/T061 run in parallel
+- **Planetary Maps (Phase 17)**: Depends on Phase 14 (planet spheres exist)
+- **Design System (Phase 18)**: Depends on nothing — T068/T069 (tokens) run immediately in parallel with any other work; remaining tasks depend on T068
+- **Security (Phase 19)**: T074/T075/T076/T077 all run in parallel immediately — no dependencies
 
 ### User Story Dependencies
 
@@ -302,6 +394,12 @@ Task T015: "Session management in backend/src/controllers/session.go"
 5. Add Phase 10 (US5 Filters) → Reduce noise
 6. Add Phase 11 (US7 Auth) → Optional accounts
 7. Phase 12 (Polish + Deploy) → Production
+8. **Phase 19 (Security)** → Production hardening — run immediately in parallel with any phase
+9. **Phase 18 (Design tokens)** → T068/T069 run immediately; rest migrated component by component
+10. **Phase 14 (Solar System)** → Heliocentric scene added to existing Globe
+11. **Phase 15 (Asteroids)** → NEOs tracked in solar scene
+12. **Phase 16 (Missions)** → ISS live + launch countdown
+13. **Phase 17 (Planetary Maps)** → Textured planets + fact panels
 
 ### Suggested MVP Scope
 
