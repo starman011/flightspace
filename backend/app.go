@@ -88,6 +88,18 @@ func (a *App) Start() error {
 	solarPoller := controllers.NewSolarPoller(a.redis, a.hub)
 	go solarPoller.Start(ctx)
 
+	// Start NEO/asteroid poller (NASA NeoWs — hourly)
+	neoPoller := controllers.NewNEOPoller(a.redis, a.hub, a.cfg.NASAAPIKey)
+	go neoPoller.Start(ctx)
+
+	// Start ISS live tracker (Open Notify — every 5s)
+	issPoller := controllers.NewISSPoller(a.redis)
+	go issPoller.Start(ctx)
+
+	// Start launch manifest poller (Launch Library 2 — every 15 min)
+	launchPoller := controllers.NewLaunchPoller(a.redis, a.cfg.LL2BaseURL)
+	go launchPoller.Start(ctx)
+
 	// Start data retention cleanup
 	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
 

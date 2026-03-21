@@ -17,12 +17,13 @@ func Setup(
 	hub *controllers.Hub,
 	jwtSecret string,
 ) {
-	health := controllers.NewHealthController(pool, rdb)
+	health  := controllers.NewHealthController(pool, rdb)
 	session := controllers.NewSessionController(pool, rdb, jwtSecret)
 	aircraft := controllers.NewAircraftController(pool, rdb)
-	auth := controllers.NewAuthController(pool, rdb, jwtSecret)
-	user := controllers.NewUserController(pool, rdb)
-	ws := controllers.NewWSController(hub, jwtSecret)
+	auth   := controllers.NewAuthController(pool, rdb, jwtSecret)
+	user   := controllers.NewUserController(pool, rdb)
+	ws     := controllers.NewWSController(hub, jwtSecret)
+	launch := controllers.NewLaunchController(rdb)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -50,6 +51,9 @@ func Setup(
 	mux.Handle("GET /api/v1/user/watchlist", authReq(http.HandlerFunc(user.GetWatchlist)))
 	mux.Handle("POST /api/v1/user/watchlist", authReq(http.HandlerFunc(user.AddWatchlist)))
 	mux.Handle("DELETE /api/v1/user/watchlist/{id}", authReq(http.HandlerFunc(user.DeleteWatchlist)))
+
+	// Space data
+	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)

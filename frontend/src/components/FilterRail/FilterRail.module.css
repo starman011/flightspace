@@ -1,0 +1,108 @@
+/* ── Filter Rail — left-edge vertical strip ───────────────────────────────── */
+
+.rail {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: var(--glass-border);
+  border-radius: 0 8px 8px 0;
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  transition:
+    color var(--duration-panel) var(--ease-panel),
+    background var(--duration-panel) var(--ease-panel);
+  position: relative;
+}
+
+.btn:hover {
+  color: var(--on-surface);
+  background: rgba(195, 245, 255, 0.05);
+}
+
+/* Active state — Starlight tint */
+.btn.active {
+  color: var(--primary);
+  background: rgba(195, 245, 255, 0.08);
+}
+
+/* Active left-edge accent bar */
+.btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 2px;
+  background: var(--gradient-starlight);
+  border-radius: 0 2px 2px 0;
+}
+
+.icon {
+  font-size: 18px;
+  line-height: 1;
+  filter: none;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Mobile — collapse to icon-only strip at the bottom */
+@media (max-width: 767px) {
+  .rail {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    flex-direction: row;
+    justify-content: space-around;
+    border-right: none;
+    border-top: var(--glass-border);
+    border-radius: 12px 12px 0 0;
+    padding: 0;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 10px 0 14px;
+    width: auto;
+  }
+
+  .btn.active::before {
+    left: 20%;
+    top: 0;
+    width: 60%;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+  }
+
+  .label {
+    font-size: 9px;
+  }
+}

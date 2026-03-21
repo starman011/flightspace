@@ -52,6 +52,8 @@ type LiveAircraft struct {
 	Cat      string   `json:"cat"`             // "plane"|"helicopter"|"satellite"|"ship"
 	Ctry     *string  `json:"ctry,omitempty"`  // origin_country
 	TS       int64    `json:"ts"`              // unix timestamp of last position
+	Crew     int      `json:"crew,omitempty"`  // crewed spacecraft only (ISS etc.)
+	T        *string  `json:"t,omitempty"`     // ICAO type code (aircraft only)
 }
 
 // AircraftDetailResponse is the full response for GET /aircraft/:icao24
