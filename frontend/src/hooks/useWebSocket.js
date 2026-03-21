@@ -14,7 +14,7 @@ const MAX_BACKOFF = 30_000
  * @param {Function} onSnapshot - called with full aircraft array on snapshot
  * @param {Function} onDelta    - called with { updated, removed } arrays on delta
  */
-export function useWebSocket(sessionToken, onSnapshot, onDelta) {
+export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem) {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
   const wsRef = useRef(null)
   const backoffRef = useRef(1000)
@@ -63,6 +63,8 @@ export function useWebSocket(sessionToken, onSnapshot, onDelta) {
             updated: msg.data?.updated ?? [],
             removed: msg.data?.removed ?? [],
           })
+        } else if (msg.type === 'solar_system' && onSolarSystem) {
+          onSolarSystem(msg.data)
         }
       } catch (err) {
         console.warn('WS parse error:', err)
@@ -82,7 +84,7 @@ export function useWebSocket(sessionToken, onSnapshot, onDelta) {
     ws.onerror = () => {
       ws.close()
     }
-  }, [sessionToken, onSnapshot, onDelta])
+  }, [sessionToken, onSnapshot, onDelta, onSolarSystem])
 
   // Connect when token is available
   useEffect(() => {

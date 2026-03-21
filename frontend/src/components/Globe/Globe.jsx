@@ -14,6 +14,8 @@ import {
   LinearMipmapLinearFilter, LinearFilter,
 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { createSolarSystem } from './SolarSystemScene.js'
+import { CAM_SOLAR, CAM_EARTH, CAM_TWEEN_MS } from './solarSystem.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -742,7 +744,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -750,6 +752,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const [mapStyle, setMapStyle] = useState('satellite')
   const mapStyleRef = useRef('satellite')
   const [cameraInfo, setCameraInfo] = useState({ altM: null, scaleLabel: '', scaleBarPx: 80 })
+  const [cameraScale, setCameraScale] = useState('earth')   // 'earth' | 'solar'
 
   // ── API trail: draw departure→arrival path from detail panel ─────────────
   const drawTrail = useCallback((points) => {
@@ -789,7 +792,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     apiTrailRef.current = [coreLine, glowLine]
   }, [])
 
-  useImperativeHandle(ref, () => ({ drawTrail }), [drawTrail])
+  useImperativeHandle(ref, () => ({
+    drawTrail,
+    setCameraScale: (scale) => {
+      setCameraScale(scale)
+      int.current.targetCameraScale = scale
+    },
+  }), [drawTrail, setCameraScale])
 
   // ── Three.js init ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1001,6 +1010,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     )
     shipMesh.count = 0; shipMesh.renderOrder = 2; shipMesh.frustumCulled = false
     scene.add(shipMesh)
+
+    // ── Solar system ──────────────────────────────────────────────────
+    // Hidden by default; shown when cameraScale transitions to 'solar'.
+    const solarSystem = createSolarSystem(scene, renderer)
 
     // ── Hidden Points layer (invisible, used only for raycasting) ─────
     // PointsMaterial threshold-based picking is O(n) and very fast.
@@ -1381,6 +1394,56 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       } else {
         controls.enableRotate = true
       }
+
+      // ── Camera scale tween (earth ↔ solar) ───────────────────────────────
+      const targetScale = int.current.targetCameraScale || 'earth'
+      const isSolar     = targetScale === 'solar'
+      const CAM_TARGET  = isSolar ? CAM_SOLAR : CAM_EARTH
+
+      if (int.current.camTweenStart !== null) {
+        const elapsed  = Date.now() - int.current.camTweenStart
+        const rawT     = Math.min(elapsed / CAM_TWEEN_MS, 1)
+        // cubic-bezier(0.16, 1, 0.3, 1) approximation via smoothstep
+        const t = rawT < 0.5
+          ? 4 * rawT * rawT * rawT
+          : 1 - Math.pow(-2 * rawT + 2, 3) / 2
+
+        const [tx, ty, tz] = CAM_TARGET.position
+        const from = int.current.camTweenFrom
+        camera.position.set(
+          from.x + (tx - from.x) * t,
+          from.y + (ty - from.y) * t,
+          from.z + (tz - from.z) * t,
+        )
+
+        if (rawT >= 1) {
+          // Tween complete — update control limits and show/hide solar system
+          int.current.camTweenStart = null
+          controls.minDistance = CAM_TARGET.minDist
+          controls.maxDistance = CAM_TARGET.maxDist
+          if (isSolar) {
+            solarSystem.show()
+          } else {
+            solarSystem.hide()
+          }
+        }
+      } else {
+        // Check if a new scale target has been set since last frame
+        const prevScale = int.current._lastAppliedScale || 'earth'
+        if (prevScale !== targetScale) {
+          int.current._lastAppliedScale = targetScale
+          int.current.camTweenStart = Date.now()
+          int.current.camTweenFrom  = camera.position.clone()
+          // Show solar system immediately when going solar so it's visible during tween
+          if (isSolar) solarSystem.show()
+        }
+      }
+
+      // ── Solar system per-frame update ─────────────────────────────────────
+      if (solarSystem.solarGroup.visible) {
+        solarSystem.update(int.current.planetPositions)
+      }
+
       controls.update()
       clouds.rotation.y += 0.000022
 
@@ -1534,6 +1597,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       lastAircraft: null,
       lastSelectedId: null,
       clearTiles,
+      solarSystem,
+      targetCameraScale: 'earth',   // set by setCameraScale via imperative handle
+      camTweenStart: null,          // timestamp when tween began
+      camTweenFrom: null,           // Vector3 camera start position
+      planetPositions: null,        // populated by WS solar_system message
     }
 
     return () => {
@@ -1544,6 +1612,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
       clearTiles()
+      solarSystem.dispose()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
@@ -1561,6 +1630,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   useEffect(() => {
     if (int.current) int.current.trackingId = trackingId ?? null
   }, [trackingId])
+
+  useEffect(() => {
+    if (!int.current || !solarData?.planets) return
+    // Convert array to name-keyed map for O(1) lookup in the tick loop
+    const map = {}
+    for (const p of solarData.planets) map[p.name] = p
+    int.current.planetPositions = map
+  }, [solarData])
 
   // When style toggles, update the ref and flush the tile cache so tiles reload with new URLs
   useEffect(() => {

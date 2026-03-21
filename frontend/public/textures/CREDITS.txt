@@ -1,0 +1,38 @@
+Planet texture credits and download sources
+===========================================
+
+All textures are free for non-commercial and educational use.
+Solar System Scope textures: CC BY 4.0 — https://www.solarsystemscope.com/textures/
+
+Run the download script to fetch all textures:
+  bash frontend/public/textures/download.sh
+
+─── Files required ────────────────────────────────────────────────────────────
+
+planets/sun.jpg          — Solar System Scope
+planets/mercury.jpg      — Solar System Scope
+planets/venus.jpg        — Solar System Scope (surface)
+planets/earth_day.jpg    — NASA Visible Earth "Blue Marble" (public domain)
+planets/earth_night.jpg  — NASA "Black Marble" (public domain)
+planets/earth_clouds.jpg — NASA Visible Earth cloud layer (public domain)
+planets/moon.jpg         — Solar System Scope
+planets/mars.jpg         — Solar System Scope
+planets/jupiter.jpg      — Solar System Scope
+planets/saturn.jpg       — Solar System Scope
+planets/saturn_ring.png  — Solar System Scope (transparent PNG)
+planets/uranus.jpg       — Solar System Scope
+planets/neptune.jpg      — Solar System Scope
+
+─── Attribution ───────────────────────────────────────────────────────────────
+
+Solar System Scope Textures
+  © Solar System Scope, CC BY 4.0
+  https://www.solarsystemscope.com/textures/
+
+NASA Visible Earth
+  Public Domain — NASA Earth Observatory
+  https://visibleearth.nasa.gov/
+
+NASA Black Marble
+  Public Domain — NASA Earth Observatory / Suomi NPP VIIRS
+  https://earthobservatory.nasa.gov/features/NightLights

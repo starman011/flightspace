@@ -50,13 +50,29 @@ func NewWSMessage(msgType string, data interface{}) WSMessage {
 
 // WebSocket message type constants
 const (
-	WSTypeSnapshot  = "snapshot"
-	WSTypeDelta     = "delta"
-	WSTypeError     = "error"
-	WSTypePong      = "pong"
-	WSTypeSetBounds = "set_bounds"
-	WSTypePing      = "ping"
+	WSTypeSnapshot    = "snapshot"
+	WSTypeDelta       = "delta"
+	WSTypeError       = "error"
+	WSTypePong        = "pong"
+	WSTypeSetBounds   = "set_bounds"
+	WSTypePing        = "ping"
+	WSTypeSolarSystem = "solar_system"
 )
+
+// PlanetPosition holds the heliocentric position of a solar system body.
+type PlanetPosition struct {
+	Name    string  `json:"name"`
+	X       float64 `json:"x"`        // AU from Sun
+	Y       float64 `json:"y"`        // AU from Sun
+	Z       float64 `json:"z"`        // AU from Sun
+	RadiusKM float64 `json:"radius_km"`
+}
+
+// WSSolarSystem is the data payload for a "solar_system" message.
+type WSSolarSystem struct {
+	Planets []PlanetPosition `json:"planets"`
+	UpdatedAt int64          `json:"updated_at"` // unix seconds
+}
 
 // WebSocket error codes
 const (

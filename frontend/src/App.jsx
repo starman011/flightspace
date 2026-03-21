@@ -13,7 +13,7 @@ import { useAircraft } from './hooks/useAircraft'
 
 export default function App() {
   const { sessionToken, isAuthenticated } = useSession()
-  const { filteredAircraft, filters, setFilters, connectionStatus, setBounds } = useAircraft(sessionToken)
+  const { filteredAircraft, filters, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken)
 
   const [selectedIcao24, setSelectedIcao24] = useState(null)
   const [searchOpen, setSearchOpen]         = useState(false)
@@ -54,6 +54,7 @@ export default function App() {
           onAircraftClick={handleAircraftClick}
           onViewportChange={setBounds}
           trackingId={trackingId}
+          solarData={solarData}
         />
       </Suspense>
       <Filters filters={filters} onFiltersChange={setFilters} />

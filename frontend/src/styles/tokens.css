@@ -1,0 +1,97 @@
+/* ─── Celestial Precision — Design Tokens ────────────────────────────────────
+   Single source of truth for all design values.
+   Import this before any other stylesheet.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  --surface-dim:               #0f1419;
+  --surface:                   #0f1419;
+  --surface-container-lowest:  #0a0e13;
+  --surface-container-low:     #171c22;
+  --surface-container:         #1e2329;
+  --surface-container-high:    #262a30;
+  --surface-container-highest: #30353b;
+  --surface-variant:           #3b494c;
+  --surface-tint:              #00daf3;
+
+  /* ── Primary ───────────────────────────────────────────────────────────── */
+  --primary:           #c3f5ff;
+  --primary-container: #00e5ff;
+  --on-primary:        #00363d;
+  --on-primary-container: #001f24;
+
+  /* ── Secondary ─────────────────────────────────────────────────────────── */
+  --secondary:         #b2ccd2;
+  --on-secondary:      #1c353b;
+
+  /* ── Status ────────────────────────────────────────────────────────────── */
+  --tertiary-container: #22ef7e;
+  --error-container:    #93000a;
+  --on-error:           #ffdad6;
+  --warning:            #ff6b35;
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --on-surface:        #dfe3eb;
+  --on-surface-variant:#a8b5b8;
+  --outline-variant:   #3b494c;
+
+  /* ── Gradients ─────────────────────────────────────────────────────────── */
+  --gradient-starlight: linear-gradient(135deg, #c3f5ff, #00e5ff);
+
+  /* ── Glassmorphism ─────────────────────────────────────────────────────── */
+  --glass-bg:     rgba(23, 28, 34, 0.72);
+  --glass-blur:   blur(14px);
+  --glass-border: 1px solid rgba(59, 73, 76, 0.18);
+
+  /* ── Shadows ───────────────────────────────────────────────────────────── */
+  --shadow-float: 0 20px 50px rgba(0, 218, 243, 0.05);
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* ── Typography — families ─────────────────────────────────────────────── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  /* ── Typography — scale ────────────────────────────────────────────────── */
+  --text-display-lg:  3.5rem;
+  --text-display-md:  2.25rem;
+  --text-headline:    1.5rem;
+  --text-title:       1.125rem;
+  --text-body-lg:     1rem;
+  --text-body-md:     0.875rem;
+  --text-label-md:    0.75rem;
+  --text-label-sm:    0.625rem;
+
+  /* ── Spacing (4px base) ────────────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Border radius ─────────────────────────────────────────────────────── */
+  --radius-sm:  2px;
+  --radius-md:  4px;
+  --radius-pill: 100px;
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --ease-camera:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-panel:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-drift:   linear;
+
+  --duration-camera: 1400ms;
+  --duration-panel:  320ms;
+  --duration-fade:   400ms;
+  --duration-drift:  80ms;
+
+  /* ── Chip glows ────────────────────────────────────────────────────────── */
+  --chip-glow-active:  0 0 8px rgba(34, 239, 126, 0.4);
+  --chip-glow-alert:   0 0 8px rgba(255, 107, 53, 0.4);
+  --chip-glow-error:   0 0 8px rgba(147, 0, 10, 0.3);
+}

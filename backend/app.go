@@ -84,6 +84,10 @@ func (a *App) Start() error {
 	shipPoller := controllers.NewShipPoller(a.redis, a.cfg.AISStreamKey)
 	go shipPoller.Start(ctx)
 
+	// Start solar system poller (NASA Horizons — planet positions every 5 min)
+	solarPoller := controllers.NewSolarPoller(a.redis, a.hub)
+	go solarPoller.Start(ctx)
+
 	// Start data retention cleanup
 	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
 
