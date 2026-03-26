@@ -22,10 +22,11 @@ export default defineConfig({
         // Granular chunks: React, Three.js, and everything else separate
         // so browsers can cache them independently between deploys
         manualChunks(id) {
-          if (id.includes('node_modules/three'))                    return 'three'
-          if (id.includes('node_modules/react-dom'))                return 'react-dom'
-          if (id.includes('node_modules/react'))                    return 'react'
-          if (id.includes('node_modules/'))                         return 'vendor'
+          if (id.includes('node_modules/three'))       return 'three'
+          // Keep all React ecosystem in one chunk — splitting react/react-dom
+          // causes circular init errors with react-router-dom v7
+          if (id.includes('node_modules/react'))       return 'react'
+          if (id.includes('node_modules/'))            return 'vendor'
         },
         // Deterministic filenames so CDN caches survive re-deploys unchanged
         entryFileNames:  'assets/[name]-[hash].js',
