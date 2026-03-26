@@ -27,7 +27,7 @@ export default function StatusBar({
     <div
       ref={notchRef}
       className={`${styles.notch} ${expanded ? styles.expanded : ''}`}
-      // Concave ear corners rendered via CSS pseudo-elements
+      data-tour="status-bar"
     >
       {/* ── Handle — always visible pill ───────────────────────────── */}
       <button

@@ -8,19 +8,19 @@ const PAD = 8   // padding around spotlight rect
 // Each step provides separate copy for desktop vs mobile.
 const STEPS = [
   {
-    target:  'live-btn',
+    target:  'status-bar',
     title:   'Enable live tracking',
-    body:    'Hit LIVE to stream real-time positions of aircraft, satellites and ships on the globe.',
+    body:    'Click here to expand — then hit LIVE to stream real-time positions of aircraft, satellites and ships.',
     mTitle:  'Enable live tracking',
-    mBody:   'Tap the notch at the top, then press LIVE to start real-time tracking.',
+    mBody:   'Tap this notch to expand it, then press LIVE to start real-time tracking.',
     icon:    'wifi_tethering',
   },
   {
-    target:  'search-btn',
+    target:  'status-bar',
     title:   'Search anything',
-    body:    'Look up any flight by callsign, aircraft type or ICAO code for instant details.',
+    body:    'Expand the notch and hit Search to look up any flight by callsign, aircraft type or ICAO code.',
     mTitle:  'Search anything',
-    mBody:   'Open the notch and tap Search to find any flight or aircraft.',
+    mBody:   'Tap the notch and use Search to find any flight or aircraft instantly.',
     icon:    'search',
   },
   {
