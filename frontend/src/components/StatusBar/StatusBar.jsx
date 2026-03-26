@@ -99,12 +99,13 @@ export default function StatusBar({
                 className={`${styles.liveBtn} ${liveEnabled ? styles.liveBtnOn : ''}`}
                 onClick={onLiveToggle}
                 title={liveEnabled ? 'Disable live tracking' : 'Enable live tracking'}
+                data-tour="live-btn"
               >
                 <span className={`${styles.liveLed} ${liveEnabled ? styles.liveLedOn : ''}`} />
                 LIVE
               </button>
 
-              <button className={styles.searchBtn} onClick={() => { onSearchOpen?.(); setExpanded(false) }}>
+              <button className={styles.searchBtn} onClick={() => { onSearchOpen?.(); setExpanded(false) }} data-tour="search-btn">
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                   <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.3"/>
                   <path d="M8.5 8.5L11 11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>

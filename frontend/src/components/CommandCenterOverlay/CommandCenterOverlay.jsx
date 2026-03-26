@@ -853,6 +853,7 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
       <div
         ref={streamRef}
         className={`${styles.stream}${sheetOpen ? '' : ` ${styles.streamClosed}`}`}
+        data-tour="signal-stream"
       >
         {/* Grab handle strip — handles both swipe-down (close) and swipe-up (open) */}
         <div

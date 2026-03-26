@@ -162,7 +162,7 @@ export default function OrbitalMapBar({
       <CosmicAddressWidget />
 
       {/* Unified bottom dock — collapses to a thin bar, expands on hover */}
-      <div className={styles.dockWrap}>
+      <div className={styles.dockWrap} data-tour="filter-bar">
         {/* Collapsed indicator bar (always visible) */}
         <div className={styles.collapseBar}>
           <span className={styles.collapseHandle} />

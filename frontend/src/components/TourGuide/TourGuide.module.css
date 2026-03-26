@@ -1,0 +1,174 @@
+/* ── Tour Guide ──────────────────────────────────────────────────────────── */
+
+/* Full-screen backdrop — box-shadow on .spotlight creates the cutout */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: auto;
+}
+
+/* Spotlight ring — box-shadow floods everything outside it */
+.spotlight {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 12, 0.78);
+  border: 1.5px solid rgba(0, 229, 255, 0.45);
+  pointer-events: none;
+  transition:
+    top    0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    left   0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    width  0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: spotPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes spotPulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 0 rgba(0,229,255,0.25); }
+  50%       { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 6px rgba(0,229,255,0.12); }
+}
+
+/* Tooltip card */
+.tooltip {
+  position: fixed;
+  width: 300px;
+  background: rgba(8, 14, 22, 0.97);
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 16px;
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0,229,255,0.04) inset;
+  animation: tooltipIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 501;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stepIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 8px;
+  color: #00e5ff;
+}
+
+.stepCount {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: rgba(195, 245, 255, 0.3);
+  text-transform: uppercase;
+}
+
+.tooltipTitle {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.tooltipBody {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(195, 245, 255, 0.5);
+}
+
+.tooltipFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+/* Progress dots */
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(195, 245, 255, 0.15);
+  transition: background 0.2s, width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dotActive {
+  width: 16px;
+  border-radius: 3px;
+  background: #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+/* Buttons */
+.btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skipBtn {
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(195, 245, 255, 0.22);
+  cursor: pointer;
+  padding: 6px 4px;
+  transition: color 0.15s;
+}
+.skipBtn:hover { color: rgba(195, 245, 255, 0.55); }
+
+.nextBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #00e5ff;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.nextBtn:hover {
+  background: rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.1);
+}
+
+/* Mobile: full-width tooltip pinned to bottom */
+@media (max-width: 640px) {
+  .tooltip {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 24px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto;
+  }
+}
