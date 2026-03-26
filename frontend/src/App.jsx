@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component, useEffect, useTransition } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 class ErrorBoundary extends Component {
@@ -103,6 +103,7 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
 export default function App() {
   const navigate  = useNavigate()
   const location  = useLocation()
+  const [, startTransition] = useTransition()
 
   const { sessionToken, isAuthenticated } = useSession()
   const [liveEnabled, setLiveEnabled] = useState(false)
@@ -135,7 +136,7 @@ export default function App() {
   // Sync state → URL whenever relevant state changes
   useEffect(() => {
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
-    if (location.pathname !== path) navigate(path, { replace: true })
+    if (location.pathname !== path) startTransition(() => navigate(path, { replace: true }))
   }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
