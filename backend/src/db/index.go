@@ -3,13 +3,15 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
-// Connect establishes a PostgreSQL connection pool and verifies connectivity.
+// Connect establishes a PostgreSQL connection pool, retrying up to 10 times
+// to handle transient states like Postgres recovery mode on Railway.
 func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -27,12 +29,17 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("create pool: %w", err)
 	}
 
-	if err := HealthCheckPostgres(ctx, pool); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("health check: %w", err)
+	var lastErr error
+	for i := range 10 {
+		lastErr = HealthCheckPostgres(ctx, pool)
+		if lastErr == nil {
+			return pool, nil
+		}
+		log.Printf(`{"level":"warn","msg":"postgres not ready, retrying","attempt":%d,"err":%q}`, i+1, lastErr)
+		time.Sleep(time.Duration(i+1) * 2 * time.Second)
 	}
-
-	return pool, nil
+	pool.Close()
+	return nil, fmt.Errorf("health check: %w", lastErr)
 }
 
 // ConnectRedis creates and verifies a Redis client connection.
