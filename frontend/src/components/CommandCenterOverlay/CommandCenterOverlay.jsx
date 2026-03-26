@@ -732,11 +732,9 @@ function PinnedCountdown({ launch, onUnpin }) {
   )
 }
 
-export default function CommandCenterOverlay({ trackedCount, connectionStatus, issData, onISSLink, activeFilter, pinnedLaunch, onUnpinLaunch }) {
-  const showIssCard = activeFilter == null || activeFilter === 'satellites'
+export default function CommandCenterOverlay({ trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch }) {
   const isLive = connectionStatus === 'connected'
   const utcTime = useUtcTime()
-  const [toast, setToast] = useState(null)
   const news    = useSpaceNews()
   const solarKp = useSolarKp()
   const apod    = useApod()
@@ -780,19 +778,6 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
     if (!touchRef.current.wasOpen && dy < -40) setSheetOpen(true)
   }
 
-  const hasISS   = issData != null
-  const issLat   = issData?.lat
-  const issLon   = issData?.lon
-  const issAlt   = issData?.alt_km ?? 408
-  const issCrew  = issData?.crew ?? 0
-  const issRegion = geoRegion(issLat, issLon)
-
-  const issLatStr = issLat != null
-    ? `${Math.abs(issLat).toFixed(2)}° ${issLat >= 0 ? 'N' : 'S'}`
-    : '—'
-  const issLonStr = issLon != null
-    ? `${Math.abs(issLon).toFixed(2)}° ${issLon >= 0 ? 'E' : 'W'}`
-    : '—'
 
   return (
     <div className={styles.overlay}>
@@ -839,97 +824,11 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
           <div className={styles.statCard}>
             <p className={styles.statLabel}>ISS Altitude</p>
             <p className={styles.statValue}>
-              {issAlt.toFixed(0)} <span className={styles.statUnit}>km</span>
+              408 <span className={styles.statUnit}>km</span>
             </p>
           </div>
         </div>
 
-        {/* ── Live ISS card — only when filter is All or Satellites ── */}
-        {showIssCard && <div className={styles.focusCard}>
-          {/* Pulsing target icon */}
-          <div className={styles.focusTarget}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--primary-container)' }}>
-              target
-            </span>
-          </div>
-
-          {/* Header row: ISS icon + label */}
-          <div className={styles.issHeader}>
-            <div className={styles.issIconWrap}>
-              {/* Custom ISS silhouette in CSS */}
-              <div className={styles.issIcon}>
-                <span className={styles.issSolarL} />
-                <span className={styles.issBody} />
-                <span className={styles.issSolarR} />
-              </div>
-              {hasISS && <span className={styles.issLiveDot} />}
-            </div>
-            <div>
-              <p className={styles.focusLabel}>
-                {hasISS ? 'LIVE · ISS TRAJECTORY' : 'ISS · AWAITING SIGNAL'}
-              </p>
-              <h2 className={styles.focusTitle}>
-                International Space Station
-              </h2>
-            </div>
-          </div>
-
-          {/* Telemetry grid */}
-          <div className={styles.issTelemetry}>
-            <div className={styles.issTelemCell}>
-              <span className={styles.issTelemLabel}>Latitude</span>
-              <span className={styles.issTelemValue}>{issLatStr}</span>
-            </div>
-            <div className={styles.issTelemCell}>
-              <span className={styles.issTelemLabel}>Longitude</span>
-              <span className={styles.issTelemValue}>{issLonStr}</span>
-            </div>
-            <div className={styles.issTelemCell}>
-              <span className={styles.issTelemLabel}>Altitude</span>
-              <span className={styles.issTelemValue}>{issAlt.toFixed(0)} km</span>
-            </div>
-            {issCrew > 0 && (
-              <div className={styles.issTelemCell}>
-                <span className={styles.issTelemLabel}>Crew</span>
-                <span className={styles.issTelemValue}>{issCrew} aboard</span>
-              </div>
-            )}
-          </div>
-
-          <p className={styles.focusDesc}>
-            {hasISS
-              ? `Currently traversing over ${issRegion}. Orbiting at ${ISS_VEL_KMH.toLocaleString()} km/h.`
-              : 'Awaiting live position data from ISS poller…'}
-          </p>
-
-          <button
-            className={styles.linkBtn}
-            aria-label="Link ISS"
-            onClick={() => {
-              // Always open detail panel + start tracking
-              onISSLink?.selectISS()
-              onISSLink?.trackISS()
-              // Fly camera + copy coords only when live position is available
-              if (hasISS) {
-                onISSLink?.flyTo(issLat, issLon)
-                const coords = `${issLatStr}, ${issLonStr}`
-                navigator.clipboard?.writeText(coords).catch(() => {})
-                setToast(`Locked on ISS · ${coords}`)
-                setTimeout(() => setToast(null), 2200)
-              }
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>wifi_tethering</span>
-            LINK
-          </button>
-
-          {toast && (
-            <div className={styles.toast}>
-              <span className="material-symbols-outlined" style={{ fontSize: 13 }}>check_circle</span>
-              {toast}
-            </div>
-          )}
-        </div>}
       </div>
 
       {/* Right: Smart Stack — peek + swipe-up/down on mobile */}
