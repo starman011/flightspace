@@ -78,7 +78,7 @@ func sendWaitlistEmail(to string) {
 	}
 
 	payload := map[string]any{
-		"from":    "Flightspace <noreply@flightspace.app>",
+		"from":    "Flightspace <noreply@space.starmanodyssey.com>",
 		"to":      []string{to},
 		"subject": "You're on the Flightspace waitlist",
 		"html": `<!DOCTYPE html>
