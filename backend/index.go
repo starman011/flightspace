@@ -10,6 +10,11 @@ func main() {
 	// Load .env file if present (development convenience)
 	loadDotEnv()
 
+	if os.Getenv("SERVER_DISABLED") == "true" {
+		log.Println(`{"level":"info","service":"app","msg":"SERVER_DISABLED=true — exiting"}`)
+		os.Exit(0)
+	}
+
 	cfg, err := LoadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "configuration error: %v\n", err)
