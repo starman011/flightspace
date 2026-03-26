@@ -37,6 +37,10 @@ Thumbs.db
 *.swo
 .idea/
 .vscode/settings.json
+# macOS duplicate files (created by Finder copy operations)
+*\ 2
+*\ 2.*
+*\ 2/
 
 # ── Test artifacts ────────────────────────────────────────────────────────────
 frontend/test-results/

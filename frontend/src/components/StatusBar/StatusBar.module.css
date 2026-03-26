@@ -299,7 +299,40 @@
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .notch   { width: 220px; }
+  .notch    { width: 220px; }
   .expanded { width: calc(100vw - 24px); }
   .wordmark { display: none; }
+
+  /* Stack nav + actions vertically so nothing gets cut off */
+  .panelRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Spread the three scale buttons evenly across full width */
+  .scaleNav {
+    justify-content: space-between;
+  }
+  .navBtn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    padding: 8px 4px;
+    min-height: 44px; /* touch target */
+  }
+
+  /* Make LIVE + Search buttons fill the row equally */
+  .panelActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .liveBtn,
+  .searchBtn {
+    justify-content: center;
+    padding: 10px;
+    font-size: 10px;
+    min-height: 44px; /* touch target */
+  }
 }

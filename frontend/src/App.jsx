@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component } from 'react'
+import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 class ErrorBoundary extends Component {
   state = { error: null }
@@ -78,23 +79,54 @@ function PadFocusBadge({ launch, onExit }) {
   )
 }
 
+// ── URL ↔ State helpers ────────────────────────────────────────────────────
+function parseInitialState(pathname) {
+  if (pathname.startsWith('/flight/')) {
+    return { selectedIcao24: pathname.replace('/flight/', ''), activeScale: 'earth', launchPanelOpen: false, activeFilter: null }
+  }
+  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',  launchPanelOpen: false, activeFilter: null }
+  if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null }
+  if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids' }
+  return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null }
+}
+
+function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter) {
+  if (selectedIcao24)             return `/flight/${selectedIcao24}`
+  if (activeFilter === 'asteroids') return '/asteroids'
+  if (launchPanelOpen)            return '/launches'
+  if (activeScale === 'solar')    return '/solar-system'
+  return '/'
+}
+
 export default function App() {
+  const navigate  = useNavigate()
+  const location  = useLocation()
+
   const { sessionToken, isAuthenticated } = useSession()
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
 
-  const [selectedIcao24, setSelectedIcao24] = useState(null)
+  // Initialise from URL on first render
+  const init = parseInitialState(location.pathname)
+
+  const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
   const [trackingId, setTrackingId]         = useState(null)
-  const [launchPanelOpen, setLaunchPanelOpen] = useState(false)
+  const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
-  const [activeScale, setActiveScale]       = useState('earth')
-  const [activeFilter, setActiveFilter]     = useState(null)
+  const [activeScale, setActiveScale]       = useState(init.activeScale)
+  const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
-  const [focusedPad, setFocusedPad]         = useState(null)   // launch object | null
-  const [pinnedLaunch, setPinnedLaunch]     = useState(null)   // launch object | null
-  const [returnMission, setReturnMission]   = useState(null)   // mission to re-open on pad exit
+  const [focusedPad, setFocusedPad]         = useState(null)
+  const [pinnedLaunch, setPinnedLaunch]     = useState(null)
+  const [returnMission, setReturnMission]   = useState(null)
   const globeRef = useRef(null)
+
+  // Sync state → URL whenever relevant state changes
+  useEffect(() => {
+    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
+    if (location.pathname !== path) navigate(path, { replace: true })
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 

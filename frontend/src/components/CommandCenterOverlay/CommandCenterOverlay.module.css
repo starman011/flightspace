@@ -1330,6 +1330,14 @@
 
 /* ── Mobile: bottom-sheet stream, hidden hero ────────────────────────────── */
 
+/* Grab handle strip + peek label — hidden on desktop */
+.grabHandle { display: none; }
+.grabBar    { display: none; }
+.peekLabel  { display: none; }
+
+/* Mobile intro — hidden on desktop */
+.mobileIntro { display: none; }
+
 @media (max-width: 767px) {
   .overlay {
     left: 0;
@@ -1354,19 +1362,118 @@
     border-right: 1px solid rgba(59, 73, 76, 0.18);
     border-top: 1px solid rgba(59, 73, 76, 0.22);
     border-bottom: none;
-    padding: 10px var(--space-4) var(--space-4);
+    padding: 4px var(--space-4) var(--space-4);
     box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.5);
+    transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
 
-  /* Grab handle */
-  .stream::before {
-    content: '';
+  /* Peek state — show 60px strip so user can see and swipe up */
+  .streamClosed {
+    transform: translateY(calc(100% - 60px));
+  }
+
+  /* Grab handle strip — full-width touch zone at top of sheet */
+  .grabHandle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 0 10px;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+    pointer-events: auto;
+  }
+
+  /* The visual pill bar */
+  .grabBar {
     display: block;
     width: 36px;
     height: 4px;
-    background: rgba(195, 245, 255, 0.18);
+    background: rgba(195, 245, 255, 0.22);
     border-radius: 2px;
-    margin: 0 auto 12px;
+    flex-shrink: 0;
+  }
+
+  /* Label shown only when peeking — invites upward swipe */
+  .peekLabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0, 229, 255, 0.5);
+    animation: peekLabelFade 0.25s ease;
+  }
+
+  @keyframes peekLabelFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Mobile intro overlay — fades in then out, revealing globe */
+  .mobileIntro {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 10, 15, 0.96);
+    pointer-events: none;
+    animation: mobileIntroAnim 3.6s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  }
+
+  @keyframes mobileIntroAnim {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    72%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .mobileIntroContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .mobileIntroTag {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(0, 229, 255, 0.55);
+  }
+
+  .mobileIntroTitle {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 10vw, 4rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--on-surface);
+    text-shadow: 0 0 60px rgba(0, 229, 255, 0.15);
+  }
+
+  .mobileIntroAccent {
+    color: var(--primary-container);
+  }
+
+  .mobileIntroSub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(195, 245, 255, 0.4);
+    letter-spacing: 0.06em;
   }
 
   /* Keep stats readable at 3 columns */

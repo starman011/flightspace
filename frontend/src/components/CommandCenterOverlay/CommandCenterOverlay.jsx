@@ -605,6 +605,43 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
   const showers = nextShowers(4)
   const quote   = dailyQuote()
 
+  // ── Mobile bottom sheet — swipe up/down gesture ──────────────────────────
+  const [sheetOpen, setSheetOpen] = useState(true)
+  const [introGone, setIntroGone] = useState(false)
+  const streamRef = useRef(null)
+  const touchRef  = useRef({ startY: 0, wasOpen: true, dragging: false })
+
+  // Height of visible peek strip when sheet is closed
+  const PEEK_H = 60
+
+  const onHandleTouchStart = (e) => {
+    touchRef.current = { startY: e.touches[0].clientY, wasOpen: sheetOpen, dragging: true }
+  }
+  const onHandleTouchMove = (e) => {
+    if (!touchRef.current.dragging || !streamRef.current) return
+    const dy = e.touches[0].clientY - touchRef.current.startY
+    const h  = streamRef.current.clientHeight
+    streamRef.current.style.transition = 'none'
+    if (touchRef.current.wasOpen) {
+      // dragging down from open state — follow finger
+      if (dy > 0) streamRef.current.style.transform = `translateY(${dy * 0.85}px)`
+    } else {
+      // dragging up from peek state — follow finger toward open
+      if (dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, (h - PEEK_H) + dy * 0.85)}px)`
+    }
+  }
+  const onHandleTouchEnd = (e) => {
+    if (!touchRef.current.dragging) return
+    const dy = e.changedTouches[0].clientY - touchRef.current.startY
+    touchRef.current.dragging = false
+    if (streamRef.current) {
+      streamRef.current.style.transition = ''
+      streamRef.current.style.transform  = ''
+    }
+    if (touchRef.current.wasOpen  && dy >  80) setSheetOpen(false)
+    if (!touchRef.current.wasOpen && dy < -40) setSheetOpen(true)
+  }
+
   const hasISS   = issData != null
   const issLat   = issData?.lat
   const issLon   = issData?.lon
@@ -757,8 +794,26 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
         </div>}
       </div>
 
-      {/* Right: Smart Stack */}
-      <div className={styles.stream}>
+      {/* Right: Smart Stack — peek + swipe-up/down on mobile */}
+      <div
+        ref={streamRef}
+        className={`${styles.stream}${sheetOpen ? '' : ` ${styles.streamClosed}`}`}
+      >
+        {/* Grab handle strip — handles both swipe-down (close) and swipe-up (open) */}
+        <div
+          className={styles.grabHandle}
+          onTouchStart={onHandleTouchStart}
+          onTouchMove={onHandleTouchMove}
+          onTouchEnd={onHandleTouchEnd}
+        >
+          <span className={styles.grabBar} />
+          {!sheetOpen && (
+            <span className={styles.peekLabel}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>keyboard_arrow_up</span>
+              Signal Stream
+            </span>
+          )}
+        </div>
         <SmartStack
           apod={apod}
           kp={solarKp}
@@ -769,6 +824,24 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
           onUnpinLaunch={onUnpinLaunch}
         />
       </div>
+
+      {/* Mobile intro — fades in on load then dissolves to reveal the globe */}
+      {!introGone && (
+        <div className={styles.mobileIntro} onAnimationEnd={() => setIntroGone(true)}>
+          <div className={styles.mobileIntroContent}>
+            <p className={styles.mobileIntroTag}>
+              <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
+              Active Tracking
+            </p>
+            <h1 className={styles.mobileIntroTitle}>
+              PLANETARY<br /><span className={styles.mobileIntroAccent}>OBSERVER</span>
+            </h1>
+            <p className={styles.mobileIntroSub}>
+              {trackedCount > 0 ? `${trackedCount.toLocaleString()} objects tracked` : 'Initialising sensors…'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Encryption watermark */}
       <div className={styles.watermark}>
