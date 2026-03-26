@@ -78,8 +78,7 @@ func sendWaitlistEmail(to string) {
 	}
 
 	payload := map[string]any{
-		// Update "from" once you verify a domain in Resend — until then onboarding@resend.dev works
-		"from":    "Flightspace <onboarding@resend.dev>",
+		"from":    "Flightspace <noreply@flightspace.app>",
 		"to":      []string{to},
 		"subject": "You're on the Flightspace waitlist",
 		"html": `<!DOCTYPE html>
