@@ -25,6 +25,7 @@ import StatusBar from './components/StatusBar/StatusBar'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
+import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 
@@ -302,6 +303,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onTrack={setTrackingId}
         />
       )}
+
+      <WaitlistPopup />
     </ErrorBoundary>
   )
 }
