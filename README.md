@@ -1,31 +1,207 @@
-# Flightspace
+# SkyDot
 
-A real-time space observatory — track everything moving through Earth's atmosphere and beyond. One viewport that scales from individual aircraft to the entire solar system.
+A real-time planetary observatory. One viewport that scales from individual aircraft to the entire solar system — tracking every commercial flight, satellite, ship, rocket launch, and near-Earth asteroid in motion right now.
 
 ---
 
 ## What it tracks
 
-| Object | Source | Update Rate |
-|--------|--------|-------------|
-| Commercial flights | ADS-B via adsb.lol | 15s |
-| Satellites | CelesTrak TLE + SGP4 | 30s |
-| ISS | Open Notify | 5s |
-| Rocket launches | Launch Library 2 | 15min |
-| Near-Earth asteroids | NASA NeoWs | 1hr |
-| Planets | NASA Horizons | 5min |
-| Space weather | NASA DONKI | 15min |
-| Daily astronomy image | NASA APOD | 24hr |
+| Object | Data Source | Update Rate |
+|--------|-------------|-------------|
+| Commercial flights | ADS-B via adsb.lol | 15 s |
+| Satellites (ISS, Starlink, GPS, NOAA…) | CelesTrak TLE + SGP4 | 30 s |
+| ISS live position | wheretheiss.at | 5 s |
+| AIS maritime vessels | AISStream.io | live |
+| Rocket launches | Launch Library 2 | 15 min |
+| Near-Earth asteroids | NASA NeoWs | 1 hr |
+| Planet positions | NASA Horizons | 5 min |
+| Space weather (Kp index) | NOAA SWPC | 10 min |
+| Astronomy Picture of the Day | NASA APOD | 24 hr |
+| Space news | Spaceflight News API | on-demand |
 
 ---
 
-## Stack
+## Architecture
 
-**Backend** — Go 1.22, `net/http`, gorilla/websocket, pgx/v5, go-redis/v9, golang-jwt
+```
+┌──────────────────────────────────────────────────────────────┐
+│                         CLIENT (Vercel)                      │
+│                                                              │
+│  React 18 + Vite                                             │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐  │
+│  │  Globe.jsx  │  │ useWebSocket │  │  useAircraft       │  │
+│  │  Three.js   │◄─│  WS client   │◄─│  delta reducer     │  │
+│  │  WebGL      │  │  + backoff   │  │  + stale pruner    │  │
+│  └─────────────┘  └──────────────┘  └────────────────────┘  │
+│         │                                                    │
+│   URL router (React Router v7) — state ↔ URL sync           │
+└──────────────────────────────────────────────────────────────┘
+                          │  WSS + HTTPS
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│                       BACKEND (Railway)                      │
+│                                                              │
+│  Go 1.22 · net/http · gorilla/websocket                      │
+│                                                              │
+│  ┌─────────┐    ┌────────────────────────────────────┐      │
+│  │  HTTP   │    │         WebSocket Hub               │      │
+│  │  API    │    │  register · broadcast · set_bounds  │      │
+│  └────┬────┘    └──────────────┬─────────────────────┘      │
+│       │                        │ fan-out deltas              │
+│       │         ┌──────────────▼──────────────────┐         │
+│       │         │           Redis 7               │         │
+│       │         │  aircraft:live  (HSET per ICAO) │         │
+│       │         │  satellite:live (HSET per ID)   │         │
+│       │         │  launches · asteroids · solar   │         │
+│       │         └─────────────────────────────────┘         │
+│       │                                                      │
+│       │         ┌─────────────────────────────────┐         │
+│       └────────►│        PostgreSQL 16             │         │
+│                 │  aircraft_positions (trail)      │         │
+│                 │  aircraft_static   (metadata)   │         │
+│                 │  anonymous_sessions              │         │
+│                 └─────────────────────────────────┘         │
+│                                                              │
+│  Background goroutines (one per data source):               │
+│  Aircraft · Satellite · Ship · Solar · NEO · ISS · Launch   │
+└──────────────────────────────────────────────────────────────┘
+                          │
+               Cloudflare (TLS proxy + CDN)
+```
 
-**Frontend** — React 18, Vite, Three.js (3D solar system), CSS Modules, react-router-dom v7
+---
 
-**Infra** — PostgreSQL 16, Redis 7, Railway (backend), Vercel (frontend), Cloudflare (proxy)
+## Engineering decisions, by problem
+
+### Rendering 12,000 aircraft without frame drops
+**Technique: GPU instanced rendering + single-draw-call pick geometry**
+
+Each aircraft category (plane, heavy regional, helicopter, satellite, ship) gets its own Three.js `InstancedMesh`. All instances share one shader program and one draw call per category — the GPU handles per-instance transforms. Position buffers use `DynamicDrawUsage` so WebGL keeps them in fast-path memory for frequent writes. Module-level scratch `Vector3` and `Matrix4` objects are reused every frame to eliminate GC pauses during the render loop.
+
+For click detection a parallel flat `Points` geometry mirrors every aircraft position. Only one raycasting pass runs per click — against points, not meshes — which is orders of magnitude cheaper than intersecting 12,000 mesh instances.
+
+### Picking the right aircraft when dots overlap
+**Technique: Screen-space closest-point disambiguation**
+
+Three.js `Raycaster.intersectObject` returns all hits sorted by depth along the ray — which means a nearby aircraft that happens to be behind the cursor on the z-axis wins. Instead, every hit's 3D position is projected into NDC screen space and the one whose 2D screen coordinate is geometrically closest to the actual click pixel is selected. This means "the dot you tapped" always wins over "the dot closest to the camera on that ray."
+
+```js
+// Globe.jsx — pick loop
+for (const hit of hits) {
+  const ndc = hit.point.clone().project(camera)
+  const d   = (ndc.x - mouse.x) ** 2 + (ndc.y - mouse.y) ** 2
+  if (d < bestDist) { bestDist = d; bestId = acIds[hit.index] }
+}
+```
+
+### Streaming 12,000 positions with minimal bandwidth
+**Technique: Snapshot + delta protocol over WebSocket**
+
+On connect the server sends a full snapshot of every aircraft in the client's viewport. After that, only changed rows are sent — an `updated` array for new/modified positions and a `removed` array for aircraft that disappeared. A typical delta is 10–200 aircraft vs. thousands in a snapshot. The client maintains a `Map<id, aircraft>` and applies patches in-place.
+
+Clients also send a `set_bounds` message whenever the globe viewport changes (pan/zoom). The server uses these bounds to filter which aircraft it includes in each delta, so a client zoomed into Europe never receives Pacific Ocean traffic.
+
+### Viewport bounds without polling
+**Technique: Client-driven `set_bounds` over the existing WS connection**
+
+The Globe exposes an `onViewportChange` callback that fires whenever `OrbitControls` finishes moving. The hook converts the current camera frustum to a lat/lon bounding box and sends `{ type: "set_bounds", data: { minLat, maxLat, minLon, maxLon } }` over the existing WebSocket — no separate HTTP request, no polling, zero added latency.
+
+### Satellite positions in real time
+**Technique: SGP4 propagation from Two-Line Element sets**
+
+TLE data for 6 satellite groups (ISS/Tiangong, Starlink ×100, GPS ×32, Iridium ×66, NOAA ×20, GOES ×10) is fetched from the CelesTrak mirror every hour. Between refreshes, a 30-second tick propagates each TLE forward in time using the SGP4 algorithm (`go-satellite` library) to compute the current geocentric lat/lon/altitude. The ISS is additionally seeded every 5 seconds from `wheretheiss.at` for instant cold-start visibility before TLE propagation warms up.
+
+### WebSocket reconnect in React StrictMode
+**Technique: `setTimeout(0)` to escape synchronous double-mount**
+
+React 18 StrictMode synchronously mounts → unmounts → remounts every component in development. A naive `useEffect` that opens a WebSocket on mount will create two sockets because the first cleanup fires before the first open resolves. Deferring `connect()` with `setTimeout(0)` means the first timer is cleared by the cleanup before the socket is ever created — the second mount wins cleanly.
+
+```js
+// useWebSocket.js
+const timerId = setTimeout(connect, 0)
+return () => {
+  mountedRef.current = false
+  clearTimeout(timerId)   // cancels pending open on unmount
+  closeSocket()
+}
+```
+
+### iOS Safari back-forward cache
+**Technique: `pagehide`/`pageshow` lifecycle events**
+
+When a user navigates away and returns via the browser back button on iOS, the page is restored from memory (BFCache) with all JS state intact but the WebSocket connection dropped. `pagehide` closes the socket cleanly so the server releases the slot. `pageshow` with `e.persisted === true` reconnects immediately without waiting for the next reconnect timer.
+
+### Route-change Suspense flash
+**Technique: `startTransition` around `navigate()`**
+
+Globe is lazy-loaded via `React.lazy`. When `navigate()` fires synchronously inside a state update, React can briefly show the Suspense fallback (a dark screen) while it reconciles. Wrapping navigate in `startTransition` marks it as a non-urgent background update — React holds the current UI stable and never shows the fallback during client-side navigation.
+
+### Stale aircraft cleanup without a server round-trip
+**Technique: Client-side TTL pruning on a 10-second tick**
+
+Aircraft that stop broadcasting (landed, out of range, ADS-B off) will never appear in a future delta's `removed` list if the server's poller missed the disappearance. A `setInterval` every 10 seconds scans the client-side `Map` and removes any entry whose `receivedAt` timestamp is older than 120 seconds. This keeps the globe clean without requiring a server-side tombstone mechanism.
+
+### Tile map system
+**Technique: Priority-queue quadtree loader with parent-tile placeholders**
+
+When the camera zooms in, the tile system determines the required zoom level and builds a priority queue ordered by distance from the viewport center. At most 6 tiles load concurrently (preventing network saturation). For any tile at zoom Z, the parent tile at Z-2 is queued first as a low-resolution placeholder — the user sees a blurry but immediate map image while the sharp tile loads behind it. Tiles outside the view frustum plus a margin are evicted via lazy disposal to bound GPU memory.
+
+### Country borders without a mapping library
+**Technique: `world-atlas` TopoJSON → Three.js `LineSegments` with additive blending**
+
+Country border geometry is fetched once from the CDN (`countries-110m.json`) and decoded client-side with a tiny TopoJSON parser. Each border segment is converted to a pair of `Vector3` points projected onto the sphere surface. The resulting `BufferGeometry LineSegments` object lives in the Three.js scene and uses additive blending to produce a glow effect against the dark earth. Opacity fades to zero as the camera zooms in past the tile threshold so borders don't compete with map imagery.
+
+### Camera fly-to and entity lock
+**Technique: Spherical interpolation + ease-out cubic**
+
+`flyTo(lat, lon)` lerps the camera position between start and target on the unit sphere and then re-normalizes, keeping the path on the sphere surface (unlike raw linear interpolation which would cut through the globe). The easing is a cubic ease-out: `t = 1 - (1 - rawT)³`. Duration is 1.4 s.
+
+Entity lock (`trackISS`) runs every animation frame: the current entity lat/lon is projected to a sphere position and the camera is translated there while keeping `lookAt(0,0,0)` — the user retains zoom (radial distance) but rotation follows the object.
+
+### Earth ↔ solar system transition
+**Technique: Camera position tween + deferred mesh visibility**
+
+The solar system scene (`createSolarSystem`) is built once and kept invisible. When the user switches scale, the camera tweens from Earth's close position (`CAM_EARTH`) to a heliocentric vantage point (`CAM_SOLAR`). When the tween completes, `solarSystem.show()` enables the planetary meshes. The reverse transition hides the solar system before beginning the camera return so the Earth globe is never visible at solar scale.
+
+### Anonymous-first session model
+**Technique: Ephemeral JWT, no registration required**
+
+On first load the frontend calls `POST /api/v1/session`, which issues a short-lived JWT signed with `JWT_SECRET`. The token is stored in `sessionStorage` (tab-scoped, clears on close). Every WebSocket connection sends it as a query parameter for validation before upgrade. No cookies, no accounts, no tracking — users get full functionality immediately.
+
+### Mobile bottom sheet with dual-axis gestures
+**Technique: Passive-false touchmove + direction lock**
+
+The bottom sheet handles vertical drag (sheet resize) and the SmartStack inside it handles horizontal swipe (panel change). Both gestures start with the same `touchstart`. The direction is determined on the first 8px of movement and locked for the rest of the touch. The SmartStack's `touchmove` listener is registered as `{ passive: false }` so it can call `preventDefault()` to capture horizontal swipes without the browser treating them as scroll attempts — while vertical touches fall through to the sheet's drag handler unblocked.
+
+### Desktop signal stream panel collapse
+**Technique: CSS `translateX` with a persistent 40px tab**
+
+The right panel uses `transform: translateX(calc(100% - 40px))` in its collapsed state. This slides the panel almost fully off-screen but leaves a 40px vertical tab visible at the right edge — always interactive, always pointing back to the panel. Three CSS states (`collapsed`, `open`, `wide`) are applied as modifier classes; `transition` on the `transform` property handles the animation at 60fps on the compositor thread without triggering layout.
+
+### Space data caching across React remounts
+**Technique: Module-level cache with TTL**
+
+Hooks for news, Kp index, and APOD store their fetched data in module-scope variables (`_newsCache`, `_kpCache`, `_apodCache`) alongside a `cachedAt` timestamp. On mount, each hook checks the cache age before fetching. Because these variables live at module scope — outside any component — they survive React's `StrictMode` double-mount, component unmount during navigation, and Suspense boundary resolution without re-fetching the same data.
+
+---
+
+## Tech stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| 3D rendering | Three.js r168 | WebGL scene, instanced meshes, raycasting |
+| Frontend framework | React 18 + Vite | Concurrent features, lazy loading, fast HMR |
+| Routing | React Router v7 | URL ↔ state sync, `startTransition` for Suspense safety |
+| Styles | CSS Modules + design tokens | Zero runtime, scoped, no Tailwind dependency |
+| Backend language | Go 1.22 | Goroutine-per-client WS model, zero-cost concurrency |
+| WebSocket | gorilla/websocket | Battle-tested, read/write pump pattern |
+| Database driver | pgx/v5 | Typed PostgreSQL, no ORM overhead |
+| Cache / pub-sub | go-redis/v9 + Redis 7 | O(1) HSET/HGETALL for live aircraft state |
+| Auth | golang-jwt/jwt/v5 | Stateless anonymous sessions |
+| Satellite math | go-satellite (SGP4) | TLE propagation without an external API |
+| Analytics | Vercel Analytics | Zero-config, no cookie consent needed |
+| Infra (backend) | Railway | Persistent process, PostgreSQL + Redis add-ons |
+| Infra (frontend) | Vercel + Cloudflare | Edge CDN, automatic HTTPS, DDoS protection |
 
 ---
 
@@ -35,26 +211,45 @@ A real-time space observatory — track everything moving through Earth's atmosp
 flightspace/
 ├── backend/
 │   ├── src/
-│   │   ├── controllers/     # HTTP handlers + background pollers
-│   │   ├── db/              # PostgreSQL + Redis connections
-│   │   ├── middlewares/     # CORS, auth, rate limiting
-│   │   ├── models/          # Go structs
-│   │   ├── routes/          # Route registration
-│   │   └── utils/           # Shared helpers
-│   ├── migrations/          # SQL migration files (up/down)
-│   ├── app.go               # Dependency wiring + lifecycle
-│   ├── constants.go         # Config + env vars
-│   ├── index.go             # Entry point
+│   │   ├── controllers/
+│   │   │   ├── aircraft.go          # Detail + search endpoints
+│   │   │   ├── ws.go                # WebSocket upgrade + hub
+│   │   │   ├── launch_poller.go     # Launch Library 2 — 15 min
+│   │   │   ├── satellite_poller.go  # CelesTrak TLE + SGP4 — 30 s
+│   │   │   ├── asteroid_controller.go  # NASA NeoWs — 1 hr
+│   │   │   ├── apod_controller.go   # NASA APOD proxy — 24 hr
+│   │   │   └── solar_poller.go      # NASA Horizons — 5 min
+│   │   ├── db/                      # PostgreSQL + Redis connections
+│   │   ├── middlewares/             # CORS, security headers, logger
+│   │   ├── models/                  # Shared Go structs
+│   │   ├── routes/                  # Route registration
+│   │   └── utils/                   # JSON helpers
+│   ├── migrations/                  # SQL migration files (up/down)
+│   ├── app.go                       # Dependency wiring + lifecycle
+│   ├── constants.go                 # Config + env vars
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # React components (Globe, HUD, panels...)
-│   │   ├── hooks/           # useAircraft, useWebSocket, useSession...
-│   │   └── styles/          # Design tokens + global CSS
-│   ├── vite.config.js
-│   └── vercel.json
+│   │   ├── components/
+│   │   │   ├── Globe/               # Three.js scene — aircraft, tiles, solar
+│   │   │   ├── CommandCenterOverlay/ # Right panel / mobile bottom sheet
+│   │   │   ├── DetailPanel/         # Per-flight detail + trail
+│   │   │   ├── LaunchPanel/         # Rocket launch manifest
+│   │   │   ├── DeepSpacePanel/      # Near-Earth asteroid viewer
+│   │   │   ├── OrbitalMapBar/       # Desktop filter dock + Cosmic Address
+│   │   │   ├── FilterRail/          # Left sidebar filters
+│   │   │   ├── HUD/                 # Altitude + tracking HUD
+│   │   │   └── StatusBar/           # Connection status + live toggle
+│   │   ├── hooks/
+│   │   │   ├── useAircraft.js       # State map + delta reducer + filters
+│   │   │   ├── useWebSocket.js      # WS lifecycle + reconnect + BFCache
+│   │   │   └── useSession.js        # Anonymous JWT session
+│   │   └── styles/
+│   │       ├── tokens.css           # Design system (colors, spacing, type)
+│   │       └── global.css
+│   └── vite.config.js
 └── infra/
-    └── docker-compose.yml   # Local PostgreSQL + Redis
+    └── docker-compose.yml           # Local PostgreSQL + Redis
 ```
 
 ---
@@ -83,7 +278,7 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-Vite automatically proxies `/api/*` and `/ws` to `localhost:8080`.
+Vite proxies `/api/*` and `/ws` to `localhost:8080` automatically.
 
 ---
 
@@ -95,46 +290,47 @@ Vite automatically proxies `/api/*` and `/ws` to `localhost:8080`.
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
-| `JWT_SECRET` | Secret for signing JWT tokens |
+| `JWT_SECRET` | Secret for signing anonymous session JWTs |
 
 ### Optional
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `8080` | HTTP listen port |
-| `ALLOWED_ORIGINS` | `http://localhost:5173` | CORS allowed origins |
-| `NASA_API_KEY` | `DEMO_KEY` | NASA API key (higher rate limits with a real key) |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated CORS origins |
+| `NASA_API_KEY` | `DEMO_KEY` | NASA APOD + NeoWs (higher rate limits) |
 | `AISSTREAM_KEY` | — | AISStream.io key (ship tracking disabled if absent) |
 | `RESEND_API_KEY` | — | Resend key for waitlist confirmation emails |
-| `SERVER_DISABLED` | — | Set to `true` to put backend into maintenance mode (serves 503) |
+| `LL2_BASE_URL` | public endpoint | Override Launch Library 2 base URL |
+| `SERVER_DISABLED` | — | Set `true` to serve 503 maintenance mode |
 
 ---
 
-## API
+## API reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/health` | Health check |
-| POST | `/api/v1/session` | Create anonymous session |
-| GET | `/api/v1/aircraft/search?q=` | Search by callsign / ICAO |
-| GET | `/api/v1/aircraft/:icao24` | Flight detail + trail |
-| POST | `/api/v1/auth/register` | Register account |
-| POST | `/api/v1/auth/login` | Login |
-| GET | `/api/v1/launches` | Upcoming rocket launches |
-| GET | `/api/v1/asteroids` | Near-Earth asteroid close approaches |
-| GET | `/api/v1/apod` | Astronomy Picture of the Day |
-| POST | `/api/v1/waitlist` | Waitlist signup |
-| GET | `/ws` | WebSocket stream (live aircraft positions) |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/health` | Health check |
+| `POST` | `/api/v1/session` | Issue anonymous JWT session |
+| `GET` | `/api/v1/aircraft/search?q=` | Search live traffic by callsign / ICAO |
+| `GET` | `/api/v1/aircraft/:icao24` | Flight detail + last 200 trail points |
+| `GET` | `/api/v1/launches` | Upcoming + recent rocket launches |
+| `GET` | `/api/v1/asteroids` | Near-Earth asteroid close approaches |
+| `GET` | `/api/v1/apod` | Astronomy Picture of the Day (proxied) |
+| `POST` | `/api/v1/auth/register` | Register user account |
+| `POST` | `/api/v1/auth/login` | Login |
+| `POST` | `/api/v1/waitlist` | Waitlist signup |
+| `GET` | `/ws?token=` | WebSocket stream — snapshot + deltas |
 
----
+### WebSocket message types
 
-## Key design decisions
-
-- **No ORM** — raw SQL with pgx/v5 for full control
-- **Anonymous-first** — no login required; sessions are ephemeral JWTs
-- **Upsert storage** — `aircraft_latest` table caps at ~10k rows regardless of poll frequency (no disk exhaustion)
-- **CSS Modules only** — no Tailwind, no CSS-in-JS; all tokens in `tokens.css`
-- **One scene** — single Three.js viewport that scales from Earth orbit to the heliocentric solar system
+| Direction | Type | Payload |
+|-----------|------|---------|
+| Server → Client | `snapshot` | Full aircraft list for current viewport |
+| Server → Client | `delta` | `{ updated: [...], removed: [...] }` |
+| Server → Client | `solar_system` | Planet positions for solar scene |
+| Client → Server | `set_bounds` | `{ minLat, maxLat, minLon, maxLon }` |
+| Client → Server | `ping` | Keep-alive (server responds `pong`) |
 
 ---
 
@@ -142,13 +338,19 @@ Vite automatically proxies `/api/*` and `/ws` to `localhost:8080`.
 
 ```bash
 # Backend
-cd backend && go test ./...            # Run tests (requires Docker)
-cd backend && go run . migrate up      # Run DB migrations
+cd backend && go run .               # Start server (port 8080)
+cd backend && go test ./...          # All tests (requires Docker for DB)
+cd backend && go run . migrate up    # Run pending migrations
 
 # Frontend
-cd frontend && npm test                # Unit tests (Vitest)
-cd frontend && npm run test:e2e        # E2E tests (Playwright)
-cd frontend && npm run build           # Production build
+cd frontend && npm run dev           # Dev server (port 5173)
+cd frontend && npm run build         # Production build
+cd frontend && npm test              # Unit tests (Vitest)
+cd frontend && npm run test:e2e      # E2E tests (Playwright)
+
+# Local infra
+docker compose -f infra/docker-compose.yml up -d    # Start PostgreSQL + Redis
+docker compose -f infra/docker-compose.yml down     # Stop
 ```
 
 ---
