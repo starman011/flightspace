@@ -249,7 +249,8 @@ func (p *Poller) storeInRedis(ctx context.Context, aircraft []models.LiveAircraf
 	return err
 }
 
-// storePositions batch-inserts position records into PostgreSQL.
+// storePositions upserts each aircraft into aircraft_latest — one row per ICAO24.
+// This bounds the table to ~10k rows regardless of poll frequency, preventing disk exhaustion.
 func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircraft) error {
 	if len(aircraft) == 0 {
 		return nil
@@ -261,16 +262,30 @@ func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircr
 	}
 	defer tx.Rollback(ctx)
 
+	const upsertSQL = `
+		INSERT INTO aircraft_latest
+		  (icao24, callsign, longitude, latitude, baro_altitude, velocity, heading, vertical_rate, on_ground, time_position, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10), NOW())
+		ON CONFLICT (icao24) DO UPDATE SET
+		  callsign      = EXCLUDED.callsign,
+		  longitude     = EXCLUDED.longitude,
+		  latitude      = EXCLUDED.latitude,
+		  baro_altitude = EXCLUDED.baro_altitude,
+		  velocity      = EXCLUDED.velocity,
+		  heading       = EXCLUDED.heading,
+		  vertical_rate = EXCLUDED.vertical_rate,
+		  on_ground     = EXCLUDED.on_ground,
+		  time_position = EXCLUDED.time_position,
+		  updated_at    = NOW()`
+
 	for _, a := range aircraft {
-		_, err := tx.Exec(ctx,
-			`INSERT INTO aircraft_positions
-			 (icao24, callsign, longitude, latitude, baro_altitude, velocity, heading, vertical_rate, on_ground, time_position, received_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10), NOW())
-			 ON CONFLICT DO NOTHING`,
+		_, err := tx.Exec(ctx, upsertSQL,
 			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
 		)
 		if err != nil {
-			log.Printf(`{"level":"warn","service":"poller","msg":"insert position failed","icao24":%q,"error":%q}`, a.ID, err)
+			// Abort immediately on transaction-level errors (e.g. 25P02 in-failed-tx, 53100 disk full)
+			// rather than spamming thousands of doomed inserts.
+			return fmt.Errorf("upsert aircraft_latest: %w", err)
 		}
 	}
 

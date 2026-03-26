@@ -131,6 +131,7 @@ export default function OrbitalMapBar({
   const [activeCat,   setActiveCat]   = useState('all')
   const [altValue,    setAltValue]    = useState(100)   // 100 = show all / GEO
   const [currentType, setCurrentType] = useState('all')
+  const [dockOpen,    setDockOpen]    = useState(false)
 
   function handleCat(cat) {
     const isDeselect = activeCat === cat.id
@@ -161,10 +162,10 @@ export default function OrbitalMapBar({
       {/* Cosmic address — top-left, below HUD */}
       <CosmicAddressWidget />
 
-      {/* Unified bottom dock — collapses to a thin bar, expands on hover */}
-      <div className={styles.dockWrap} data-tour="filter-bar">
-        {/* Collapsed indicator bar (always visible) */}
-        <div className={styles.collapseBar}>
+      {/* Unified bottom dock — collapses to a thin bar, expands on hover/tap */}
+      <div className={`${styles.dockWrap}${dockOpen ? ` ${styles.dockOpen}` : ''}`} data-tour="filter-bar">
+        {/* Collapsed indicator bar (always visible) — tap on mobile to open */}
+        <div className={styles.collapseBar} onClick={() => setDockOpen(o => !o)}>
           <span className={styles.collapseHandle} />
         </div>
 

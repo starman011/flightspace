@@ -67,16 +67,18 @@
   order: 1; /* renders above collapseBar */
 }
 
-/* ── Hover on wrapper → expand ────────────────────────────────────────────── */
+/* ── Hover / tap-open → expand ────────────────────────────────────────────── */
 
-.dockWrap:hover .dockContent {
+.dockWrap:hover .dockContent,
+.dockOpen .dockContent {
   max-height: 200px;
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
 
-.dockWrap:hover .collapseBar {
+.dockWrap:hover .collapseBar,
+.dockOpen .collapseBar {
   width: 620px;
   background: rgba(12, 17, 22, 0.96);
   border-color: rgba(59, 73, 76, 0.2);
@@ -84,7 +86,8 @@
   border-radius: 0 0 18px 18px;
 }
 
-.dockWrap:hover .collapseHandle {
+.dockWrap:hover .collapseHandle,
+.dockOpen .collapseHandle {
   background: rgba(0, 229, 255, 0.35);
 }
 
@@ -286,7 +289,8 @@
 @media (max-width: 767px) {
   .dockContent  { width: calc(100vw - 24px); }
   .collapseBar  { width: 80px; }
-  .dockWrap:hover .collapseBar { width: calc(100vw - 24px); }
+  .dockWrap:hover .collapseBar,
+  .dockOpen .collapseBar { width: calc(100vw - 24px); }
   .cosmicWrap    { display: none; }
   .filterStrip { padding: var(--space-3) var(--space-4); }
 }

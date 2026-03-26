@@ -206,6 +206,7 @@ const PLANETS = [
 
 // ── Smart Stack definitions ────────────────────────────────────────────────
 const STACK_DEFS = [
+  { id: 'iss',      label: 'ISS Tracker',       icon: 'satellite_alt' },
   { id: 'apod',     label: 'Image of the Day',  icon: 'photo_camera'  },
   { id: 'solar',    label: 'Solar Activity',    icon: 'wb_sunny'      },
   { id: 'meteors',  label: 'Meteor Showers',    icon: 'star_rate'     },
@@ -418,8 +419,89 @@ function NightSkyStack() {
   )
 }
 
+// ── ISS Stack panel ────────────────────────────────────────────────────────
+function ISSStack({ issData, onISSLink }) {
+  const [toast, setToast] = useState(null)
+  const hasISS   = issData != null
+  const issLat   = issData?.lat
+  const issLon   = issData?.lon
+  const issAlt   = issData?.alt_km ?? 408
+  const issLatStr = issLat != null ? `${Math.abs(issLat).toFixed(2)}° ${issLat >= 0 ? 'N' : 'S'}` : '—'
+  const issLonStr = issLon != null ? `${Math.abs(issLon).toFixed(2)}° ${issLon >= 0 ? 'E' : 'W'}` : '—'
+  const region   = geoRegion(issLat, issLon)
+
+  return (
+    <div className={styles.issStackWrap}>
+      {/* Header */}
+      <div className={styles.issHeader}>
+        <div className={styles.issIconWrap}>
+          <div className={styles.issIcon}>
+            <span className={styles.issSolarL} />
+            <span className={styles.issBody} />
+            <span className={styles.issSolarR} />
+          </div>
+          {hasISS && <span className={styles.issLiveDot} />}
+        </div>
+        <div>
+          <p className={styles.focusLabel}>{hasISS ? 'LIVE · ISS TRAJECTORY' : 'ISS · AWAITING SIGNAL'}</p>
+          <h3 className={styles.focusTitle}>International Space Station</h3>
+        </div>
+      </div>
+
+      {/* Telemetry */}
+      <div className={styles.issTelemetry}>
+        <div className={styles.issTelemCell}>
+          <span className={styles.issTelemLabel}>Latitude</span>
+          <span className={styles.issTelemValue}>{issLatStr}</span>
+        </div>
+        <div className={styles.issTelemCell}>
+          <span className={styles.issTelemLabel}>Longitude</span>
+          <span className={styles.issTelemValue}>{issLonStr}</span>
+        </div>
+        <div className={styles.issTelemCell}>
+          <span className={styles.issTelemLabel}>Altitude</span>
+          <span className={styles.issTelemValue}>{issAlt.toFixed(0)} km</span>
+        </div>
+        <div className={styles.issTelemCell}>
+          <span className={styles.issTelemLabel}>Velocity</span>
+          <span className={styles.issTelemValue}>27,600 km/h</span>
+        </div>
+      </div>
+
+      <p className={styles.issRegionNote}>
+        {hasISS ? `Over ${region} · Orbiting at 27,600 km/h` : 'Awaiting live position data…'}
+      </p>
+
+      <button
+        className={styles.linkBtn}
+        onClick={() => {
+          onISSLink?.selectISS()
+          onISSLink?.trackISS()
+          if (hasISS) {
+            onISSLink?.flyTo(issLat, issLon)
+            const coords = `${issLatStr}, ${issLonStr}`
+            navigator.clipboard?.writeText(coords).catch(() => {})
+            setToast(`Locked on ISS · ${coords}`)
+            setTimeout(() => setToast(null), 2200)
+          }
+        }}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>wifi_tethering</span>
+        LINK TO ISS
+      </button>
+
+      {toast && (
+        <div className={styles.toast}>
+          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>check_circle</span>
+          {toast}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Smart Stack container ──────────────────────────────────────────────────
-function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunch }) {
+function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink }) {
   const [active, setActive]   = useState(0)
   const pausedRef             = useRef(false)
   const pauseTimerRef         = useRef(null)
@@ -519,12 +601,13 @@ function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunc
       >
         {/* Animated slide content — key forces remount + CSS animation */}
         <div key={active} className={styles.stackSlide}>
-          {active === 0 && <ApodStack apod={apod} />}
-          {active === 1 && <SolarStack kp={kp} />}
-          {active === 2 && <MeteorsStack showers={showers} />}
-          {active === 3 && <NewsStack news={news} />}
-          {active === 4 && <NightSkyStack />}
-          {active === 5 && <QuoteStack quote={quote} />}
+          {active === 0 && <ISSStack issData={issData} onISSLink={onISSLink} />}
+          {active === 1 && <ApodStack apod={apod} />}
+          {active === 2 && <SolarStack kp={kp} />}
+          {active === 3 && <MeteorsStack showers={showers} />}
+          {active === 4 && <NewsStack news={news} />}
+          {active === 5 && <NightSkyStack />}
+          {active === 6 && <QuoteStack quote={quote} />}
         </div>
       </div>
 
@@ -878,6 +961,8 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
           quote={quote}
           pinnedLaunch={pinnedLaunch}
           onUnpinLaunch={onUnpinLaunch}
+          issData={issData}
+          onISSLink={onISSLink}
         />
       </div>
 
