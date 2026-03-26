@@ -122,12 +122,12 @@ func sendWaitlistEmail(to string) {
           </p>
         </div>
 
-        <a href="https://flightspace.app" style="display:inline-block;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:8px;padding:10px 22px;font-size:12px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:#00e5ff;text-decoration:none;">
+        <a href="https://space.starmanodyssey.com" style="display:inline-block;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:8px;padding:10px 22px;font-size:12px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:#00e5ff;text-decoration:none;">
           Open Flightspace
         </a>
 
         <p style="margin:28px 0 0;font-size:11px;color:rgba(195,245,255,0.2);line-height:1.6;">
-          You're receiving this because you signed up at flightspace.app.<br>
+          You're receiving this because you signed up at space.starmanodyssey.com.<br>
           No spam — only launch announcements.
         </p>
       </td>
