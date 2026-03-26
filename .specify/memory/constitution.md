@@ -335,12 +335,35 @@ Implementations MUST follow this priority order — do not skip levels:
 
 ---
 
+## Article XI: Mobile-First Parity
+
+### Section 11.1: Every Feature Must Work on Mobile
+Every UI feature built for desktop must have a functional, usable mobile equivalent. "Mobile" is defined as viewport widths ≤ 767px.
+
+### Section 11.2: Layout Patterns
+- **Panels**: right-side panels become bottom sheets (`bottom: 0; left: 0; right: 0; border-radius: 20px 20px 0 0`)
+- **Sidebars**: collapse behind a hamburger; never visible by default on mobile
+- **Overlays**: full-width, no `left: var(--sidebar-w)` offset on mobile
+- **HUD / telemetry**: hide at `max-width: 480px`; adjust `right` offset at `max-width: 1024px`
+
+### Section 11.3: Touch Targets
+All interactive elements must have a minimum tap target of 44×44px on mobile.
+
+### Section 11.4: No Desktop-Only Breakage
+Mobile CSS must be scoped to `max-width` media queries. Desktop layout (≥ 1024px) must never be altered by mobile fixes.
+
+### Section 11.5: Test on 390px Width
+The canonical mobile test viewport is 390×844px (iPhone 14). All layouts must be verified at this size before shipping.
+
+---
+
 ## Amendment Log
 
 | Date | Article | Change | Rationale |
 |------|---------|--------|-----------|
 | 2026-03-12 | Initial | Constitution ratified (v1.0.0) | Project inception |
 | 2026-03-15 | Article X | Added Documentation-First Implementation (v1.1.0) | Enforce research-before-build discipline; prevent premature custom solutions |
+| 2026-03-25 | Article XI | Added Mobile-First Parity (v1.2.0) | All features must work on mobile; desktop layout must not be broken |
 
 ---
 
