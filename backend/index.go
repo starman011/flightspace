@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -11,8 +12,15 @@ func main() {
 	loadDotEnv()
 
 	if os.Getenv("SERVER_DISABLED") == "true" {
-		log.Println(`{"level":"info","service":"app","msg":"SERVER_DISABLED=true — exiting"}`)
-		os.Exit(0)
+		log.Println(`{"level":"info","service":"app","msg":"SERVER_DISABLED=true — serving 503"}`)
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		http.ListenAndServe(":"+port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Service temporarily unavailable", http.StatusServiceUnavailable)
+		}))
+		return
 	}
 
 	cfg, err := LoadConfig()
