@@ -169,9 +169,26 @@ The solar system scene (`createSolarSystem`) is built once and kept invisible. W
 On first load the frontend calls `POST /api/v1/session`, which issues a short-lived JWT signed with `JWT_SECRET`. The token is stored in `sessionStorage` (tab-scoped, clears on close). Every WebSocket connection sends it as a query parameter for validation before upgrade. No cookies, no accounts, no tracking — users get full functionality immediately.
 
 ### Mobile bottom sheet with dual-axis gestures
-**Technique: Passive-false touchmove + direction lock**
+**Technique: Native touch listeners, passive-false, document-level tracking, ref-mirrored state**
 
-The bottom sheet handles vertical drag (sheet resize) and the SmartStack inside it handles horizontal swipe (panel change). Both gestures start with the same `touchstart`. The direction is determined on the first 8px of movement and locked for the rest of the touch. The SmartStack's `touchmove` listener is registered as `{ passive: false }` so it can call `preventDefault()` to capture horizontal swipes without the browser treating them as scroll attempts — while vertical touches fall through to the sheet's drag handler unblocked.
+The bottom sheet handles vertical drag (sheet resize) and the SmartStack inside it handles horizontal swipe (panel change). Both gestures start with the same `touchstart`. The direction is determined on the first 8px of movement and locked for the rest of the touch. The SmartStack's `touchmove` listener is registered as `{ passive: false }` so it can call `preventDefault()` to capture horizontal swipes without the browser treating them as scroll attempts.
+
+The sheet's vertical drag was originally wired via React synthetic event props (`onTouchMove` etc.), which are always passive — meaning the browser could steal the gesture as a scroll. The fix registers native listeners directly on the DOM node via `useEffect`:
+
+```js
+grab.addEventListener('touchstart', onStart, { passive: true })
+document.addEventListener('touchmove',  onMove,  { passive: false }) // allows preventDefault()
+document.addEventListener('touchend',   onEnd,   { passive: true })
+```
+
+`touchmove`/`touchend` are on `document` so the gesture continues even when the finger slides off the grab bar. Because native listener closures can't read React state updates, a `sheetStateRef` mirrors `sheetState` via `useEffect` — the closure reads the ref, which is always current:
+
+```js
+const sheetStateRef = useRef(sheetState)
+useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])
+```
+
+Friction multipliers (`dy * 0.85`) and over-large thresholds (40–80 px) were also removed — the sheet now tracks the finger 1:1 and commits on 30 px up / 50 px down.
 
 ### Desktop signal stream panel collapse
 **Technique: CSS `translateX` with a persistent 40px tab**

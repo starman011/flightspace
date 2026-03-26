@@ -1096,36 +1096,60 @@ export default function CommandCenterOverlay({
   useEffect(() => {
     if (forceCollapsed) setSheetState('peek')
   }, [forceCollapsed])
-  const touchRef  = useRef({ startY: 0, wasState: 'peek', dragging: false })
+  const grabRef       = useRef(null)
+  const sheetStateRef = useRef(sheetState)
+  useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])
 
   const PEEK_H = 80  // px visible in peek: grab bar + filter row
 
-  const onHandleTouchStart = (e) => {
-    touchRef.current = { startY: e.touches[0].clientY, wasState: sheetState, dragging: true }
-  }
-  const onHandleTouchMove = (e) => {
-    if (!touchRef.current.dragging || !streamRef.current) return
-    const dy    = e.touches[0].clientY - touchRef.current.startY
-    const h     = streamRef.current.clientHeight
-    const halfY = h - Math.round(window.innerHeight * 0.52)
-    streamRef.current.style.transition = 'none'
-    const s = touchRef.current.wasState
-    if (s === 'peek'  && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, h - PEEK_H + dy * 0.85)}px)`
-    if (s === 'half'  && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(h - PEEK_H, halfY + dy * 0.85)}px)`
-    if (s === 'half'  && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, halfY + dy * 0.85)}px)`
-    if (s === 'full'  && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(halfY, dy * 0.85)}px)`
-  }
-  const onHandleTouchEnd = (e) => {
-    if (!touchRef.current.dragging) return
-    const dy = e.changedTouches[0].clientY - touchRef.current.startY
-    touchRef.current.dragging = false
-    if (streamRef.current) { streamRef.current.style.transition = ''; streamRef.current.style.transform = '' }
-    const s = touchRef.current.wasState
-    if (s === 'peek' && dy < -40) setSheetState('half')
-    if (s === 'half' && dy < -60) setSheetState('full')
-    if (s === 'half' && dy >  80) setSheetState('peek')
-    if (s === 'full' && dy >  60) setSheetState('half')
-  }
+  // Native touch listeners so we can call preventDefault on touchmove
+  // and track the gesture even when the finger slides off the grab bar.
+  useEffect(() => {
+    const grab = grabRef.current
+    if (!grab) return
+
+    const drag = { startY: 0, dragging: false }
+
+    const onStart = (e) => {
+      drag.startY   = e.touches[0].clientY
+      drag.dragging = true
+    }
+
+    const onMove = (e) => {
+      if (!drag.dragging || !streamRef.current) return
+      e.preventDefault()   // stop browser scroll fighting the drag
+      const dy    = e.touches[0].clientY - drag.startY
+      const h     = streamRef.current.clientHeight
+      const halfY = h - Math.round(window.innerHeight * 0.52)
+      streamRef.current.style.transition = 'none'
+      const s = sheetStateRef.current
+      if (s === 'peek' && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, h - PEEK_H + dy)}px)`
+      if (s === 'half' && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(h - PEEK_H, halfY + dy)}px)`
+      if (s === 'half' && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, halfY + dy)}px)`
+      if (s === 'full' && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(halfY, dy)}px)`
+    }
+
+    const onEnd = (e) => {
+      if (!drag.dragging) return
+      drag.dragging = false
+      if (streamRef.current) { streamRef.current.style.transition = ''; streamRef.current.style.transform = '' }
+      const dy = e.changedTouches[0].clientY - drag.startY
+      const s  = sheetStateRef.current
+      if (s === 'peek' && dy < -30) setSheetState('half')
+      if (s === 'half' && dy < -30) setSheetState('full')
+      if (s === 'half' && dy >  50) setSheetState('peek')
+      if (s === 'full' && dy >  60) setSheetState('half')
+    }
+
+    grab.addEventListener('touchstart', onStart, { passive: true })
+    document.addEventListener('touchmove', onMove, { passive: false })
+    document.addEventListener('touchend', onEnd, { passive: true })
+    return () => {
+      grab.removeEventListener('touchstart', onStart)
+      document.removeEventListener('touchmove', onMove)
+      document.removeEventListener('touchend', onEnd)
+    }
+  }, [])
 
   const expanded = sheetState === 'full' || desktopOpen === 'wide'
 
@@ -1234,10 +1258,8 @@ export default function CommandCenterOverlay({
 
         {/* Grab handle — swipe zone */}
         <div
+          ref={grabRef}
           className={styles.grabHandle}
-          onTouchStart={onHandleTouchStart}
-          onTouchMove={onHandleTouchMove}
-          onTouchEnd={onHandleTouchEnd}
           onClick={() => sheetState === 'peek' && setSheetState('half')}
         >
           <span className={styles.grabBar} />
