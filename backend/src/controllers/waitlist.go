@@ -78,7 +78,7 @@ func sendWaitlistEmail(to string) {
 	}
 
 	payload := map[string]any{
-		"from":    "Flightspace <noreply@space.starmanodyssey.com>",
+		"from":    "Flightspace <hello@space.starmanodyssey.com>",
 		"to":      []string{to},
 		"subject": "You're on the Flightspace waitlist",
 		"html": `<!DOCTYPE html>
@@ -89,14 +89,9 @@ func sendWaitlistEmail(to string) {
     <tr>
       <td style="padding:40px 32px;background:#0a1018;border:1px solid rgba(0,229,255,0.12);border-radius:16px;">
 
-        <!-- Logo mark -->
+        <!-- Wordmark -->
         <div style="margin-bottom:28px;">
-          <svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="8" cy="8" r="6.5" stroke="#00e5ff" stroke-width="1.1" opacity=".5"/>
-            <circle cx="8" cy="8" r="3.5" stroke="#00e5ff" stroke-width="1.3"/>
-            <circle cx="8" cy="8" r="1" fill="#00e5ff"/>
-            <ellipse cx="8" cy="8" rx="6.5" ry="2.5" stroke="#00e5ff" stroke-width="0.9" opacity=".35" transform="rotate(-30 8 8)"/>
-          </svg>
+          <p style="margin:0;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#00e5ff;">&#9711; FLIGHTSPACE</p>
         </div>
 
         <p style="margin:0 0 6px;font-size:10px;font-family:monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,229,255,0.6);">
