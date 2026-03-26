@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Vector3, Vector2, Matrix4, Color, MathUtils,
   Scene, PerspectiveCamera, WebGLRenderer,
@@ -20,14 +21,15 @@ import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const EARTH_R    = 1.0
-const CLOUD_R    = 1.006
-const ATM_SCALE  = 1.18
-const AC_R       = 1.013
-const TRAIL_R    = 1.016   // trail sits slightly above aircraft
+const EARTH_R      = 1.0
+const CLOUD_R      = 1.006
+const ATM_SCALE    = 1.18
+const AC_R         = 1.013
+const TRAIL_R      = 1.018   // trail core — slightly above aircraft
+const TRAIL_GLOW_R = 1.023   // glow layer — above core for sci-fi bloom effect
 
 const MAX_AC          = 12000
-const MAX_TRAIL_PTS   = 30
+const MAX_TRAIL_PTS   = 180   // long sci-fi trails (~6× original)
 const MAX_TRAIL_VERTS = MAX_AC * (MAX_TRAIL_PTS - 1) * 2
 const MAX_TILE_LOADS  = 6
 // Camera distance below which tiles are shown; above = pure globe mode
@@ -45,7 +47,7 @@ const _zeroMat = new Matrix4().makeScale(0, 0, 0)  // hides a slot
 const _worldUp = new Vector3(0, 1, 0)
 const _colNormal   = new Color(0.38, 0.58, 0.85)  // steel blue (planes)
 const _colSelected = new Color(0.08, 0.50, 0.92)  // deep cyan (selected)
-const _colHover    = new Color(0.18, 0.40, 0.82)  // deep blue (hover)
+const _colHover    = new Color(1.00, 0.85, 0.15)  // FR24 yellow (hover)
 const _colHeli     = new Color(0.80, 0.52, 0.10)  // dark amber (helicopters)
 const _colSat      = new Color(0.48, 0.48, 0.78)  // muted violet (satellites)
 const _colShip     = new Color(0.20, 0.90, 0.55)  // bright sea-green (ships)
@@ -494,24 +496,46 @@ function buildRingTex() {
   return new CanvasTexture(c)
 }
 
-// Hover ring texture — brighter solid white ring + blue fill hint
+// Hover ring texture — FR24-style yellow ring
 function buildHoverRingTex() {
   const sz  = 128
   const c   = document.createElement('canvas')
   c.width   = c.height = sz
   const ctx = c.getContext('2d')
-  // Outer solid white ring
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)'
-  ctx.lineWidth   = 4
+  // Outer glow
+  ctx.strokeStyle = 'rgba(255, 200, 0, 0.35)'
+  ctx.lineWidth   = 14
+  ctx.beginPath()
+  ctx.arc(sz / 2, sz / 2, sz / 2 - 8, 0, Math.PI * 2)
+  ctx.stroke()
+  // Crisp yellow ring
+  ctx.strokeStyle = 'rgba(255, 220, 30, 0.98)'
+  ctx.lineWidth   = 3
   ctx.beginPath()
   ctx.arc(sz / 2, sz / 2, sz / 2 - 5, 0, Math.PI * 2)
   ctx.stroke()
-  // Inner soft blue glow
-  ctx.strokeStyle = 'rgba(80, 160, 255, 0.5)'
-  ctx.lineWidth   = 10
-  ctx.beginPath()
-  ctx.arc(sz / 2, sz / 2, sz / 2 - 10, 0, Math.PI * 2)
-  ctx.stroke()
+  return new CanvasTexture(c)
+}
+
+/** Cyan neon crosshair texture for launch pad marker */
+function buildPadMarkerTex() {
+  const sz  = 128, cx = sz / 2, cy = sz / 2
+  const c   = document.createElement('canvas')
+  c.width   = c.height = sz
+  const ctx = c.getContext('2d')
+
+  // Glow halo
+  const halo = ctx.createRadialGradient(cx, cy, sz * 0.05, cx, cy, sz * 0.5)
+  halo.addColorStop(0,   'rgba(0, 229, 255, 0.6)')
+  halo.addColorStop(0.4, 'rgba(0, 229, 255, 0.15)')
+  halo.addColorStop(1,   'rgba(0, 229, 255, 0)')
+  ctx.fillStyle = halo
+  ctx.beginPath(); ctx.arc(cx, cy, sz * 0.5, 0, Math.PI * 2); ctx.fill()
+
+  // Bright center dot
+  ctx.fillStyle = '#00e5ff'
+  ctx.beginPath(); ctx.arc(cx, cy, sz * 0.09, 0, Math.PI * 2); ctx.fill()
+
   return new CanvasTexture(c)
 }
 
@@ -689,7 +713,8 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
     if (id === selectedId && inst.pos) state.selPos = inst.pos
 
     // Track ISS position for the special blinking overlay
-    if (inst.pos && (a.callsign?.toUpperCase() === 'ISS' || id === 'demo_iss')) {
+    // JSON field for callsign is "cs" (short payload key), also match by id
+    if (inst.pos && (a.cs?.toUpperCase() === 'ISS' || id?.toUpperCase() === 'ISS' || id === 'demo_iss')) {
       state.issPos = inst.pos
     }
   }
@@ -744,7 +769,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -753,6 +778,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const mapStyleRef = useRef('satellite')
   const [cameraInfo, setCameraInfo] = useState({ altM: null, scaleLabel: '', scaleBarPx: 80 })
   const [cameraScale, setCameraScale] = useState('earth')   // 'earth' | 'solar'
+  const [hoverTooltip, setHoverTooltip] = useState(null)  // { x, y, data }
+  const setHoverTooltipRef = useRef(null)
+  setHoverTooltipRef.current = setHoverTooltip
 
   // ── API trail: draw departure→arrival path from detail panel ─────────────
   const drawTrail = useCallback((points) => {
@@ -774,22 +802,33 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const geo = new BufferGeometry().setFromPoints(verts)
 
+    // Core: bright cyan-white
     const coreLine = new Line(geo, new LineBasicMaterial({
-      color: 0xffaa33, transparent: true, opacity: 0.92,
-      depthWrite: false, depthTest: true,
+      color: 0x00eeff, transparent: true, opacity: 0.95,
+      depthWrite: false, blending: AdditiveBlending,
     }))
-    coreLine.renderOrder = 10
+    coreLine.renderOrder = 12
 
+    // Inner glow: tighter cyan
     const geo2     = new BufferGeometry().setFromPoints(verts)
     const glowLine = new Line(geo2, new LineBasicMaterial({
-      color: 0xff6600, transparent: true, opacity: 0.35,
+      color: 0x00aaff, transparent: true, opacity: 0.45,
       depthWrite: false, blending: AdditiveBlending,
     }))
     glowLine.renderOrder = 11
 
-    scene.add(coreLine)
+    // Outer bloom: wide, very soft
+    const geo3      = new BufferGeometry().setFromPoints(verts)
+    const bloomLine = new Line(geo3, new LineBasicMaterial({
+      color: 0x003366, transparent: true, opacity: 0.20,
+      depthWrite: false, blending: AdditiveBlending,
+    }))
+    bloomLine.renderOrder = 10
+
+    scene.add(bloomLine)
     scene.add(glowLine)
-    apiTrailRef.current = [coreLine, glowLine]
+    scene.add(coreLine)
+    apiTrailRef.current = [coreLine, glowLine, bloomLine]
   }, [])
 
   useImperativeHandle(ref, () => ({
@@ -797,6 +836,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     setCameraScale: (scale) => {
       setCameraScale(scale)
       int.current.targetCameraScale = scale
+    },
+    flyTo: (lat, lon) => {
+      if (!int.current?.camera) return
+      const camera = int.current.camera
+      const d = camera.position.length()
+      int.current.flyToTarget = ll2v(lat, lon, EARTH_R).normalize().multiplyScalar(d)
+      int.current.flyToStart  = Date.now()
+      int.current.flyToFrom   = camera.position.clone()
     },
   }), [drawTrail, setCameraScale])
 
@@ -808,7 +855,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const renderer = new WebGLRenderer({ antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(el.clientWidth, el.clientHeight)
-    renderer.setClearColor(0x000008)
+    renderer.setClearColor(0x0f1419)
     el.appendChild(renderer.domElement)
 
     const scene  = new Scene()
@@ -1049,10 +1096,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const hoverRingGeo = new BufferGeometry()
     hoverRingGeo.setAttribute('position', new BufferAttribute(new Float32Array(3), 3))
     const hoverRingMat = new PointsMaterial({
-      size: 22, sizeAttenuation: false,
+      size: 28, sizeAttenuation: false,
       map: hoverRingTex, transparent: true, alphaTest: 0.005,
       opacity: 0, depthWrite: false,
-      blending: AdditiveBlending, color: 0xffffff,
+      blending: AdditiveBlending, color: 0xffd700,
     })
     const hoverRingPts = new Points(hoverRingGeo, hoverRingMat)
     hoverRingPts.renderOrder = 5
@@ -1072,6 +1119,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const issPts = new Points(issGeo, issMat)
     issPts.renderOrder = 8
     scene.add(issPts)
+
+    // ── Launch pad neon crosshair marker ──────────────────────────────
+    const padGeo = new BufferGeometry()
+    padGeo.setAttribute('position', new BufferAttribute(new Float32Array(3), 3))
+    padGeo.setDrawRange(0, 0)
+    const padMat = new PointsMaterial({
+      size: 48, sizeAttenuation: false,
+      map: buildPadMarkerTex(), transparent: true, alphaTest: 0.005,
+      opacity: 1, depthWrite: false, depthTest: false,
+      blending: AdditiveBlending,
+    })
+    const padPts = new Points(padGeo, padMat)
+    padPts.renderOrder = 30
+    scene.add(padPts)
 
     // ── Vector map: graticule (static, built immediately) ────────────
     // Both graticule and borders fade out as the user zooms in and tiles take over.
@@ -1282,7 +1343,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       processQueue()
     }
 
-    // ── Real-time trail segments ──────────────────────────────────────
+    // ── Real-time trail segments — core (sharp, bright) ──────────────
     const trailPos = new Float32Array(MAX_TRAIL_VERTS * 3)
     const trailCol = new Float32Array(MAX_TRAIL_VERTS * 3)
     const trailGeo = new BufferGeometry()
@@ -1293,8 +1354,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       vertexColors: true, transparent: true, opacity: 1,
       depthWrite: false, blending: AdditiveBlending,
     }))
-    trailMesh.renderOrder = 1
+    trailMesh.renderOrder = 2
     scene.add(trailMesh)
+
+    // ── Real-time trail segments — glow halo (soft, bloomed) ─────────
+    const trailGlowPos = new Float32Array(MAX_TRAIL_VERTS * 3)
+    const trailGlowCol = new Float32Array(MAX_TRAIL_VERTS * 3)
+    const trailGlowGeo = new BufferGeometry()
+    trailGlowGeo.setAttribute('position', new BufferAttribute(trailGlowPos, 3).setUsage(DynamicDrawUsage))
+    trailGlowGeo.setAttribute('color',    new BufferAttribute(trailGlowCol, 3).setUsage(DynamicDrawUsage))
+    trailGlowGeo.setDrawRange(0, 0)
+    const trailGlowMesh = new LineSegments(trailGlowGeo, new LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.28,
+      depthWrite: false, blending: AdditiveBlending,
+    }))
+    trailGlowMesh.renderOrder = 1
+    scene.add(trailGlowMesh)
 
     // ── Raycaster ─────────────────────────────────────────────────────
     const ray   = new Raycaster()
@@ -1307,7 +1382,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         -((clientY - rect.top) / rect.height) * 2 + 1,
       )
       const _screenH = el.clientHeight || 1080
-      ray.params.Points.threshold = (2 * camera.position.length() * Math.tan((40 / 2) * Math.PI / 180)) / _screenH * 22
+      ray.params.Points.threshold = (2 * camera.position.length() * Math.tan((40 / 2) * Math.PI / 180)) / _screenH * 8
       ray.setFromCamera(mouse, camera)
     }
 
@@ -1337,6 +1412,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         int.current.hoveredId  = newId
         int.current.hoverPos   = newId ? (int.current.idToInstance?.get(newId)?.pos ?? null) : null
         renderer.domElement.classList.toggle(styles.hovered, !!newId)
+
+        // Update tooltip
+        if (newId) {
+          const acData = int.current.lastAircraft?.get(newId)
+          int.current.setHoverTooltip?.({ x: e.clientX, y: e.clientY, data: acData ?? null, id: newId })
+        } else {
+          int.current.setHoverTooltip?.(null)
+        }
+      } else if (newId) {
+        // Update position while hovering same entity
+        int.current.setHoverTooltip?.(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : prev)
       }
     }
     el.addEventListener('mousemove', onMouseMove)
@@ -1366,6 +1452,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     el.addEventListener('pointerdown', onPointerDown)
     el.addEventListener('pointerup',   onPointerUp)
 
+    const onMouseLeave = () => {
+      int.current.hoveredId = null
+      int.current.hoverPos  = null
+      int.current.setHoverTooltip?.(null)
+      renderer.domElement.classList.remove(styles.hovered)
+    }
+    el.addEventListener('mouseleave', onMouseLeave)
+
     // ── Resize ───────────────────────────────────────────────────────
     const onResize = () => {
       camera.aspect = el.clientWidth / el.clientHeight
@@ -1386,13 +1480,53 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const _trackedInst = int.current.idToInstance?.get(_trackId)
         if (_trackedInst?.lat != null) {
           const _d = camera.position.length()
-          const _surfacePos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
-          camera.position.copy(_surfacePos.normalize().multiplyScalar(_d))
+          const _targetPos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
+            .normalize().multiplyScalar(_d)
+
+          const _tweenStart = int.current.trackTweenStart
+          if (_tweenStart != null) {
+            // Smooth flyTo: slerp along the sphere surface for 1.4 s
+            const _elapsed = Date.now() - _tweenStart
+            const _TWEEN_MS = 1400
+            const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
+            // ease-out cubic
+            const _t = 1 - Math.pow(1 - _rawT, 3)
+            const _from = int.current.trackTweenFrom
+            // Spherical interpolation: lerp then re-normalise to keep on sphere
+            const _interp = new Vector3().lerpVectors(_from, _targetPos, _t)
+            camera.position.copy(_interp.normalize().multiplyScalar(_d))
+            if (_rawT >= 1) {
+              int.current.trackTweenStart = null
+              int.current.trackTweenFrom  = null
+            }
+          } else {
+            // Tween done — lock to aircraft every frame
+            camera.position.copy(_targetPos)
+          }
+
           camera.lookAt(0, 0, 0)
           controls.enableRotate = false
         }
       } else {
         controls.enableRotate = true
+
+        // ── One-shot flyTo tween (not tracking — just navigate to a point) ──
+        const _flyStart = int.current.flyToTarget ? int.current.flyToStart : null
+        if (_flyStart != null) {
+          const _elapsed = Date.now() - _flyStart
+          const _TWEEN_MS = 1600
+          const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
+          const _t = 1 - Math.pow(1 - _rawT, 3) // ease-out cubic
+          const _interp = new Vector3()
+            .lerpVectors(int.current.flyToFrom, int.current.flyToTarget, _t)
+          camera.position.copy(_interp.normalize().multiplyScalar(int.current.flyToTarget.length()))
+          camera.lookAt(0, 0, 0)
+          if (_rawT >= 1) {
+            int.current.flyToTarget = null
+            int.current.flyToStart  = null
+            int.current.flyToFrom   = null
+          }
+        }
       }
 
       // ── Camera scale tween (earth ↔ solar) ───────────────────────────────
@@ -1400,7 +1534,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const isSolar     = targetScale === 'solar'
       const CAM_TARGET  = isSolar ? CAM_SOLAR : CAM_EARTH
 
-      if (int.current.camTweenStart !== null) {
+      if (int.current.camTweenStart != null) {
         const elapsed  = Date.now() - int.current.camTweenStart
         const rawT     = Math.min(elapsed / CAM_TWEEN_MS, 1)
         // cubic-bezier(0.16, 1, 0.3, 1) approximation via smoothstep
@@ -1573,22 +1707,38 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         issGeo.setDrawRange(0, 0)
       }
 
+      // Pad marker neon pulse
+      const padPos = int.current.padMarkerPos
+      if (padPos) {
+        const pp = padGeo.attributes.position
+        pp.setXYZ(0, padPos.x, padPos.y, padPos.z)
+        pp.needsUpdate = true
+        padGeo.setDrawRange(0, 1)
+        const t = Date.now() * 0.003
+        padMat.opacity = 0.7 + 0.3 * Math.sin(t)
+        padMat.size    = 44 + 8 * Math.sin(t * 0.7)
+      } else {
+        padGeo.setDrawRange(0, 0)
+      }
+
       renderer.render(scene, camera)
     }
-    tick()
-
     int.current = {
       renderer, scene, camera, controls,
       planeMesh, heavyMesh, regionalMesh, heliMesh, satMesh, shipMesh,
       acPts, acGeo, acPos,
       trailMesh, trailGeo, trailPos, trailCol,
+      trailGlowMesh, trailGlowGeo, trailGlowPos, trailGlowCol,
       issPts, issGeo, issMat,
       issPos: null,
+      padPts, padGeo, padMat,
+      padMarkerPos: null,
       acIds: [],
       catAlloc: null,      // lazily initialised by syncInstances on first call
       idToInstance: null,
       hoveredId: null,
       hoverPos: null,
+      setHoverTooltip: (...args) => setHoverTooltipRef.current?.(...args),
       onAircraftClick: null,
       onViewportChange: null,
       selPos: null,
@@ -1602,12 +1752,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       camTweenStart: null,          // timestamp when tween began
       camTweenFrom: null,           // Vector3 camera start position
       planetPositions: null,        // populated by WS solar_system message
+      trackTweenStart: null,        // timestamp of flyTo-on-track-start tween
+      trackTweenFrom: null,         // Vector3 camera position when tracking started
+      flyToTarget: null,            // one-shot flyTo destination (Vector3)
+      flyToStart:  null,            // timestamp
+      flyToFrom:   null,            // Vector3 camera start
     }
+
+    tick()
 
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', onResize)
       el.removeEventListener('mousemove', onMouseMove)
+      el.removeEventListener('mouseleave', onMouseLeave)
       el.removeEventListener('pointerdown', onPointerDown)
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
@@ -1628,7 +1786,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   }, [onViewportChange])
 
   useEffect(() => {
-    if (int.current) int.current.trackingId = trackingId ?? null
+    if (!int.current) return
+    const wasTracking = int.current.trackingId != null
+    int.current.trackingId = trackingId ?? null
+    // When tracking starts, initiate a smooth flyTo tween from current camera position
+    if (trackingId && !wasTracking) {
+      int.current.trackTweenStart = Date.now()
+      int.current.trackTweenFrom  = int.current.camera.position.clone()
+    } else if (!trackingId) {
+      int.current.trackTweenStart = null
+      int.current.trackTweenFrom  = null
+    }
   }, [trackingId])
 
   useEffect(() => {
@@ -1638,6 +1806,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     for (const p of solarData.planets) map[p.name] = p
     int.current.planetPositions = map
   }, [solarData])
+
+  // Set pad marker world position; render loop handles visibility + animation
+  useEffect(() => {
+    if (!int.current) return
+    int.current.padMarkerPos = padMarker?.lat && padMarker?.lon
+      ? ll2v(padMarker.lat, padMarker.lon, AC_R)
+      : null
+  }, [padMarker])
 
   // When style toggles, update the ref and flush the tile cache so tiles reload with new URLs
   useEffect(() => {
@@ -1655,47 +1831,96 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     syncInstances(int.current, aircraft, selectedId, int.current.hoveredId, false)
 
-    // ── Trails ──────────────────────────────────────────────────────
-    const { trailGeo, trailPos, trailCol } = int.current
-    let ti = 0
+    // ── Neon sci-fi trails ───────────────────────────────────────────
+    const { trailGeo, trailPos, trailCol,
+            trailGlowGeo, trailGlowPos, trailGlowCol } = int.current
+    let ti = 0  // vertex index (shared: core and glow are written in lock-step)
 
     // Prune history for departed aircraft
     for (const id of trailHist.current.keys()) {
       if (!aircraft.has(id)) trailHist.current.delete(id)
     }
 
+    // Per-category neon RGB (additive, so these are peak intensities at the tip)
+    const neonColor = (cat) => {
+      switch (cat) {
+        case 'satellite':  return [0.20, 0.55, 1.00]  // electric blue
+        case 'ship':       return [0.13, 0.94, 0.49]  // neon green
+        case 'helicopter': return [1.00, 0.60, 0.00]  // amber
+        case 'asteroid':
+        case 'planet':
+        case 'rocket':     return [1.00, 0.40, 0.10]  // orange-red
+        default:           return [0.00, 0.90, 1.00]  // cyan (planes)
+      }
+    }
+
     for (const [id, a] of aircraft) {
-      const vTrail = ll2v(a.lat, a.lon, TRAIL_R)
+      const cat    = a.cat || 'plane'
+      const [r, g, b] = neonColor(cat)
+
+      // Core trail at TRAIL_R, glow slightly above at TRAIL_GLOW_R
+      const baseVec = ll2v(a.lat, a.lon, 1.0).normalize()
+      const vCore   = baseVec.clone().multiplyScalar(TRAIL_R)
+      const vGlow   = baseVec.clone().multiplyScalar(TRAIL_GLOW_R)
+
       let hist = trailHist.current.get(id)
-      if (!hist) { hist = []; trailHist.current.set(id, hist) }
-      const last = hist[hist.length - 1]
-      if (!last || vTrail.distanceTo(last) > 0.000008) {
-        hist.push(vTrail.clone())
-        if (hist.length > MAX_TRAIL_PTS) hist.shift()
+      if (!hist) {
+        hist = { core: [], glow: [] }
+        trailHist.current.set(id, hist)
+      }
+      // Back-compat: if hist was stored as an array (old format), reset it
+      if (Array.isArray(hist)) {
+        hist = { core: [], glow: [] }
+        trailHist.current.set(id, hist)
       }
 
-      const n = hist.length
+      const lastCore = hist.core[hist.core.length - 1]
+      if (!lastCore || vCore.distanceTo(lastCore) > 0.000005) {
+        hist.core.push(vCore.clone())
+        hist.glow.push(vGlow.clone())
+        if (hist.core.length > MAX_TRAIL_PTS) { hist.core.shift(); hist.glow.shift() }
+      }
+
+      const n = hist.core.length
       if (n < 2) continue
+
       for (let k = 0; k < n - 1; k++) {
         if (ti + 2 > MAX_TRAIL_VERTS) break
-        const frac0 = k       / (n - 1)
+
+        const frac0 = k       / (n - 1)   // 0 = oldest (tail), 1 = newest (tip)
         const frac1 = (k + 1) / (n - 1)
-        const b0    = Math.pow(frac0, 1.2) * 0.85
-        const b1    = Math.pow(frac1, 1.2) * 0.85
-        const p0 = hist[k], p1 = hist[k + 1]
-        trailPos[ti * 3]     = p0.x; trailPos[ti * 3 + 1] = p0.y; trailPos[ti * 3 + 2] = p0.z
-        trailCol[ti * 3]     = b0 * 0.75; trailCol[ti * 3 + 1] = b0 * 0.88; trailCol[ti * 3 + 2] = b0
+
+        // Brightness curve: cubic ease-in so tail fades fast, tip stays bright
+        const b0 = Math.pow(frac0, 0.6)
+        const b1 = Math.pow(frac1, 0.6)
+
+        const p0c = hist.core[k],     p1c = hist.core[k + 1]
+        const p0g = hist.glow[k],     p1g = hist.glow[k + 1]
+
+        // ── Core vertices ─────────────────────────────────────────────
+        trailPos[ti * 3]     = p0c.x; trailPos[ti * 3 + 1] = p0c.y; trailPos[ti * 3 + 2] = p0c.z
+        trailCol[ti * 3]     = r * b0; trailCol[ti * 3 + 1] = g * b0; trailCol[ti * 3 + 2] = b * b0
+        trailGlowPos[ti * 3]     = p0g.x; trailGlowPos[ti * 3 + 1] = p0g.y; trailGlowPos[ti * 3 + 2] = p0g.z
+        trailGlowCol[ti * 3]     = r * b0 * 0.6; trailGlowCol[ti * 3 + 1] = g * b0 * 0.6; trailGlowCol[ti * 3 + 2] = b * b0 * 0.6
         ti++
-        trailPos[ti * 3]     = p1.x; trailPos[ti * 3 + 1] = p1.y; trailPos[ti * 3 + 2] = p1.z
-        trailCol[ti * 3]     = b1 * 0.75; trailCol[ti * 3 + 1] = b1 * 0.88; trailCol[ti * 3 + 2] = b1
+
+        trailPos[ti * 3]     = p1c.x; trailPos[ti * 3 + 1] = p1c.y; trailPos[ti * 3 + 2] = p1c.z
+        trailCol[ti * 3]     = r * b1; trailCol[ti * 3 + 1] = g * b1; trailCol[ti * 3 + 2] = b * b1
+        trailGlowPos[ti * 3]     = p1g.x; trailGlowPos[ti * 3 + 1] = p1g.y; trailGlowPos[ti * 3 + 2] = p1g.z
+        trailGlowCol[ti * 3]     = r * b1 * 0.6; trailGlowCol[ti * 3 + 1] = g * b1 * 0.6; trailGlowCol[ti * 3 + 2] = b * b1 * 0.6
         ti++
       }
     }
 
-    // Flush trails
+    // Flush core
     trailGeo.setDrawRange(0, ti)
     trailGeo.attributes.position.needsUpdate = true
     trailGeo.attributes.color.needsUpdate    = true
+
+    // Flush glow
+    trailGlowGeo.setDrawRange(0, ti)
+    trailGlowGeo.attributes.position.needsUpdate = true
+    trailGlowGeo.attributes.color.needsUpdate    = true
   }, [aircraft, selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -1711,7 +1936,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         >Satellite</button>
       </div>
 
-      {cameraInfo.altLabel && (
+      {cameraInfo.altLabel && createPortal(
         <div className={styles.cameraHud}>
           <div className={styles.hudAlt}>
             <span className={styles.hudLabel}>ALT</span>
@@ -1721,8 +1946,85 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             <div className={styles.hudScaleBar} style={{ transform: `scaleX(${(cameraInfo.scaleBarPx / 80).toFixed(3)})` }} />
             <span className={styles.hudScaleLabel}>{cameraInfo.scaleLabel}</span>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {hoverTooltip && createPortal(
+        <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} />,
+        document.body
       )}
     </div>
   )
 })
+
+// ── Hover tooltip ─────────────────────────────────────────────────────────────
+
+function AircraftTooltip({ x, y, data }) {
+  if (!data) return null
+
+  const cat      = data.cat || 'plane'
+  const callsign = data.cs || data.id || '—'
+  const altFt    = data.alt != null ? Math.round(data.alt).toLocaleString() + ' ft' : null
+  const altKm    = data.alt_km != null ? data.alt_km.toFixed(0) + ' km' : null
+  const altitude = altFt ?? altKm ?? '—'
+  const speed    = data.spd != null ? Math.round(data.spd) + ' kt' : null
+  const hdg      = data.hdg ?? data.heading ?? data.trk ?? data.cog
+  const heading  = hdg != null ? Math.round(hdg) + '°' : null
+
+  // Offset tooltip so it doesn't overlap the cursor
+  const left = x + 14
+  const top  = y - 10
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left,
+        top,
+        pointerEvents: 'none',
+        zIndex: 9999,
+        background: 'rgba(8, 14, 24, 0.92)',
+        border: '1px solid rgba(255, 215, 0, 0.55)',
+        borderRadius: '4px',
+        padding: '7px 11px 8px',
+        minWidth: '130px',
+        backdropFilter: 'blur(6px)',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.12)',
+        fontFamily: "'Space Mono', 'Courier New', monospace",
+      }}
+    >
+      {/* Callsign / ID row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '5px' }}>
+        <span style={{
+          display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
+          background: cat === 'helicopter' ? '#e08010'
+                    : cat === 'satellite'  ? '#9090cc'
+                    : cat === 'ship'       ? '#20e88a'
+                    : '#5ab4ff',
+          flexShrink: 0,
+        }} />
+        <span style={{
+          fontSize: '12px', fontWeight: '700', letterSpacing: '0.06em',
+          color: 'rgba(255,230,100,0.95)', textTransform: 'uppercase',
+        }}>{callsign}</span>
+      </div>
+
+      {/* Data rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <TooltipRow label="ALT" value={altitude} />
+        {speed   && <TooltipRow label="SPD" value={speed} />}
+        {heading && <TooltipRow label="HDG" value={heading} />}
+      </div>
+    </div>
+  )
+}
+
+function TooltipRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
+      <span style={{ fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(100,160,255,0.65)', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: '11px', color: 'rgba(200,220,255,0.9)', fontWeight: '500' }}>{value}</span>
+    </div>
+  )
+}

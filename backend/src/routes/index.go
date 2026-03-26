@@ -15,7 +15,9 @@ func Setup(
 	pool *pgxpool.Pool,
 	rdb *redis.Client,
 	hub *controllers.Hub,
+	launchPoller *controllers.LaunchPoller,
 	jwtSecret string,
+	nasaAPIKey string,
 ) {
 	health  := controllers.NewHealthController(pool, rdb)
 	session := controllers.NewSessionController(pool, rdb, jwtSecret)
@@ -23,7 +25,9 @@ func Setup(
 	auth   := controllers.NewAuthController(pool, rdb, jwtSecret)
 	user   := controllers.NewUserController(pool, rdb)
 	ws     := controllers.NewWSController(hub, jwtSecret)
-	launch := controllers.NewLaunchController(rdb)
+	launch   := controllers.NewLaunchController(rdb, launchPoller)
+	asteroid := controllers.NewAsteroidController(rdb)
+	apod     := controllers.NewAPODController(rdb, nasaAPIKey)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -54,6 +58,8 @@ func Setup(
 
 	// Space data
 	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))
+	mux.Handle("GET /api/v1/asteroids", rateLimit(http.HandlerFunc(asteroid.GetAsteroids)))
+	mux.Handle("GET /api/v1/apod", rateLimit(http.HandlerFunc(apod.GetAPOD)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)

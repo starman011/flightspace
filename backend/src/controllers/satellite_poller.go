@@ -7,9 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	satellite "github.com/joshuaferrara/go-satellite"
@@ -23,17 +21,17 @@ const (
 	tleAPIBase      = "https://tle.ivanstanojevic.me/api/tle/"
 )
 
-// Groups to fetch from tle.ivanstanojevic.me with a search query and max count.
+// tleGroups maps a search term → page size for tle.ivanstanojevic.me.
 var tleGroups = []struct {
 	search string
 	limit  int
 }{
-	{"ISS", 10},
-	{"STARLINK", 200},
-	{"GPS", 32},
-	{"IRIDIUM", 66},
-	{"WEATHER", 30},
-	{"GOES", 10},
+	{"ZARYA", 10},     // ISS, Tiangong, CSS
+	{"STARLINK", 100}, // Starlink constellation (API max page-size is 100)
+	{"GPS", 32},       // GPS operational
+	{"IRIDIUM", 66},   // Iridium
+	{"NOAA", 20},      // NOAA weather
+	{"GOES", 10},      // GOES geostationary
 }
 
 // SatelliteRecord uses the same JSON field names as models.LiveAircraft
@@ -54,18 +52,6 @@ type issPosition struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Altitude  float64 `json:"altitude"`
-}
-
-// tleAPIResponse is the response from tle.ivanstanojevic.me
-type tleAPIResponse struct {
-	Members []tleAPIMember `json:"member"`
-}
-
-type tleAPIMember struct {
-	SatelliteID int    `json:"satelliteId"`
-	Name        string `json:"name"`
-	Line1       string `json:"line1"`
-	Line2       string `json:"line2"`
 }
 
 // SatellitePoller fetches TLE data and computes real-time satellite positions.
@@ -152,48 +138,43 @@ type tleEntry struct {
 	line2 string
 }
 
-// fetchAllTLE fetches all TLE groups concurrently from tle.ivanstanojevic.me.
+// fetchAllTLE fetches all TLE groups sequentially from tle.ivanstanojevic.me.
 func (sp *SatellitePoller) fetchAllTLE(ctx context.Context) []tleEntry {
-	type result struct {
-		entries []tleEntry
-		search  string
-		err     error
-	}
-	ch := make(chan result, len(tleGroups))
-	var wg sync.WaitGroup
-
-	for _, g := range tleGroups {
-		wg.Add(1)
-		go func(search string, limit int) {
-			defer wg.Done()
-			entries, err := sp.fetchTLEGroup(ctx, search, limit)
-			ch <- result{entries: entries, search: search, err: err}
-		}(g.search, g.limit)
-	}
-
-	go func() { wg.Wait(); close(ch) }()
-
 	var all []tleEntry
-	for r := range ch {
-		if r.err != nil {
-			log.Printf(`{"level":"warn","service":"sat_poller","msg":"TLE fetch failed","search":%q,"error":%q}`, r.search, r.err)
-			continue
+	for _, g := range tleGroups {
+		entries, err := sp.fetchTLEGroup(ctx, g.search, g.limit)
+		if err != nil {
+			log.Printf(`{"level":"warn","service":"sat_poller","msg":"TLE fetch failed","search":%q,"error":%q}`, g.search, err)
+		} else {
+			all = append(all, entries...)
+			log.Printf(`{"level":"info","service":"sat_poller","msg":"TLE group loaded","search":%q,"count":%d}`, g.search, len(entries))
 		}
-		all = append(all, r.entries...)
+		// 600ms between requests to avoid rate-limiting
+		select {
+		case <-ctx.Done():
+			return all
+		case <-time.After(600 * time.Millisecond):
+		}
 	}
 	log.Printf(`{"level":"info","service":"sat_poller","msg":"TLE loaded","count":%d}`, len(all))
 	return all
 }
 
-// fetchTLEGroup fetches TLE data from tle.ivanstanojevic.me for a search term.
-func (sp *SatellitePoller) fetchTLEGroup(ctx context.Context, search string, limit int) ([]tleEntry, error) {
-	pageSize := limit
-	if pageSize > 100 {
-		pageSize = 100
-	}
-	u := fmt.Sprintf("%s?search=%s&sort=popularity&sort-dir=asc&page-size=%d",
-		tleAPIBase, url.QueryEscape(search), pageSize)
+// tleMember is one entry from the tle.ivanstanojevic.me JSON response.
+type tleMember struct {
+	Name  string `json:"name"`
+	Line1 string `json:"line1"`
+	Line2 string `json:"line2"`
+}
 
+// tleAPIResponse is the paginated response from tle.ivanstanojevic.me.
+type tleAPIResponse struct {
+	Member []tleMember `json:"member"`
+}
+
+// fetchTLEGroup searches tle.ivanstanojevic.me for satellites matching the given term.
+func (sp *SatellitePoller) fetchTLEGroup(ctx context.Context, search string, limit int) ([]tleEntry, error) {
+	u := fmt.Sprintf("%s?search=%s&page-size=%d", tleAPIBase, search, limit)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
@@ -209,21 +190,16 @@ func (sp *SatellitePoller) fetchTLEGroup(ctx context.Context, search string, lim
 		return nil, fmt.Errorf("status %d", resp.StatusCode)
 	}
 
-	var api tleAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&api); err != nil {
+	var apiResp tleAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 
-	entries := make([]tleEntry, 0, len(api.Members))
-	for _, m := range api.Members {
-		if len(m.Line1) < 69 || m.Line1[0] != '1' || len(m.Line2) < 69 || m.Line2[0] != '2' {
-			continue
+	entries := make([]tleEntry, 0, len(apiResp.Member))
+	for _, m := range apiResp.Member {
+		if m.Line1 != "" && m.Line2 != "" {
+			entries = append(entries, tleEntry{name: m.Name, line1: m.Line1, line2: m.Line2})
 		}
-		entries = append(entries, tleEntry{
-			name:  strings.TrimSpace(m.Name),
-			line1: strings.TrimSpace(m.Line1),
-			line2: strings.TrimSpace(m.Line2),
-		})
 	}
 	return entries, nil
 }

@@ -3,19 +3,19 @@
 .hud {
   position: fixed;
   z-index: 55;
-  background: rgba(15, 20, 25, 0.62);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 229, 255, 0.06);
   padding: var(--space-2) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 3px;
   pointer-events: none;
-  /* No border — atmospheric shift only */
 }
 
-.topLeft  { top: var(--space-4); left: 72px; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
-.topRight { top: var(--space-4); right: var(--space-4); border-radius: var(--radius-md); text-align: right; }
+.topLeft  { top: 16px; left: calc(var(--sidebar-w) + 16px); border-radius: var(--radius-md); transition: left var(--duration-panel) var(--ease-panel); }
+.topRight { top: 16px; right: 376px; border-radius: var(--radius-md); text-align: right; }
 
 .row {
   display: flex;

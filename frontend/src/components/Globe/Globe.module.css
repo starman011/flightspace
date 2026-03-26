@@ -1,4 +1,9 @@
-.globe { position: fixed; inset: 0; background: #000008; overflow: hidden; }
+.globe {
+  position: fixed;
+  inset: 0;
+  background: #0f1419;
+  overflow: hidden;
+}
 .globe canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
 .globe canvas:active { cursor: grabbing; }
 /* !important beats OrbitControls inline style="cursor:grab" */
@@ -32,17 +37,17 @@
 .mapToggle button:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255,255,255,0.85); }
 .mapToggle button.active { background: rgba(80, 160, 255, 0.20); color: #50b4ff; }
 
-/* Camera HUD — altitude + scale bar, right side above map toggle */
+/* Camera HUD — altitude + scale bar, portalled to body so it clears all stacking contexts */
 .cameraHud {
-  position: absolute;
-  right: 24px;
-  bottom: 68px;
+  position: fixed;
+  right: calc(368px + 22px); /* clear the 368px stream panel */
+  bottom: 70px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
   pointer-events: none;
-  z-index: 10;
+  z-index: 50;
 }
 
 .hudAlt {

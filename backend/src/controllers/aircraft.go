@@ -17,6 +17,40 @@ import (
 
 var icaoRe = regexp.MustCompile(`^[0-9a-f]{6}$`)
 
+// getISSDetail serves the ISS detail response from satellite:live Redis key.
+func (ac *AircraftController) getISSDetail(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	raw, err := ac.rdb.HGet(ctx, "satellite:live", "ISS").Result()
+	if err != nil {
+		utils.Error(w, http.StatusNotFound, "ISS position unavailable")
+		return
+	}
+
+	var live models.LiveAircraft
+	if err := json.Unmarshal([]byte(raw), &live); err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to parse ISS data")
+		return
+	}
+
+	name := "International Space Station"
+	ts := time.Unix(live.TS, 0)
+	resp := models.AircraftDetailResponse{
+		ICAO24:          live.ID,
+		Callsign:        live.Callsign,
+		Registration:    &name,
+		TypeDescription: &name,
+		Trail:           []models.TrailPoint{},
+		Current: &models.CurrentPosition{
+			Latitude:  live.Lat,
+			Longitude: live.Lon,
+			Timestamp: ts,
+		},
+	}
+
+	utils.JSON(w, http.StatusOK, resp)
+}
+
 const trailLimit = 200 // last N positions, no time constraint
 
 // AircraftController handles aircraft detail and search endpoints.
@@ -38,6 +72,13 @@ func (ac *AircraftController) GetDetail(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	icao24 = strings.ToLower(strings.TrimSpace(icao24))
+
+	// ── ISS fast-path: stored in satellite:live, not aircraft:live ──────────
+	if icao24 == "iss" {
+		ac.getISSDetail(w, r)
+		return
+	}
+
 	if !icaoRe.MatchString(icao24) {
 		utils.Error(w, http.StatusBadRequest, "invalid icao24 format")
 		return

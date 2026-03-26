@@ -2,8 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { inject } from '@vercel/analytics'
 import App from './App.jsx'
-import './styles/tokens.css'
 import './styles/global.css'
+import './styles/tokens.css'
 
 inject()
 

@@ -105,7 +105,7 @@ func (a *App) Start() error {
 
 	// Build handler chain: logging → CORS → routes
 	mux := http.NewServeMux()
-	routes.Setup(mux, a.db, a.redis, a.hub, a.cfg.JWTSecret)
+	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, a.cfg.JWTSecret, a.cfg.NASAAPIKey)
 
 	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
 

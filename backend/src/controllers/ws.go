@@ -67,6 +67,10 @@ func (wc *WSController) newUpgrader() websocket.Upgrader {
 			if origin == "" {
 				return true
 			}
+			// Allow any localhost or 127.0.0.1 origin (any port) for local dev
+			if strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:") {
+				return true
+			}
 			return wc.allowedOrigins[origin]
 		},
 	}

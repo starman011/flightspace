@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -17,7 +19,7 @@ const (
 	launchCacheTTL  = 15 * time.Minute
 )
 
-// ── LL2 API response structures ───────────────────────────────────────────────
+// ── LL2 API response structures ���──────────────────────────────────────────────
 
 type ll2Response struct {
 	Results []ll2Launch `json:"results"`
@@ -62,14 +64,14 @@ type ll2Orbit struct {
 }
 
 type ll2Pad struct {
-	Name     string      `json:"name"`
-	Location ll2Location `json:"location"`
+	Name      string      `json:"name"`
+	Latitude  string      `json:"latitude"`
+	Longitude string      `json:"longitude"`
+	Location  ll2Location `json:"location"`
 }
 
 type ll2Location struct {
-	Name      string  `json:"name"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Name string `json:"name"`
 }
 
 // StoredLaunch is the shape we store in Redis and return from the REST endpoint.
@@ -100,8 +102,11 @@ type LaunchListResponse struct {
 // ── LaunchPoller ─────────────────────────────────────────────────────────────
 
 type LaunchPoller struct {
-	rdb     *redis.Client
-	baseURL string
+	rdb      *redis.Client
+	baseURL  string
+	mu       sync.RWMutex
+	upcoming []StoredLaunch
+	recent   []StoredLaunch
 }
 
 func NewLaunchPoller(rdb *redis.Client, baseURL string) *LaunchPoller {
@@ -129,14 +134,23 @@ func (p *LaunchPoller) poll(ctx context.Context) {
 	upcoming := p.fetchLaunches(ctx, p.baseURL+ll2UpcomingPath, false)
 	recent   := p.fetchLaunches(ctx, p.baseURL+ll2PreviousPath, true)
 
-	payload := map[string]interface{}{
-		"upcoming": upcoming,
-		"recent":   recent,
+	// Don't overwrite stale data with empty results (rate-limited or network error)
+	if len(upcoming) == 0 && len(recent) == 0 {
+		log.Println(`{"level":"warn","service":"launch_poller","msg":"no results, keeping stale cache"}`)
+		return
 	}
+
+	// Store in-memory (primary — survives Redis restarts)
+	p.mu.Lock()
+	p.upcoming = upcoming
+	p.recent   = recent
+	p.mu.Unlock()
+
+	// Also write to Redis (secondary — survives backend restarts)
+	payload := map[string]interface{}{"upcoming": upcoming, "recent": recent}
 	data, _ := json.Marshal(payload)
 	if err := p.rdb.Set(ctx, "launch:upcoming", data, launchCacheTTL+5*time.Minute).Err(); err != nil {
-		log.Printf(`{"level":"error","service":"launch_poller","msg":"redis write failed","error":%q}`, err)
-		return
+		log.Printf(`{"level":"warn","service":"launch_poller","msg":"redis write failed","error":%q}`, err)
 	}
 	log.Printf(`{"level":"info","service":"launch_poller","msg":"launches updated","upcoming":%d,"recent":%d}`,
 		len(upcoming), len(recent))
@@ -164,6 +178,8 @@ func (p *LaunchPoller) fetchLaunches(ctx context.Context, url string, isPast boo
 
 	out := make([]StoredLaunch, 0, len(ll2.Results))
 	for _, l := range ll2.Results {
+		padLat, _ := strconv.ParseFloat(l.Pad.Latitude, 64)
+		padLon, _ := strconv.ParseFloat(l.Pad.Longitude, 64)
 		sl := StoredLaunch{
 			ID:         l.ID,
 			Name:       l.Name,
@@ -173,8 +189,8 @@ func (p *LaunchPoller) fetchLaunches(ctx context.Context, url string, isPast boo
 			RocketName: l.Rocket.Config.Name,
 			Provider:   l.Provider.Name,
 			PadName:    l.Pad.Name + " — " + l.Pad.Location.Name,
-			PadLat:     l.Pad.Location.Latitude,
-			PadLon:     l.Pad.Location.Longitude,
+			PadLat:     padLat,
+			PadLon:     padLon,
 			IsPast:     isPast,
 		}
 		if l.Mission != nil {
@@ -192,27 +208,51 @@ func (p *LaunchPoller) fetchLaunches(ctx context.Context, url string, isPast boo
 // ── LaunchController ─────────────────────────────────────────────────────────
 
 type LaunchController struct {
-	rdb *redis.Client
+	rdb    *redis.Client
+	poller *LaunchPoller // for in-memory fallback
 }
 
-func NewLaunchController(rdb *redis.Client) *LaunchController {
-	return &LaunchController{rdb: rdb}
+func NewLaunchController(rdb *redis.Client, poller *LaunchPoller) *LaunchController {
+	return &LaunchController{rdb: rdb, poller: poller}
 }
 
-// GetLaunches serves GET /api/v1/launches — reads from Redis cache.
+// GetLaunches serves GET /api/v1/launches.
+// Primary: reads from LaunchPoller in-memory cache.
+// Falls back to Redis if available.
 func (c *LaunchController) GetLaunches(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	cached, err := c.rdb.Get(ctx, "launch:upcoming").Bytes()
-	if err != nil {
-		http.Error(w, `{"error":"launches not yet available"}`, http.StatusServiceUnavailable)
+	// ── 1. In-memory cache (always available while backend is up) ──────────
+	c.poller.mu.RLock()
+	memUpcoming := c.poller.upcoming
+	memRecent   := c.poller.recent
+	c.poller.mu.RUnlock()
+
+	if len(memUpcoming) > 0 || len(memRecent) > 0 {
+		resp := map[string]interface{}{
+			"upcoming": memUpcoming,
+			"recent":   memRecent,
+		}
+		// Optionally attach people-in-space from Redis
+		if people, err := c.rdb.Get(ctx, "people:space").Bytes(); err == nil {
+			var p json.RawMessage = people
+			resp["people_in_space"] = p
+		}
+		out, _ := json.Marshal(resp)
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "public, max-age=900")
+		w.Write(out)
 		return
 	}
 
-	// Optionally enrich with people-in-space
-	people, _ := c.rdb.Get(ctx, "people:space").Bytes()
+	// ── 2. Redis fallback (populated by previous run or seed) ─────────────
+	cached, err := c.rdb.Get(ctx, "launch:upcoming").Bytes()
+	if err != nil {
+		http.Error(w, `{"error":"launches not yet available, poller starting"}`, http.StatusServiceUnavailable)
+		return
+	}
 
-	// Re-marshal to include people field
+	people, _ := c.rdb.Get(ctx, "people:space").Bytes()
 	var base map[string]json.RawMessage
 	if err := json.Unmarshal(cached, &base); err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -222,9 +262,8 @@ func (c *LaunchController) GetLaunches(w http.ResponseWriter, r *http.Request) {
 	if people != nil {
 		base["people_in_space"] = people
 	}
-
 	out, _ := json.Marshal(base)
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=900") // 15 min
+	w.Header().Set("Cache-Control", "public, max-age=900")
 	w.Write(out)
 }

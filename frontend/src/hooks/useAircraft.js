@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useWebSocket } from './useWebSocket'
 
 const ALT_LOW  = 10_000  // ft
@@ -8,11 +8,16 @@ const ALT_MID  = 30_000  // ft
  * useAircraft manages the full aircraft state map, applies filters,
  * and exposes the WebSocket connection controls.
  */
-export function useAircraft(sessionToken) {
+export function useAircraft(sessionToken, enabled = true) {
   // aircraft: Map<id, LiveAircraftWithMeta>
   const [aircraft, setAircraft] = useState(new Map())
   const [filters, setFilters] = useState({ type: 'all', altitude: 'all' })
   const staleTimerRef = useRef(null)
+
+  // Clear map immediately when tracking is disabled
+  useEffect(() => {
+    if (!enabled) setAircraft(new Map())
+  }, [enabled])
 
   const handleSnapshot = useCallback((list) => {
     const map = new Map()
@@ -40,7 +45,7 @@ export function useAircraft(sessionToken) {
     if (data?.planets) setSolarData(data)
   }, [])
 
-  const { connectionStatus, setBounds } = useWebSocket(sessionToken, handleSnapshot, handleDelta, handleSolarSystem)
+  const { connectionStatus, setBounds } = useWebSocket(sessionToken, handleSnapshot, handleDelta, handleSolarSystem, enabled)
 
   // Remove stale aircraft (no update > 120s) on a 10s tick
   const pruneStalePeriodically = useCallback(() => {
@@ -79,6 +84,10 @@ export function useAircraft(sessionToken) {
         if (filters.type === 'helicopters' && cat !== 'helicopter') continue
         if (filters.type === 'satellites'  && cat !== 'satellite')  continue
         if (filters.type === 'ships'       && cat !== 'ship')       continue
+        // Solar / space object types — show only those categories (globe is empty while in solar view)
+        if (filters.type === 'asteroids'   && cat !== 'asteroid')   continue
+        if (filters.type === 'planets'     && cat !== 'planet')     continue
+        if (filters.type === 'rockets'     && cat !== 'rocket')     continue
       }
 
       // --- Altitude filter ---

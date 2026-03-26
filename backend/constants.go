@@ -61,7 +61,7 @@ func LoadConfig() (*Config, error) {
 
 	ll2Base := os.Getenv("LL2_BASE_URL")
 	if ll2Base == "" {
-		ll2Base = "https://ll.thespacedevs.com/2.2.0"
+		ll2Base = "https://lldev.thespacedevs.com/2.2.0"
 	}
 
 	pollInterval := 15
