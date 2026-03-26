@@ -26,17 +26,17 @@ const STEPS = [
   {
     target:  'signal-stream',
     title:   'Explore the data stream',
-    body:    'This panel rotates through live space data — solar activity, APOD, launches and more.',
+    body:    'Live space data — solar activity, APOD, launches and more. Click the tab to collapse, or expand for full detail and globe filters.',
     mTitle:  'Swipe up for space data',
-    mBody:   'Swipe up on the bar at the bottom to reveal the Signal Stream — solar data, news, APOD and more. Swipe left/right to cycle panels.',
+    mBody:   'Swipe up from the bottom bar to reveal the Signal Stream — solar data, news, APOD and more. Swipe left/right to cycle panels, swipe higher for full detail.',
     icon:    'database',
   },
   {
     target:  'filter-bar',
     title:   'Filter by category',
     body:    'Use the bottom dock to filter by satellites, flights, launches, asteroids or ships.',
-    mTitle:  'Filter by category',
-    mBody:   'Tap the bar at the very bottom to filter by satellites, flights, launches and more.',
+    mTitle:  'Filter the globe',
+    mBody:   'Tap a chip here to filter the globe by satellites, flights, launches, asteroids or ships.',
     icon:    'filter_list',
   },
 ]

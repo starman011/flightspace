@@ -50,6 +50,16 @@
   z-index: 50;
 }
 
+@media (max-width: 767px) {
+  .cameraHud {
+    right: 14px;
+    bottom: 90px; /* sit just above the 80px peek strip */
+    gap: 5px;
+    transform: scale(0.82);
+    transform-origin: right bottom;
+  }
+}
+
 .hudAlt {
   display: flex;
   align-items: baseline;

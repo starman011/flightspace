@@ -339,6 +339,7 @@
   border-right: none;
   border-radius: 16px 0 0 16px;
   padding: var(--space-5);
+  padding-left: calc(var(--space-5) + 40px); /* desktop: clear the vertical collapse tab */
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -1385,6 +1386,113 @@
 /* Mobile intro — hidden on desktop */
 .mobileIntro { display: none; }
 
+/* ── Desktop vertical tab — the always-visible right-edge collapse handle ── */
+
+.desktopTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: rgba(8, 14, 22, 0.95);
+  border-right: 1px solid rgba(59, 73, 76, 0.2);
+  border-radius: 16px 0 0 16px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.desktopTab:hover {
+  background: rgba(0, 229, 255, 0.07);
+}
+
+.desktopTabLabel {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(195, 245, 255, 0.3);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ── Desktop panel header (title + expand/close buttons) ─────────────────── */
+
+.desktopHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
+}
+
+.desktopHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(195, 245, 255, 0.4);
+}
+
+.desktopHeaderBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(23, 28, 34, 0.7);
+  border: 1px solid rgba(59, 73, 76, 0.25);
+  border-radius: 7px;
+  color: rgba(195, 245, 255, 0.45);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.desktopHeaderBtn:hover {
+  color: var(--primary);
+  border-color: rgba(0, 229, 255, 0.35);
+  background: rgba(0, 229, 255, 0.06);
+}
+
+/* ── Desktop stream width states ─────────────────────────────────────────── */
+
+.streamDesktopCollapsed {
+  transform: translateX(calc(100% - 40px));
+}
+
+.streamDesktopWide {
+  width: 520px;
+}
+
+/* ── Desktop filter section visible in wide mode ─────────────────────────── */
+
+.desktopFilterVisible {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
+  margin: 0 0 var(--space-2);
+}
+
+.desktopDividerVisible {
+  display: flex !important;
+}
+
 @media (max-width: 767px) {
   .overlay {
     left: 0;
@@ -1394,6 +1502,10 @@
   /* Hero hidden — globe is the hero on mobile */
   .hero     { display: none; }
   .watermark { display: none; }
+
+  /* Desktop-only elements — hidden on mobile */
+  .desktopTab    { display: none; }
+  .desktopHeader { display: none; }
 
   /* Stream becomes a bottom sheet — tall enough to go full-screen */
   .stream {

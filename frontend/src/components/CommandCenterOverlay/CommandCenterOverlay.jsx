@@ -1090,6 +1090,7 @@ export default function CommandCenterOverlay({
   const [sheetState, setSheetState] = useState('peek')
   const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
+  const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
 
   // Globe interaction → dock sheet to peek (graceful, not full-hide)
   useEffect(() => {
@@ -1126,7 +1127,7 @@ export default function CommandCenterOverlay({
     if (s === 'full' && dy >  60) setSheetState('half')
   }
 
-  const expanded = sheetState === 'full'
+  const expanded = sheetState === 'full' || desktopOpen === 'wide'
 
 
   return (
@@ -1188,9 +1189,49 @@ export default function CommandCenterOverlay({
           styles.stream,
           sheetState === 'peek' ? styles.streamClosed :
           sheetState === 'half' ? styles.streamHalf : '',
+          desktopOpen === 'collapsed' ? styles.streamDesktopCollapsed : '',
+          desktopOpen === 'wide'      ? styles.streamDesktopWide : '',
         ].filter(Boolean).join(' ')}
         data-tour="signal-stream"
       >
+        {/* Desktop: vertical tab — always visible, even when panel collapsed */}
+        <div
+          className={styles.desktopTab}
+          onClick={() => setDesktopOpen(d => d === 'collapsed' ? 'open' : 'collapsed')}
+          title={desktopOpen === 'collapsed' ? 'Open Signal Stream' : 'Collapse Signal Stream'}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(0,229,255,0.5)' }}>
+            {desktopOpen === 'collapsed' ? 'chevron_left' : 'chevron_right'}
+          </span>
+          <span className={styles.desktopTabLabel}>Signal Stream</span>
+        </div>
+
+        {/* Desktop: panel header with expand/collapse controls */}
+        <div className={styles.desktopHeader}>
+          <span className={styles.desktopHeaderTitle}>
+            <span className="material-symbols-outlined" style={{ fontSize: 11 }}>signal_cellular_alt</span>
+            Signal Stream
+          </span>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <button
+              className={styles.desktopHeaderBtn}
+              onClick={() => setDesktopOpen(d => d === 'wide' ? 'open' : 'wide')}
+              title={desktopOpen === 'wide' ? 'Collapse to normal' : 'Expand to full detail'}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 13 }}>
+                {desktopOpen === 'wide' ? 'close_fullscreen' : 'open_in_full'}
+              </span>
+            </button>
+            <button
+              className={styles.desktopHeaderBtn}
+              onClick={() => setDesktopOpen('collapsed')}
+              title="Close panel"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 13 }}>chevron_right</span>
+            </button>
+          </div>
+        </div>
+
         {/* Grab handle — swipe zone */}
         <div
           className={styles.grabHandle}
@@ -1200,22 +1241,10 @@ export default function CommandCenterOverlay({
           onClick={() => sheetState === 'peek' && setSheetState('half')}
         >
           <span className={styles.grabBar} />
-          {/* Expand / collapse chevron visible in half/full */}
-          <button
-            className={styles.sheetStateBtn}
-            onClick={(e) => {
-              e.stopPropagation()
-              setSheetState(s => s === 'full' ? 'half' : s === 'half' ? 'peek' : 'half')
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              {sheetState === 'full' ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}
-            </span>
-          </button>
         </div>
 
         {/* Filter chips — globe filter, always visible as the peek layer */}
-        <div className={styles.mobileFilterSection}>
+        <div className={`${styles.mobileFilterSection}${desktopOpen === 'wide' ? ' ' + styles.desktopFilterVisible : ''}`} data-tour="filter-bar">
           <p className={styles.mobileFilterLabel}>
             <span className="material-symbols-outlined" style={{ fontSize: 9 }}>tune</span>
             Globe Filter
@@ -1230,7 +1259,7 @@ export default function CommandCenterOverlay({
         </div>
 
         {/* Divider — signals content below is a separate stream */}
-        <div className={styles.mobileSheetDivider}>
+        <div className={`${styles.mobileSheetDivider}${desktopOpen === 'wide' ? ' ' + styles.desktopDividerVisible : ''}`}>
           <span className={styles.mobileSheetDividerLine} />
           <span className={styles.mobileSheetDividerLabel}>
             <span className="material-symbols-outlined" style={{ fontSize: 9 }}>signal_cellular_alt</span>
