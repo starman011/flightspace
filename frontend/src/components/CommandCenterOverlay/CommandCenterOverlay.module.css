@@ -1365,9 +1365,12 @@
   letter-spacing: 0.1em;
 }
 
-/* ── Mobile filter row — hidden on desktop, shown inside sheet ───────────── */
-.mobileFilterRow { display: none; }
-.mobileFilterChip { display: none; }
+/* ── Mobile filter section + divider — hidden on desktop ─────────────────── */
+.mobileFilterSection { display: none; }
+.mobileFilterLabel   { display: none; }
+.mobileFilterRow     { display: none; }
+.mobileFilterChip    { display: none; }
+.mobileSheetDivider  { display: none; }
 
 /* ── Sheet state/expand button — hidden on desktop ───────────────────────── */
 .sheetStateBtn { display: none; }
@@ -1465,14 +1468,39 @@
   }
   .sheetStateBtn:active { background: rgba(0, 229, 255, 0.12); color: #00e5ff; }
 
-  /* Mobile filter row — chip strip always visible in peek */
+  /* Filter section — visually grouped as a distinct "Globe Filter" zone */
+  .mobileFilterSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 12px;
+    margin: 0 var(--space-2) 0;
+    padding: 8px 0 6px;
+  }
+
+  .mobileFilterLabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(195, 245, 255, 0.28);
+    padding: 0 14px 5px;
+    flex-shrink: 0;
+  }
+
+  /* Mobile filter row — chip strip */
   .mobileFilterRow {
     display: flex;
     align-items: center;
     gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 2px var(--space-4) 8px;
+    padding: 0 10px;
     flex-shrink: 0;
   }
   .mobileFilterRow::-webkit-scrollbar { display: none; }
@@ -1481,15 +1509,15 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: rgba(10, 15, 22, 0.65);
-    border: 1px solid rgba(59, 73, 76, 0.28);
+    background: rgba(15, 20, 28, 0.7);
+    border: 1px solid rgba(59, 73, 76, 0.3);
     border-radius: 20px;
     padding: 6px 12px;
     font-family: var(--font-mono);
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(195, 245, 255, 0.5);
+    color: rgba(195, 245, 255, 0.45);
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
@@ -1501,6 +1529,34 @@
     border-color: rgba(0, 229, 255, 0.45);
     background: rgba(0, 229, 255, 0.1);
     box-shadow: 0 0 10px rgba(0, 229, 255, 0.12);
+  }
+
+  /* Divider between filter and signal stream */
+  .mobileSheetDivider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px var(--space-4) 6px;
+    flex-shrink: 0;
+  }
+
+  .mobileSheetDividerLine {
+    flex: 1;
+    height: 1px;
+    background: rgba(59, 73, 76, 0.3);
+  }
+
+  .mobileSheetDividerLabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(0, 229, 255, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   /* The visual pill bar */

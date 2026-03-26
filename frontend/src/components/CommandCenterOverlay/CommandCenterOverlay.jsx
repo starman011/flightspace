@@ -1090,6 +1090,11 @@ export default function CommandCenterOverlay({
   const [sheetState, setSheetState] = useState('peek')
   const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
+
+  // Globe interaction → dock sheet to peek (graceful, not full-hide)
+  useEffect(() => {
+    if (forceCollapsed) setSheetState('peek')
+  }, [forceCollapsed])
   const touchRef  = useRef({ startY: 0, wasState: 'peek', dragging: false })
 
   const PEEK_H = 80  // px visible in peek: grab bar + filter row
@@ -1181,7 +1186,6 @@ export default function CommandCenterOverlay({
         ref={streamRef}
         className={[
           styles.stream,
-          forceCollapsed ? styles.streamHidden :
           sheetState === 'peek' ? styles.streamClosed :
           sheetState === 'half' ? styles.streamHalf : '',
         ].filter(Boolean).join(' ')}
@@ -1210,14 +1214,30 @@ export default function CommandCenterOverlay({
           </button>
         </div>
 
-        {/* Filter chips — always visible as the peek layer */}
-        <MobileFilterRow
-          activeFilter={activeFilter}
-          onFiltersChange={onFiltersChange}
-          onCameraScale={onCameraScale}
-          onActiveFilterChange={onActiveFilterChange}
-          onLaunchPanelToggle={onLaunchPanelToggle}
-        />
+        {/* Filter chips — globe filter, always visible as the peek layer */}
+        <div className={styles.mobileFilterSection}>
+          <p className={styles.mobileFilterLabel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>tune</span>
+            Globe Filter
+          </p>
+          <MobileFilterRow
+            activeFilter={activeFilter}
+            onFiltersChange={onFiltersChange}
+            onCameraScale={onCameraScale}
+            onActiveFilterChange={onActiveFilterChange}
+            onLaunchPanelToggle={onLaunchPanelToggle}
+          />
+        </div>
+
+        {/* Divider — signals content below is a separate stream */}
+        <div className={styles.mobileSheetDivider}>
+          <span className={styles.mobileSheetDividerLine} />
+          <span className={styles.mobileSheetDividerLabel}>
+            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>signal_cellular_alt</span>
+            Signal Stream
+          </span>
+          <span className={styles.mobileSheetDividerLine} />
+        </div>
 
         <SmartStack
           apod={apod}
