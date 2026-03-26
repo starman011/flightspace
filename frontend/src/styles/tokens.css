@@ -1,0 +1,104 @@
+/* ─── Celestial Precision — Design Tokens ────────────────────────────────────
+   Matches the Stitch StellarTracker design system exactly.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Surfaces — Stitch exact values ────────────────────────────────────── */
+  --surface-dim:               #0f1419;
+  --surface:                   #0f1419;
+  --surface-container-lowest:  #0a0f14;
+  --surface-container-low:     #171c22;
+  --surface-container:         #1b2026;
+  --surface-container-high:    #262a30;
+  --surface-container-highest: #30353b;
+  --surface-variant:           #30353b;
+  --surface-tint:              #00daf3;
+
+  /* ── Primary ───────────────────────────────────────────────────────────── */
+  --primary:           #c3f5ff;
+  --primary-container: #00e5ff;
+  --on-primary:        #00363d;
+  --on-primary-container: #00626e;
+
+  /* ── Secondary ─────────────────────────────────────────────────────────── */
+  --secondary:         #7ad0ff;
+  --on-secondary:      #003549;
+
+  /* ── Status ────────────────────────────────────────────────────────────── */
+  --tertiary-container: #22ef7e;
+  --tertiary:           #b1ffbf;
+  --error-container:    #93000a;
+  --on-error:           #ffdad6;
+  --warning:            #ff6b35;
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --on-surface:         #dfe3eb;
+  --on-surface-variant: #bac9cc;
+  --outline-variant:    #3b494c;
+  --outline:            #849396;
+
+  /* ── Gradients ─────────────────────────────────────────────────────────── */
+  --gradient-starlight: linear-gradient(135deg, #c3f5ff 0%, #00e5ff 100%);
+
+  /* ── Glassmorphism — Stitch spec ────────────────────────────────────────── */
+  --glass-bg:     rgba(48, 53, 59, 0.4);
+  --glass-blur:   blur(12px);
+  --glass-border: 1px solid rgba(59, 73, 76, 0.15);
+
+  /* ── Shadows — Stitch spec ──────────────────────────────────────────────── */
+  --shadow-float:    0 20px 50px rgba(0, 218, 243, 0.05);
+  --shadow-panel:    0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 -4px 24px rgba(0, 0, 0, 0.4);
+
+  /* ── Typography — families (Stitch: Space Grotesk + IBM Plex Mono + Inter) */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  /* ── Typography — scale ────────────────────────────────────────────────── */
+  --text-display-lg:  3.5rem;
+  --text-display-md:  2.25rem;
+  --text-headline:    1.5rem;
+  --text-title:       1.125rem;
+  --text-body-lg:     1rem;
+  --text-body-md:     0.875rem;
+  --text-label-md:    0.75rem;
+  --text-label-sm:    0.625rem;
+
+  /* ── Spacing (4px base) ────────────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Border radius — Stitch uses xl=0.75rem for cards ───────────────────── */
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   12px;
+  --radius-pill: 9999px;
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --ease-camera:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-panel:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-drift:   linear;
+
+  --duration-camera: 1400ms;
+  --duration-panel:  500ms;
+  --duration-fade:   400ms;
+  --duration-drift:  80ms;
+  --duration-fast:   150ms;
+
+  /* ── Chip glows ────────────────────────────────────────────────────────── */
+  --chip-glow-active:  0 0 8px rgba(34, 239, 126, 0.4);
+  --chip-glow-alert:   0 0 8px rgba(255, 107, 53, 0.4);
+  --chip-glow-error:   0 0 8px rgba(147, 0, 10, 0.3);
+
+  /* ── Layout — updated by JS when sidebar opens/closes ──────────────────── */
+  --sidebar-w: 256px;
+}

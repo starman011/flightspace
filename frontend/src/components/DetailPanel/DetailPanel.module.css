@@ -1,0 +1,359 @@
+/* ── Data Explorer (Final) — Stitch design ──────────────────────────────── */
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: calc(100dvh - 64px);
+  width: 340px;
+  background: rgba(23, 28, 34, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid rgba(59, 73, 76, 0.15);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: var(--text-label-md);
+  overflow: hidden;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Panel top bar ──────────────────────────────────────────────────────── */
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: rgba(15, 20, 25, 0.6);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
+  flex-shrink: 0;
+}
+
+.nominalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(34, 239, 126, 0.1);
+  border: 1px solid rgba(34, 239, 126, 0.2);
+  font-size: 10px;
+  color: var(--tertiary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.locLabel {
+  font-size: 10px;
+  color: var(--outline);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ── Page header ────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--on-surface);
+  margin-bottom: 4px;
+}
+
+.callsignRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.callsign {
+  font-family: var(--font-display);
+  font-size: var(--text-headline);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+}
+
+.typeCode {
+  font-size: var(--text-label-sm);
+  color: var(--on-surface-variant);
+  letter-spacing: 0.04em;
+}
+
+.pageDesc {
+  font-family: var(--font-body);
+  font-size: var(--text-label-md);
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+}
+
+/* Header right controls */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.trackBtn {
+  background: none;
+  border: var(--glass-border);
+  font-family: var(--font-mono);
+  font-size: var(--text-label-sm);
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  padding: var(--space-1) var(--space-2);
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.trackBtn:hover { color: var(--primary); border-color: var(--primary); }
+
+.trackBtn.tracking {
+  color: var(--tertiary-container);
+  border-color: var(--tertiary-container);
+  box-shadow: var(--chip-glow-active);
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  line-height: 1;
+  padding: 0;
+  font-family: var(--font-mono);
+  transition: color var(--duration-fast);
+}
+
+.close:hover { color: var(--on-surface); }
+
+/* ── State messages ─────────────────────────────────────────────────────── */
+
+.state {
+  padding: var(--space-3) var(--space-5);
+  color: var(--on-surface-variant);
+  font-size: var(--text-label-sm);
+}
+
+/* ── Aircraft photo ─────────────────────────────────────────────────────── */
+
+.photoWrap {
+  display: block;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.photo {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.photoCredit {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: var(--text-label-sm);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1px 4px;
+  pointer-events: none;
+}
+
+/* ── Telemetry stream (body) ────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-container-highest) transparent;
+}
+
+/* Stream header */
+.streamHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-5) var(--space-2);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+}
+
+.streamHeadLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--outline);
+}
+
+.streamLiveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tertiary-container);
+  box-shadow: 0 0 8px #22ef7e;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* Telemetry rows */
+.telemSection {
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.telemEntry {
+  padding: var(--space-3);
+  background: rgba(15, 20, 25, 0.4);
+  border-radius: var(--radius-md);
+  border-left: 2px solid rgba(195, 245, 255, 0.2);
+}
+
+.telemEntryHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.telemKey {
+  color: var(--primary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.telemTime {
+  color: var(--outline);
+}
+
+.telemValue {
+  font-size: var(--text-label-md);
+  color: var(--on-surface);
+}
+
+.telemValueAccent {
+  color: var(--tertiary-container);
+}
+
+.telemValueDown {
+  color: var(--on-error);
+}
+
+/* Simple data rows */
+.divider {
+  height: 1px;
+  background: rgba(59, 73, 76, 0.15);
+  margin: var(--space-2) 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.label {
+  color: var(--on-surface-variant);
+  text-transform: lowercase;
+  font-size: var(--text-label-sm);
+}
+
+.value {
+  color: var(--on-surface);
+  font-size: var(--text-label-md);
+}
+
+.value.up   { color: var(--tertiary-container); }
+.value.down { color: var(--on-error); }
+
+/* Signal precision display */
+.precisionCard {
+  margin: var(--space-2) var(--space-3);
+  background: rgba(23, 28, 34, 0.8);
+  border: 1px solid rgba(59, 73, 76, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.precisionLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--outline);
+}
+
+.precisionValue {
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 700;
+  color: var(--primary-container);
+}
+
+.precisionSub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tertiary-container);
+}
+
+/* ── Mobile: bottom sheet ───────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 60dvh;
+    border-left: none;
+    border-top: 1px solid rgba(0, 229, 255, 0.1);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6);
+  }
+}

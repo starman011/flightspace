@@ -1,0 +1,116 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.container {
+  position: fixed;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(500px, 90vw);
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.04),
+    0 24px 64px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(0, 229, 255, 0.06);
+  z-index: 201;
+  font-family: var(--font-mono);
+  font-size: var(--text-label-md);
+  overflow: hidden;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+}
+
+.prefix {
+  color: var(--primary-container);
+  font-size: var(--text-title);
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-label-md);
+  color: var(--on-surface);
+}
+
+.input::placeholder {
+  color: rgba(138, 155, 160, 0.4);
+}
+
+.loading {
+  color: var(--on-surface-variant);
+  font-size: var(--text-label-sm);
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.1) transparent;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-panel);
+  border-left: 2px solid transparent;
+}
+
+.result:hover {
+  background: rgba(0, 229, 255, 0.05);
+  border-left-color: rgba(0, 229, 255, 0.3);
+}
+
+.callsign {
+  font-weight: bold;
+  color: var(--primary-container);
+  letter-spacing: 0.05em;
+}
+
+.type {
+  color: var(--on-surface-variant);
+  font-size: var(--text-label-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alt {
+  color: var(--on-surface-variant);
+  font-size: var(--text-label-sm);
+  white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-4) var(--space-4);
+  color: rgba(138, 155, 160, 0.4);
+  font-size: var(--text-label-sm);
+  text-align: center;
+}

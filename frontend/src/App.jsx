@@ -1,0 +1,262 @@
+import { useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react'
+const Globe = lazy(() =>
+  import('./components/Globe/Globe').then(m => ({ default: m.Globe }))
+)
+import DetailPanel from './components/DetailPanel/DetailPanel'
+import SearchBar from './components/SearchBar/SearchBar'
+import FilterRail from './components/FilterRail/FilterRail'
+import LaunchPanel from './components/LaunchPanel/LaunchPanel'
+import HUD from './components/HUD/HUD'
+import StatusBar from './components/StatusBar/StatusBar'
+import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
+import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
+import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
+import { useSession } from './hooks/useSession'
+import { useAircraft } from './hooks/useAircraft'
+
+// ── Pad Focus Badge ───────────────────────────────────────────────────────────
+function PadFocusBadge({ launch, onExit }) {
+  const lat = launch.pad_lat, lon = launch.pad_lon
+  const latStr = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}`
+  const lonStr = `${Math.abs(lon).toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}`
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 200, display: 'flex', alignItems: 'center', gap: 16,
+      background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(18px)',
+      border: '1px solid rgba(0,229,255,0.3)', borderRadius: 12,
+      padding: '12px 20px', boxShadow: '0 0 40px rgba(0,229,255,0.12)',
+    }}>
+      {/* Pulsing ping dot */}
+      <div style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          background: '#00e5ff', animation: 'padPing 1.6s ease-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%', background: '#00e5ff',
+        }} />
+      </div>
+
+      <div>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
+          letterSpacing: '0.1em', color: 'rgba(0,229,255,0.6)', marginBottom: 3 }}>
+          Launch Pad · Locked
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
+          color: '#fff', marginBottom: 2 }}>
+          {launch.pad || (launch.mission_name || launch.name)}
+        </p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(195,245,255,0.5)' }}>
+          {latStr} · {lonStr}
+        </p>
+      </div>
+
+      <button onClick={onExit} style={{
+        background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)',
+        borderRadius: 8, color: 'rgba(0,229,255,0.7)', fontFamily: 'var(--font-mono)',
+        fontSize: 11, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
+        letterSpacing: '0.06em',
+      }}>
+        ✕ Exit
+      </button>
+    </div>
+  )
+}
+
+export default function App() {
+  const { sessionToken, isAuthenticated } = useSession()
+  const [liveEnabled, setLiveEnabled] = useState(false)
+  const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
+
+  const [selectedIcao24, setSelectedIcao24] = useState(null)
+  const [searchOpen, setSearchOpen]         = useState(false)
+  const [trackingId, setTrackingId]         = useState(null)
+  const [launchPanelOpen, setLaunchPanelOpen] = useState(false)
+  const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
+  const [activeScale, setActiveScale]       = useState('earth')
+  const [activeFilter, setActiveFilter]     = useState(null)
+  const [sidebarOpen, setSidebarOpen]       = useState(false)
+  const [focusedPad, setFocusedPad]         = useState(null)   // launch object | null
+  const [pinnedLaunch, setPinnedLaunch]     = useState(null)   // launch object | null
+  const [returnMission, setReturnMission]   = useState(null)   // mission to re-open on pad exit
+  const globeRef = useRef(null)
+
+const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
+
+  // In pad-focus mode pass an empty map so the globe is clean
+  const globeAircraft = useMemo(
+    () => focusedPad ? new Map() : aircraftWithShips,
+    [focusedPad, aircraftWithShips]
+  )
+
+  const handleAircraftClick = useCallback((icao24) => {
+    setSelectedIcao24(icao24)
+  }, [])
+
+  const handlePanelClose = useCallback(() => {
+    setSelectedIcao24(null)
+    setTrackingId(null)
+    globeRef.current?.drawTrail?.([])
+  }, [])
+
+  const handleSearchSelect = useCallback((result) => {
+    setSelectedIcao24(result.icao24)
+    setSearchOpen(false)
+  }, [])
+
+  const handleTrailData = useCallback((trailPoints) => {
+    globeRef.current?.drawTrail?.(trailPoints)
+  }, [])
+
+  const handleCameraScale = useCallback((scale) => {
+    setActiveScale(scale)
+    globeRef.current?.setCameraScale?.(scale)
+  }, [])
+
+  const handleLocatePad = useCallback((launch) => {
+    if (launch?.pad_lat && launch?.pad_lon) {
+      globeRef.current?.flyTo?.(launch.pad_lat, launch.pad_lon)
+    }
+    setFocusedPad(launch)
+    setReturnMission(launch)
+    setLaunchPanelOpen(false)
+    setSelectedIcao24(null)
+    setTrackingId(null)
+  }, [])
+
+  const handleExitPadFocus = useCallback(() => {
+    setFocusedPad(null)
+    setReturnMission(prev => {
+      if (prev) setLaunchPanelOpen(true)
+      return prev
+    })
+  }, [])
+
+  // Hide CommandCenter while launch panel is open or pad is focused
+  const showCommandCenter = !selectedIcao24 && !launchPanelOpen && !focusedPad && activeFilter !== 'asteroids'
+
+  return (
+    <>
+      {/* Keyframe for ping dot */}
+      <style>{`
+        @keyframes padPing {
+          0%   { transform: scale(1);   opacity: 0.9; }
+          70%  { transform: scale(3.5); opacity: 0; }
+          100% { transform: scale(1);   opacity: 0; }
+        }
+      `}</style>
+
+      {!focusedPad && (
+        <StatusBar
+          connectionStatus={connectionStatus}
+          activeScale={activeScale}
+          onScaleChange={handleCameraScale}
+          onSearchOpen={() => setSearchOpen(true)}
+          liveEnabled={liveEnabled}
+          onLiveToggle={() => setLiveEnabled(v => !v)}
+          trackedCount={aircraftWithShips.size}
+        />
+      )}
+
+      {!focusedPad && (
+        <HUD
+          trackedCount={aircraftWithShips.size}
+          connectionStatus={connectionStatus}
+          cameraAltM={cameraInfo.altM}
+          cameraLat={cameraInfo.lat}
+          cameraLon={cameraInfo.lon}
+          scaleLabel={cameraInfo.scaleLabel}
+        />
+      )}
+
+      {!focusedPad && (
+        <FilterRail
+          onFiltersChange={setFilters}
+          onCameraScale={handleCameraScale}
+          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+          launchPanelOpen={launchPanelOpen}
+          onActiveFilterChange={setActiveFilter}
+          sidebarOpen={sidebarOpen}
+          onSidebarToggle={() => setSidebarOpen(o => !o)}
+        />
+      )}
+
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0f1419' }} />}>
+        <Globe
+          ref={globeRef}
+          aircraft={globeAircraft}
+          selectedId={selectedIcao24}
+          onAircraftClick={focusedPad ? null : handleAircraftClick}
+          onViewportChange={setBounds}
+          trackingId={trackingId}
+          solarData={solarData}
+          padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
+        />
+      </Suspense>
+
+      {showCommandCenter && (
+        <CommandCenterOverlay
+          trackedCount={aircraftWithShips.size}
+          connectionStatus={connectionStatus}
+          issData={aircraftWithShips.get('ISS') ?? null}
+          activeFilter={activeFilter}
+          pinnedLaunch={pinnedLaunch}
+          onUnpinLaunch={() => setPinnedLaunch(null)}
+          onISSLink={{
+            flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
+            selectISS: ()         => setSelectedIcao24('ISS'),
+            trackISS:  ()         => setTrackingId('ISS'),
+          }}
+        />
+      )}
+
+      {!focusedPad && (
+        <OrbitalMapBar
+          onFiltersChange={setFilters}
+          onCameraScale={handleCameraScale}
+          onActiveFilterChange={setActiveFilter}
+          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        />
+      )}
+
+      <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} />
+
+      {!focusedPad && (
+        <SearchBar
+          open={searchOpen}
+          onOpen={() => setSearchOpen(true)}
+          onClose={() => setSearchOpen(false)}
+          onSelect={handleSearchSelect}
+          sessionToken={sessionToken}
+        />
+      )}
+
+      <LaunchPanel
+        open={launchPanelOpen}
+        onClose={() => { setLaunchPanelOpen(false); setReturnMission(null) }}
+        onLocatePad={handleLocatePad}
+        pinnedLaunchId={pinnedLaunch?.id ?? null}
+        onPinLaunch={setPinnedLaunch}
+        openToMission={returnMission}
+      />
+
+      {focusedPad && (
+        <PadFocusBadge launch={focusedPad} onExit={handleExitPadFocus} />
+      )}
+
+      {selectedIcao24 && !focusedPad && (
+        <DetailPanel
+          icao24={selectedIcao24}
+          onClose={handlePanelClose}
+          onTrailData={handleTrailData}
+          isAuthenticated={isAuthenticated}
+          sessionToken={sessionToken}
+          isTracking={trackingId === selectedIcao24}
+          onTrack={setTrackingId}
+        />
+      )}
+    </>
+  )
+}

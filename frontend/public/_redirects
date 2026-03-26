@@ -1,0 +1,7 @@
+# Static files — serve as-is, never rewrite to index.html
+/robots.txt    /robots.txt    200
+/sitemap.xml   /sitemap.xml   200
+/favicon.ico   /favicon.ico   200
+
+# SPA routing — all other paths serve index.html
+/*    /index.html   200

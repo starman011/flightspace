@@ -1,0 +1,1338 @@
+/* ── Command Center V2 Overlay — Stitch StellarTracker ──────────────────── */
+
+.overlay {
+  position: fixed;
+  left: var(--sidebar-w);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  pointer-events: none;
+  overflow: hidden;
+  transition: left var(--duration-panel) var(--ease-panel);
+}
+
+/* ── Background grid + radial glow ─────────────────────────────────────── */
+
+.gridBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gridSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.12;
+}
+
+.radialGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.08), transparent 70%);
+}
+
+/* ── Hero section (left, bottom-anchored) ───────────────────────────────── */
+
+.hero {
+  position: absolute;
+  left: 0;
+  bottom: 80px;
+  padding: var(--space-8);
+  max-width: 580px;
+  pointer-events: auto;
+}
+
+.activeTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotLive { background: var(--tertiary-container); box-shadow: 0 0 8px #22ef7e; animation: pulse 2s infinite; }
+.dotOff  { background: var(--warning); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.activeLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tertiary-container);
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 4.5rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  margin-bottom: var(--space-6);
+  text-shadow: 0 0 40px rgba(0, 229, 255, 0.1);
+}
+
+.heroAccent { color: var(--primary-container); }
+
+/* Stats grid */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 500px;
+  margin-bottom: var(--space-5);
+}
+
+.statCard {
+  background: rgba(23, 28, 34, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 73, 76, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.statLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(195, 245, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-1);
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.1;
+}
+
+.statUnit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--on-surface-variant);
+}
+
+/* Focused entity card */
+
+.focusCard {
+  background: rgba(23, 28, 34, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 73, 76, 0.15);
+  border-left: 4px solid var(--primary-container);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  position: relative;
+  max-width: 380px;
+  overflow: hidden;
+}
+
+.focusTarget {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  animation: pulse 2s infinite;
+}
+
+.focusLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-1);
+}
+
+.focusTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-headline);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: var(--space-2);
+}
+
+.focusDesc {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+/* ── Live ISS header row ─────────────────────────────────────────────────── */
+
+.issHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+/* ISS silhouette built in CSS */
+.issIconWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.issIcon {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.7));
+}
+
+.issSolarL,
+.issSolarR {
+  display: block;
+  width: 14px;
+  height: 7px;
+  background: rgba(0, 229, 255, 0.9);
+  border-radius: 1px;
+}
+
+.issBody {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: rgba(195, 245, 255, 0.95);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+/* Pulsing live dot on icon */
+.issLiveDot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tertiary-container);
+  box-shadow: 0 0 6px #22ef7e;
+  animation: issLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes issLivePulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.75); }
+}
+
+/* Telemetry grid inside focus card */
+.issTelemetry {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.issTelemCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.issTelemLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(132, 147, 150, 0.7);
+}
+
+.issTelemValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-container);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: linear-gradient(135deg, #c3f5ff 0%, #00e5ff 100%);
+  color: #00363d;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity var(--duration-fast);
+}
+
+.linkBtn:hover { opacity: 0.9; }
+
+/* Toast confirmation */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(34, 239, 126, 0.12);
+  border: 1px solid rgba(34, 239, 126, 0.25);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--tertiary-container);
+  letter-spacing: 0.05em;
+  animation: toastIn 0.2s ease-out;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Signal Stream (right panel) ────────────────────────────────────────── */
+
+.stream {
+  position: absolute;
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 368px;
+  background: rgba(12, 16, 22, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(59, 73, 76, 0.18);
+  border-right: none;
+  border-radius: 16px 0 0 16px;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  pointer-events: auto;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
+}
+
+.streamHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.streamTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-headline);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: var(--on-surface);
+}
+
+/* ── Smart Stack ─────────────────────────────────────────────────────────── */
+
+.smartStack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Navigation header row */
+.stackHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.stackLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(195, 245, 255, 0.55);
+}
+
+.stackNavBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(23, 28, 34, 0.7);
+  border: 1px solid rgba(59, 73, 76, 0.25);
+  border-radius: 7px;
+  color: rgba(195, 245, 255, 0.45);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.stackNavBtn:hover {
+  color: var(--primary);
+  border-color: rgba(0, 229, 255, 0.35);
+  background: rgba(0, 229, 255, 0.06);
+}
+
+/* Animated stack slide — key-swap triggers this animation */
+.stackSlide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  animation: stackFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stackSlide::-webkit-scrollbar { display: none; }
+
+@keyframes stackFadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);     }
+}
+
+/* Dot indicators */
+.stackDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 2px 0;
+}
+
+.stackDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(195, 245, 255, 0.18);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stackDotActive {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.45);
+}
+
+/* Shared chip label used across all stacks */
+.stackChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(0, 229, 255, 0.7);
+  background: rgba(0, 0, 20, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 3px 7px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* ── APOD stack (Jobs law: image IS the design; title commands) ──────────── */
+
+.apodStack {
+  flex: 1;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #020508;
+  min-height: 200px;
+}
+.apodStack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  transition: box-shadow 0.22s;
+  pointer-events: none;
+}
+.apodStack:hover::after { box-shadow: inset 0 0 0 1px rgba(0,229,255,0.2); }
+
+.apodStackBg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.apodStack:hover .apodStackBg { transform: scale(1.04); }
+
+/* Deep-base shade — image clear at top, readable text at base */
+.apodStackShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(2,5,14,0.97)  0%,
+    rgba(2,5,14,0.52)  40%,
+    rgba(2,5,14,0.08)  68%,
+    rgba(2,5,14,0)     100%);
+}
+
+.apodStackContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Source — whisper; image already proves the source */
+.apodStackSource {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.55);
+}
+
+/* Title — the dominant voice; no competition */
+.apodStackTitle {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Credit — present but invisible; steps aside completely */
+.apodStackCredit {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: rgba(195, 245, 255, 0.3);
+}
+
+.apodStackBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 18, 0.65);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 229, 255, 0.7);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.apodStack:hover .apodStackBadge { opacity: 1; }
+
+/* ── Solar stack (Jobs law: the sun IS the hero; chrome disappears) ───────── */
+
+/* Full-panel immersive — same language as APOD/News */
+.solarStack {
+  flex: 1;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0a040a;
+  min-height: 200px;
+}
+.solarStack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  pointer-events: none;
+  transition: box-shadow 0.22s;
+}
+.solarStack:hover::after { box-shadow: inset 0 0 0 1px rgba(255,107,53,0.25); }
+
+.solarBg {
+  position: absolute;
+  inset: 0;
+  background-color: #3a0800;
+  background-image: url('https://cdn.pixabay.com/photo/2011/12/13/14/31/sun-11588_640.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.2);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s;
+}
+.solarStack:hover .solarBg { transform: scale(1.04); filter: saturate(1.35) brightness(1.08); }
+
+.solarShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(2,2,8,0.97)  0%,
+    rgba(2,2,8,0.45)  40%,
+    rgba(2,2,8,0.05)  72%,
+    rgba(2,2,8,0)     100%);
+}
+
+.solarContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Activity level — the single dominant statement */
+.solarLevel {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+/* Kp + description — one compact line, steps back */
+.solarKp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(195, 245, 255, 0.5);
+  line-height: 1.5;
+}
+
+/* ── Meteors stack (Jobs law: name dominates; one function) ──────────────── */
+
+.meteorsStack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meteorsFeatured {
+  flex: 1;
+  min-height: 155px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+.meteorsFeatured:hover .meteorsFeatBg { transform: scale(1.04); }
+
+.meteorsFeatBg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.meteorsFeatShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(2,5,14,0.97)  0%,
+    rgba(2,5,14,0.45)  45%,
+    rgba(2,5,14,0.05)  72%,
+    rgba(2,5,14,0)     100%);
+}
+
+.meteorsFeatContent {
+  position: absolute;
+  inset: 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* Shower name — the single dominant voice */
+.meteorsFeatName {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+/* Peak · Moon · ZHR — one line, mid-weight mono */
+.meteorsFeatSub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(195, 245, 255, 0.72);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meteorsDot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(195, 245, 255, 0.35);
+  flex-shrink: 0;
+}
+
+/* Active date range — quietest line */
+.meteorsFeatActive {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
+/* Description — italic, fully back */
+.meteorsDescText {
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.38);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Upcoming — zero decoration; pure type */
+.meteorsUpcoming {
+  background: rgba(4, 7, 14, 0.7);
+  border-radius: 12px;
+  padding: 8px 12px 6px;
+  flex-shrink: 0;
+}
+
+.meteorsUpcomingLabel {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.38);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.meteorsUpcomingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.meteorsUpcomingRow:hover   { background: rgba(0, 229, 255, 0.05); }
+.meteorsUpcomingActive      { background: rgba(0, 229, 255, 0.08) !important; }
+
+.meteorsUpcomingName {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.8);
+  letter-spacing: -0.01em;
+}
+
+.meteorsUpcomingDate {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.3);
+}
+
+/* ── News stack (Jobs law: content > chrome, hierarchy, breathing room) ── */
+
+.newsStack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Hero — the image IS the design; text breathes over it */
+.newsHero {
+  flex: 1;
+  min-height: 168px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #030810;
+  background-size: cover;
+  background-position: center;
+}
+.newsHero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  transition: box-shadow 0.2s;
+  pointer-events: none;
+}
+.newsHero:hover::after {
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.25);
+}
+.newsHero:hover .newsHeroBg { transform: scale(1.03); }
+
+/* Shade: near-opaque at base so title is always readable */
+.newsHeroShade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top,
+      rgba(2, 5, 14, 0.97)  0%,
+      rgba(2, 5, 14, 0.55)  38%,
+      rgba(2, 5, 14, 0.08)  70%,
+      rgba(2, 5, 14, 0)     100%);
+}
+
+.newsHeroContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Source label — quiet, upper-case, mono */
+.newsHeroSource {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.6);
+}
+
+/* Headline — the dominant voice; generous size, tight tracking */
+.newsHeroTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Age — nearly invisible, just present */
+.newsHeroAge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195, 245, 255, 0.32);
+}
+
+/* Open-in-new badge — invisible until hover; details reward attention */
+.newsHeroBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 18, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 229, 255, 0.7);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.newsHero:hover .newsHeroBadge { opacity: 1; }
+
+/* Secondary — pure typography, zero decoration; let the words do the work */
+.newsSecondary {
+  background: rgba(5, 8, 16, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.newsSecondaryRow {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.newsSecondaryRow:hover { background: rgba(0, 229, 255, 0.04); }
+
+.newsDivider {
+  height: 1px;
+  background: rgba(59, 73, 76, 0.22);
+  margin: 0 14px;
+}
+
+/* Title: confident weight, not screaming */
+.newsSecondaryTitle {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(223, 232, 245, 0.82);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* Meta: steps all the way back */
+.newsSecondaryMeta {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.28);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Quote stack ─────────────────────────────────────────────────────────── */
+
+.quoteStack {
+  flex: 1;
+  background: rgba(5, 8, 18, 0.88);
+  border: 1px solid rgba(59, 73, 76, 0.2);
+  border-left: 3px solid rgba(0, 229, 255, 0.4);
+  border-radius: 14px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-left-color 0.2s;
+  min-height: 160px;
+}
+.quoteStack:hover { border-left-color: rgba(0, 229, 255, 0.7); }
+
+.quoteStackMark {
+  font-family: Georgia, serif;
+  font-size: 3.5rem;
+  color: rgba(0, 229, 255, 0.12);
+  line-height: 0.8;
+  margin-top: -4px;
+  user-select: none;
+}
+
+.quoteStackText {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.85);
+  line-height: 1.65;
+}
+
+.quoteStackAuthor {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0, 229, 255, 0.55);
+  letter-spacing: 0.05em;
+}
+
+/* ── Night Sky stack ─────────────────────────────────────────────────────── */
+
+.nightSkyStack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Comet hero — CSS starfield, no external image */
+.cometHero {
+  flex: 1;
+  min-height: 155px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: linear-gradient(165deg, #020b1e 0%, #030e22 55%, #020710 100%);
+}
+.cometHero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  transition: box-shadow 0.2s;
+  pointer-events: none;
+}
+.cometHero:hover::after { box-shadow: inset 0 0 0 1px rgba(180,210,255,0.18); }
+
+/* CSS starfield + comet streak via box-shadow */
+.cometStars {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.55) 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 12%, rgba(255,255,255,0.45) 1px, transparent 1.5px),
+    radial-gradient(circle at 45% 8%,  rgba(255,255,255,0.35) 1px, transparent 1.5px),
+    radial-gradient(circle at 85% 38%, rgba(255,255,255,0.4)  1px, transparent 1.5px),
+    radial-gradient(circle at 60% 55%, rgba(255,255,255,0.3)  1px, transparent 1.5px),
+    radial-gradient(circle at 30% 70%, rgba(255,255,255,0.25) 1px, transparent 1.5px),
+    radial-gradient(circle at 92% 68%, rgba(255,255,255,0.35) 1px, transparent 1.5px),
+    radial-gradient(circle at 10% 50%, rgba(255,255,255,0.3)  1px, transparent 1.5px),
+    /* comet streak */
+    linear-gradient(
+      100deg,
+      transparent 5%,
+      rgba(180,215,255,0.15) 28%,
+      rgba(220,240,255,0.55) 50%,
+      rgba(255,252,220,0.8)  56%,
+      rgba(255,252,220,0.2)  62%,
+      transparent 68%
+    );
+}
+
+.cometShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(2,5,14,0.97) 0%,
+    rgba(2,5,14,0.48) 42%,
+    rgba(2,5,14,0.06) 72%,
+    rgba(2,5,14,0)    100%);
+}
+
+.cometContent {
+  position: absolute;
+  inset: 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.cometName {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.cometFullName {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(180, 210, 255, 0.6);
+}
+
+.cometDesc {
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.38);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cometStatus {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
+/* Planets section */
+.planetsWrap {
+  background: rgba(4, 7, 14, 0.7);
+  border-radius: 12px;
+  padding: 8px 12px 6px;
+  flex-shrink: 0;
+}
+
+.planetsLabel {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(0, 229, 255, 0.38);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.planetsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.planetRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 4px;
+  border-radius: 5px;
+  transition: background 0.12s;
+}
+.planetRow:hover { background: rgba(0, 229, 255, 0.04); }
+
+.planetSymbol {
+  font-size: 13px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.planetImg {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+}
+
+.planetName {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.82);
+  flex: 1;
+  letter-spacing: -0.01em;
+}
+
+.planetSky {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.38);
+  white-space: nowrap;
+}
+
+.planetBino {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  color: rgba(180, 160, 255, 0.6);
+  letter-spacing: 0.06em;
+  background: rgba(180, 160, 255, 0.1);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+}
+
+.planetMag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(0, 229, 255, 0.5);
+  min-width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Watermark */
+.watermark {
+  position: absolute;
+  top: 12px;
+  right: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.watermark span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--primary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* ── Pinned launch countdown tile ───────────────────────────────────────── */
+
+.pinnedTile {
+  background: rgba(8, 14, 22, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 12px;
+  padding: var(--space-4);
+  flex-shrink: 0;
+  animation: pinnedIn 0.25s ease-out;
+  box-shadow: 0 2px 16px rgba(0, 229, 255, 0.06);
+}
+
+@keyframes pinnedIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pinnedHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
+
+.pinnedMeta { flex: 1; min-width: 0; }
+
+.pinnedStatus {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.pinnedStatusGo   { background: rgba(34,239,126,0.15); color: var(--tertiary-container); }
+.pinnedStatusTbd  { background: rgba(195,245,255,0.08); color: var(--secondary); }
+.pinnedStatusHold { background: rgba(255,107,53,0.15); color: var(--warning); }
+
+.pinnedName {
+  font-family: var(--font-display);
+  font-size: var(--text-label-md);
+  font-weight: 700;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.pinnedSub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-surface-variant);
+}
+
+.pinnedUnpin {
+  background: none;
+  border: none;
+  color: rgba(0, 229, 255, 0.5);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+  transition: color var(--duration-fast);
+}
+.pinnedUnpin:hover { color: var(--primary); }
+
+.pinnedCountdown {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.pinnedCountUnit {
+  display: flex;
+  align-items: baseline;
+  text-align: center;
+}
+
+.pinnedNum {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.pinnedLab {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--on-surface-variant);
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.pinnedSep {
+  font-size: 1.2rem;
+  color: rgba(59, 73, 76, 0.6);
+  font-weight: 100;
+  padding: 0 2px;
+}
+
+.pinnedLaunched {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--tertiary-container);
+  letter-spacing: 0.1em;
+}
+
+/* ── Mobile: hide overlay ────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .overlay { left: 0; top: 56px; }
+  .hero    { display: none; }
+  .stream  { display: none; }
+  .watermark { display: none; }
+}

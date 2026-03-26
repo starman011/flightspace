@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ── Primary SEO ──────────────────────────────────────────────── -->
+    <title>SkyDot — Live Flight Radar &amp; Ship Tracker</title>
+    <meta name="description"
+          content="Track real-time flights, ships, and satellites on an interactive 3D globe. SkyDot delivers live ADS-B aircraft positions, AIS maritime vessels, and orbital data in a clean newspaper dot-projection interface." />
+    <meta name="keywords"
+          content="flight tracker, live flight radar, real-time aircraft tracking, ADS-B, ship tracker, AIS maritime, satellite tracker, ISS tracker, 3D globe, flight map" />
+    <meta name="author" content="SkyDot" />
+    <link rel="canonical" href="https://skydot.app/" />
+
+    <!-- ── Open Graph (Facebook, LinkedIn, WhatsApp) ────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:url"         content="https://skydot.app/" />
+    <meta property="og:title"       content="SkyDot — Live Flight Radar &amp; Ship Tracker" />
+    <meta property="og:description" content="Track real-time flights, ships, and satellites on an interactive 3D globe. Live ADS-B, AIS maritime, and orbital data." />
+    <meta property="og:image"       content="https://skydot.app/og-image.png" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale"      content="en_US" />
+    <meta property="og:site_name"   content="SkyDot" />
+
+    <!-- ── Twitter / X Card ─────────────────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:url"         content="https://skydot.app/" />
+    <meta name="twitter:title"       content="SkyDot — Live Flight Radar &amp; Ship Tracker" />
+    <meta name="twitter:description" content="Track real-time flights, ships, and satellites on an interactive 3D globe." />
+    <meta name="twitter:image"       content="https://skydot.app/og-image.png" />
+
+    <!-- ── Structured Data (JSON-LD) ────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SkyDot",
+      "url": "https://skydot.app/",
+      "description": "Real-time 3D globe tracking live flights (ADS-B), maritime vessels (AIS), and satellites including the ISS.",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "Live ADS-B flight tracking",
+        "Real-time AIS ship tracking",
+        "Satellite and ISS orbital tracking",
+        "Interactive 3D globe visualization",
+        "Flight detail panels with trail history",
+        "Search by callsign or ICAO24"
+      ]
+    }
+    </script>
+
+    <!-- ── Favicon (placeholder — replace with actual icon) ─────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Preconnect to all external origins used by the app -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin />
+    <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin />
+
+    <!-- Design system fonts: Orbitron (brand), Space Grotesk (headlines), IBM Plex Mono (telemetry), Inter (body) -->
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap"
+          onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript>
+      <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" />
+    </noscript>
+
+    <!-- Material Symbols for sidebar + HUD icons -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Kick off world-atlas fetch early so it's ready when Globe initialises -->
+    <link rel="prefetch" as="fetch" crossorigin
+          href="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
