@@ -633,11 +633,11 @@ function NightSkyStack({ expanded }) {
         {/* Full planet table */}
         <p className={styles.expandedSectionLabel} style={{ marginTop: 12 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 10 }}>visibility</span>
-          Planetary Visibility · {new Date().getFullYear()} · naked eye unless noted
+          Planetary Visibility · {new Date().getFullYear()} · unaided unless noted
         </p>
         <div className={styles.planetsExpandedTable}>
           <div className={styles.planetsExpandedHead}>
-            <span>Planet</span><span>Sky</span><span>Mag</span><span>Note</span>
+            <span>Planet</span><span>Sky</span><span>Mag</span><span>Visibility</span>
           </div>
           {PLANETS.map(p => (
             <div key={p.name} className={styles.planetsExpandedRow}>
@@ -649,11 +649,11 @@ function NightSkyStack({ expanded }) {
               <span className={styles.planetsExpandedMag} style={{ color: p.color }}>
                 {p.mag > 0 ? '+' : ''}{p.mag.toFixed(1)}
               </span>
-              <span>{p.naked ? '👁 Naked eye' : <span className={styles.planetBino}>BINO</span>}</span>
+              <span>{p.naked ? <span className={styles.planetUnaided}>Unaided</span> : <span className={styles.planetBino}>Optical</span>}</span>
             </div>
           ))}
         </div>
-        <p className={styles.expandedFootnote}>Magnitude scale: lower = brighter. −4 = Venus (very bright). +7 = binocular limit.</p>
+        <p className={styles.expandedFootnote}>Magnitude: lower = brighter · −4 (Venus) very bright · +6 unaided limit · +8 binoculars · +13 telescope</p>
       </div>
     )
   }
@@ -677,7 +677,7 @@ function NightSkyStack({ expanded }) {
       <div className={styles.planetsWrap}>
         <p className={styles.planetsLabel}>
           <span className="material-symbols-outlined" style={{ fontSize: 9 }}>visibility</span>
-          Planets · approx {new Date().getFullYear()} · naked eye unless noted
+          Planets · approx {new Date().getFullYear()} · unaided unless noted
         </p>
         <div className={styles.planetsGrid}>
           {PLANETS.map(p => (
@@ -685,7 +685,7 @@ function NightSkyStack({ expanded }) {
               <img src={p.img} alt={p.name} className={styles.planetImg} />
               <span className={styles.planetName}>{p.name}</span>
               <span className={styles.planetSky}>{p.sky}</span>
-              {!p.naked && <span className={styles.planetBino}>BINO</span>}
+              {!p.naked && <span className={styles.planetBino}>Optical</span>}
               <span className={styles.planetMag}>{p.mag > 0 ? '+' : ''}{p.mag.toFixed(1)}</span>
             </div>
           ))}
