@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import styles from './DetailPanel.module.css'
 import { formatAltitude, formatSpeed, formatHeading, formatCallsign } from '../../utils/formatters'
 
+const API = import.meta.env.VITE_API_URL || ''
+
 async function fetchPhoto(icao24) {
   try {
     const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`, {
@@ -54,7 +56,7 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
 
   const refreshLive = useCallback(() => {
     if (!icao24) return
-    fetch(`/api/v1/aircraft/${icao24}`, { credentials: 'include' })
+    fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => {
         setDetail(data)
@@ -70,7 +72,7 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
     setDetail(null)
     setPhoto(null)
 
-    fetch(`/api/v1/aircraft/${icao24}`, { credentials: 'include' })
+    fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => {
         setDetail(data)

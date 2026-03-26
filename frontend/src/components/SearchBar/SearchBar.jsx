@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './SearchBar.module.css'
 
+const API = import.meta.env.VITE_API_URL || ''
+
 export default function SearchBar({ open, onOpen, onClose, onSelect }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -46,7 +48,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect }) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=10`, {
+        const res = await fetch(`${API}/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=10`, {
           credentials: 'include',
         })
         if (res.ok) {

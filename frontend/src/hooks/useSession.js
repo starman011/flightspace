@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
+const API = import.meta.env.VITE_API_URL || ''
+
 export function useSession() {
   const [sessionToken, setSessionToken] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -7,7 +9,7 @@ export function useSession() {
 
   const createAnonymousSession = useCallback(async () => {
     try {
-      const res = await fetch('/api/v1/session', {
+      const res = await fetch(`${API}/api/v1/session`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -38,7 +40,7 @@ export function useSession() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback(async (email, password) => {
-    const res = await fetch('/api/v1/auth/login', {
+    const res = await fetch(`${API}/api/v1/auth/login`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -55,7 +57,7 @@ export function useSession() {
   }, [])
 
   const logout = useCallback(async () => {
-    await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' })
+    await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
     setIsAuthenticated(false)
     await createAnonymousSession()
   }, [createAnonymousSession])

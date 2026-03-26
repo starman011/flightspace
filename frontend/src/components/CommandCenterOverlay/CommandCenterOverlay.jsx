@@ -128,7 +128,7 @@ function useApod() {
   const [apod, setApod] = useState(_apodCache)
   useEffect(() => {
     if (_apodCache && Date.now() - _apodCachedAt < 3_600_000) { setApod(_apodCache); return }
-    fetch('/api/v1/apod')
+    fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/apod')
       .then(r => r.json())
       .then(d => {
         const entry = (d.media_type === 'image') ? d : apodFallback()
