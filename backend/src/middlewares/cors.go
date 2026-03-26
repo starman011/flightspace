@@ -28,12 +28,13 @@ func allowedOrigins() map[string]bool {
 // CORS returns a middleware that sets CORS headers for allowed origins.
 func CORS(next http.Handler) http.Handler {
 	allowed := allowedOrigins()
+	allowAll := allowed["*"]
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
 		isLocalhost := strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:")
-		if origin != "" && (allowed[origin] || isLocalhost) {
+		if origin != "" && (allowAll || allowed[origin] || isLocalhost) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
