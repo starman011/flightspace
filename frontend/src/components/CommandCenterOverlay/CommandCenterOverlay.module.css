@@ -1405,9 +1405,9 @@
     will-change: transform;
   }
 
-  /* Peek state — show 60px strip so user can see and swipe up */
+  /* Peek state — show 80px strip so user can see rich preview and swipe up */
   .streamClosed {
-    transform: translateY(calc(100% - 60px));
+    transform: translateY(calc(100% - 80px));
   }
 
   /* Globe interaction — fully hide the sheet */
@@ -1440,22 +1440,63 @@
     flex-shrink: 0;
   }
 
-  /* Label shown only when peeking — invites upward swipe */
-  .peekLabel {
+  /* Rich peek preview row — panel icon + name + dots */
+  .peekPreview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 4px;
+    animation: peekIn 0.22s ease;
+  }
+
+  @keyframes peekIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .peekLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .peekTitle {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(195, 245, 255, 0.9);
+    margin: 0 0 2px;
+  }
+
+  .peekHint {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(0, 229, 255, 0.45);
+    margin: 0;
+  }
+
+  .peekDots {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(0, 229, 255, 0.5);
-    animation: peekLabelFade 0.25s ease;
   }
 
-  @keyframes peekLabelFade {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .peekDot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(195, 245, 255, 0.18);
+    transition: background 0.2s, width 0.2s;
+  }
+
+  .peekDotActive {
+    width: 12px;
+    border-radius: 2px;
+    background: #00e5ff;
+    box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
   }
 
   /* Mobile intro overlay — fades in then out, revealing globe */

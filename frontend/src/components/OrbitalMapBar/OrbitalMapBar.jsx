@@ -162,7 +162,21 @@ export default function OrbitalMapBar({
       {/* Cosmic address — top-left, below HUD */}
       <CosmicAddressWidget />
 
-      {/* Unified bottom dock — collapses to a thin bar, expands on hover/tap */}
+      {/* Mobile: always-visible category chip strip above the stream peek */}
+      <div className={styles.mobileBar} data-tour="filter-bar">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat.id}
+            className={`${styles.mobileChip} ${activeCat === cat.id ? styles.mobileChipOn : ''}`}
+            onClick={() => handleCat(cat)}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{cat.icon}</span>
+            <span className={styles.mobileChipLabel}>{cat.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop: hover/tap-to-expand dock */}
       <div className={`${styles.dockWrap}${dockOpen ? ` ${styles.dockOpen}` : ''}`} data-tour="filter-bar">
         {/* Collapsed indicator bar (always visible) — tap on mobile to open */}
         <div className={styles.collapseBar} onClick={() => setDockOpen(o => !o)}>

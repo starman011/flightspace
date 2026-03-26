@@ -284,13 +284,67 @@
   padding: 4px 8px 8px;
 }
 
+/* ── Mobile strip (always visible) ───────────────────────────────────────── */
+
+.mobileBar {
+  display: none; /* hidden on desktop — shown only on mobile */
+}
+
+.mobileChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(10, 15, 22, 0.6);
+  border: 1px solid rgba(59, 73, 76, 0.22);
+  border-radius: 12px;
+  padding: 7px 12px 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  color: rgba(195, 245, 255, 0.4);
+}
+
+.mobileChip:active { background: rgba(0, 229, 255, 0.08); }
+
+.mobileChipOn {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
+}
+
+.mobileChipLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
-  .dockContent  { width: calc(100vw - 24px); }
-  .collapseBar  { width: 80px; }
-  .dockWrap:hover .collapseBar,
-  .dockOpen .collapseBar { width: calc(100vw - 24px); }
-  .cosmicWrap    { display: none; }
-  .filterStrip { padding: var(--space-3) var(--space-4); }
+  /* Hide desktop dock entirely on mobile */
+  .dockWrap    { display: none; }
+  .cosmicWrap  { display: none; }
+
+  /* Always-visible chip strip */
+  .mobileBar {
+    display: flex;
+    position: fixed;
+    bottom: 88px; /* sits just above the stream peek (80px) + 8px gap */
+    left: 0;
+    right: 0;
+    padding: 8px 14px;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: rgba(5, 9, 16, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 229, 255, 0.07);
+    z-index: 48; /* below stream sheet (which starts at bottom) */
+  }
+  .mobileBar::-webkit-scrollbar { display: none; }
 }

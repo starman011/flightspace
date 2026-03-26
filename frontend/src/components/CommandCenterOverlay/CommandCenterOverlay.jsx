@@ -501,7 +501,7 @@ function ISSStack({ issData, onISSLink }) {
 }
 
 // ── Smart Stack container ──────────────────────────────────────────────────
-function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink }) {
+function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, onPanelChange }) {
   const [active, setActive]   = useState(0)
   const pausedRef             = useRef(false)
   const pauseTimerRef         = useRef(null)
@@ -510,14 +510,19 @@ function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunc
   // Auto-rotate every 9 s, pauses for 25 s after user interaction
   useEffect(() => {
     const id = setInterval(() => {
-      if (!pausedRef.current) setActive(a => (a + 1) % total)
+      if (!pausedRef.current) setActive(a => {
+        const next = (a + 1) % total
+        onPanelChange?.(next)
+        return next
+      })
     }, 9000)
     return () => clearInterval(id)
-  }, [total])
+  }, [total, onPanelChange])
 
   const go = (idx) => {
     pausedRef.current = true
     setActive(idx)
+    onPanelChange?.(idx)
     clearTimeout(pauseTimerRef.current)
     pauseTimerRef.current = setTimeout(() => { pausedRef.current = false }, 25000)
   }
@@ -744,11 +749,12 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
   // ── Mobile bottom sheet — swipe up/down gesture ──────────────────────────
   const [sheetOpen, setSheetOpen] = useState(true)
   const [introGone, setIntroGone] = useState(false)
+  const [activePanelIdx, setActivePanelIdx] = useState(0)
   const streamRef = useRef(null)
   const touchRef  = useRef({ startY: 0, wasOpen: true, dragging: false })
 
   // Height of visible peek strip when sheet is closed
-  const PEEK_H = 60
+  const PEEK_H = 80
 
   const onHandleTouchStart = (e) => {
     touchRef.current = { startY: e.touches[0].clientY, wasOpen: sheetOpen, dragging: true }
@@ -837,20 +843,32 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
         className={`${styles.stream}${(!sheetOpen || forceCollapsed) ? ` ${styles.streamClosed}` : ''}${forceCollapsed ? ` ${styles.streamHidden}` : ''}`}
         data-tour="signal-stream"
       >
-        {/* Grab handle strip — handles both swipe-down (close) and swipe-up (open) */}
+        {/* Grab handle — swipe zone + peek preview */}
         <div
           className={styles.grabHandle}
           onTouchStart={onHandleTouchStart}
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
+          onClick={() => !sheetOpen && setSheetOpen(true)}
         >
           <span className={styles.grabBar} />
-          {!sheetOpen && (
-            <span className={styles.peekLabel}>
-              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>keyboard_arrow_up</span>
-              Signal Stream
-            </span>
-          )}
+          {/* Peek preview — only visible when collapsed */}
+          <div className={styles.peekPreview}>
+            <div className={styles.peekLeft}>
+              <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#00e5ff' }}>
+                {STACK_DEFS[activePanelIdx]?.icon}
+              </span>
+              <div>
+                <p className={styles.peekTitle}>{STACK_DEFS[activePanelIdx]?.label}</p>
+                <p className={styles.peekHint}>Swipe up to explore</p>
+              </div>
+            </div>
+            <div className={styles.peekDots}>
+              {STACK_DEFS.map((_, i) => (
+                <span key={i} className={`${styles.peekDot} ${i === activePanelIdx ? styles.peekDotActive : ''}`} />
+              ))}
+            </div>
+          </div>
         </div>
         <SmartStack
           apod={apod}
@@ -862,6 +880,7 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
           onUnpinLaunch={onUnpinLaunch}
           issData={issData}
           onISSLink={onISSLink}
+          onPanelChange={setActivePanelIdx}
         />
       </div>
 
