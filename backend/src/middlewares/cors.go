@@ -25,24 +25,20 @@ func allowedOrigins() map[string]bool {
 	return origins
 }
 
-// CORS returns a middleware that sets CORS headers for allowed origins.
+// CORS returns a middleware that sets CORS headers.
+// Origin is echoed back so credentials work; security is enforced via JWT.
 func CORS(next http.Handler) http.Handler {
-	allowed := allowedOrigins()
-	allowAll := allowed["*"]
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-
-		isLocalhost := strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:")
-		if origin != "" && (allowAll || allowed[origin] || isLocalhost) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token")
-			w.Header().Set("Vary", "Origin")
+		if origin == "" {
+			origin = "*"
 		}
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token")
+		w.Header().Set("Vary", "Origin")
 
-		// Handle preflight
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
