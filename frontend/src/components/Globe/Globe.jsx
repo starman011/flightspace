@@ -769,7 +769,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -872,7 +872,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     controls.zoomSpeed       = 2.0       // faster scroll needed for large zoom range
     controls.autoRotate      = true
     controls.autoRotateSpeed = 0.18
-    renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false })
+    renderer.domElement.addEventListener('pointerdown', () => {
+      controls.autoRotate = false
+      int.current.onInteract?.()
+    })
+    renderer.domElement.addEventListener('wheel', () => { int.current.onInteract?.() }, { passive: true })
 
     // ── Viewport bounds → backend filtering ──────────────────────────
     // Sends lat/lon bounding box to the parent so the backend only streams
@@ -1784,6 +1788,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   useEffect(() => {
     if (int.current) int.current.onViewportChange = onViewportChange
   }, [onViewportChange])
+
+  useEffect(() => {
+    if (int.current) int.current.onInteract = onInteract
+  }, [onInteract])
 
   useEffect(() => {
     if (!int.current) return

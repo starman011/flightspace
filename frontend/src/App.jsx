@@ -122,7 +122,15 @@ export default function App() {
   const [focusedPad, setFocusedPad]         = useState(null)
   const [pinnedLaunch, setPinnedLaunch]     = useState(null)
   const [returnMission, setReturnMission]   = useState(null)
+  const [streamCollapsed, setStreamCollapsed] = useState(false)
+  const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
+
+  const handleGlobeInteract = useCallback(() => {
+    setStreamCollapsed(true)
+    clearTimeout(collapseTimerRef.current)
+    collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
+  }, [])
 
   // Sync state → URL whenever relevant state changes
   useEffect(() => {
@@ -240,6 +248,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           trackingId={trackingId}
           solarData={solarData}
           padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
+          onInteract={handleGlobeInteract}
         />
       </Suspense>
 
@@ -248,9 +257,9 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           trackedCount={aircraftWithShips.size}
           connectionStatus={connectionStatus}
           issData={aircraftWithShips.get('ISS') ?? null}
-          activeFilter={activeFilter}
           pinnedLaunch={pinnedLaunch}
           onUnpinLaunch={() => setPinnedLaunch(null)}
+          forceCollapsed={streamCollapsed}
           onISSLink={{
             flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
             selectISS: ()         => setSelectedIcao24('ISS'),

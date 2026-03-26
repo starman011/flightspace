@@ -320,6 +320,12 @@
 
 /* ── Signal Stream (right panel) ────────────────────────────────────────── */
 
+.streamHidden {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .stream {
   position: absolute;
   right: 0;
@@ -340,6 +346,7 @@
   min-height: 0;
   overflow: hidden;
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
 }
 
 .streamHeader {
@@ -1401,6 +1408,12 @@
   /* Peek state — show 60px strip so user can see and swipe up */
   .streamClosed {
     transform: translateY(calc(100% - 60px));
+  }
+
+  /* Globe interaction — fully hide the sheet */
+  .streamHidden {
+    transform: translateY(100%) !important;
+    opacity: 0;
   }
 
   /* Grab handle strip — full-width touch zone at top of sheet */

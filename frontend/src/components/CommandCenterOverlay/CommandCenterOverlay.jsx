@@ -732,7 +732,7 @@ function PinnedCountdown({ launch, onUnpin }) {
   )
 }
 
-export default function CommandCenterOverlay({ trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch }) {
+export default function CommandCenterOverlay({ trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed }) {
   const isLive = connectionStatus === 'connected'
   const utcTime = useUtcTime()
   const news    = useSpaceNews()
@@ -834,7 +834,7 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
       {/* Right: Smart Stack — peek + swipe-up/down on mobile */}
       <div
         ref={streamRef}
-        className={`${styles.stream}${sheetOpen ? '' : ` ${styles.streamClosed}`}`}
+        className={`${styles.stream}${(!sheetOpen || forceCollapsed) ? ` ${styles.streamClosed}` : ''}${forceCollapsed ? ` ${styles.streamHidden}` : ''}`}
         data-tour="signal-stream"
       >
         {/* Grab handle strip — handles both swipe-down (close) and swipe-up (open) */}
