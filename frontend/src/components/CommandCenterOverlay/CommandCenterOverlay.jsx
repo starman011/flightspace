@@ -442,6 +442,53 @@ function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunc
   const prev = () => go((active - 1 + total) % total)
   const next = () => go((active + 1) % total)
 
+  // ── Horizontal swipe to change panel ──────────────────────────────────────
+  const swipeWrapRef = useRef(null)
+  const swipeTRef    = useRef({ startX: 0, startY: 0, dir: null, on: false })
+  // Keep latest go/active in refs so the passive-false listener sees them
+  const goRef        = useRef(go);     goRef.current     = go
+  const activeRef    = useRef(active); activeRef.current = active
+
+  useEffect(() => {
+    const el = swipeWrapRef.current
+    if (!el) return
+    const onMove = (e) => {
+      const t  = swipeTRef.current
+      if (!t.on) return
+      const dx = e.touches[0].clientX - t.startX
+      const dy = e.touches[0].clientY - t.startY
+      // Lock direction on first 8 px of movement
+      if (!t.dir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        t.dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v'
+      }
+      if (t.dir === 'h') {
+        e.preventDefault()
+        el.style.transition = 'none'
+        el.style.transform  = `translateX(${dx * 0.5}px)`
+      }
+    }
+    // Must be non-passive to call preventDefault
+    el.addEventListener('touchmove', onMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onMove)
+  }, [])
+
+  const onSwipeStart = (e) => {
+    swipeTRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, dir: null, on: true }
+  }
+  const onSwipeEnd = (e) => {
+    const t  = swipeTRef.current
+    t.on     = false
+    const dx = e.changedTouches[0].clientX - t.startX
+    if (swipeWrapRef.current) {
+      swipeWrapRef.current.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)'
+      swipeWrapRef.current.style.transform  = ''
+    }
+    if (t.dir === 'h') {
+      if (dx < -50) goRef.current((activeRef.current + 1) % total)
+      if (dx >  50) goRef.current((activeRef.current - 1 + total) % total)
+    }
+  }
+
   const def = STACK_DEFS[active]
 
   return (
@@ -463,14 +510,22 @@ function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunc
       {/* Pinned launch — always visible */}
       {pinnedLaunch && <PinnedCountdown launch={pinnedLaunch} onUnpin={onUnpinLaunch} />}
 
-      {/* Animated slide content — key forces remount + CSS animation */}
-      <div key={active} className={styles.stackSlide}>
-        {active === 0 && <ApodStack apod={apod} />}
-        {active === 1 && <SolarStack kp={kp} />}
-        {active === 2 && <MeteorsStack showers={showers} />}
-        {active === 3 && <NewsStack news={news} />}
-        {active === 4 && <NightSkyStack />}
-        {active === 5 && <QuoteStack quote={quote} />}
+      {/* Swipe wrapper — horizontal swipe changes panel, vertical scroll passes through */}
+      <div
+        ref={swipeWrapRef}
+        className={styles.swipeArea}
+        onTouchStart={onSwipeStart}
+        onTouchEnd={onSwipeEnd}
+      >
+        {/* Animated slide content — key forces remount + CSS animation */}
+        <div key={active} className={styles.stackSlide}>
+          {active === 0 && <ApodStack apod={apod} />}
+          {active === 1 && <SolarStack kp={kp} />}
+          {active === 2 && <MeteorsStack showers={showers} />}
+          {active === 3 && <NewsStack news={news} />}
+          {active === 4 && <NightSkyStack />}
+          {active === 5 && <QuoteStack quote={quote} />}
+        </div>
       </div>
 
       {/* Dot indicators */}

@@ -406,6 +406,16 @@
   background: rgba(0, 229, 255, 0.06);
 }
 
+/* Swipe wrapper — clips horizontal drag translate, fills remaining height */
+.swipeArea {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
 /* Animated stack slide — key-swap triggers this animation */
 .stackSlide {
   flex: 1;
