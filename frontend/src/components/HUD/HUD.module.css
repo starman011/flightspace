@@ -52,6 +52,11 @@
   color: var(--warning);
 }
 
+/* Tablet: move topRight closer since right panel is gone */
+@media (max-width: 1024px) {
+  .topRight { right: 16px; }
+}
+
 /* Hide on very small screens — space needed for touch targets */
 @media (max-width: 480px) {
   .topLeft  { display: none; }

@@ -1328,11 +1328,69 @@
   letter-spacing: 0.1em;
 }
 
-/* ── Mobile: hide overlay ────────────────────────────────────────────────── */
+/* ── Mobile: bottom-sheet stream, hidden hero ────────────────────────────── */
 
 @media (max-width: 767px) {
-  .overlay { left: 0; top: 56px; }
-  .hero    { display: none; }
-  .stream  { display: none; }
+  .overlay {
+    left: 0;
+    top: 0;
+  }
+
+  /* Hero hidden — globe is the hero on mobile */
+  .hero     { display: none; }
   .watermark { display: none; }
+
+  /* Stream becomes a bottom sheet */
+  .stream {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    height: 52dvh;
+    border-radius: 20px 20px 0 0;
+    border-left: 1px solid rgba(59, 73, 76, 0.18);
+    border-right: 1px solid rgba(59, 73, 76, 0.18);
+    border-top: 1px solid rgba(59, 73, 76, 0.22);
+    border-bottom: none;
+    padding: 10px var(--space-4) var(--space-4);
+    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Grab handle */
+  .stream::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: rgba(195, 245, 255, 0.18);
+    border-radius: 2px;
+    margin: 0 auto 12px;
+  }
+
+  /* Keep stats readable at 3 columns */
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
+  }
+
+  /* Stack cards fill available height */
+  .apodStack  { min-height: 140px; }
+  .solarStack { min-height: 120px; }
+
+  /* Larger touch targets on nav buttons */
+  .stackNavBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .linkBtn {
+    padding: var(--space-3) var(--space-4);
+    font-size: 12px;
+  }
+
+  /* Slightly smaller title inside stack cards */
+  .apodStackTitle { font-size: 15px; }
+  .streamTitle    { font-size: 14px; }
 }
