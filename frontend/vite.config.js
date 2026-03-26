@@ -32,12 +32,6 @@ export default defineConfig({
         chunkFileNames:  'assets/[name]-[hash].js',
         assetFileNames:  'assets/[name]-[hash][extname]',
       },
-      // Rollup tree-shaking — mark Three.js as side-effect-free so named imports
-      // allow dead-code elimination of unused Three classes
-      treeshake: {
-        moduleSideEffects: false,
-        propertyReadSideEffects: false,
-      },
     },
   },
 })
