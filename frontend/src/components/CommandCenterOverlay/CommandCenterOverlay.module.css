@@ -1365,6 +1365,13 @@
   letter-spacing: 0.1em;
 }
 
+/* ── Mobile filter row — hidden on desktop, shown inside sheet ───────────── */
+.mobileFilterRow { display: none; }
+.mobileFilterChip { display: none; }
+
+/* ── Sheet state/expand button — hidden on desktop ───────────────────────── */
+.sheetStateBtn { display: none; }
+
 /* ── Mobile: bottom-sheet stream, hidden hero ────────────────────────────── */
 
 /* Grab handle strip + peek label — hidden on desktop */
@@ -1385,7 +1392,7 @@
   .hero     { display: none; }
   .watermark { display: none; }
 
-  /* Stream becomes a bottom sheet */
+  /* Stream becomes a bottom sheet — tall enough to go full-screen */
   .stream {
     position: absolute;
     left: 0;
@@ -1393,7 +1400,7 @@
     bottom: 0;
     top: auto;
     width: 100%;
-    height: 52dvh;
+    height: 95dvh;
     border-radius: 20px 20px 0 0;
     border-left: 1px solid rgba(59, 73, 76, 0.18);
     border-right: 1px solid rgba(59, 73, 76, 0.18);
@@ -1405,10 +1412,17 @@
     will-change: transform;
   }
 
-  /* Peek state — show 80px strip so user can see rich preview and swipe up */
+  /* Peek state — show filter chips + grab bar only (80px) */
   .streamClosed {
     transform: translateY(calc(100% - 80px));
   }
+
+  /* Half state — 52dvh visible (same as old open state) */
+  .streamHalf {
+    transform: translateY(calc(100% - 52dvh));
+  }
+
+  /* Full state — no transform (95dvh fills screen) */
 
   /* Globe interaction — fully hide the sheet */
   .streamHidden {
@@ -1419,15 +1433,74 @@
   /* Grab handle strip — full-width touch zone at top of sheet */
   .grabHandle {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     width: 100%;
-    padding: 8px 0 10px;
+    padding: 8px 12px 6px;
     cursor: grab;
     touch-action: none;
     flex-shrink: 0;
     pointer-events: auto;
+    position: relative;
+  }
+
+  /* Sheet state toggle button */
+  .sheetStateBtn {
+    display: flex;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 229, 255, 0.06);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 50%;
+    color: rgba(195, 245, 255, 0.55);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sheetStateBtn:active { background: rgba(0, 229, 255, 0.12); color: #00e5ff; }
+
+  /* Mobile filter row — chip strip always visible in peek */
+  .mobileFilterRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 2px var(--space-4) 8px;
+    flex-shrink: 0;
+  }
+  .mobileFilterRow::-webkit-scrollbar { display: none; }
+
+  .mobileFilterChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(10, 15, 22, 0.65);
+    border: 1px solid rgba(59, 73, 76, 0.28);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(195, 245, 255, 0.5);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .mobileFilterChip:active { background: rgba(0, 229, 255, 0.08); }
+  .mobileFilterChipOn {
+    color: #00e5ff;
+    border-color: rgba(0, 229, 255, 0.45);
+    background: rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.12);
   }
 
   /* The visual pill bar */
@@ -1440,64 +1513,7 @@
     flex-shrink: 0;
   }
 
-  /* Rich peek preview row — panel icon + name + dots */
-  .peekPreview {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0 4px;
-    animation: peekIn 0.22s ease;
-  }
-
-  @keyframes peekIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .peekLeft {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .peekTitle {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(195, 245, 255, 0.9);
-    margin: 0 0 2px;
-  }
-
-  .peekHint {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(0, 229, 255, 0.45);
-    margin: 0;
-  }
-
-  .peekDots {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .peekDot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(195, 245, 255, 0.18);
-    transition: background 0.2s, width 0.2s;
-  }
-
-  .peekDotActive {
-    width: 12px;
-    border-radius: 2px;
-    background: #00e5ff;
-    box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
-  }
+  /* peekPreview removed — filter chips serve as the peek layer */
 
   /* Mobile intro overlay — fades in then out, revealing globe */
   .mobileIntro {
@@ -1584,4 +1600,638 @@
   /* Slightly smaller title inside stack cards */
   .apodStackTitle { font-size: 15px; }
   .streamTitle    { font-size: 14px; }
+}
+
+/* ── Expanded panel styles (full-screen mode) ────────────────────────────── */
+
+/* Shared label used in all expanded panels */
+.expandedSectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.45);
+  margin-bottom: 8px;
+}
+
+.expandedFootnote {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.25);
+  letter-spacing: 0.04em;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* ── Meteor shower expanded calendar ─────────────────────────────────────── */
+.meteorsExpanded {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+}
+.meteorsExpanded::-webkit-scrollbar { display: none; }
+
+.showerCalendar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.showerCard {
+  background: rgba(5, 10, 20, 0.75);
+  border: 1px solid rgba(59, 73, 76, 0.22);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.showerCard:active { background: rgba(0, 229, 255, 0.05); border-color: rgba(0, 229, 255, 0.2); }
+
+.showerCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.showerCardName {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.92);
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.showerCardConst {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195, 245, 255, 0.4);
+  letter-spacing: 0.06em;
+}
+
+.showerZhr {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: rgba(0, 229, 255, 0.85);
+  line-height: 1;
+}
+
+.showerZhrUnit {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 400;
+  color: rgba(0, 229, 255, 0.45);
+  letter-spacing: 0.08em;
+}
+
+.showerMoon {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.35);
+  margin-top: 2px;
+  text-align: right;
+}
+
+.showerCardDates {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
+.showerPeak {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.6);
+}
+
+.showerActive {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195, 245, 255, 0.3);
+}
+
+.showerDesc {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.38);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.showerZhrBar {
+  height: 2px;
+  background: rgba(59, 73, 76, 0.3);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.showerZhrFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.8));
+  border-radius: 1px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Solar expanded ──────────────────────────────────────────────────────── */
+.solarExpanded {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.solarExpanded::-webkit-scrollbar { display: none; }
+
+.solarExpandedHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(58, 8, 0, 0.35);
+  border: 1px solid rgba(255, 107, 53, 0.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.solarExpandedKpNum {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.solarExpandedKpLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(195, 245, 255, 0.4);
+  margin-top: 2px;
+}
+
+.solarExpandedStatus { flex: 1; padding-top: 4px; }
+
+.solarExpandedLevel {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.solarExpandedDesc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(195, 245, 255, 0.5);
+  line-height: 1.5;
+}
+
+.solarAuroraRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(34, 239, 126, 0.05);
+  border: 1px solid rgba(34, 239, 126, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.solarAuroraLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(34, 239, 126, 0.7);
+  line-height: 1.4;
+}
+
+.solarAuroraAlert {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(255, 215, 0, 0.7);
+  margin-top: 2px;
+}
+
+.kpChartWrap {
+  background: rgba(5, 10, 20, 0.6);
+  border: 1px solid rgba(59, 73, 76, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+
+.kpChartTitle {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(195, 245, 255, 0.35);
+  margin-bottom: 10px;
+}
+
+.kpBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 48px;
+}
+
+.kpBarCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  height: 100%;
+}
+
+.kpBar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.4s ease;
+}
+
+.kpBarLabel {
+  font-family: var(--font-mono);
+  font-size: 6px;
+  color: rgba(195, 245, 255, 0.25);
+  white-space: nowrap;
+  transform: rotate(-30deg);
+  transform-origin: center top;
+  margin-top: 2px;
+}
+
+.kpThresholds {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.kpThresholdChip {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+
+.solarCycleCard {
+  background: rgba(5, 10, 20, 0.6);
+  border: 1px solid rgba(59, 73, 76, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+
+.solarCycleTitle {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.8);
+  margin-bottom: 6px;
+}
+
+.solarCycleDesc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(195, 245, 255, 0.45);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.solarCycleLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(0, 229, 255, 0.6);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.solarCycleLink:hover { border-color: rgba(0, 229, 255, 0.4); color: rgba(0, 229, 255, 0.9); }
+
+/* ── ISS orbital parameters grid ─────────────────────────────────────────── */
+.issOrbitalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.issOrbitalCell {
+  background: rgba(0, 229, 255, 0.03);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.issOrbitalLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(132, 147, 150, 0.6);
+}
+
+.issOrbitalValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-container);
+  letter-spacing: 0.01em;
+}
+
+/* ── News expanded feed ──────────────────────────────────────────────────── */
+.newsExpanded {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.newsExpanded::-webkit-scrollbar { display: none; }
+
+.newsExpandedRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(5, 8, 18, 0.7);
+  border: 1px solid rgba(59, 73, 76, 0.18);
+  border-radius: 12px;
+  padding: 11px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.newsExpandedRow:active { border-color: rgba(0, 229, 255, 0.2); background: rgba(0, 229, 255, 0.04); }
+
+.newsExpandedThumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.newsExpandedBody { flex: 1; min-width: 0; }
+
+.newsExpandedSource {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(0, 229, 255, 0.55);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.newsExpandedTitle {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.88);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.newsExpandedSummary {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: rgba(195, 245, 255, 0.38);
+  line-height: 1.45;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.newsExpandedAge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 245, 255, 0.25);
+}
+
+.loadMoreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 10px;
+  color: rgba(0, 229, 255, 0.65);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.loadMoreBtn:disabled { opacity: 0.45; cursor: default; }
+.loadMoreBtn:not(:disabled):active { background: rgba(0, 229, 255, 0.1); }
+
+/* ── Night sky expanded ──────────────────────────────────────────────────── */
+.nightSkyExpanded {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+}
+.nightSkyExpanded::-webkit-scrollbar { display: none; }
+
+.cometExpandedCard {
+  background: rgba(2, 5, 14, 0.8);
+  border: 1px solid rgba(180, 210, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.cometExpandedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.cometExpandedName {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(223, 232, 245, 0.9);
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.cometExpandedFull {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(180, 210, 255, 0.5);
+}
+
+.cometExpandedPeri {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.55);
+  text-align: right;
+  margin-bottom: 2px;
+}
+
+.cometExpandedReturn {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195, 245, 255, 0.35);
+  text-align: right;
+}
+
+.cometExpandedDesc {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.42);
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+
+.cometExpandedMag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.45);
+}
+
+.planetsExpandedTable {
+  background: rgba(4, 7, 14, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.planetsExpandedHead {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(0, 229, 255, 0.38);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.2);
+}
+
+.planetsExpandedRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  align-items: center;
+  padding: 7px 12px;
+  transition: background 0.12s;
+  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+}
+.planetsExpandedRow:last-child { border-bottom: none; }
+.planetsExpandedRow:hover { background: rgba(0, 229, 255, 0.04); }
+
+.planetsExpandedName {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(223, 232, 245, 0.82);
+}
+
+.planetsExpandedSky {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195, 245, 255, 0.45);
+}
+
+.planetsExpandedMag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── Quote expanded ──────────────────────────────────────────────────────── */
+.quotesExpanded {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quotesExpanded::-webkit-scrollbar { display: none; }
+
+.quoteExpandedCard {
+  background: rgba(5, 8, 18, 0.75);
+  border: 1px solid rgba(59, 73, 76, 0.2);
+  border-left: 3px solid rgba(0, 229, 255, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-left-color 0.15s;
+}
+.quoteExpandedCard:active { border-left-color: rgba(0, 229, 255, 0.7); }
+
+.quoteExpandedMark {
+  font-family: Georgia, serif;
+  font-size: 2.5rem;
+  color: rgba(0, 229, 255, 0.1);
+  line-height: 0.8;
+  user-select: none;
+}
+
+.quoteExpandedText {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(195, 245, 255, 0.82);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.quoteExpandedAuthor {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(0, 229, 255, 0.5);
+  letter-spacing: 0.04em;
 }

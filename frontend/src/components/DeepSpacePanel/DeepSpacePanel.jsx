@@ -137,7 +137,7 @@ function AsteroidDetail({ ast, onClose }) {
   )
 }
 
-export default function DeepSpacePanel({ open }) {
+export default function DeepSpacePanel({ open, onClose }) {
   const { asteroids, loading, error } = useAsteroids(open)
   const [query, setQuery]               = useState('')
   const [view,  setView]                = useState('directory')  // 'directory' | 'solarmap'
@@ -165,9 +165,26 @@ export default function DeepSpacePanel({ open }) {
     <div className={`${styles.panel} ${open ? styles.open : ''}`} aria-label="Deep Space Directory">
 
       {/* ── Page header ── */}
-      <div className={styles.badge}>
-        <span className={styles.badgeDot} />
-        {loading ? 'Scanning Deep Field…' : `${asteroids.length} Objects Cataloged`}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className={styles.badge}>
+          <span className={styles.badgeDot} />
+          {loading ? 'Scanning Deep Field…' : `${asteroids.length} Objects Cataloged`}
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.15)',
+              borderRadius: 8, color: 'rgba(195,245,255,0.6)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4,
+              fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '6px 12px',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_back</span>
+            Back to Globe
+          </button>
+        )}
       </div>
       <h1 className={styles.pageTitle}>Deep Space Directory</h1>
       <p className={styles.pageDesc}>

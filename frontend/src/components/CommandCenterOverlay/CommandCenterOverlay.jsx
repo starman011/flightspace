@@ -98,18 +98,52 @@ function dailyQuote() {
 // Module-level caches to survive remounts without re-fetching
 let _newsCache = [], _newsCachedAt = 0
 let _kpCache = null, _kpCachedAt = 0
+let _kpHistCache = null, _kpHistCachedAt = 0
 let _apodCache = null, _apodCachedAt = 0
 
 function useSpaceNews() {
-  const [news, setNews] = useState(_newsCache)
+  const [news,    setNews]    = useState(_newsCache)
+  const [offset,  setOffset]  = useState(_newsCache.length)
+  const [hasMore, setHasMore] = useState(true)
+  const [fetching,setFetching]= useState(false)
+
   useEffect(() => {
-    if (Date.now() - _newsCachedAt < 600_000) { setNews(_newsCache); return }
-    fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=3&ordering=-published_at')
+    if (_newsCache.length > 0 && Date.now() - _newsCachedAt < 600_000) { setNews(_newsCache); return }
+    fetchPage(0)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function fetchPage(off) {
+    if (fetching) return
+    setFetching(true)
+    fetch(`https://api.spaceflightnewsapi.net/v4/articles/?limit=4&offset=${off}&ordering=-published_at`)
       .then(r => r.json())
-      .then(d => { _newsCache = d.results ?? []; _newsCachedAt = Date.now(); setNews(_newsCache) })
+      .then(d => {
+        const items = d.results ?? []
+        const all   = off === 0 ? items : [..._newsCache, ...items]
+        _newsCache = all; _newsCachedAt = Date.now()
+        setNews(all); setOffset(all.length); setHasMore(items.length === 4)
+      })
+      .catch(() => {})
+      .finally(() => setFetching(false))
+  }
+
+  return { news, loadMore: () => fetchPage(offset), hasMore, fetching }
+}
+
+function useSolarKpHistory() {
+  const [hist, setHist] = useState(_kpHistCache ?? [])
+  useEffect(() => {
+    if (_kpHistCache && Date.now() - _kpHistCachedAt < 600_000) { setHist(_kpHistCache); return }
+    fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json')
+      .then(r => r.json())
+      .then(d => {
+        const rows   = Array.isArray(d) ? d.slice(1) : []
+        const parsed = rows.slice(-16).map(r => ({ time: String(r[0] ?? '').slice(11,16), kp: parseFloat(r[1] ?? 0) }))
+        _kpHistCache = parsed; _kpHistCachedAt = Date.now(); setHist(parsed)
+      })
       .catch(() => {})
   }, [])
-  return news
+  return hist
 }
 
 function useSolarKp() {
@@ -140,6 +174,40 @@ function useApod() {
 }
 
 // ── Bento tile components ────────────────────────────���───��───────��──────��──
+
+// ── Globe filter categories (shown as chips inside mobile sheet) ─────────────
+const SHEET_CATS = [
+  { id: 'all',        icon: 'public',          label: 'All',      type: 'all',        scale: 'earth' },
+  { id: 'satellites', icon: 'satellite_alt',   label: 'Sat',      type: 'satellites', scale: 'earth' },
+  { id: 'flights',    icon: 'flight',          label: 'Flights',  type: 'planes',     scale: 'earth' },
+  { id: 'ships',      icon: 'directions_boat', label: 'Ships',    type: 'ships',      scale: 'earth' },
+  { id: 'rockets',    icon: 'rocket_launch',   label: 'Launches', type: 'rockets',    scale: 'earth' },
+  { id: 'asteroids',  icon: 'wb_iridescent',   label: 'NEO',      type: 'asteroids',  scale: 'solar' },
+]
+
+function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle }) {
+  function handle(cat) {
+    const deselect = (activeFilter ?? 'all') === cat.id
+    onFiltersChange?.({ type: deselect ? 'all' : cat.type, altitude: 'all' })
+    onCameraScale?.(deselect ? 'earth' : cat.scale)
+    onActiveFilterChange?.(deselect ? null : cat.id)
+    if (cat.id === 'rockets') onLaunchPanelToggle?.()
+  }
+  return (
+    <div className={styles.mobileFilterRow}>
+      {SHEET_CATS.map(cat => (
+        <button
+          key={cat.id}
+          className={`${styles.mobileFilterChip} ${(activeFilter ?? 'all') === cat.id ? styles.mobileFilterChipOn : ''}`}
+          onClick={() => handle(cat)}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>{cat.icon}</span>
+          {cat.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const openTab = url => window.open(url, '_blank', 'noopener,noreferrer')
 
@@ -242,7 +310,7 @@ function ApodStack({ apod }) {
   )
 }
 
-function SolarStack({ kp }) {
+function SolarStack({ kp, kpHistory = [], expanded }) {
   const level  = kp == null ? null : kp >= 5 ? 'STORM' : kp >= 4 ? 'ACTIVE' : 'NOMINAL'
   const accent = level === 'STORM' ? '#ff6b35' : level === 'ACTIVE' ? '#ffd700' : '#22ef7e'
   const desc   = level === 'STORM'
@@ -250,6 +318,74 @@ function SolarStack({ kp }) {
     : level === 'ACTIVE'
     ? 'Elevated solar activity. Aurora possible at high latitudes.'
     : 'Solar activity nominal. No significant disturbances.'
+
+  if (expanded) {
+    const auroraLat = kp != null ? Math.max(30, 66.5 - kp * 2.5).toFixed(1) : null
+    return (
+      <div className={styles.solarExpanded}>
+        {/* Current status bar */}
+        <div className={styles.solarExpandedHeader}>
+          <div>
+            <p className={styles.solarExpandedKpNum} style={{ color: accent }}>{kp?.toFixed(1) ?? '—'}</p>
+            <p className={styles.solarExpandedKpLabel}>Planetary Kp Index</p>
+          </div>
+          <div className={styles.solarExpandedStatus}>
+            <span className={styles.solarExpandedLevel} style={{ color: accent }}>{level ?? 'Loading'}</span>
+            <p className={styles.solarExpandedDesc}>{desc}</p>
+          </div>
+        </div>
+        {/* Aurora latitude */}
+        {auroraLat && (
+          <div className={styles.solarAuroraRow}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#22ef7e' }}>north_star</span>
+            <div>
+              <p className={styles.solarAuroraLabel}>Aurora visible equatorward of {auroraLat}° latitude</p>
+              {kp >= 4 && <p className={styles.solarAuroraAlert}>Unusually southern visibility tonight</p>}
+            </div>
+          </div>
+        )}
+        {/* 48-hour Kp bar chart */}
+        {kpHistory.length > 0 && (
+          <div className={styles.kpChartWrap}>
+            <p className={styles.kpChartTitle}>48-hour Kp history · 3-hour intervals</p>
+            <div className={styles.kpBars}>
+              {kpHistory.map((r, i) => (
+                <div key={i} className={styles.kpBarCol} title={`${r.time} UTC — Kp ${r.kp.toFixed(1)}`}>
+                  <div
+                    className={styles.kpBar}
+                    style={{
+                      height: `${Math.max(4, (r.kp / 9) * 100)}%`,
+                      background: r.kp >= 5 ? '#ff6b35' : r.kp >= 4 ? '#ffd700' : '#22ef7e',
+                    }}
+                  />
+                  {i % 4 === 0 && <span className={styles.kpBarLabel}>{r.time}</span>}
+                </div>
+              ))}
+            </div>
+            <div className={styles.kpThresholds}>
+              {[[5,'#ff6b35','Storm'],[4,'#ffd700','Active'],[0,'#22ef7e','Quiet']].map(([v,c,l]) => (
+                <span key={l} className={styles.kpThresholdChip} style={{ color: c }}>Kp≥{v} {l}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Solar cycle context */}
+        <div className={styles.solarCycleCard}>
+          <p className={styles.solarCycleTitle}>Solar Cycle 25 · Near Maximum</p>
+          <p className={styles.solarCycleDesc}>
+            Cycle 25 began Dec 2019. Solar maximum expected 2025–2026 — prime time for aurora
+            observation, radio propagation, and solar imaging. The Sun's 11-year activity cycle
+            drives geomagnetic storms, aurora, and HF radio blackouts.
+          </p>
+          <button className={styles.solarCycleLink} onClick={() => openTab('https://www.swpc.noaa.gov/')}>
+            <span className="material-symbols-outlined" style={{ fontSize: 12 }}>open_in_new</span>
+            NOAA Space Weather Center
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.solarStack} onClick={() => openTab('https://www.swpc.noaa.gov/products/planetary-k-index')}>
       <div className={styles.solarBg} />
@@ -266,10 +402,49 @@ function SolarStack({ kp }) {
   )
 }
 
-function MeteorsStack({ showers }) {
+function MeteorsStack({ showers, expanded }) {
   const [idx, setIdx] = useState(0)
   const s = showers[idx]
   if (!s) return null
+
+  if (expanded) {
+    // Full annual calendar — all 9 showers, infinitely scrollable
+    const allShowers = nextShowers(9)
+    return (
+      <div className={styles.meteorsExpanded}>
+        <p className={styles.expandedSectionLabel}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>calendar_month</span>
+          Annual Meteor Shower Calendar · {allShowers.length} showers
+        </p>
+        <div className={styles.showerCalendar}>
+          {allShowers.map((sh) => (
+            <div key={sh.name} className={styles.showerCard} onClick={() => openTab(sh.url)}>
+              <div className={styles.showerCardTop}>
+                <div>
+                  <p className={styles.showerCardName}>{sh.name}</p>
+                  <p className={styles.showerCardConst}>Radiant: {sh.const}</p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p className={styles.showerZhr}>{sh.zhr} <span className={styles.showerZhrUnit}>ZHR</span></p>
+                  <p className={styles.showerMoon}>Moon {sh.illum}%</p>
+                </div>
+              </div>
+              <div className={styles.showerCardDates}>
+                <span className={styles.showerPeak}>Peak: {fmtPeakNight(sh.date)}</span>
+                <span className={styles.showerActive}>{fmtRange(sh.active)}</span>
+              </div>
+              <p className={styles.showerDesc}>{sh.desc}</p>
+              <div className={styles.showerZhrBar}>
+                <div className={styles.showerZhrFill} style={{ width: `${Math.min(100, (sh.zhr / 150) * 100)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className={styles.expandedFootnote}>ZHR = Zenithal Hourly Rate under ideal conditions · tap shower for AMS database</p>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.meteorsStack}>
       <div
@@ -315,12 +490,45 @@ function MeteorsStack({ showers }) {
   )
 }
 
-function NewsStack({ news }) {
-  const [hero, ...rest] = news.slice(0, 3)
+function NewsStack({ news, loadMore, hasMore, fetching, expanded }) {
+  const [hero, ...rest] = expanded ? news : news.slice(0, 3)
   if (!hero) return <div className={styles.newsStack} />
+
+  if (expanded) {
+    return (
+      <div className={styles.newsExpanded}>
+        <p className={styles.expandedSectionLabel}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>article</span>
+          Space News Feed · {news.length} articles
+        </p>
+        {news.map((item) => (
+          <div key={item.id} className={styles.newsExpandedRow} onClick={() => item.url && openTab(item.url)}>
+            {item.image_url && (
+              <div className={styles.newsExpandedThumb} style={{ backgroundImage: `url(${item.image_url})` }} />
+            )}
+            <div className={styles.newsExpandedBody}>
+              <span className={styles.newsExpandedSource}>{item.news_site}</span>
+              <p className={styles.newsExpandedTitle}>{item.title}</p>
+              {item.summary && <p className={styles.newsExpandedSummary}>{item.summary}</p>}
+              <p className={styles.newsExpandedAge}>{timeAgo(item.published_at)}</p>
+            </div>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(0,229,255,0.35)', flexShrink: 0, marginTop: 2 }}>open_in_new</span>
+          </div>
+        ))}
+        {hasMore && (
+          <button className={styles.loadMoreBtn} onClick={loadMore} disabled={fetching}>
+            {fetching
+              ? <><span className="material-symbols-outlined" style={{ fontSize: 14 }}>hourglass_empty</span> Loading…</>
+              : <><span className="material-symbols-outlined" style={{ fontSize: 14 }}>expand_more</span> Load more</>}
+          </button>
+        )}
+        <p className={styles.expandedFootnote}>Source: Spaceflight News API</p>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.newsStack}>
-      {/* Hero — image commands full panel, title breathes over it */}
       <div
         className={styles.newsHero}
         style={hero.image_url ? { backgroundImage: `url(${hero.image_url})` } : undefined}
@@ -336,8 +544,6 @@ function NewsStack({ news }) {
           <span className="material-symbols-outlined" style={{ fontSize: 11 }}>open_in_new</span>
         </span>
       </div>
-
-      {/* Secondary — pure typography, no boxes */}
       {rest.length > 0 && (
         <div className={styles.newsSecondary}>
           {rest.map((item, i) => (
@@ -355,15 +561,34 @@ function NewsStack({ news }) {
   )
 }
 
-function QuoteStack({ quote }) {
+function QuoteStack({ quote, expanded }) {
   const [copied, setCopied] = useState(false)
-  const copy = () => {
-    navigator.clipboard?.writeText(`"${quote.q}" — ${quote.a}`).catch(() => {})
+  const copy = (q) => {
+    navigator.clipboard?.writeText(`"${q.q}" — ${q.a}`).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 1800)
   }
+
+  if (expanded) {
+    return (
+      <div className={styles.quotesExpanded}>
+        <p className={styles.expandedSectionLabel}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>format_quote</span>
+          Science Quotes · swipe or tap to copy
+        </p>
+        {QUOTES.map((q, i) => (
+          <div key={i} className={styles.quoteExpandedCard} onClick={() => copy(q)}>
+            <p className={styles.quoteExpandedMark}>"</p>
+            <p className={styles.quoteExpandedText}>{q.q}</p>
+            <p className={styles.quoteExpandedAuthor}>— {q.a}{q.t ? `, ${q.t}` : ''}</p>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className={styles.quoteStack} onClick={copy}>
+    <div className={styles.quoteStack} onClick={() => copy(quote)}>
       <span className={styles.stackChip}>
         <span className="material-symbols-outlined" style={{ fontSize: 10 }}>format_quote</span>
         {copied ? 'Copied to clipboard!' : 'Daily Inspiration'}
@@ -376,12 +601,65 @@ function QuoteStack({ quote }) {
 }
 
 // Night Sky — comets + planetary visibility
-function NightSkyStack() {
+function NightSkyStack({ expanded }) {
   const [idx, setIdx] = useState(0)
   const c = COMETS[idx]
+
+  if (expanded) {
+    return (
+      <div className={styles.nightSkyExpanded}>
+        {/* All comets — scrollable catalog */}
+        <p className={styles.expandedSectionLabel}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>blur_circular</span>
+          Active Comet Catalog · {COMETS.length} tracked
+        </p>
+        {COMETS.map(comet => (
+          <div key={comet.name} className={styles.cometExpandedCard}>
+            <div className={styles.cometExpandedHeader}>
+              <div>
+                <p className={styles.cometExpandedName}>{comet.name}</p>
+                <p className={styles.cometExpandedFull}>{comet.fullName}</p>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                {comet.perihelion && <p className={styles.cometExpandedPeri}>Perihelion: {comet.perihelion}</p>}
+                {comet.nextReturn && <p className={styles.cometExpandedReturn}>Returns: {comet.nextReturn}</p>}
+              </div>
+            </div>
+            <p className={styles.cometExpandedDesc}>{comet.desc}</p>
+            <p className={styles.cometExpandedMag}>Current brightness: {comet.currentMag}</p>
+          </div>
+        ))}
+
+        {/* Full planet table */}
+        <p className={styles.expandedSectionLabel} style={{ marginTop: 12 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>visibility</span>
+          Planetary Visibility · {new Date().getFullYear()} · naked eye unless noted
+        </p>
+        <div className={styles.planetsExpandedTable}>
+          <div className={styles.planetsExpandedHead}>
+            <span>Planet</span><span>Sky</span><span>Mag</span><span>Note</span>
+          </div>
+          {PLANETS.map(p => (
+            <div key={p.name} className={styles.planetsExpandedRow}>
+              <div className={styles.planetsExpandedName}>
+                <img src={p.img} alt={p.name} className={styles.planetImg} />
+                {p.name}
+              </div>
+              <span className={styles.planetsExpandedSky}>{p.sky}</span>
+              <span className={styles.planetsExpandedMag} style={{ color: p.color }}>
+                {p.mag > 0 ? '+' : ''}{p.mag.toFixed(1)}
+              </span>
+              <span>{p.naked ? '👁 Naked eye' : <span className={styles.planetBino}>BINO</span>}</span>
+            </div>
+          ))}
+        </div>
+        <p className={styles.expandedFootnote}>Magnitude scale: lower = brighter. −4 = Venus (very bright). +7 = binocular limit.</p>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.nightSkyStack}>
-      {/* Comet hero */}
       <div className={styles.cometHero} onClick={() => setIdx((idx + 1) % COMETS.length)}>
         <div className={styles.cometStars} />
         <div className={styles.cometShade} />
@@ -396,8 +674,6 @@ function NightSkyStack() {
           <p className={styles.cometStatus}>Now: {c.currentMag}{c.nextReturn ? ` · Returns ${c.nextReturn}` : ''}</p>
         </div>
       </div>
-
-      {/* Planet visibility */}
       <div className={styles.planetsWrap}>
         <p className={styles.planetsLabel}>
           <span className="material-symbols-outlined" style={{ fontSize: 9 }}>visibility</span>
@@ -419,8 +695,26 @@ function NightSkyStack() {
   )
 }
 
+// ── ISS orbital parameters (stable values) ────────────────────────────────
+const ISS_ORBITAL = [
+  { label: 'Inclination',   value: '51.64°' },
+  { label: 'Orbital Period',value: '92.68 min' },
+  { label: 'Orbits / Day',  value: '15.49' },
+  { label: 'Mean Altitude', value: '408 km' },
+  { label: 'Velocity',      value: '7.66 km/s' },
+  { label: 'Eccentricity',  value: '~0.0001' },
+  { label: 'Apogee',        value: '~420 km' },
+  { label: 'Perigee',       value: '~400 km' },
+  { label: 'Wingspan',      value: '109 m' },
+  { label: 'Mass',          value: '~420,000 kg' },
+  { label: 'Pressurised Vol',value: '916 m³' },
+  { label: 'In orbit since', value: 'Nov 1998' },
+  { label: 'Ham radio UL',  value: '145.200 MHz' },
+  { label: 'Ham radio DL',  value: '437.800 MHz' },
+]
+
 // ── ISS Stack panel ────────────────────────────────────────────────────────
-function ISSStack({ issData, onISSLink }) {
+function ISSStack({ issData, onISSLink, expanded }) {
   const [toast, setToast] = useState(null)
   const hasISS   = issData != null
   const issLat   = issData?.lat
@@ -430,9 +724,89 @@ function ISSStack({ issData, onISSLink }) {
   const issLonStr = issLon != null ? `${Math.abs(issLon).toFixed(2)}° ${issLon >= 0 ? 'E' : 'W'}` : '—'
   const region   = geoRegion(issLat, issLon)
 
+  const telemetry = (
+    <div className={styles.issTelemetry}>
+      {[
+        { label: 'Latitude',  value: issLatStr },
+        { label: 'Longitude', value: issLonStr },
+        { label: 'Altitude',  value: `${issAlt.toFixed(0)} km` },
+        { label: 'Velocity',  value: '27,600 km/h' },
+      ].map(c => (
+        <div key={c.label} className={styles.issTelemCell}>
+          <span className={styles.issTelemLabel}>{c.label}</span>
+          <span className={styles.issTelemValue}>{c.value}</span>
+        </div>
+      ))}
+    </div>
+  )
+
+  const linkBtn = (
+    <button
+      className={styles.linkBtn}
+      onClick={() => {
+        onISSLink?.selectISS()
+        onISSLink?.trackISS()
+        if (hasISS) {
+          onISSLink?.flyTo(issLat, issLon)
+          const coords = `${issLatStr}, ${issLonStr}`
+          navigator.clipboard?.writeText(coords).catch(() => {})
+          setToast(`Locked on ISS · ${coords}`)
+          setTimeout(() => setToast(null), 2200)
+        }
+      }}
+    >
+      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>wifi_tethering</span>
+      LINK TO ISS
+    </button>
+  )
+
+  if (expanded) {
+    return (
+      <div className={styles.issStackWrap}>
+        <div className={styles.issHeader}>
+          <div className={styles.issIconWrap}>
+            <div className={styles.issIcon}>
+              <span className={styles.issSolarL} />
+              <span className={styles.issBody} />
+              <span className={styles.issSolarR} />
+            </div>
+            {hasISS && <span className={styles.issLiveDot} />}
+          </div>
+          <div>
+            <p className={styles.focusLabel}>{hasISS ? 'LIVE · ISS TRAJECTORY' : 'ISS · AWAITING SIGNAL'}</p>
+            <h3 className={styles.focusTitle}>International Space Station</h3>
+          </div>
+        </div>
+        {telemetry}
+        <p className={styles.issRegionNote}>
+          {hasISS ? `Over ${region} · Orbiting at 27,600 km/h` : 'Awaiting live position data…'}
+        </p>
+        {linkBtn}
+        {toast && <div className={styles.toast}><span className="material-symbols-outlined" style={{ fontSize: 13 }}>check_circle</span>{toast}</div>}
+
+        {/* Orbital parameters table */}
+        <p className={styles.expandedSectionLabel} style={{ marginTop: 16 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10 }}>orbit</span>
+          Orbital Parameters
+        </p>
+        <div className={styles.issOrbitalGrid}>
+          {ISS_ORBITAL.map(p => (
+            <div key={p.label} className={styles.issOrbitalCell}>
+              <span className={styles.issOrbitalLabel}>{p.label}</span>
+              <span className={styles.issOrbitalValue}>{p.value}</span>
+            </div>
+          ))}
+        </div>
+        <button className={styles.solarCycleLink} onClick={() => openTab('https://spotthestation.nasa.gov/')}>
+          <span className="material-symbols-outlined" style={{ fontSize: 12 }}>open_in_new</span>
+          Spot the Station · NASA
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.issStackWrap}>
-      {/* Header */}
       <div className={styles.issHeader}>
         <div className={styles.issIconWrap}>
           <div className={styles.issIcon}>
@@ -447,49 +821,11 @@ function ISSStack({ issData, onISSLink }) {
           <h3 className={styles.focusTitle}>International Space Station</h3>
         </div>
       </div>
-
-      {/* Telemetry */}
-      <div className={styles.issTelemetry}>
-        <div className={styles.issTelemCell}>
-          <span className={styles.issTelemLabel}>Latitude</span>
-          <span className={styles.issTelemValue}>{issLatStr}</span>
-        </div>
-        <div className={styles.issTelemCell}>
-          <span className={styles.issTelemLabel}>Longitude</span>
-          <span className={styles.issTelemValue}>{issLonStr}</span>
-        </div>
-        <div className={styles.issTelemCell}>
-          <span className={styles.issTelemLabel}>Altitude</span>
-          <span className={styles.issTelemValue}>{issAlt.toFixed(0)} km</span>
-        </div>
-        <div className={styles.issTelemCell}>
-          <span className={styles.issTelemLabel}>Velocity</span>
-          <span className={styles.issTelemValue}>27,600 km/h</span>
-        </div>
-      </div>
-
+      {telemetry}
       <p className={styles.issRegionNote}>
         {hasISS ? `Over ${region} · Orbiting at 27,600 km/h` : 'Awaiting live position data…'}
       </p>
-
-      <button
-        className={styles.linkBtn}
-        onClick={() => {
-          onISSLink?.selectISS()
-          onISSLink?.trackISS()
-          if (hasISS) {
-            onISSLink?.flyTo(issLat, issLon)
-            const coords = `${issLatStr}, ${issLonStr}`
-            navigator.clipboard?.writeText(coords).catch(() => {})
-            setToast(`Locked on ISS · ${coords}`)
-            setTimeout(() => setToast(null), 2200)
-          }
-        }}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>wifi_tethering</span>
-        LINK TO ISS
-      </button>
-
+      {linkBtn}
       {toast && (
         <div className={styles.toast}>
           <span className="material-symbols-outlined" style={{ fontSize: 13 }}>check_circle</span>
@@ -501,7 +837,7 @@ function ISSStack({ issData, onISSLink }) {
 }
 
 // ── Smart Stack container ──────────────────────────────────────────────────
-function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, onPanelChange }) {
+function SmartStack({ apod, kp, kpHistory, showers, news, loadMoreNews, hasMoreNews, fetchingNews, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, onPanelChange, expanded }) {
   const [active, setActive]   = useState(0)
   const pausedRef             = useRef(false)
   const pauseTimerRef         = useRef(null)
@@ -605,14 +941,14 @@ function SmartStack({ apod, kp, showers, news, quote, pinnedLaunch, onUnpinLaunc
         onTouchEnd={onSwipeEnd}
       >
         {/* Animated slide content — key forces remount + CSS animation */}
-        <div key={active} className={styles.stackSlide}>
-          {active === 0 && <ISSStack issData={issData} onISSLink={onISSLink} />}
+        <div key={`${active}-${expanded}`} className={styles.stackSlide}>
+          {active === 0 && <ISSStack issData={issData} onISSLink={onISSLink} expanded={expanded} />}
           {active === 1 && <ApodStack apod={apod} />}
-          {active === 2 && <SolarStack kp={kp} />}
-          {active === 3 && <MeteorsStack showers={showers} />}
-          {active === 4 && <NewsStack news={news} />}
-          {active === 5 && <NightSkyStack />}
-          {active === 6 && <QuoteStack quote={quote} />}
+          {active === 2 && <SolarStack kp={kp} kpHistory={kpHistory} expanded={expanded} />}
+          {active === 3 && <MeteorsStack showers={showers} expanded={expanded} />}
+          {active === 4 && <NewsStack news={news} loadMore={loadMoreNews} hasMore={hasMoreNews} fetching={fetchingNews} expanded={expanded} />}
+          {active === 5 && <NightSkyStack expanded={expanded} />}
+          {active === 6 && <QuoteStack quote={quote} expanded={expanded} />}
         </div>
       </div>
 
@@ -737,52 +1073,55 @@ function PinnedCountdown({ launch, onUnpin }) {
   )
 }
 
-export default function CommandCenterOverlay({ trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed }) {
-  const isLive = connectionStatus === 'connected'
+export default function CommandCenterOverlay({
+  trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
+  activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle,
+}) {
+  const isLive  = connectionStatus === 'connected'
   const utcTime = useUtcTime()
-  const news    = useSpaceNews()
-  const solarKp = useSolarKp()
-  const apod    = useApod()
-  const showers = nextShowers(4)
-  const quote   = dailyQuote()
+  const { news, loadMore: loadMoreNews, hasMore: hasMoreNews, fetching: fetchingNews } = useSpaceNews()
+  const solarKp  = useSolarKp()
+  const kpHistory = useSolarKpHistory()
+  const apod     = useApod()
+  const showers  = nextShowers(4)
+  const quote    = dailyQuote()
 
-  // ── Mobile bottom sheet — swipe up/down gesture ──────────────────────────
-  const [sheetOpen, setSheetOpen] = useState(true)
-  const [introGone, setIntroGone] = useState(false)
-  const [activePanelIdx, setActivePanelIdx] = useState(0)
+  // ── Mobile bottom sheet — 3-state: 'peek' | 'half' | 'full' ─────────────
+  const [sheetState, setSheetState] = useState('peek')
+  const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
-  const touchRef  = useRef({ startY: 0, wasOpen: true, dragging: false })
+  const touchRef  = useRef({ startY: 0, wasState: 'peek', dragging: false })
 
-  // Height of visible peek strip when sheet is closed
-  const PEEK_H = 80
+  const PEEK_H = 80  // px visible in peek: grab bar + filter row
 
   const onHandleTouchStart = (e) => {
-    touchRef.current = { startY: e.touches[0].clientY, wasOpen: sheetOpen, dragging: true }
+    touchRef.current = { startY: e.touches[0].clientY, wasState: sheetState, dragging: true }
   }
   const onHandleTouchMove = (e) => {
     if (!touchRef.current.dragging || !streamRef.current) return
-    const dy = e.touches[0].clientY - touchRef.current.startY
-    const h  = streamRef.current.clientHeight
+    const dy    = e.touches[0].clientY - touchRef.current.startY
+    const h     = streamRef.current.clientHeight
+    const halfY = h - Math.round(window.innerHeight * 0.52)
     streamRef.current.style.transition = 'none'
-    if (touchRef.current.wasOpen) {
-      // dragging down from open state — follow finger
-      if (dy > 0) streamRef.current.style.transform = `translateY(${dy * 0.85}px)`
-    } else {
-      // dragging up from peek state — follow finger toward open
-      if (dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, (h - PEEK_H) + dy * 0.85)}px)`
-    }
+    const s = touchRef.current.wasState
+    if (s === 'peek'  && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, h - PEEK_H + dy * 0.85)}px)`
+    if (s === 'half'  && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(h - PEEK_H, halfY + dy * 0.85)}px)`
+    if (s === 'half'  && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, halfY + dy * 0.85)}px)`
+    if (s === 'full'  && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(halfY, dy * 0.85)}px)`
   }
   const onHandleTouchEnd = (e) => {
     if (!touchRef.current.dragging) return
     const dy = e.changedTouches[0].clientY - touchRef.current.startY
     touchRef.current.dragging = false
-    if (streamRef.current) {
-      streamRef.current.style.transition = ''
-      streamRef.current.style.transform  = ''
-    }
-    if (touchRef.current.wasOpen  && dy >  80) setSheetOpen(false)
-    if (!touchRef.current.wasOpen && dy < -40) setSheetOpen(true)
+    if (streamRef.current) { streamRef.current.style.transition = ''; streamRef.current.style.transform = '' }
+    const s = touchRef.current.wasState
+    if (s === 'peek' && dy < -40) setSheetState('half')
+    if (s === 'half' && dy < -60) setSheetState('full')
+    if (s === 'half' && dy >  80) setSheetState('peek')
+    if (s === 'full' && dy >  60) setSheetState('half')
   }
+
+  const expanded = sheetState === 'full'
 
 
   return (
@@ -837,50 +1176,65 @@ export default function CommandCenterOverlay({ trackedCount, connectionStatus, i
 
       </div>
 
-      {/* Right: Smart Stack — peek + swipe-up/down on mobile */}
+      {/* Right: Smart Stack — peek + 3-state swipe on mobile */}
       <div
         ref={streamRef}
-        className={`${styles.stream}${(!sheetOpen || forceCollapsed) ? ` ${styles.streamClosed}` : ''}${forceCollapsed ? ` ${styles.streamHidden}` : ''}`}
+        className={[
+          styles.stream,
+          forceCollapsed ? styles.streamHidden :
+          sheetState === 'peek' ? styles.streamClosed :
+          sheetState === 'half' ? styles.streamHalf : '',
+        ].filter(Boolean).join(' ')}
         data-tour="signal-stream"
       >
-        {/* Grab handle — swipe zone + peek preview */}
+        {/* Grab handle — swipe zone */}
         <div
           className={styles.grabHandle}
           onTouchStart={onHandleTouchStart}
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
-          onClick={() => !sheetOpen && setSheetOpen(true)}
+          onClick={() => sheetState === 'peek' && setSheetState('half')}
         >
           <span className={styles.grabBar} />
-          {/* Peek preview — only visible when collapsed */}
-          <div className={styles.peekPreview}>
-            <div className={styles.peekLeft}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#00e5ff' }}>
-                {STACK_DEFS[activePanelIdx]?.icon}
-              </span>
-              <div>
-                <p className={styles.peekTitle}>{STACK_DEFS[activePanelIdx]?.label}</p>
-                <p className={styles.peekHint}>Swipe up to explore</p>
-              </div>
-            </div>
-            <div className={styles.peekDots}>
-              {STACK_DEFS.map((_, i) => (
-                <span key={i} className={`${styles.peekDot} ${i === activePanelIdx ? styles.peekDotActive : ''}`} />
-              ))}
-            </div>
-          </div>
+          {/* Expand / collapse chevron visible in half/full */}
+          <button
+            className={styles.sheetStateBtn}
+            onClick={(e) => {
+              e.stopPropagation()
+              setSheetState(s => s === 'full' ? 'half' : s === 'half' ? 'peek' : 'half')
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+              {sheetState === 'full' ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}
+            </span>
+          </button>
         </div>
+
+        {/* Filter chips — always visible as the peek layer */}
+        <MobileFilterRow
+          activeFilter={activeFilter}
+          onFiltersChange={onFiltersChange}
+          onCameraScale={onCameraScale}
+          onActiveFilterChange={onActiveFilterChange}
+          onLaunchPanelToggle={onLaunchPanelToggle}
+        />
+
         <SmartStack
           apod={apod}
           kp={solarKp}
+          kpHistory={kpHistory}
           showers={showers}
           news={news}
+          loadMoreNews={loadMoreNews}
+          hasMoreNews={hasMoreNews}
+          fetchingNews={fetchingNews}
           quote={quote}
           pinnedLaunch={pinnedLaunch}
           onUnpinLaunch={onUnpinLaunch}
           issData={issData}
           onISSLink={onISSLink}
-          onPanelChange={setActivePanelIdx}
+          onPanelChange={() => {}}
+          expanded={expanded}
         />
       </div>
 

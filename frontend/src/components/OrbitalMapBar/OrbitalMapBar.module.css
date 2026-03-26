@@ -328,6 +328,8 @@
   /* Hide desktop dock entirely on mobile */
   .dockWrap    { display: none; }
   .cosmicWrap  { display: none; }
+  /* Mobile filter bar is now inside CommandCenterOverlay bottom sheet */
+  .mobileBar   { display: none !important; }
 
   /* Always-visible chip strip */
   .mobileBar {

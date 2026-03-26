@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './OrbitalMapBar.module.css'
 
 // ── Cosmic Address — concentric rings diagram ────────────────────────────────
@@ -126,12 +126,21 @@ export default function OrbitalMapBar({
   onCameraScale,
   onActiveFilterChange,
   onLaunchPanelToggle,
+  activeFilter,
 }) {
   const [activeTab,   setActiveTab]   = useState('telemetry')
-  const [activeCat,   setActiveCat]   = useState('all')
+  const [activeCat,   setActiveCat]   = useState(activeFilter ?? 'all')
   const [altValue,    setAltValue]    = useState(100)   // 100 = show all / GEO
   const [currentType, setCurrentType] = useState('all')
   const [dockOpen,    setDockOpen]    = useState(false)
+
+  // Sync activeCat when parent clears the filter (e.g. back from /asteroids)
+  useEffect(() => {
+    const nextId = activeFilter ?? 'all'
+    setActiveCat(nextId)
+    const cat = CATEGORIES.find(c => c.id === nextId)
+    setCurrentType(cat?.type ?? 'all')
+  }, [activeFilter])
 
   function handleCat(cat) {
     const isDeselect = activeCat === cat.id

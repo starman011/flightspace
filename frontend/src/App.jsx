@@ -265,6 +265,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             selectISS: ()         => setSelectedIcao24('ISS'),
             trackISS:  ()         => setTrackingId('ISS'),
           }}
+          activeFilter={activeFilter}
+          onFiltersChange={setFilters}
+          onCameraScale={handleCameraScale}
+          onActiveFilterChange={setActiveFilter}
+          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         />
       )}
 
@@ -274,10 +279,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onCameraScale={handleCameraScale}
           onActiveFilterChange={setActiveFilter}
           onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+          activeFilter={activeFilter}
         />
       )}
 
-      <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} />
+      <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} onClose={() => setActiveFilter(null)} />
 
       {!focusedPad && (
         <SearchBar
