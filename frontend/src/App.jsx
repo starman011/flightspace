@@ -1,4 +1,17 @@
-import { useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react'
+import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component } from 'react'
+
+class ErrorBoundary extends Component {
+  state = { error: null }
+  static getDerivedStateFromError(e) { return { error: e } }
+  render() {
+    if (this.state.error) return (
+      <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050a0f', color: '#ff6b6b', fontFamily: 'monospace', fontSize: 13, padding: 32, textAlign: 'center' }}>
+        {this.state.error.message}
+      </div>
+    )
+    return this.props.children
+  }
+}
 const Globe = lazy(() =>
   import('./components/Globe/Globe').then(m => ({ default: m.Globe }))
 )
@@ -138,7 +151,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const showCommandCenter = !selectedIcao24 && !launchPanelOpen && !focusedPad && activeFilter !== 'asteroids'
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Keyframe for ping dot */}
       <style>{`
         @keyframes padPing {
@@ -257,6 +270,6 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onTrack={setTrackingId}
         />
       )}
-    </>
+    </ErrorBoundary>
   )
 }
