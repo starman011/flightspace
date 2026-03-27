@@ -19,6 +19,7 @@ import {
   TextureLoader, BufferGeometry, BufferAttribute,
   LineLoop, LineBasicMaterial,
   AdditiveBlending, BackSide, DoubleSide, Points, PointsMaterial,
+  Sprite, SpriteMaterial, CanvasTexture,
 } from 'three'
 
 import {
@@ -71,6 +72,23 @@ function keplerianPosition(name) {
 // true scale would be sub-pixel; min 300 WU ensures even tiny Mercury is visible
 function visualRadius(name) {
   return Math.max(PLANET_RADIUS_WU[name] * 80, 300)
+}
+
+// ── Planet name label sprite ─────────────────────────────────────────────────
+function makeLabelSprite(text, color = '#c3f5ff') {
+  const cv  = document.createElement('canvas')
+  cv.width  = 256; cv.height = 64
+  const ctx = cv.getContext('2d')
+  ctx.font  = 'bold 22px "IBM Plex Mono", monospace'
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, 128, 32)
+  const tex  = new CanvasTexture(cv)
+  const mat  = new SpriteMaterial({ map: tex, transparent: true, opacity: 0.82, depthWrite: false })
+  const sprite = new Sprite(mat)
+  sprite.scale.set(1800, 450, 1)  // WU — readable at solar camera ~3–6 AU
+  return sprite
 }
 
 // ── Factory ──────────────────────────────────────────────────────────────────
@@ -130,6 +148,11 @@ export function createSolarSystem(scene, renderer) {
     mesh.userData.planet = name
     solarGroup.add(mesh)
     planetMeshes[name] = mesh
+
+    // Name label — positioned above the planet, always faces camera (Sprite)
+    const label = makeLabelSprite(name.charAt(0).toUpperCase() + name.slice(1), PLANET_COLOR[name] ? '#c3f5ff' : '#c3f5ff')
+    label.position.set(0, rWU * 1.8 + 400, 0)
+    mesh.add(label)
 
     const texKey = name === 'earth' ? 'earth_day' : name
     if (PLANET_TEXTURE[texKey]) {
@@ -263,12 +286,12 @@ export function createSolarSystem(scene, renderer) {
       const geo = new BufferGeometry()
       geo.setAttribute('position', new BufferAttribute(pts, 3))
 
-      const col = pha ? 0xff4422 : 0x1a6a8a
-      const op  = pha ? 0.55 : 0.30
+      const col = pha ? 0xff3311 : 0x00aacc
+      const op  = pha ? 0.75 : 0.45
       const mat = new LineBasicMaterial({ color: col, transparent: true, opacity: op, depthWrite: false })
       neoGroup.add(new LineLoop(geo, mat))
 
-      // Current-position dot at perihelion side (nu=0, closest approach point)
+      // Current-position dot at perihelion (closest approach point)
       const rPeri = (a * (1 - e * e)) / (1 + e) * AU_TO_WU
       const dotPts = new Float32Array(3)
       dotPts[0] = rPeri * (cos_om * Math.cos(wR) - sin_om * Math.sin(wR) * cos_i)
@@ -276,7 +299,7 @@ export function createSolarSystem(scene, renderer) {
       dotPts[2] = rPeri * (sin_om * Math.cos(wR) + cos_om * Math.sin(wR) * cos_i)
       const dotGeo = new BufferGeometry()
       dotGeo.setAttribute('position', new BufferAttribute(dotPts, 3))
-      const dotMat = new PointsMaterial({ color: pha ? 0xff6644 : 0x00ccee, size: pha ? 320 : 240, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })
+      const dotMat = new PointsMaterial({ color: pha ? 0xff5533 : 0x00ddff, size: pha ? 700 : 500, sizeAttenuation: true, transparent: true, opacity: 0.95, depthWrite: false, blending: AdditiveBlending })
       neoGroup.add(new Points(dotGeo, dotMat))
       drawn++
     }

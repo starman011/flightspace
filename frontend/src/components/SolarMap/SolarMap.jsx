@@ -118,7 +118,9 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const W = canvas.width, H = canvas.height
-    const { zoom, panX, panY } = stateRef.current
+    const { zoom } = stateRef.current
+    const panX = isFinite(stateRef.current.panX) ? stateRef.current.panX : 0
+    const panY = isFinite(stateRef.current.panY) ? stateRef.current.panY : 0
     const SCALE = Math.min(W, H) * 0.28 * zoom  // px per AU
     const cx = W / 2 + panX, cy = H / 2 + panY
 
@@ -289,10 +291,10 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
     const targetZoom = Math.min(6, Math.max(1.5, (Math.min(W, H) * 0.25) / (a * Math.min(W, H) * 0.28)))
     const SCALE = Math.min(W, H) * 0.28 * targetZoom
 
-    // Pan so the asteroid is centered
-    stateRef.current.zoom = targetZoom
-    stateRef.current.panX = -apx * SCALE
-    stateRef.current.panY = apy * SCALE  // canvas Y is flipped
+    // Pan so the asteroid is centered — guard against NaN positions
+    if (isFinite(targetZoom)) stateRef.current.zoom = targetZoom
+    if (isFinite(apx)) stateRef.current.panX = -apx * SCALE
+    if (isFinite(apy)) stateRef.current.panY = apy * SCALE
 
     draw()
   }, [selectedId, asteroids, draw])
