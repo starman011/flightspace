@@ -1640,6 +1640,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // At solar scale the old earth formula sets near > far → invalid frustum → blank screen.
       const dist    = camera.position.length()
       int.current.camDist = dist
+      const altUnit = Math.max(dist - EARTH_R, 1e-7)
       if (targetScale === 'solar') {
         if (camera.near !== 235 || camera.far !== 1_408_800) {
           camera.near = 235
@@ -1647,7 +1648,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           camera.updateProjectionMatrix()
         }
       } else {
-        const altUnit = Math.max(dist - EARTH_R, 1e-7)
         const newNear = altUnit * 0.1
         if (Math.abs(newNear - camera.near) / camera.near > 0.05) {
           camera.near = newNear
