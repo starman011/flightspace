@@ -769,7 +769,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, neoData }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -864,6 +864,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
   // Sync onPlanetClick prop into int.current so native event closures can read it
   useEffect(() => { int.current.onPlanetClick = onPlanetClick }, [onPlanetClick])
+
+  // Push NEO asteroid data into the solar scene whenever it arrives
+  useEffect(() => {
+    if (neoData?.length) int.current.solarSystem?.updateNEOs(neoData)
+  }, [neoData])
 
   // ── Three.js init ──────────────────────────────────────────────────────────
   useEffect(() => {

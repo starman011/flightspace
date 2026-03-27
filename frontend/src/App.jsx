@@ -30,6 +30,7 @@ import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
+import { useAsteroids } from './hooks/useAsteroids'
 
 // ── Pad Focus Badge ───────────────────────────────────────────────────────────
 function PadFocusBadge({ launch, onExit }) {
@@ -109,6 +110,7 @@ export default function App() {
   const { sessionToken, isAuthenticated } = useSession()
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
+  const { asteroids } = useAsteroids(activeScale === 'solar')
 
   // Initialise from URL on first render
   const init = parseInitialState(location.pathname)
@@ -264,6 +266,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
           onInteract={handleGlobeInteract}
           onPlanetClick={handlePlanetClick}
+          neoData={asteroids}
         />
       </Suspense>
 

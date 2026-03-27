@@ -18,7 +18,7 @@ import {
   PointLight, AmbientLight,
   TextureLoader, BufferGeometry, BufferAttribute,
   LineLoop, LineBasicMaterial,
-  AdditiveBlending, BackSide, DoubleSide,
+  AdditiveBlending, BackSide, DoubleSide, Points, PointsMaterial,
 } from 'three'
 
 import {
@@ -202,6 +202,86 @@ export function createSolarSystem(scene, renderer) {
     }
   }
 
+  update(null)
+
+  // ── NEO (near-earth object) orbit lines ────────────────────────────────────
+  // Drawn as faint LineLoops in the ecliptic-inclined orbital plane.
+  // PHA (potentially hazardous) asteroids are tinted red; others dim cyan.
+  //
+  // 3D orbit from Keplerian elements — heliocentric ecliptic frame (Y-up):
+  //   x = r*(cosΩ·cos(ω+ν) − sinΩ·sin(ω+ν)·cos i)
+  //   y = r·sin i·sin(ω+ν)
+  //   z = r*(sinΩ·cos(ω+ν) + cosΩ·sin(ω+ν)·cos i)
+  const neoGroup = new Object3D()
+  solarGroup.add(neoGroup)
+
+  let _lastNeoIds = ''
+
+  function updateNEOs(asteroids) {
+    if (!asteroids?.length) return
+    const idKey = asteroids.slice(0, 40).map(a => a.id).join(',')
+    if (idKey === _lastNeoIds) return
+    _lastNeoIds = idKey
+
+    // Clear previous
+    while (neoGroup.children.length) {
+      const obj = neoGroup.children[0]
+      if (obj.geometry) obj.geometry.dispose()
+      if (obj.material) obj.material.dispose()
+      neoGroup.remove(obj)
+    }
+
+    const MAX_NEO = 40
+    let drawn = 0
+    for (const ast of asteroids) {
+      if (drawn >= MAX_NEO) break
+      const { a, e, i: iDeg, om: omDeg, w: wDeg, pha } = ast
+      if (!a || a < 0.01 || e >= 0.999 || a > 8) continue
+
+      const iR  = (iDeg  || 0) * Math.PI / 180
+      const omR = (omDeg || 0) * Math.PI / 180
+      const wR  = (wDeg  || 0) * Math.PI / 180
+      const cos_om = Math.cos(omR), sin_om = Math.sin(omR)
+      const cos_i  = Math.cos(iR),  sin_i  = Math.sin(iR)
+
+      const STEPS = 96
+      const pts = new Float32Array((STEPS + 1) * 3)
+      let valid = true
+      for (let k = 0; k <= STEPS; k++) {
+        const nu = (k / STEPS) * Math.PI * 2
+        const denom = 1 + e * Math.cos(nu)
+        if (Math.abs(denom) < 1e-6) { valid = false; break }
+        const r = (a * (1 - e * e)) / denom * AU_TO_WU
+        const wNu = wR + nu
+        const cos_wnu = Math.cos(wNu), sin_wnu = Math.sin(wNu)
+        pts[k * 3]     = r * (cos_om * cos_wnu - sin_om * sin_wnu * cos_i)
+        pts[k * 3 + 1] = r * sin_i * sin_wnu
+        pts[k * 3 + 2] = r * (sin_om * cos_wnu + cos_om * sin_wnu * cos_i)
+      }
+      if (!valid) continue
+
+      const geo = new BufferGeometry()
+      geo.setAttribute('position', new BufferAttribute(pts, 3))
+
+      const col = pha ? 0xff4422 : 0x1a6a8a
+      const op  = pha ? 0.55 : 0.30
+      const mat = new LineBasicMaterial({ color: col, transparent: true, opacity: op, depthWrite: false })
+      neoGroup.add(new LineLoop(geo, mat))
+
+      // Current-position dot at perihelion side (nu=0, closest approach point)
+      const rPeri = (a * (1 - e * e)) / (1 + e) * AU_TO_WU
+      const dotPts = new Float32Array(3)
+      dotPts[0] = rPeri * (cos_om * Math.cos(wR) - sin_om * Math.sin(wR) * cos_i)
+      dotPts[1] = rPeri * sin_i * Math.sin(wR)
+      dotPts[2] = rPeri * (sin_om * Math.cos(wR) + cos_om * Math.sin(wR) * cos_i)
+      const dotGeo = new BufferGeometry()
+      dotGeo.setAttribute('position', new BufferAttribute(dotPts, 3))
+      const dotMat = new PointsMaterial({ color: pha ? 0xff6644 : 0x00ccee, size: pha ? 320 : 240, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })
+      neoGroup.add(new Points(dotGeo, dotMat))
+      drawn++
+    }
+  }
+
   function show() { solarGroup.visible = true }
   function hide() { solarGroup.visible = false }
 
@@ -216,7 +296,5 @@ export function createSolarSystem(scene, renderer) {
     scene.remove(solarGroup)
   }
 
-  update(null)
-
-  return { solarGroup, planetMeshes, update, show, hide, dispose }
+  return { solarGroup, planetMeshes, update, updateNEOs, show, hide, dispose }
 }
