@@ -17,7 +17,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createGalaxyScene } from './GalaxyScene.js'
-import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS } from './solarSystem.js'
+import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -1620,6 +1620,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current._lastAppliedScale = targetScale
           int.current.camTweenStart = Date.now()
           int.current.camTweenFrom  = camera.position.clone()
+          // Unlock controls limits immediately so scroll during tween works
+          controls.minDistance = CAM_TARGET.minDist
+          controls.maxDistance = CAM_TARGET.maxDist
           // Show solar system immediately when leaving earth scale
           if (isSolar || isGalaxy) solarSystem.show()
           if (isGalaxy) galaxySystem.show()
@@ -1630,6 +1633,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // ── Solar system per-frame update ─────────────────────────────────────
       if (solarSystem.solarGroup.visible) {
         solarSystem.update(int.current.planetPositions)
+        solarSystem.animateExtra()
       }
 
       controls.update()
@@ -1649,8 +1653,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           camera.updateProjectionMatrix()
         }
       } else if (isSolar) {
-        if (camera.near !== 235 || camera.far !== 1_408_800) {
-          camera.near = 235; camera.far = 1_408_800
+        if (camera.near !== 500 || camera.far !== SOLAR_FAR) {
+          camera.near = 500; camera.far = SOLAR_FAR
           camera.updateProjectionMatrix()
         }
       } else {

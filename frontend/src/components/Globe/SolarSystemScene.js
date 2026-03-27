@@ -20,6 +20,7 @@ import {
   LineLoop, LineBasicMaterial,
   AdditiveBlending, BackSide, DoubleSide, Points, PointsMaterial,
   Sprite, SpriteMaterial, CanvasTexture,
+  Color,
 } from 'three'
 
 import {
@@ -27,6 +28,16 @@ import {
   PLANET_TEXTURE, SATURN_RING_INNER, SATURN_RING_OUTER, SUN_RADIUS_WU,
   AU_TO_WU,
 } from './solarSystem.js'
+
+import {
+  SPACECRAFT_CATALOG, propagateLinear, propagateKeplerian,
+} from './spacecraft.js'
+
+// ── Seeded RNG (for deterministic asteroid belt) ─────────────────────────────
+function seededRng(seed) {
+  let s = seed >>> 0
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000 }
+}
 
 // ── Keplerian mean longitude (J2000 coefficients) ─────────────────────────
 const KEPLERIAN = {
@@ -310,6 +321,179 @@ export function createSolarSystem(scene, renderer) {
     }
   }
 
+  // ── Asteroid belt ─────────────────────────────────────────────────────────
+  // 4,000 particles spread between 2.0–3.5 AU with slight inclination spread.
+  const beltRng = seededRng(0xbelt1234 | 0)
+  const N_BELT  = 4000
+  const beltPos = new Float32Array(N_BELT * 3)
+  const beltCol = new Float32Array(N_BELT * 3)
+  for (let i = 0; i < N_BELT; i++) {
+    const r     = (2.0 + beltRng() * 1.5) * AU_TO_WU
+    const theta = beltRng() * Math.PI * 2
+    const elev  = (beltRng() - 0.5) * 0.12   // ±3.4° inclination spread
+    beltPos[i * 3]     = r * Math.cos(theta)
+    beltPos[i * 3 + 1] = r * elev
+    beltPos[i * 3 + 2] = r * Math.sin(theta)
+    // Slight colour variation — grey to warm grey
+    const br = 0.45 + beltRng() * 0.2
+    beltCol[i * 3] = br + 0.05; beltCol[i * 3 + 1] = br; beltCol[i * 3 + 2] = br - 0.05
+  }
+  const beltGeo = new BufferGeometry()
+  beltGeo.setAttribute('position', new BufferAttribute(beltPos, 3))
+  beltGeo.setAttribute('color',    new BufferAttribute(beltCol, 3))
+  solarGroup.add(new Points(beltGeo, new PointsMaterial({
+    size: AU_TO_WU * 0.012, sizeAttenuation: true, vertexColors: true,
+    transparent: true, opacity: 0.55, depthWrite: false,
+  })))
+
+  // ── Solar wind ────────────────────────────────────────────────────────────
+  // 200 particles animated outward from the Sun (0.15 → 5 AU), reset on arrival.
+  const SW_N = 200
+  const swPositions = new Float32Array(SW_N * 3)
+  const swDirs      = new Float32Array(SW_N * 3)  // unit direction per particle
+  const swPhases    = new Float32Array(SW_N)       // current distance (AU)
+  const swRng       = seededRng(0xwind)
+  for (let i = 0; i < SW_N; i++) {
+    // Fibonacci sphere distribution for uniform coverage
+    const y   = 1 - (i / (SW_N - 1)) * 2
+    const rad = Math.sqrt(Math.max(0, 1 - y * y))
+    const th  = Math.PI * (3 - Math.sqrt(5)) * i
+    swDirs[i * 3]     = Math.cos(th) * rad
+    swDirs[i * 3 + 1] = y
+    swDirs[i * 3 + 2] = Math.sin(th) * rad
+    swPhases[i]       = swRng() * 5.0  // stagger starting phases
+  }
+  const swGeo = new BufferGeometry()
+  swGeo.setAttribute('position', new BufferAttribute(swPositions, 3))
+  const swPoints = new Points(swGeo, new PointsMaterial({
+    color: 0xffd0a0, size: AU_TO_WU * 0.006, sizeAttenuation: true,
+    transparent: true, opacity: 0.35, depthWrite: false, blending: AdditiveBlending,
+  }))
+  solarGroup.add(swPoints)
+
+  // ── Spacecraft ────────────────────────────────────────────────────────────
+  const scGroup = new Object3D()
+  solarGroup.add(scGroup)
+
+  // Build spacecraft dots + labels
+  const SC_N = SPACECRAFT_CATALOG.length
+  const scPosBuf  = new Float32Array(SC_N * 3)
+  const scColBuf  = new Float32Array(SC_N * 3)
+  const scGeo     = new BufferGeometry()
+  scGeo.setAttribute('position', new BufferAttribute(scPosBuf, 3))
+  scGeo.setAttribute('color',    new BufferAttribute(scColBuf, 3))
+
+  // Per-spacecraft glow — separate Points so we can use AdditiveBlending
+  const scGlowBuf = new Float32Array(SC_N * 3)
+  const scGlowGeo = new BufferGeometry()
+  scGlowGeo.setAttribute('position', new BufferAttribute(scGlowBuf, 3))
+
+  const CRAFT_SIZES = SPACECRAFT_CATALOG.map(c => c.dotSize)
+  // One Points object for crisp dot, one for glow
+  const scDotMat  = new PointsMaterial({ size: 1, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false })
+  const scGlowMat = new PointsMaterial({ color: 0xffffff, size: 1, sizeAttenuation: true, transparent: true, opacity: 0.25, depthWrite: false, blending: AdditiveBlending })
+  scGroup.add(new Points(scGeo,     scDotMat))
+  scGroup.add(new Points(scGlowGeo, scGlowMat))
+
+  // Labels
+  const scLabels = SPACECRAFT_CATALOG.map(craft => {
+    const cv = document.createElement('canvas')
+    cv.width = 256; cv.height = 48
+    const ctx = cv.getContext('2d')
+    ctx.font = 'bold 14px "IBM Plex Mono", monospace'
+    const c = new Color(craft.color)
+    ctx.fillStyle = `rgb(${Math.round(c.r*255)},${Math.round(c.g*255)},${Math.round(c.b*255)})`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(craft.label, 4, 24)
+    const tex = new CanvasTexture(cv)
+    const mat = new SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthWrite: false })
+    const sp  = new Sprite(mat)
+    sp.scale.set(3200, 600, 1)
+    scGroup.add(sp)
+    return sp
+  })
+
+  // Populate initial colour buffer
+  SPACECRAFT_CATALOG.forEach((craft, i) => {
+    const c = new Color(craft.color)
+    scColBuf[i * 3] = c.r; scColBuf[i * 3 + 1] = c.g; scColBuf[i * 3 + 2] = c.b
+  })
+  scGeo.attributes.color.needsUpdate = true
+
+  // ── Spacecraft position updater (call once per frame or on demand) ─────────
+  function updateSpacecraft() {
+    SPACECRAFT_CATALOG.forEach((craft, i) => {
+      let ax = 0, ay = 0, az = 0
+
+      if (craft.pos && craft.vel) {
+        // Linear state-vector propagation
+        const [x, y, z] = propagateLinear(craft)
+        ax = x * AU_TO_WU; ay = y * AU_TO_WU; az = z * AU_TO_WU
+      } else if (craft.orbital) {
+        // Keplerian orbit
+        const [x, y, z] = propagateKeplerian(craft.orbital)
+        ax = x * AU_TO_WU; ay = y * AU_TO_WU; az = z * AU_TO_WU
+      } else if (craft.orbitsBody === 'jupiter') {
+        // Offset from current Jupiter position
+        const jMesh = planetMeshes.jupiter
+        if (jMesh) {
+          ax = jMesh.position.x + craft.offsetAU * AU_TO_WU
+          ay = jMesh.position.y
+          az = jMesh.position.z + craft.offsetAU * AU_TO_WU
+        }
+      } else if (craft.orbitsBody === 'earth_l2') {
+        // L2 point: Earth position + 0.01 AU in anti-Sun direction
+        const eMesh = planetMeshes.earth
+        if (eMesh) {
+          const ex = eMesh.position.x, ez = eMesh.position.z
+          const len = Math.sqrt(ex * ex + ez * ez)
+          ax = ex + (ex / len) * 0.01 * AU_TO_WU
+          ay = eMesh.position.y
+          az = ez + (ez / len) * 0.01 * AU_TO_WU
+        }
+      }
+
+      scPosBuf[i * 3]     = ax
+      scPosBuf[i * 3 + 1] = ay
+      scPosBuf[i * 3 + 2] = az
+      scGlowBuf[i * 3]    = ax
+      scGlowBuf[i * 3 + 1] = ay + 0
+      scGlowBuf[i * 3 + 2] = az
+
+      // Label sits above the dot
+      scLabels[i].position.set(ax + CRAFT_SIZES[i] * 0.6, ay + CRAFT_SIZES[i] * 0.8, az)
+    })
+    scGeo.attributes.position.needsUpdate     = true
+    scGlowGeo.attributes.position.needsUpdate = true
+  }
+
+  // ── Per-frame animation (solar wind + spacecraft) ─────────────────────────
+  const SW_SPEED = 0.003  // AU per frame at 60fps ≈ 450 km/s (solar wind ~400–800 km/s)
+  const SW_INNER = 0.15
+  const SW_OUTER = 5.0
+
+  function animateExtra() {
+    // Animate solar wind
+    const buf = swGeo.attributes.position.array
+    for (let i = 0; i < SW_N; i++) {
+      swPhases[i] += SW_SPEED
+      if (swPhases[i] > SW_OUTER) swPhases[i] = SW_INNER
+      const d = swPhases[i] * AU_TO_WU
+      buf[i * 3]     = swDirs[i * 3]     * d
+      buf[i * 3 + 1] = swDirs[i * 3 + 1] * d
+      buf[i * 3 + 2] = swDirs[i * 3 + 2] * d
+    }
+    swGeo.attributes.position.needsUpdate = true
+
+    // Update spacecraft positions + glow pulse
+    const t = Date.now() / 1000
+    scDotMat.opacity  = 0.80 + 0.15 * Math.sin(t * 2.5)
+    scGlowMat.size    = AU_TO_WU * (0.022 + 0.006 * Math.sin(t * 2.5))
+    scDotMat.size     = AU_TO_WU * (0.018 + 0.004 * Math.sin(t * 2.5))
+    updateSpacecraft()
+  }
+
   function show() { solarGroup.visible = true }
   function hide() { solarGroup.visible = false }
 
@@ -324,5 +508,5 @@ export function createSolarSystem(scene, renderer) {
     scene.remove(solarGroup)
   }
 
-  return { solarGroup, planetMeshes, update, updateNEOs, show, hide, dispose }
+  return { solarGroup, planetMeshes, update, updateNEOs, animateExtra, show, hide, dispose }
 }

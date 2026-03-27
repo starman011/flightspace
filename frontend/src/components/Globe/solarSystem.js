@@ -85,8 +85,11 @@ export const SATURN_RING_OUTER = 2.3  // × Saturn radius
 export const CAM_SOLAR = {
   position: [0, AU_TO_WU * 14, AU_TO_WU * 8],  // higher angle, see all 8 planets
   minDist:  AU_TO_WU * 0.3,
-  maxDist:  AU_TO_WU * 55,  // zoom out to see Neptune
+  maxDist:  AU_TO_WU * 220,  // zoom out past Voyager (~160 AU)
 }
+
+// Far clip for solar camera — must cover camera-at-maxDist + object-at-maxDist
+export const SOLAR_FAR = AU_TO_WU * 480   // ~11.3M WU, 480 AU
 
 // Galaxy / deep-space view — camera sits ~40 AU from the Sun
 export const CAM_GALAXY = {
