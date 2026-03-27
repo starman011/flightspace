@@ -23,7 +23,7 @@ import {
 } from 'three'
 
 import {
-  PLANET_NAMES, PLANET_RADIUS_WU, PLANET_COLOR,
+  PLANET_NAMES, PLANET_RADIUS_WU, PLANET_ORBIT_AU, PLANET_COLOR,
   PLANET_TEXTURE, SATURN_RING_INNER, SATURN_RING_OUTER, SUN_RADIUS_WU,
   AU_TO_WU,
 } from './solarSystem.js'
@@ -68,10 +68,16 @@ function keplerianPosition(name) {
   return { x: rWU * Math.cos(nu), z: rWU * Math.sin(nu) }
 }
 
-// ── Visual radius — exaggerated so planets are clickable at solar camera dist ─
-// true scale would be sub-pixel; min 300 WU ensures even tiny Mercury is visible
+// ── Visual radius — orbital-distance-aware so outer planets stay visible ──────
+// Scales with orbital distance so Jupiter–Neptune are never sub-pixel.
+// Floor of 600 WU keeps inner planets clickable; physical radius term preserves
+// relative size hierarchy between planets at similar distances.
 function visualRadius(name) {
-  return Math.max(PLANET_RADIUS_WU[name] * 80, 300)
+  return Math.max(
+    PLANET_ORBIT_AU[name] * AU_TO_WU * 0.007,
+    PLANET_RADIUS_WU[name] * 350,
+    600,
+  )
 }
 
 // ── Planet name label sprite ─────────────────────────────────────────────────
@@ -106,7 +112,7 @@ export function createSolarSystem(scene, renderer) {
   solarGroup.add(solarAmbient)
 
   // ── Sun ──────────────────────────────────────────────────────────────────────
-  const sunR    = SUN_RADIUS_WU * 0.55   // visual Sun radius — much larger than before
+  const sunR    = SUN_RADIUS_WU * 6   // visual Sun radius — visible from solar camera ~3–5 AU
   const sunMat  = new MeshBasicMaterial({ color: 0xfff4c2 })
   const sunMesh = new Mesh(new SphereGeometry(sunR, 32, 32), sunMat)
   solarGroup.add(sunMesh)
