@@ -43,7 +43,7 @@ function solveKepler(M, e, tol = 1e-8) {
 // Uses the known close-approach date + orbital period to propagate back to now.
 // Returns [x, y] in AU, Sun at origin.
 function currentPosition(a, e, w, approach_date) {
-  if (!a || a < 0.01) return [1.2, 0]  // fallback
+  if (!a || a < 0.01 || e >= 0.999) return [1.2, 0]  // fallback (incl. hyperbolic)
 
   // ── 1. True anomaly at close approach (where orbit crosses ≈1 AU) ──────
   const p = a * (1 - e * e)
@@ -183,6 +183,7 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
       const px = cx + apx * SCALE
       const py = cy - apy * SCALE
 
+      if (!isFinite(px) || !isFinite(py)) continue
       hitTargets.push({ id: ast.id, name: ast.name, px, py })
 
       if (isSelected || isHovered) {

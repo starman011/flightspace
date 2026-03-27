@@ -15,10 +15,17 @@ export default function FilterRail({
   onLaunchPanelToggle,
   launchPanelOpen,
   onActiveFilterChange,
+  activeFilter,
   sidebarOpen,
   onSidebarToggle,
 }) {
   const [activeId, setActiveId] = useState(null)
+
+  // Sync local chip highlight when parent clears the filter externally
+  useEffect(() => {
+    if (activeFilter == null) setActiveId(null)
+    else setActiveId(activeFilter)
+  }, [activeFilter])
 
   // Keep CSS variable in sync so dependent overlays reposition
   useEffect(() => {

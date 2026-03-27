@@ -171,6 +171,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     globeRef.current?.setCameraScale?.(scale)
   }, [])
 
+  // Central reset: clears filter + returns camera to earth (used by DeepSpacePanel close)
+  const handleClearFilter = useCallback(() => {
+    setActiveFilter(null)
+    setActiveScale('earth')
+    globeRef.current?.setCameraScale?.('earth')
+  }, [])
+
   const handleLocatePad = useCallback((launch) => {
     if (launch?.pad_lat && launch?.pad_lon) {
       globeRef.current?.flyTo?.(launch.pad_lat, launch.pad_lon)
@@ -234,6 +241,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
           launchPanelOpen={launchPanelOpen}
           onActiveFilterChange={setActiveFilter}
+          activeFilter={activeFilter}
           sidebarOpen={sidebarOpen}
           onSidebarToggle={() => setSidebarOpen(o => !o)}
         />
@@ -284,7 +292,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} onClose={() => setActiveFilter(null)} />
+      <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} onClose={handleClearFilter} />
 
       {!focusedPad && (
         <SearchBar
