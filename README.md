@@ -71,6 +71,131 @@ A real-time planetary observatory. One viewport that scales from individual airc
 
 ---
 
+## System architecture — deep dive
+
+### Pattern: Modular monolith
+
+SkyDot is a **modular monolith**, not a microservices system. A single Go binary contains all server-side logic — the WebSocket hub, every data-source poller, the REST API, authentication, and cleanup — wired together in `app.go` and started as a single process on Railway.
+
+This was a deliberate choice, not an oversight:
+
+| | Microservices | SkyDot monolith |
+|---|---|---|
+| Operational overhead | High — N deployments, N logs, service mesh | One binary, one Railway service, one log stream |
+| Data locality | Cross-service calls for shared state | All pollers write to the same Redis instance in-process |
+| Latency | Network hop between services | Zero — hub fan-out is an in-process channel write |
+| Free-tier fit | Multiple always-on services burn quota fast | One Railway instance covers everything |
+| Scalability ceiling | Horizontal per service | Vertical + a future hub-per-region split when needed |
+
+The code is still **modular** — each poller (`aircraft.go`, `satellite_poller.go`, `solar_poller.go`, etc.) is an isolated struct with its own ticker and context. Adding or removing a data source is a two-line change in `app.go`. The monolith boundary is deployment, not design.
+
+---
+
+### Data flow — end to end
+
+```
+External APIs                 Backend process                    Browser
+─────────────                 ───────────────                    ───────
+adsb.lol ──────── every 15s ──► AircraftPoller
+CelesTrak TLE ──── every 30s ──► SatellitePoller   ─► Redis HSET ──► Hub.broadcast()
+wheretheiss.at ─── every  5s ──► ISSPoller                           │
+AISStream.io ────── live WS ──► ShipPoller         ─► Redis HSET ──► │
+NASA Horizons ───── every 5m ──► SolarPoller                          │
+NASA NeoWs ────── every  1hr ──► NEOPoller         ─► Redis HSET ──► │
+Launch Library 2 ─ every 15m ──► LaunchPoller                         │
+                                                                       │
+                                 Hub.Run() ◄────────── register(client)│
+                                     │                               │ ▲
+                                  fan-out deltas                     │ │ WS upgrade
+                                     │                               │ │ JWT check
+                                     ▼                               │ │
+                              per-client goroutine ─── WS write ─────┘ │
+                                                                        │
+                               REST API (net/http) ◄─── HTTP ──────────┘
+                                     │
+                                PostgreSQL (trail, metadata, sessions)
+```
+
+**Every poller is a goroutine.** They run concurrently with independent tickers. When a poller fetches new data it writes to Redis — the Hub's read loop detects the change and broadcasts a delta to all connected clients that have the object in their viewport bounds.
+
+---
+
+### WebSocket hub — goroutine model
+
+Each connected browser gets **two dedicated goroutines**:
+
+- **readPump** — reads client messages (`set_bounds`, `ping`). Runs until the connection drops.
+- **writePump** — dequeues messages from a buffered channel and writes to the socket. Has a 10-second write deadline to kill stale connections fast.
+
+The Hub itself runs a single **coordinator goroutine** (`hub.Run(ctx)`) that owns the client registry. All register/unregister and broadcast operations go through a channel to avoid mutex contention on the registry map:
+
+```
+hub.register   ─► chan *Client ─► hub.Run() ─► clients[c] = bounds
+hub.unregister ─► chan *Client ─► hub.Run() ─► delete(clients, c)
+hub.broadcast  ─► chan []byte  ─► hub.Run() ─► for each client: c.send <- msg
+```
+
+This is the standard gorilla/websocket **read/write pump pattern** extended with a bounds filter — the broadcast loop skips any client whose registered bounding box doesn't intersect the delta's objects.
+
+---
+
+### Storage responsibilities
+
+| Store | What lives there | Why |
+|-------|-----------------|-----|
+| **Redis** | Live aircraft positions, satellite positions, ship positions, planet positions, asteroid cache, launch cache | O(1) HSET reads, TTL-based expiry, zero schema migration for fast-changing data |
+| **PostgreSQL** | `aircraft_positions` trail (last N hours), `aircraft_static` metadata, `anonymous_sessions` | Durable, queryable, supports trail rendering and ICAO lookups |
+
+Redis acts as the **live state store** — every poller writes there, and the Hub reads from there to build deltas. PostgreSQL is the **audit and trail store** — the aircraft poller additionally appends each position batch to `aircraft_positions` for trail rendering in `DetailPanel`.
+
+A cleanup goroutine runs hourly and deletes `aircraft_positions` older than `RETENTION_HOURS` (default 6 hours) and expired sessions.
+
+---
+
+### Frontend architecture
+
+The frontend is a **single-page application** with one full-viewport canvas (`Globe.jsx` → Three.js) and layered UI panels that sit on top in CSS. There is no page reload — navigation between Earth view, launches, and asteroids is React Router state.
+
+```
+App.jsx  (router, session, WebSocket lifecycle)
+  │
+  ├── Globe.jsx              Three.js scene — aircraft, satellites, tiles, solar system
+  │     └── useAircraft.js  State map + delta reducer + viewport filter
+  │     └── useWebSocket.js WS connect / reconnect / BFCache guard
+  │
+  ├── CommandCenterOverlay   Right panel (desktop) / bottom sheet (mobile)
+  │     └── SmartStack       Horizontal swipe panel switcher
+  │           └── panels:    Solar, Meteors, Planets, Kp, APOD, News
+  │
+  ├── DetailPanel            Per-flight trail + live data
+  ├── LaunchPanel            Rocket manifest (/launches route)
+  ├── DeepSpacePanel         NEO viewer (/asteroids route)
+  ├── OrbitalMapBar          Desktop filter dock
+  ├── FilterRail             Left sidebar filters
+  ├── HUD                    Altitude + camera scale bar
+  └── StatusBar              Connection state + search
+```
+
+State is local to hooks — there is no global store (no Redux, no Zustand). The aircraft `Map<icao24, aircraft>` lives in `useAircraft.js` and is passed down as props. Everything else is component-local `useState`.
+
+---
+
+### Why this stack
+
+**Go for the backend** — not because it's trendy, but because the workload is exactly what Go excels at: thousands of concurrent WebSocket connections, each a lightweight goroutine, with no shared mutable state between them. The alternative (Node.js) would require more careful async juggling and significantly more memory per connection. Python was never in contention — the poller tick latency and GIL would hurt.
+
+**`net/http` directly, no framework** — Go's stdlib router is fast and predictable. There are only ~12 routes; a framework would add indirection without benefit. Every dependency is intentional: `pgx` (typed Postgres, no ORM reflection), `go-redis` (thin wrapper around the RESP protocol), `gorilla/websocket` (the only mature WS library in Go), `golang-jwt` (stateless auth).
+
+**React 18 + Vite** — Concurrent mode's `startTransition` and `Suspense` are actively used (lazy-loaded Globe, Suspense-safe navigation). Vite's build is fast enough that the full production bundle rebuilds in under 2 seconds. No Next.js — there's no SSR benefit for a real-time canvas app; adding a server layer would only slow cold-start without improving anything visible.
+
+**Three.js over a mapping library** — Leaflet/Mapbox render a 2D tile map. Three.js renders a 3D rotating globe, a solar system, and 12,000 instanced meshes in one WebGL context. The scene switches between Earth and solar system without a page load or a second canvas. A mapping library can't do this.
+
+**Redis over in-memory Go maps** — Live positions need to survive backend restarts without clients seeing a blank globe. Redis HSET gives O(1) field-level writes per ICAO, automatic TTL eviction for aircraft that stop broadcasting, and a clean separation between the poller goroutines (writers) and the Hub (reader). If we later need multiple Hub instances, Redis already works as a pub-sub bus.
+
+**Railway + Vercel + Cloudflare** — All free tier on current traffic. Railway runs the persistent Go process and the managed PostgreSQL + Redis add-ons. Vercel hosts the static frontend with global edge CDN. Cloudflare sits in front of both for DDoS protection and TLS. The entire production stack costs $0/month at current scale.
+
+---
+
 ## Engineering decisions, by problem
 
 ### Rendering 12,000 aircraft without frame drops
