@@ -1585,15 +1585,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       controls.update()
       clouds.rotation.y += 0.000022
 
-      // Dynamic near-clip: always 10 % of altitude so the earth never clips through
-      // at extreme zoom-in, while stars stay visible via the large far plane.
+      // Dynamic near/far clip — earth and solar need completely different frustums.
+      // Earth: near = 10% of altitude (prevents z-fighting at tile zoom), far = 200 WU.
+      // Solar: near = 235 WU (0.01 AU), far = 1.4M WU (60 AU covers Neptune + margin).
+      // At solar scale the old earth formula sets near > far → invalid frustum → blank screen.
       const dist    = camera.position.length()
       int.current.camDist = dist
-      const altUnit = Math.max(dist - EARTH_R, 1e-7)
-      const newNear = altUnit * 0.1
-      if (Math.abs(newNear - camera.near) / camera.near > 0.05) {
-        camera.near = newNear
-        camera.updateProjectionMatrix()
+      if (targetScale === 'solar') {
+        if (camera.near !== 235 || camera.far !== 1_408_800) {
+          camera.near = 235
+          camera.far  = 1_408_800   // AU_TO_WU * 60
+          camera.updateProjectionMatrix()
+        }
+      } else {
+        const altUnit = Math.max(dist - EARTH_R, 1e-7)
+        const newNear = altUnit * 0.1
+        if (Math.abs(newNear - camera.near) / camera.near > 0.05) {
+          camera.near = newNear
+          camera.updateProjectionMatrix()
+        }
+        if (camera.far !== 200) {
+          camera.far = 200
+          camera.updateProjectionMatrix()
+        }
       }
 
       // Fade vector overlays out as tiles take over; fade back in when zoomed out
