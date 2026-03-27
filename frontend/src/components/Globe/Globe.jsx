@@ -16,7 +16,8 @@ import {
 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
-import { CAM_SOLAR, CAM_EARTH, CAM_TWEEN_MS } from './solarSystem.js'
+import { createGalaxyScene } from './GalaxyScene.js'
+import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS } from './solarSystem.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -1089,6 +1090,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Hidden by default; shown when cameraScale transitions to 'solar'.
     const solarSystem = createSolarSystem(scene, renderer)
 
+    // Hidden by default; shown when cameraScale transitions to 'galaxy'.
+    const galaxySystem = createGalaxyScene(scene)
+
     // ── Hidden Points layer (invisible, used only for raycasting) ─────
     // PointsMaterial threshold-based picking is O(n) and very fast.
     const acPos = new Float32Array(MAX_AC * 3)
@@ -1582,15 +1586,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
       }
 
-      // ── Camera scale tween (earth ↔ solar) ───────────────────────────────
+      // ── Camera scale tween (earth ↔ solar ↔ galaxy) ─────────────────────────
       const targetScale = int.current.targetCameraScale || 'earth'
-      const isSolar     = targetScale === 'solar'
-      const CAM_TARGET  = isSolar ? CAM_SOLAR : CAM_EARTH
+      const isSolar   = targetScale === 'solar'
+      const isGalaxy  = targetScale === 'galaxy'
+      const CAM_TARGET = isGalaxy ? CAM_GALAXY : isSolar ? CAM_SOLAR : CAM_EARTH
 
       if (int.current.camTweenStart != null) {
         const elapsed  = Date.now() - int.current.camTweenStart
         const rawT     = Math.min(elapsed / CAM_TWEEN_MS, 1)
-        // cubic-bezier(0.16, 1, 0.3, 1) approximation via smoothstep
         const t = rawT < 0.5
           ? 4 * rawT * rawT * rawT
           : 1 - Math.pow(-2 * rawT + 2, 3) / 2
@@ -1604,25 +1608,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         )
 
         if (rawT >= 1) {
-          // Tween complete — update control limits and show/hide solar system
           int.current.camTweenStart = null
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
-          if (isSolar) {
-            solarSystem.show()
-          } else {
-            solarSystem.hide()
-          }
+          if (isSolar || isGalaxy) solarSystem.show(); else solarSystem.hide()
+          if (isGalaxy) galaxySystem.show(); else galaxySystem.hide()
         }
       } else {
-        // Check if a new scale target has been set since last frame
         const prevScale = int.current._lastAppliedScale || 'earth'
         if (prevScale !== targetScale) {
           int.current._lastAppliedScale = targetScale
           int.current.camTweenStart = Date.now()
           int.current.camTweenFrom  = camera.position.clone()
-          // Show solar system immediately when going solar so it's visible during tween
-          if (isSolar) solarSystem.show()
+          // Show solar system immediately when leaving earth scale
+          if (isSolar || isGalaxy) solarSystem.show()
+          if (isGalaxy) galaxySystem.show()
+          if (!isGalaxy) galaxySystem.hide()
         }
       }
 
@@ -1634,17 +1635,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       controls.update()
       clouds.rotation.y += 0.000022
 
-      // Dynamic near/far clip — earth and solar need completely different frustums.
-      // Earth: near = 10% of altitude (prevents z-fighting at tile zoom), far = 200 WU.
-      // Solar: near = 235 WU (0.01 AU), far = 1.4M WU (60 AU covers Neptune + margin).
-      // At solar scale the old earth formula sets near > far → invalid frustum → blank screen.
+      // Dynamic near/far clip — each scale needs a different frustum.
+      // Earth: near = 10% altitude, far = 200 WU.
+      // Solar: near = 235 WU, far = 1.41M WU (60 AU).
+      // Galaxy: near = 235 WU, far = 130M WU (5,500 AU — covers sky sphere).
       const dist    = camera.position.length()
       int.current.camDist = dist
       const altUnit = Math.max(dist - EARTH_R, 1e-7)
-      if (targetScale === 'solar') {
+      if (isGalaxy) {
+        const FAR_GALAXY = 130_000_000
+        if (camera.near !== 235 || camera.far !== FAR_GALAXY) {
+          camera.near = 235; camera.far = FAR_GALAXY
+          camera.updateProjectionMatrix()
+        }
+      } else if (isSolar) {
         if (camera.near !== 235 || camera.far !== 1_408_800) {
-          camera.near = 235
-          camera.far  = 1_408_800   // AU_TO_WU * 60
+          camera.near = 235; camera.far = 1_408_800
           camera.updateProjectionMatrix()
         }
       } else {
@@ -1815,6 +1821,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       lastSelectedId: null,
       clearTiles,
       solarSystem,
+      galaxySystem,
       targetCameraScale: 'earth',   // set by setCameraScale via imperative handle
       camTweenStart: null,          // timestamp when tween began
       camTweenFrom: null,           // Vector3 camera start position
@@ -1841,6 +1848,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       mapDestroyed = true
       clearTiles()
       solarSystem.dispose()
+      galaxySystem.dispose()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)

@@ -88,6 +88,13 @@ export const CAM_SOLAR = {
   maxDist:  AU_TO_WU * 12,
 }
 
+// Galaxy / deep-space view — camera sits ~40 AU from the Sun
+export const CAM_GALAXY = {
+  position: [0, AU_TO_WU * 10, AU_TO_WU * 38],
+  minDist:  AU_TO_WU * 5,
+  maxDist:  AU_TO_WU * 600,
+}
+
 export const CAM_EARTH = {
   position: [0, 0, 3.5],   // ~2,200 km altitude — shows full globe
   minDist:  1.001,          // just above surface

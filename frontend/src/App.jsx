@@ -88,7 +88,8 @@ function parseInitialState(pathname) {
   if (pathname.startsWith('/flight/')) {
     return { selectedIcao24: pathname.replace('/flight/', ''), activeScale: 'earth', launchPanelOpen: false, activeFilter: null }
   }
-  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',  launchPanelOpen: false, activeFilter: null }
+  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',   launchPanelOpen: false, activeFilter: null }
+  if (pathname === '/deep-space')   return { selectedIcao24: null, activeScale: 'galaxy',  launchPanelOpen: false, activeFilter: null }
   if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null }
   if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids' }
   return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null }
@@ -99,6 +100,7 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
   if (activeFilter === 'asteroids') return '/asteroids'
   if (launchPanelOpen)            return '/launches'
   if (activeScale === 'solar')    return '/solar-system'
+  if (activeScale === 'galaxy')   return '/deep-space'
   return '/'
 }
 

@@ -88,8 +88,8 @@ export default function StatusBar({
               <span className={styles.navSep} />
               <NavBtn
                 label="Deep Space"
-                active={false}
-                onClick={() => { onScaleChange?.('solar'); setExpanded(false) }}
+                active={activeScale === 'galaxy'}
+                onClick={() => { onScaleChange?.('galaxy'); setExpanded(false) }}
               />
             </nav>
 
