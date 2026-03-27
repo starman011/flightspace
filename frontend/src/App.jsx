@@ -25,6 +25,7 @@ import StatusBar from './components/StatusBar/StatusBar'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
+import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import { useSession } from './hooks/useSession'
@@ -120,6 +121,7 @@ export default function App() {
   const [activeScale, setActiveScale]       = useState(init.activeScale)
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
+  const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const [pinnedLaunch, setPinnedLaunch]     = useState(null)
   const [returnMission, setReturnMission]   = useState(null)
@@ -170,6 +172,9 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setActiveScale(scale)
     globeRef.current?.setCameraScale?.(scale)
   }, [])
+
+  const handlePlanetClick = useCallback((name) => setSelectedPlanet(name), [])
+  const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
 
   // Central reset: clears filter + returns camera to earth (used by DeepSpacePanel close)
   const handleClearFilter = useCallback(() => {
@@ -258,6 +263,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           solarData={solarData}
           padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
           onInteract={handleGlobeInteract}
+          onPlanetClick={handlePlanetClick}
         />
       </Suspense>
 
@@ -326,6 +332,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           sessionToken={sessionToken}
           isTracking={trackingId === selectedIcao24}
           onTrack={setTrackingId}
+        />
+      )}
+
+      {selectedPlanet && activeScale === 'solar' && (
+        <PlanetPanel
+          planet={selectedPlanet}
+          onClose={handlePlanetClose}
+          onFocus={() => globeRef.current?.flyToPlanet?.(selectedPlanet)}
         />
       )}
 

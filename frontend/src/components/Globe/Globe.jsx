@@ -769,7 +769,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -845,7 +845,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
+    flyToPlanet: (name) => {
+      const { camera, solarSystem } = int.current
+      if (!camera || !solarSystem) return
+      const mesh = solarSystem.planetMeshes[name]
+      if (!mesh) return
+      // Target: planet position + slight offset so planet fills ~1/3 of view
+      const planetPos = mesh.position.clone()
+      const r = mesh.geometry.boundingSphere?.radius ?? 300
+      const dist = r * 6
+      // Approach from current camera direction projected onto XZ plane
+      const dir = new Vector3(planetPos.x, 0, planetPos.z).normalize()
+      int.current.solarFlyTarget = planetPos.clone().add(dir.multiplyScalar(dist))
+      int.current.solarFlyStart  = Date.now()
+      int.current.solarFlyFrom   = camera.position.clone()
+    },
   }), [drawTrail, setCameraScale])
+
+  // Sync onPlanetClick prop into int.current so native event closures can read it
+  useEffect(() => { int.current.onPlanetClick = onPlanetClick }, [onPlanetClick])
 
   // ── Three.js init ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1440,6 +1458,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       downAt = null
       if (dx > 14 || dy > 14) return
       toNDC(e.clientX, e.clientY)
+
+      // ── Solar scale: check planet meshes first ────────────────────────
+      if (int.current.targetCameraScale === 'solar' && solarSystem.solarGroup.visible) {
+        const planetMeshList = Object.values(solarSystem.planetMeshes)
+        const planetHits = ray.intersectObjects(planetMeshList, false)
+        if (planetHits.length) {
+          const name = planetHits[0].object.userData.planet
+          if (name) { int.current.onPlanetClick?.(name); return }
+        }
+      }
+
       const hits = ray.intersectObject(acPts)
       if (hits.length) {
         // Project every hit to screen space and pick the one closest to the actual click pixel.
@@ -1530,6 +1559,21 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             int.current.flyToStart  = null
             int.current.flyToFrom   = null
           }
+        }
+      }
+
+      // ── Solar planet fly-to tween ─────────────────────────────────────────
+      if (int.current.solarFlyStart != null) {
+        const _elapsed = Date.now() - int.current.solarFlyStart
+        const _TWEEN_MS = 1800
+        const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
+        const _t = 1 - Math.pow(1 - _rawT, 3)
+        camera.position.lerpVectors(int.current.solarFlyFrom, int.current.solarFlyTarget, _t)
+        camera.lookAt(0, 0, 0)
+        if (_rawT >= 1) {
+          int.current.solarFlyStart  = null
+          int.current.solarFlyFrom   = null
+          int.current.solarFlyTarget = null
         }
       }
 
@@ -1775,6 +1819,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       flyToTarget: null,            // one-shot flyTo destination (Vector3)
       flyToStart:  null,            // timestamp
       flyToFrom:   null,            // Vector3 camera start
+      solarFlyTarget: null,         // planet fly-to destination (Vector3)
+      solarFlyStart:  null,
+      solarFlyFrom:   null,
     }
 
     tick()
