@@ -83,9 +83,9 @@ export const SATURN_RING_OUTER = 2.3  // × Saturn radius
 // ── Camera presets (WU) ───────────────────────────────────────────────────
 // Used by the camera scale controller when switching filters.
 export const CAM_SOLAR = {
-  position: [0, AU_TO_WU * 2, AU_TO_WU * 3.5],
-  minDist:  AU_TO_WU * 0.5,
-  maxDist:  AU_TO_WU * 12,
+  position: [0, AU_TO_WU * 14, AU_TO_WU * 8],  // higher angle, see all 8 planets
+  minDist:  AU_TO_WU * 0.3,
+  maxDist:  AU_TO_WU * 55,  // zoom out to see Neptune
 }
 
 // Galaxy / deep-space view — camera sits ~40 AU from the Sun

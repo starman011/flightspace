@@ -68,15 +68,14 @@ function keplerianPosition(name) {
   return { x: rWU * Math.cos(nu), z: rWU * Math.sin(nu) }
 }
 
-// ── Visual radius — orbital-distance-aware so outer planets stay visible ──────
-// Scales with orbital distance so Jupiter–Neptune are never sub-pixel.
-// Floor of 600 WU keeps inner planets clickable; physical radius term preserves
-// relative size hierarchy between planets at similar distances.
+// ── Visual radius — dramatic Helldivers-style map scale ───────────────────────
+// Gas giants read as large imposing bodies; rocky planets fill enough screen
+// area to be clearly distinct. Not physically accurate by design.
 function visualRadius(name) {
   return Math.max(
-    PLANET_ORBIT_AU[name] * AU_TO_WU * 0.007,
-    PLANET_RADIUS_WU[name] * 350,
-    600,
+    PLANET_ORBIT_AU[name] * AU_TO_WU * 0.045,
+    PLANET_RADIUS_WU[name] * 2200,
+    2800,
   )
 }
 
@@ -93,7 +92,7 @@ function makeLabelSprite(text, color = '#c3f5ff') {
   const tex  = new CanvasTexture(cv)
   const mat  = new SpriteMaterial({ map: tex, transparent: true, opacity: 0.82, depthWrite: false })
   const sprite = new Sprite(mat)
-  sprite.scale.set(1800, 450, 1)  // WU — readable at solar camera ~3–6 AU
+  sprite.scale.set(4500, 1100, 1)  // WU — readable at solar camera ~5–15 AU
   return sprite
 }
 
@@ -112,7 +111,7 @@ export function createSolarSystem(scene, renderer) {
   solarGroup.add(solarAmbient)
 
   // ── Sun ──────────────────────────────────────────────────────────────────────
-  const sunR    = SUN_RADIUS_WU * 6   // visual Sun radius — visible from solar camera ~3–5 AU
+  const sunR    = SUN_RADIUS_WU * 20  // dramatic hero body — dominates center
   const sunMat  = new MeshBasicMaterial({ color: 0xfff4c2 })
   const sunMesh = new Mesh(new SphereGeometry(sunR, 32, 32), sunMat)
   solarGroup.add(sunMesh)
@@ -121,19 +120,19 @@ export function createSolarSystem(scene, renderer) {
     sunMat.map = tex; sunMat.needsUpdate = true
   })
 
-  // Sun corona glow — large semi-transparent additive sphere
+  // Sun corona glow
   const coronaMat = new MeshBasicMaterial({
-    color: 0xffeaa0, transparent: true, opacity: 0.18,
+    color: 0xffeaa0, transparent: true, opacity: 0.22,
     blending: AdditiveBlending, depthWrite: false, side: BackSide,
   })
-  solarGroup.add(new Mesh(new SphereGeometry(sunR * 2.8, 32, 32), coronaMat))
+  solarGroup.add(new Mesh(new SphereGeometry(sunR * 1.9, 32, 32), coronaMat))
 
   // Outer glow halo
   const haloMat = new MeshBasicMaterial({
-    color: 0xff9900, transparent: true, opacity: 0.07,
+    color: 0xff7700, transparent: true, opacity: 0.10,
     blending: AdditiveBlending, depthWrite: false, side: BackSide,
   })
-  solarGroup.add(new Mesh(new SphereGeometry(sunR * 5, 32, 32), haloMat))
+  solarGroup.add(new Mesh(new SphereGeometry(sunR * 3.2, 32, 32), haloMat))
 
   // Sun is a point light source for the planets
   const sunLight = new PointLight(0xfff4c2, 2.5, AU_TO_WU * 40)
@@ -156,8 +155,8 @@ export function createSolarSystem(scene, renderer) {
     planetMeshes[name] = mesh
 
     // Name label — positioned above the planet, always faces camera (Sprite)
-    const label = makeLabelSprite(name.charAt(0).toUpperCase() + name.slice(1), PLANET_COLOR[name] ? '#c3f5ff' : '#c3f5ff')
-    label.position.set(0, rWU * 1.8 + 400, 0)
+    const label = makeLabelSprite(name.charAt(0).toUpperCase() + name.slice(1))
+    label.position.set(0, rWU * 1.6 + 1200, 0)
     mesh.add(label)
 
     const texKey = name === 'earth' ? 'earth_day' : name
@@ -203,12 +202,12 @@ export function createSolarSystem(scene, renderer) {
     const geo  = new BufferGeometry()
     geo.setAttribute('position', new BufferAttribute(pts, 3))
 
-    // Inner planets get a slightly brighter orbit line
+    // Orbit rings — brighter for dramatic map feel
     const isInner  = ['mercury','venus','earth','mars'].includes(name)
     const orbitMat = new LineBasicMaterial({
-      color:       isInner ? 0x1e3a5f : 0x162840,
+      color:       isInner ? 0x2a5a8a : 0x1e3f64,
       transparent: true,
-      opacity:     isInner ? 0.55 : 0.35,
+      opacity:     isInner ? 0.70 : 0.50,
       depthWrite:  false,
     })
     solarGroup.add(new LineLoop(geo, orbitMat))
