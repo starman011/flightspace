@@ -110,7 +110,6 @@ export default function App() {
   const { sessionToken, isAuthenticated } = useSession()
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
-  const { asteroids } = useAsteroids(activeScale === 'solar')
 
   // Initialise from URL on first render
   const init = parseInitialState(location.pathname)
@@ -121,6 +120,8 @@ export default function App() {
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
   const [activeScale, setActiveScale]       = useState(init.activeScale)
+
+  const { asteroids } = useAsteroids(activeScale === 'solar')
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
