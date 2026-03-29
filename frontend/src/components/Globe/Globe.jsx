@@ -1660,14 +1660,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // ── Dynamic rotate + zoom speed — slower when zoomed in ──────────────────
-      // t=0 at surface, t=1 at max distance; quadratic so precision improves
-      // sharply as you get close. Applied per-scale so solar/galaxy feel natural.
+      // Below 50 km: extra-slow precision tier.
+      // 50 km → max distance: quadratic ramp from slow floor to full speed.
       if (targetScale === 'earth') {
-        const dist = camera.position.length()
-        const t  = Math.max(0, Math.min(1, (dist - 1.001) / (8.0 - 1.001)))
-        const tQ = t * t  // quadratic — steeper drop-off near surface
-        controls.rotateSpeed = 0.07 + tQ * 0.63  // 0.07 at surface → 0.70 far
-        controls.zoomSpeed   = 0.12 + tQ * 0.58  // 0.12 at surface → 0.70 far
+        const dist     = camera.position.length()
+        const ALT_50KM = 1.00785   // (6371 + 50) / 6371 ≈ 1.00785 WU
+        if (dist < ALT_50KM) {
+          controls.rotateSpeed = 0.025
+          controls.zoomSpeed   = 0.04
+        } else {
+          const t  = Math.max(0, Math.min(1, (dist - ALT_50KM) / (8.0 - ALT_50KM)))
+          const tQ = t * t
+          controls.rotateSpeed = 0.025 + tQ * 0.675  // 0.025 at 50 km → 0.70 far
+          controls.zoomSpeed   = 0.04  + tQ * 0.66   // 0.04  at 50 km → 0.70 far
+        }
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
