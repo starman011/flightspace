@@ -889,11 +889,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const controls           = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping   = true
-    controls.dampingFactor   = 0.055
+    controls.dampingFactor   = 0.08
     controls.enablePan       = false
     controls.minDistance     = 1.00002   // ~127 m altitude → zoom 18 tiles (~0.6 m/px)
     controls.maxDistance     = 8
-    controls.zoomSpeed       = 2.0       // faster scroll needed for large zoom range
+    controls.zoomSpeed       = 0.7       // applies to both mouse wheel and trackpad pinch
     controls.autoRotate      = true
     controls.autoRotateSpeed = 0.18
     renderer.domElement.addEventListener('pointerdown', () => {
