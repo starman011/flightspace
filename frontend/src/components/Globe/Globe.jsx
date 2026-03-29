@@ -1668,8 +1668,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        controls.rotateSpeed = 0.05 + t * 0.65   // 0.05 at surface → 0.70 at max
-        controls.zoomSpeed   = 0.07 + t * 0.63   // 0.07 at surface → 0.70 at max
+        controls.rotateSpeed  = 0.05 + t * 0.65   // 0.05 at surface → 0.70 at max
+        controls.zoomSpeed    = 0.07 + t * 0.63   // 0.07 at surface → 0.70 at max
+        controls.dampingFactor = 0.48 - t * 0.33  // 0.48 at surface (stiff) → 0.15 far (fluid)
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
