@@ -1702,8 +1702,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // on the far side of the globe (facing away from the camera).
       // Scale is computed so the sprite stays ~100 px wide at any zoom level.
       if (targetScale === 'earth') {
+        const _d        = camera.position.length()
         const _screenW  = el.clientWidth || 1920
-        const _wuPerPx  = (2 * dist * Math.tan(20 * Math.PI / 180)) / _screenW
+        const _wuPerPx  = (2 * _d * Math.tan(20 * Math.PI / 180)) / _screenW
         const _camFwd   = camera.position.clone().normalize()
         // Sprite canvas is 256×40 → aspect 6.4:1; scale.x/scale.y preserve that
         const _sh = _wuPerPx * 18                 // desired height in world units
@@ -1711,7 +1712,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         for (const p of placeItems) {
           const threshold = p.tier === 1 ? 2.0 : p.tier === 2 ? 1.5 : 1.15
           const facing    = p.sprite.position.clone().normalize().dot(_camFwd)
-          p.sprite.visible = dist < threshold && facing > 0.08
+          p.sprite.visible = _d < threshold && facing > 0.08
           if (p.sprite.visible) p.sprite.scale.set(_sw, _sh, 1)
         }
       } else {
