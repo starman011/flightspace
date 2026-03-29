@@ -4,8 +4,9 @@ import {
   Vector3, Vector2, Matrix4, Color, MathUtils,
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
-  PlaneGeometry, SphereGeometry, DodecahedronGeometry, EdgesGeometry,
+  PlaneGeometry, SphereGeometry,
   Mesh, InstancedMesh, Line, LineSegments, Points,
+  Sprite, SpriteMaterial,
   MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
@@ -18,6 +19,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createGalaxyScene } from './GalaxyScene.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
+import { PLACES } from './placeData.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -127,7 +129,7 @@ function greatCirclePoints(pts, r = EARTH_R + 0.035, steps = 40) {
 // Fetch world-atlas TopoJSON and decode to [[lon,lat],…] polylines (country borders).
 async function loadWorldLines() {
   try {
-    const res  = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    const res  = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
     const topo = await res.json()
     const { scale: [sx, sy], translate: [tx, ty] } = topo.transform
     return topo.arcs.map(arc => {
@@ -135,6 +137,50 @@ async function loadWorldLines() {
       return arc.map(([dx, dy]) => { x += dx; y += dy; return [x * sx + tx, y * sy + ty] })
     })
   } catch { return [] }
+}
+
+// ── Place label sprite ────────────────────────────────────────────────────────
+// Returns a Sprite with a dark pill label: colored dot + uppercase name.
+// Canvas is 256 × 40 px (aspect 6.4:1).  Scale is updated per-frame in the
+// render loop so the label stays a fixed pixel size at any zoom level.
+function buildPlaceSprite(name, type) {
+  const W = 256, H = 40
+  const canvas = document.createElement('canvas')
+  canvas.width = W; canvas.height = H
+  const ctx = canvas.getContext('2d')
+
+  const dotColor = type === 'airport' ? '#ffaa00' : type === 'port' ? '#00ff99' : '#00e5ff'
+
+  // Dark pill background
+  ctx.fillStyle = 'rgba(4,9,16,0.80)'
+  ctx.beginPath()
+  ctx.roundRect(0, 0, W, H, 6)
+  ctx.fill()
+
+  // Thin border matching dot color
+  ctx.strokeStyle = dotColor.replace(')', ',0.3)').replace('rgb', 'rgba') || 'rgba(0,229,255,0.3)'
+  ctx.lineWidth = 0.8
+  ctx.stroke()
+
+  // Colored dot
+  ctx.beginPath()
+  ctx.arc(16, H / 2, 5, 0, Math.PI * 2)
+  ctx.fillStyle = dotColor
+  ctx.fill()
+
+  // Label text
+  ctx.font = 'bold 11px "Courier New", monospace'
+  ctx.fillStyle = 'rgba(210,238,255,0.92)'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(name.toUpperCase(), 28, H / 2)
+
+  const tex = new CanvasTexture(canvas)
+  const mat = new SpriteMaterial({
+    map: tex, transparent: true, depthWrite: false, depthTest: false,
+  })
+  const sprite = new Sprite(mat)
+  sprite.renderOrder = 20
+  return { sprite, tex, mat }
 }
 
 // Pre-build a lat/lon graticule as a static BufferGeometry (LineSegments).
@@ -993,28 +1039,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // ── Atmosphere ───────────────────────────────────────────────────
     scene.add(makeAtmosphere())
 
-    // ── Subtle dodecahedron wireframe ─────────────────────────────────
-    const dodecGeo = new DodecahedronGeometry(EARTH_R + 0.003, 0)
-    const edgesGeo = new EdgesGeometry(dodecGeo)
-    const edgePos  = edgesGeo.getAttribute('position')
-    const arcVerts = []
-    const STEPS    = 16
-    for (let i = 0; i < edgePos.count; i += 2) {
-      const v1 = new Vector3(edgePos.getX(i),     edgePos.getY(i),     edgePos.getZ(i)).normalize()
-      const v2 = new Vector3(edgePos.getX(i + 1), edgePos.getY(i + 1), edgePos.getZ(i + 1)).normalize()
-      for (let s = 0; s < STEPS; s++) {
-        const p0 = new Vector3().copy(v1).lerp(v2, s / STEPS).normalize().multiplyScalar(EARTH_R + 0.003)
-        const p1 = new Vector3().copy(v1).lerp(v2, (s + 1) / STEPS).normalize().multiplyScalar(EARTH_R + 0.003)
-        arcVerts.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
-      }
-    }
-    const dodecArcGeo = new BufferGeometry()
-    dodecArcGeo.setAttribute('position', new BufferAttribute(new Float32Array(arcVerts), 3))
-    scene.add(new LineSegments(dodecArcGeo, new LineBasicMaterial({
-      color: 0x1a3a6a, transparent: true, opacity: 0.10,
-      depthWrite: false, blending: AdditiveBlending,
-    })))
-    dodecGeo.dispose(); edgesGeo.dispose()
 
     // ── Aircraft planes (InstancedMesh for display) ───────────────────
     const planeTex  = buildPlaneTex()
@@ -1165,6 +1189,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     padPts.renderOrder = 30
     scene.add(padPts)
 
+    // ── Place labels (cities, airports, ports) ────────────────────────
+    // Each place gets a Sprite (dot + text pill).  Visibility and scale are
+    // updated every frame in the tick loop; sprites stay in-scene always.
+    const placeItems = PLACES.map(p => {
+      const { sprite, tex, mat } = buildPlaceSprite(p.name, p.type)
+      sprite.position.copy(ll2v(p.lat, p.lon, EARTH_R + 0.002))
+      sprite.visible = false
+      scene.add(sprite)
+      return { ...p, sprite, tex, mat }
+    })
+
     // ── Vector map: graticule (static, built immediately) ────────────
     // Both graticule and borders fade out as the user zooms in and tiles take over.
     const graticuleGeo  = buildGraticuleGeo()
@@ -1313,14 +1348,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       lastTileZ = z; lastTileCX = cx; lastTileCY = cy
 
       // Demote stale detail tiles to background tier instead of removing them.
-      // This prevents black gaps while new tiles load — old tiles stay visible at
-      // renderOrder 0 (behind fresh detail tiles at renderOrder 1).
+      // Keep opacity unchanged — reducing it causes semi-transparent dark polygons
+      // to bleed through new tiles. Just drop renderOrder so new tiles cover them.
       if (_prevTileZ !== -1 && _prevTileZ !== z) {
         for (const [, _staleTile] of tileCache) {
           if (!_staleTile || _staleTile.isParent || _staleTile.z === z) continue
           _staleTile.mesh.renderOrder = 0
-          _staleTile.mat.opacity      = 0.75
-          _staleTile.mat.needsUpdate  = true
           _staleTile.isStale          = true
         }
       }
@@ -1664,6 +1697,27 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         solarSystem.animateExtra()
       }
 
+      // ── Place label visibility + fixed-pixel scale ───────────────────────────
+      // Labels are only shown on the Earth scale.  Each label is hidden when it's
+      // on the far side of the globe (facing away from the camera).
+      // Scale is computed so the sprite stays ~100 px wide at any zoom level.
+      if (targetScale === 'earth') {
+        const _screenW  = el.clientWidth || 1920
+        const _wuPerPx  = (2 * dist * Math.tan(20 * Math.PI / 180)) / _screenW
+        const _camFwd   = camera.position.clone().normalize()
+        // Sprite canvas is 256×40 → aspect 6.4:1; scale.x/scale.y preserve that
+        const _sh = _wuPerPx * 18                 // desired height in world units
+        const _sw = _sh * (256 / 40)              // preserve canvas aspect ratio
+        for (const p of placeItems) {
+          const threshold = p.tier === 1 ? 2.0 : p.tier === 2 ? 1.5 : 1.15
+          const facing    = p.sprite.position.clone().normalize().dot(_camFwd)
+          p.sprite.visible = dist < threshold && facing > 0.08
+          if (p.sprite.visible) p.sprite.scale.set(_sw, _sh, 1)
+        }
+      } else {
+        for (const p of placeItems) p.sprite.visible = false
+      }
+
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
       // log curve: ramps up quickly leaving the surface, levels off when far out
       // so zoomed-out feels fast, zoomed-in feels precise, no jarring threshold.
@@ -1677,8 +1731,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         controls.zoomSpeed     = 0.02 + t * 0.68   // 0.02 at surface → 0.70 at max
         // Extra stiffness below 250 km — damping clamps to 0.75 in that band
         const ALT_250KM = 1.03924  // (6371+250)/6371
-        const dampBase  = dist < ALT_250KM ? 0.75 : 0.60
-        controls.dampingFactor = dampBase - t * 0.46
+        const dampBase  = dist < ALT_250KM ? 0.88 : 0.65
+        controls.dampingFactor = dampBase - t * 0.52
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -1902,6 +1956,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
       clearTiles()
+      for (const p of placeItems) { scene.remove(p.sprite); p.tex.dispose(); p.mat.dispose() }
       solarSystem.dispose()
       galaxySystem.dispose()
       controls.dispose()
