@@ -1237,14 +1237,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         tileCache.set(key, null)                // sentinel: "loading"
         tileLoading++
 
-        const r    = item.isParent ? EARTH_R * 1.001 : EARTH_R * 1.0015
+        // Tile radii must stay below camera minDistance (127 m = 1.00002 WU)
+        // so the camera is always above the tile mesh → front face always visible.
+        // Old values (1.001 / 1.0015) were 6.4 km / 9.5 km — caused blank screen
+        // when zooming below those altitudes.
+        const r    = item.isParent ? EARTH_R * 1.000005 : EARTH_R * 1.00001
         const geo  = buildTileGeo(item.tx, item.ty, item.z, r)
         const mat  = new MeshBasicMaterial({
           transparent: true, opacity: 0, side: FrontSide,
           depthWrite: false,
           polygonOffset: true,
-          polygonOffsetFactor: item.isParent ? -1 : -2,
-          polygonOffsetUnits:  item.isParent ? -1 : -2,
+          polygonOffsetFactor: item.isParent ? -4 : -6,
+          polygonOffsetUnits:  item.isParent ? -4 : -6,
         })
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
@@ -1671,7 +1675,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         ))
         controls.rotateSpeed   = 0.01 + t * 0.69   // 0.01 at surface → 0.70 at max
         controls.zoomSpeed     = 0.02 + t * 0.68   // 0.02 at surface → 0.70 at max
-        controls.dampingFactor = 0.60 - t * 0.46   // 0.60 at surface (stiff) → 0.14 far (fluid)
+        // Extra stiffness below 250 km — damping clamps to 0.75 in that band
+        const ALT_250KM = 1.03924  // (6371+250)/6371
+        const dampBase  = dist < ALT_250KM ? 0.75 : 0.60
+        controls.dampingFactor = dampBase - t * 0.46
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
