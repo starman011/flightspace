@@ -1323,8 +1323,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       const radius = z >= 13 ? 2 : z >= 10 ? 3 : z >= 7 ? 4 : 5
 
-      // Grandparent tier (z-3): lowest-res, loads fast, always covers bare areas
-      const gpz  = Math.max(0, z - 3)
+      // Grandparent tier: z-3 at low zoom (wide coverage), z-1 at high zoom (quality)
+      // At z≥10 z-3 tiles cover huge areas and look extremely blurry — use z-1 instead.
+      const gpz  = Math.max(0, z >= 10 ? z - 1 : z - 3)
       const gpN  = 1 << gpz
       const gpcx = Math.floor(((clon + 180) / 360) * gpN)
       const gpcy = Math.max(0, Math.min(gpN - 1,
@@ -1668,9 +1669,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        controls.rotateSpeed  = 0.05 + t * 0.65   // 0.05 at surface → 0.70 at max
-        controls.zoomSpeed    = 0.07 + t * 0.63   // 0.07 at surface → 0.70 at max
-        controls.dampingFactor = 0.48 - t * 0.33  // 0.48 at surface (stiff) → 0.15 far (fluid)
+        controls.rotateSpeed   = 0.01 + t * 0.69   // 0.01 at surface → 0.70 at max
+        controls.zoomSpeed     = 0.02 + t * 0.68   // 0.02 at surface → 0.70 at max
+        controls.dampingFactor = 0.60 - t * 0.46   // 0.60 at surface (stiff) → 0.14 far (fluid)
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
