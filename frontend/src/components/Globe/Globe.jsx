@@ -1659,6 +1659,23 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         solarSystem.animateExtra()
       }
 
+      // ── Dynamic rotate + zoom speed — slower when zoomed in ──────────────────
+      // t=0 at surface, t=1 at max distance; quadratic so precision improves
+      // sharply as you get close. Applied per-scale so solar/galaxy feel natural.
+      if (targetScale === 'earth') {
+        const dist = camera.position.length()
+        const t  = Math.max(0, Math.min(1, (dist - 1.001) / (8.0 - 1.001)))
+        const tQ = t * t  // quadratic — steeper drop-off near surface
+        controls.rotateSpeed = 0.07 + tQ * 0.63  // 0.07 at surface → 0.70 far
+        controls.zoomSpeed   = 0.12 + tQ * 0.58  // 0.12 at surface → 0.70 far
+      } else if (targetScale === 'solar') {
+        controls.rotateSpeed = 0.45
+        controls.zoomSpeed   = 0.55
+      } else {
+        controls.rotateSpeed = 0.5
+        controls.zoomSpeed   = 0.6
+      }
+
       controls.update()
       clouds.rotation.y += 0.000022
 
