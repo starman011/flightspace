@@ -6,7 +6,6 @@ import {
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
   PlaneGeometry, SphereGeometry,
   Mesh, InstancedMesh, Line, LineSegments, Points,
-  Sprite, SpriteMaterial,
   MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
@@ -140,48 +139,8 @@ async function loadWorldLines() {
 }
 
 // ── Place label sprite ────────────────────────────────────────────────────────
-// Returns a Sprite with a dark pill label: colored dot + uppercase name.
-// Canvas is 256 × 40 px (aspect 6.4:1).  Scale is updated per-frame in the
-// render loop so the label stays a fixed pixel size at any zoom level.
-function buildPlaceSprite(name, type) {
-  const W = 256, H = 40
-  const canvas = document.createElement('canvas')
-  canvas.width = W; canvas.height = H
-  const ctx = canvas.getContext('2d')
-
-  const dotColor = type === 'airport' ? '#ffaa00' : type === 'port' ? '#00ff99' : '#00e5ff'
-
-  // Dark pill background
-  ctx.fillStyle = 'rgba(4,9,16,0.80)'
-  ctx.beginPath()
-  ctx.roundRect(0, 0, W, H, 6)
-  ctx.fill()
-
-  // Thin border matching dot color
-  ctx.strokeStyle = dotColor.replace(')', ',0.3)').replace('rgb', 'rgba') || 'rgba(0,229,255,0.3)'
-  ctx.lineWidth = 0.8
-  ctx.stroke()
-
-  // Colored dot
-  ctx.beginPath()
-  ctx.arc(16, H / 2, 5, 0, Math.PI * 2)
-  ctx.fillStyle = dotColor
-  ctx.fill()
-
-  // Label text
-  ctx.font = 'bold 11px "Courier New", monospace'
-  ctx.fillStyle = 'rgba(210,238,255,0.92)'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(name.toUpperCase(), 28, H / 2)
-
-  const tex = new CanvasTexture(canvas)
-  const mat = new SpriteMaterial({
-    map: tex, transparent: true, depthWrite: false, depthTest: false,
-  })
-  const sprite = new Sprite(mat)
-  sprite.renderOrder = 20
-  return { sprite, tex, mat }
-}
+// Module-level scratch for world→screen projection (avoids per-frame allocation)
+const _projVec = new Vector3()
 
 // Pre-build a lat/lon graticule as a static BufferGeometry (LineSegments).
 function buildGraticuleGeo(r = EARTH_R + 0.0008, step = 20, segsPerLine = 180) {
@@ -1189,16 +1148,38 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     padPts.renderOrder = 30
     scene.add(padPts)
 
-    // ── Place labels (cities, airports, ports) ────────────────────────
-    // Each place gets a Sprite (dot + text pill).  Visibility and scale are
-    // updated every frame in the tick loop; sprites stay in-scene always.
-    const placeItems = PLACES.map(p => {
-      const { sprite, tex, mat } = buildPlaceSprite(p.name, p.type)
-      sprite.position.copy(ll2v(p.lat, p.lon, EARTH_R + 0.002))
-      sprite.visible = false
-      scene.add(sprite)
-      return { ...p, sprite, tex, mat }
-    })
+    // ── Place markers (cities, airports, ports) ───────────────────────
+    // Dots: three Points geometries (one per tier) for LOD show/hide.
+    // Labels: HTML divs in placeLabelsContainerRef, projected to screen each frame.
+    const placeWorldPos = PLACES.map(p => ll2v(p.lat, p.lon, EARTH_R + 0.001))
+
+    const _buildTierPoints = (tier) => {
+      const positions = [], colors = []
+      PLACES.forEach((p, i) => {
+        if (p.tier !== tier) return
+        const v = placeWorldPos[i]
+        positions.push(v.x, v.y, v.z)
+        const c = p.type === 'airport' ? [1, 0.68, 0] : p.type === 'port' ? [0, 0.92, 0.60] : [0, 0.90, 1]
+        colors.push(...c)
+      })
+      const geo = new BufferGeometry()
+      geo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
+      geo.setAttribute('color',    new BufferAttribute(new Float32Array(colors),    3))
+      const mat = new PointsMaterial({
+        size: tier === 1 ? 5 : tier === 2 ? 4 : 3,
+        sizeAttenuation: false, vertexColors: true,
+        transparent: true, opacity: 0.9, depthWrite: false, depthTest: false,
+      })
+      const pts = new Points(geo, mat)
+      pts.renderOrder = 20
+      pts.visible = false
+      pts.frustumCulled = false
+      scene.add(pts)
+      return { pts, geo, mat }
+    }
+    const placeTier1 = _buildTierPoints(1)
+    const placeTier2 = _buildTierPoints(2)
+    const placeTier3 = _buildTierPoints(3)
 
     // ── Vector map: graticule (static, built immediately) ────────────
     // Both graticule and borders fade out as the user zooms in and tiles take over.
@@ -1347,14 +1328,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const _prevTileZ = lastTileZ
       lastTileZ = z; lastTileCX = cx; lastTileCY = cy
 
-      // Demote stale detail tiles to background tier instead of removing them.
-      // Keep opacity unchanged — reducing it causes semi-transparent dark polygons
-      // to bleed through new tiles. Just drop renderOrder so new tiles cover them.
+      // Hide stale detail tiles immediately on zoom change.
+      // The blue-marble sphere shows through while new tiles load — cleaner than
+      // keeping large dark low-zoom ocean tiles visible as background patches.
       if (_prevTileZ !== -1 && _prevTileZ !== z) {
         for (const [, _staleTile] of tileCache) {
           if (!_staleTile || _staleTile.isParent || _staleTile.z === z) continue
-          _staleTile.mesh.renderOrder = 0
-          _staleTile.isStale          = true
+          _staleTile.mesh.visible = false
+          _staleTile.isStale      = true
         }
       }
 
@@ -1697,26 +1678,38 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         solarSystem.animateExtra()
       }
 
-      // ── Place label visibility + fixed-pixel scale ───────────────────────────
-      // Labels are only shown on the Earth scale.  Each label is hidden when it's
-      // on the far side of the globe (facing away from the camera).
-      // Scale is computed so the sprite stays ~100 px wide at any zoom level.
-      if (targetScale === 'earth') {
-        const _d        = camera.position.length()
-        const _screenW  = el.clientWidth || 1920
-        const _wuPerPx  = (2 * _d * Math.tan(20 * Math.PI / 180)) / _screenW
-        const _camFwd   = camera.position.clone().normalize()
-        // Sprite canvas is 256×40 → aspect 6.4:1; scale.x/scale.y preserve that
-        const _sh = _wuPerPx * 18                 // desired height in world units
-        const _sw = _sh * (256 / 40)              // preserve canvas aspect ratio
-        for (const p of placeItems) {
-          const threshold = p.tier === 1 ? 2.0 : p.tier === 2 ? 1.5 : 1.15
-          const facing    = p.sprite.position.clone().normalize().dot(_camFwd)
-          p.sprite.visible = _d < threshold && facing > 0.08
-          if (p.sprite.visible) p.sprite.scale.set(_sw, _sh, 1)
+      // ── Place markers — Points visibility + DOM label projection ─────────────
+      {
+        const _d       = camera.position.length()
+        const onEarth  = targetScale === 'earth'
+        placeTier1.pts.visible = onEarth && _d < 2.0
+        placeTier2.pts.visible = onEarth && _d < 1.5
+        placeTier3.pts.visible = onEarth && _d < 1.15
+
+        const _lc = int.current.placeLabelsContainer
+        if (_lc) {
+          const _cw  = el.clientWidth  || 1920
+          const _ch  = el.clientHeight || 1080
+          const _fwd = camera.position.clone().normalize()
+          const _els = _lc.children
+          for (let _i = 0; _i < PLACES.length; _i++) {
+            const _p  = PLACES[_i]
+            const _le = _els[_i]
+            if (!_le) continue
+            const _thresh = _p.tier === 1 ? 2.0 : _p.tier === 2 ? 1.5 : 1.15
+            const _wp = placeWorldPos[_i]
+            const _facing = _wp.x * _fwd.x + _wp.y * _fwd.y + _wp.z * _fwd.z
+            if (!onEarth || _d > _thresh || _facing < 0.12) {
+              _le.style.display = 'none'; continue
+            }
+            _projVec.copy(_wp).project(camera)
+            if (_projVec.z > 1) { _le.style.display = 'none'; continue }
+            const _sx = (_projVec.x + 1) * 0.5 * _cw
+            const _sy = (1 - _projVec.y) * 0.5 * _ch
+            _le.style.display = 'block'
+            _le.style.transform = `translate3d(${Math.round(_sx)}px,${Math.round(_sy)}px,0) translate(-50%,-130%)`
+          }
         }
-      } else {
-        for (const p of placeItems) p.sprite.visible = false
       }
 
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
@@ -1944,6 +1937,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       solarFlyTarget: null,         // planet fly-to destination (Vector3)
       solarFlyStart:  null,
       solarFlyFrom:   null,
+      placeLabelsContainer: null,   // set by JSX ref callback below
     }
 
     tick()
@@ -1957,7 +1951,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
       clearTiles()
-      for (const p of placeItems) { scene.remove(p.sprite); p.tex.dispose(); p.mat.dispose() }
+      for (const t of [placeTier1, placeTier2, placeTier3]) { scene.remove(t.pts); t.geo.dispose(); t.mat.dispose() }
       solarSystem.dispose()
       galaxySystem.dispose()
       controls.dispose()
@@ -2147,6 +2141,33 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} />,
         document.body
       )}
+
+      {/* Place labels — DOM-positioned via world→screen projection in tick loop */}
+      <div
+        ref={el => { if (int.current) int.current.placeLabelsContainer = el }}
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}
+      >
+        {PLACES.map(p => (
+          <div
+            key={p.name + p.lat}
+            style={{
+              position: 'absolute', display: 'none', left: 0, top: 0,
+              fontFamily: '"IBM Plex Mono","Courier New",monospace',
+              fontSize: p.tier === 3 ? '9px' : p.tier === 2 ? '10px' : '11px',
+              fontWeight: p.tier === 1 ? 600 : 400,
+              letterSpacing: '0.06em',
+              whiteSpace: 'nowrap',
+              color: p.type === 'airport' ? 'rgba(255,180,0,0.92)'
+                   : p.type === 'port'    ? 'rgba(0,230,150,0.88)'
+                   :                        'rgba(195,245,255,0.88)',
+              textShadow: '0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8)',
+              lineHeight: 1,
+            }}
+          >
+            {p.name}
+          </div>
+        ))}
+      </div>
     </div>
   )
 })
