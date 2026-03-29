@@ -323,7 +323,7 @@ export function createSolarSystem(scene, renderer) {
 
   // ── Asteroid belt ─────────────────────────────────────────────────────────
   // 4,000 particles spread between 2.0–3.5 AU with slight inclination spread.
-  const beltRng = seededRng(0xbelt1234 | 0)
+  const beltRng = seededRng(0xbe1412)
   const N_BELT  = 4000
   const beltPos = new Float32Array(N_BELT * 3)
   const beltCol = new Float32Array(N_BELT * 3)
@@ -352,7 +352,7 @@ export function createSolarSystem(scene, renderer) {
   const swPositions = new Float32Array(SW_N * 3)
   const swDirs      = new Float32Array(SW_N * 3)  // unit direction per particle
   const swPhases    = new Float32Array(SW_N)       // current distance (AU)
-  const swRng       = seededRng(0xwind)
+  const swRng       = seededRng(0xd1ad)
   for (let i = 0; i < SW_N; i++) {
     // Fibonacci sphere distribution for uniform coverage
     const y   = 1 - (i / (SW_N - 1)) * 2

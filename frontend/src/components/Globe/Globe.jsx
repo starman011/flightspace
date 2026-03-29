@@ -32,7 +32,7 @@ const TRAIL_GLOW_R = 1.023   // glow layer — above core for sci-fi bloom effec
 const MAX_AC          = 12000
 const MAX_TRAIL_PTS   = 180   // long sci-fi trails (~6× original)
 const MAX_TRAIL_VERTS = MAX_AC * (MAX_TRAIL_PTS - 1) * 2
-const MAX_TILE_LOADS  = 6
+const MAX_TILE_LOADS  = 10
 // Camera distance below which tiles are shown; above = pure globe mode
 const TILE_DIST_THRESHOLD = 2.5
 
@@ -1257,10 +1257,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             if (mapDestroyed) { geo.dispose(); mat.dispose(); processQueue(); return }
             tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
             mat.map     = tex
-            mat.opacity = item.isParent ? 0.9 : 1.0
+            mat.opacity = item.isParent ? 0.88 : 1.0
             mat.needsUpdate = true
+            // Fresh tiles always draw on top of demoted stale tiles
+            mesh.renderOrder = item.isParent ? 0 : 1
             scene.add(mesh)
-            tileCache.set(key, { mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z, isParent: item.isParent })
+            tileCache.set(key, { mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z, isParent: item.isParent, isStale: false })
             processQueue()
           },
           undefined,
@@ -1306,25 +1308,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const _prevTileZ = lastTileZ
       lastTileZ = z; lastTileCX = cx; lastTileCY = cy
 
-      // Purge detail tiles from any zoom level other than the new one.
-      // This eliminates the "ghost polygon" artifact when fast-zooming —
-      // stale tiles from intermediate zoom levels would otherwise show
-      // through before the new zoom's tiles finish loading.
+      // Demote stale detail tiles to background tier instead of removing them.
+      // This prevents black gaps while new tiles load — old tiles stay visible at
+      // renderOrder 0 (behind fresh detail tiles at renderOrder 1).
       if (_prevTileZ !== -1 && _prevTileZ !== z) {
-        for (const [_staleKey, _staleTile] of tileCache) {
-          if (!_staleTile) continue  // null = in-flight sentinel, skip
-          if (!_staleTile.isParent && _staleTile.z !== z) {
-            scene.remove(_staleTile.mesh)
-            _staleTile.geo.dispose()
-            _staleTile.mat.dispose()
-            tileCache.delete(_staleKey)
-          }
+        for (const [, _staleTile] of tileCache) {
+          if (!_staleTile || _staleTile.isParent || _staleTile.z === z) continue
+          _staleTile.mesh.renderOrder = 0
+          _staleTile.mat.opacity      = 0.75
+          _staleTile.mat.needsUpdate  = true
+          _staleTile.isStale          = true
         }
       }
 
       const radius = z >= 13 ? 2 : z >= 10 ? 3 : z >= 7 ? 4 : 5
 
-      // Parent fallback tiles at z-2 — low-res placeholders visible instantly
+      // Grandparent tier (z-3): lowest-res, loads fast, always covers bare areas
+      const gpz  = Math.max(0, z - 3)
+      const gpN  = 1 << gpz
+      const gpcx = Math.floor(((clon + 180) / 360) * gpN)
+      const gpcy = Math.max(0, Math.min(gpN - 1,
+                     Math.floor((0.5 - Math.log((1 + sinL) / (1 - sinL)) / (4 * Math.PI)) * gpN)))
+
+      // Parent fallback tiles at z-2 — medium-res placeholders
       const pz  = Math.max(0, z - 2)
       const pN  = 1 << pz
       const pcx = Math.floor(((clon + 180) / 360) * pN)
@@ -1333,6 +1339,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       const newItems = []
 
+      // Grandparent tiles — highest priority so they load first and cover gaps instantly
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const gtx = ((gpcx + dx) % gpN + gpN) % gpN
+          const gty = Math.max(0, Math.min(gpN - 1, gpcy + dy))
+          const _gk = tileKey(gtx, gty, gpz)
+          if (!tileCache.has(_gk) && !failedTiles.has(_gk)) {
+            newItems.push({ tx: gtx, ty: gty, z: gpz, isParent: true,
+                            priority: 900 - (Math.abs(dx) + Math.abs(dy)) })
+          }
+        }
+      }
+
+      // Parent tiles at z-2
       for (let dy = -3; dy <= 3; dy++) {
         for (let dx = -3; dx <= 3; dx++) {
           const ptx = ((pcx + dx) % pN + pN) % pN
@@ -1340,7 +1360,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const _pk = tileKey(ptx, pty, pz)
           if (!tileCache.has(_pk) && !failedTiles.has(_pk)) {
             newItems.push({ tx: ptx, ty: pty, z: pz, isParent: true,
-                            priority: 500 - (Math.abs(dx) + Math.abs(dy)) })
+                            priority: 700 - (Math.abs(dx) + Math.abs(dy)) })
           }
         }
       }
@@ -1358,13 +1378,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
       }
 
-      // Lazy eviction: keep tiles until they're well outside view to avoid re-loading on pan
+      // Lazy eviction: keep tiles until well outside view to avoid re-loading on pan.
+      // Stale tiles (old zoom) get a tighter eviction window.
       for (const [key, t] of tileCache) {
         if (!t) continue
-        const nt = t.z === z  ? Math.abs(t.tx - cx)  + Math.abs(t.ty - cy)
-                 : t.z === pz ? Math.abs(t.tx - pcx) + Math.abs(t.ty - pcy)
+        const nt = t.z === z   ? Math.abs(t.tx - cx)   + Math.abs(t.ty - cy)
+                 : t.z === pz  ? Math.abs(t.tx - pcx)  + Math.abs(t.ty - pcy)
+                 : t.z === gpz ? Math.abs(t.tx - gpcx) + Math.abs(t.ty - gpcy)
                  : 999
-        if (nt > radius + 5) {
+        const evictRadius = t.isStale ? radius + 1 : radius + 5
+        if (nt > evictRadius) {
           scene.remove(t.mesh); t.geo.dispose(); t.mat.dispose(); tileCache.delete(key)
         }
       }
