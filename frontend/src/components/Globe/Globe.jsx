@@ -982,7 +982,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const loader   = new TextureLoader()
     const earthGeo = new SphereGeometry(EARTH_R, 96, 96)
     const earthMat = new MeshStandardMaterial({
-      color: 0x0d2b6b, roughness: 0.75, metalness: 0.05,
+      color: 0x1a5276, roughness: 0.75, metalness: 0.05,   // mid-ocean blue fallback
     })
     const earth = new Mesh(earthGeo, earthMat)
     scene.add(earth)
@@ -1205,9 +1205,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // ── Tile system: priority-queue quadtree loader ───────────────────
     // Tiles sit at two elevations:
-    //   Parent placeholders (z-2): EARTH_R * 1.001,  renderOrder 0
-    //   Full-detail tiles   (z)  : EARTH_R * 1.0015, renderOrder 1
-    // Country borders at EARTH_R + 0.003 render above both.
+    //   Parent placeholders (z-2): EARTH_R * 1.000005, renderOrder 0
+    //   Full-detail tiles   (z)  : EARTH_R * 1.00001,  renderOrder 1
+    // Stale tiles stay visible on zoom change — they cover the surface
+    // while new tiles load, preventing the earth base color from showing.
     const tileCache   = new Map()   // tileKey → {mesh, mat, geo, tx, ty, z, parent}
     const failedTiles = new Set()   // tileKeys that failed network load — skip re-queuing
     let tileQueue    = []           // [{tx, ty, z, priority, isParent}]
@@ -1315,14 +1316,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const _prevTileZ = lastTileZ
       lastTileZ = z; lastTileCX = cx; lastTileCY = cy
 
-      // Hide stale detail tiles immediately on zoom change.
-      // The blue-marble sphere shows through while new tiles load — cleaner than
-      // keeping large dark low-zoom ocean tiles visible as background patches.
+      // On zoom change, mark old detail tiles as stale but keep them visible.
+      // They stay as a blurry-but-correct backdrop while new tiles load — the new
+      // tiles render on top via renderOrder once ready. Hiding them immediately
+      // causes the dark blue earth base color to flash through during load.
       if (_prevTileZ !== -1 && _prevTileZ !== z) {
         for (const [, _staleTile] of tileCache) {
           if (!_staleTile || _staleTile.isParent || _staleTile.z === z) continue
-          _staleTile.mesh.visible = false
-          _staleTile.isStale      = true
+          _staleTile.isStale = true   // tightens eviction window; mesh stays visible
         }
       }
 
