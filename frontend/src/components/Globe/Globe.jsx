@@ -10,25 +10,30 @@ import {
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
   TextureLoader, CanvasTexture,
-  Raycaster,
+  Raycaster, WebGLRenderTarget,
   FrontSide, DoubleSide, AdditiveBlending,
+  InstancedBufferAttribute,
   LinearMipmapLinearFilter, LinearFilter,
 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createGalaxyScene } from './GalaxyScene.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
-import { PLACES } from './placeData.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const EARTH_R      = 1.0
 const CLOUD_R      = 1.006
+// ── Picking ───────────────────────────────────────────────────────────────────
+// Below this camera distance (~320 km altitude) switch to GPU color pick.
+const PICK_GPU_DIST  = 1.05
+// Order must match the encoding in syncInstances and the GPU decode.
+const PICK_CAT_ORDER = ['plane','heavy','regional','helicopter','satellite','ship']
 const ATM_SCALE    = 1.18
-const AC_R         = 1.013
-const TRAIL_R      = 1.018   // trail core — slightly above aircraft
-const TRAIL_GLOW_R = 1.023   // glow layer — above core for sci-fi bloom effect
+const AC_R         = 1.002   // just above tile layer (1.0015) — aircraft appear on the map surface
+const TRAIL_R      = 1.003   // trail core — just above aircraft layer
+const TRAIL_GLOW_R = 1.004   // glow layer — above core
 
 const MAX_AC          = 12000
 const MAX_TRAIL_PTS   = 180   // long sci-fi trails (~6× original)
@@ -47,6 +52,7 @@ const _xAxis   = new Vector3()
 const _rotMat  = new Matrix4()
 const _zeroMat = new Matrix4().makeScale(0, 0, 0)  // hides a slot
 const _worldUp = new Vector3(0, 1, 0)
+const _pickColor   = new Color()              // scratch for GPU pick color encoding
 const _colNormal   = new Color(0.38, 0.58, 0.85)  // steel blue (planes)
 const _colSelected = new Color(0.08, 0.50, 0.92)  // deep cyan (selected)
 const _colHover    = new Color(1.00, 0.85, 0.15)  // FR24 yellow (hover)
@@ -140,7 +146,6 @@ async function loadWorldLines() {
 
 // ── Place label sprite ────────────────────────────────────────────────────────
 // Module-level scratch for world→screen projection (avoids per-frame allocation)
-const _projVec = new Vector3()
 
 // Pre-build a lat/lon graticule as a static BufferGeometry (LineSegments).
 function buildGraticuleGeo(r = EARTH_R + 0.0008, step = 20, segsPerLine = 180) {
@@ -603,8 +608,8 @@ function allocForCat(state, cat) {
 function buildMatrix(a, cat, planeScale, camDist) {
   let r = AC_R
   if (cat === 'satellite') r = EARTH_R + (a.alt_km ?? 400) / 6371
-  else if (cat === 'ship') r = EARTH_R * 1.002   // above tile layers (1.001 parent, 1.0015 detail)
-  // (plane/heli/heavy/regional all default to AC_R = 1.013)
+  else if (cat === 'ship') r = EARTH_R * 1.002   // same layer as aircraft, above tiles
+  // (plane/heli/heavy/regional all default to AC_R = 1.002)
 
   // Universal clamp: if the entity layer is at or behind the camera, pull it just
   // in front so it never clips past the near plane at close zoom.
@@ -658,7 +663,8 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
       heavy:      { nextSlot: 0, freeSlots: [] },
       regional:   { nextSlot: 0, freeSlots: [] },
     }
-    state.idToInstance = new Map()
+    state.idToInstance  = new Map()
+    state.pickIdToAcId  = new Map()
   }
 
   const { idToInstance, catAlloc } = state
@@ -693,12 +699,23 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
       // Hard cap: never exceed the InstancedMesh buffer size
       if (alloc.freeSlots.length === 0 && alloc.nextSlot >= MAX_AC) continue
       const slot  = alloc.freeSlots.length ? alloc.freeSlots.pop() : alloc.nextSlot++
-      inst = { mesh, index: slot, cat, pos: null, lat: null, lon: null, hdg: null }
+      inst = { mesh, index: slot, cat, pos: null, lat: null, lon: null, hdg: null, pickId: 0 }
       idToInstance.set(id, inst)
-      // Set initial color
+      // Set display color
       const sel = id === selectedId, hov = id === hoveredId && !sel
       mesh.setColorAt(slot, sel ? _colSelected : hov ? _colHover : defaultColor(cat))
       meshDirty.add(mesh)
+      // Set GPU pick color: encode (catIndex * MAX_AC + slot + 1) into RGB
+      // +1 so that pickId=0 (black) is always "no hit / background"
+      const pickMesh = state.pickMeshes?.[cat]
+      if (pickMesh) {
+        const pickId = PICK_CAT_ORDER.indexOf(cat) * MAX_AC + slot + 1
+        _pickColor.setRGB(((pickId >> 16) & 255) / 255, ((pickId >> 8) & 255) / 255, (pickId & 255) / 255)
+        pickMesh.setColorAt(slot, _pickColor)
+        meshDirty.add(pickMesh)
+        state.pickIdToAcId?.set(pickId, id)
+        inst.pickId = pickId
+      }
     }
 
     // ── Skip matrix recomputation if position/heading unchanged ─────────────
@@ -731,6 +748,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
       inst.mesh.setMatrixAt(inst.index, _zeroMat)
       allocForCat(state, inst.cat).freeSlots.push(inst.index)
       meshDirty.add(inst.mesh)
+      if (inst.pickId) state.pickIdToAcId?.delete(inst.pickId)
       idToInstance.delete(id)
     }
   }
@@ -750,6 +768,17 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
   flush(heliMesh,     catAlloc.helicopter)
   flush(satMesh,      catAlloc.satellite)
   flush(shipMesh,     catAlloc.ship)
+
+  // Sync pick mesh counts + flush pick colors
+  if (state.pickMeshes) {
+    for (const cat of PICK_CAT_ORDER) {
+      const pm    = state.pickMeshes[cat]
+      const alloc = allocForCat(state, cat)
+      if (!pm || !alloc) continue
+      pm.count = alloc.nextSlot
+      if (meshDirty.has(pm) && pm.instanceColor) pm.instanceColor.needsUpdate = true
+    }
+  }
 
   // ── 4. Rebuild compact raycasting buffer (always — positions changed) ────
   const ids = []
@@ -894,7 +923,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const controls           = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping   = true
-    controls.dampingFactor   = 0.22   // higher = stops faster = rigid feel
+    controls.dampingFactor   = 0.30   // higher = stops faster = rigid feel
     controls.enablePan       = false
     controls.minDistance     = 1.00002   // ~127 m altitude → zoom 18 tiles (~0.6 m/px)
     controls.maxDistance     = 8
@@ -1069,6 +1098,31 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     shipMesh.count = 0; shipMesh.renderOrder = 2; shipMesh.frustumCulled = false
     scene.add(shipMesh)
 
+    // ── GPU color pick system ─────────────────────────────────────────
+    // A separate pickScene holds 6 shadow InstancedMeshes that SHARE the
+    // same instanceMatrix buffers as the display meshes (zero copy).
+    // Each instance gets a unique RGB color encoding (catIdx * MAX_AC + slot + 1).
+    // On click when zoomed in: render pickScene → sample 1 pixel → decode ID.
+    const pickMat   = new MeshBasicMaterial({ vertexColors: true, side: DoubleSide })
+    const pickScene = new Scene()
+    const _mkPickMesh = (displayMesh) => {
+      const pm = new InstancedMesh(new PlaneGeometry(1, 1), pickMat, MAX_AC)
+      pm.instanceMatrix = displayMesh.instanceMatrix   // share transform data
+      pm.instanceColor  = new InstancedBufferAttribute(new Float32Array(MAX_AC * 3), 3)
+      pm.count = 0; pm.frustumCulled = false
+      pickScene.add(pm)
+      return pm
+    }
+    const pickMeshes = {
+      plane:      _mkPickMesh(planeMesh),
+      heavy:      _mkPickMesh(heavyMesh),
+      regional:   _mkPickMesh(regionalMesh),
+      helicopter: _mkPickMesh(heliMesh),
+      satellite:  _mkPickMesh(satMesh),
+      ship:       _mkPickMesh(shipMesh),
+    }
+    const pickTarget = new WebGLRenderTarget(el.clientWidth, el.clientHeight)
+
     // ── Solar system ──────────────────────────────────────────────────
     // Hidden by default; shown when cameraScale transitions to 'solar'.
     const solarSystem = createSolarSystem(scene, renderer)
@@ -1147,39 +1201,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const padPts = new Points(padGeo, padMat)
     padPts.renderOrder = 30
     scene.add(padPts)
-
-    // ── Place markers (cities, airports, ports) ───────────────────────
-    // Dots: three Points geometries (one per tier) for LOD show/hide.
-    // Labels: HTML divs in placeLabelsContainerRef, projected to screen each frame.
-    const placeWorldPos = PLACES.map(p => ll2v(p.lat, p.lon, EARTH_R + 0.001))
-
-    const _buildTierPoints = (tier) => {
-      const positions = [], colors = []
-      PLACES.forEach((p, i) => {
-        if (p.tier !== tier) return
-        const v = placeWorldPos[i]
-        positions.push(v.x, v.y, v.z)
-        const c = p.type === 'airport' ? [1, 0.68, 0] : p.type === 'port' ? [0, 0.92, 0.60] : [0, 0.90, 1]
-        colors.push(...c)
-      })
-      const geo = new BufferGeometry()
-      geo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
-      geo.setAttribute('color',    new BufferAttribute(new Float32Array(colors),    3))
-      const mat = new PointsMaterial({
-        size: tier === 1 ? 5 : tier === 2 ? 4 : 3,
-        sizeAttenuation: false, vertexColors: true,
-        transparent: true, opacity: 0.9, depthWrite: false, depthTest: false,
-      })
-      const pts = new Points(geo, mat)
-      pts.renderOrder = 20
-      pts.visible = false
-      pts.frustumCulled = false
-      scene.add(pts)
-      return { pts, geo, mat }
-    }
-    const placeTier1 = _buildTierPoints(1)
-    const placeTier2 = _buildTierPoints(2)
-    const placeTier3 = _buildTierPoints(3)
 
     // ── Vector map: graticule (static, built immediately) ────────────
     // Both graticule and borders fade out as the user zooms in and tiles take over.
@@ -1448,19 +1469,21 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const ray   = new Raycaster()
     const mouse = new Vector2()
 
-    const toNDC = (clientX, clientY) => {
+    // isTouch: use a larger hit target for fingers vs mouse pointer
+    const toNDC = (clientX, clientY, isTouch = false) => {
       const rect = el.getBoundingClientRect()
       mouse.set(
         ((clientX - rect.left) / rect.width)  * 2 - 1,
         -((clientY - rect.top) / rect.height) * 2 + 1,
       )
       const _screenH = el.clientHeight || 1080
-      ray.params.Points.threshold = (2 * camera.position.length() * Math.tan((40 / 2) * Math.PI / 180)) / _screenH * 8
+      const _hitPx   = isTouch ? 40 : 18   // fingers need ~44px; mouse ~18px
+      ray.params.Points.threshold = (2 * camera.position.length() * Math.tan((40 / 2) * Math.PI / 180)) / _screenH * _hitPx
       ray.setFromCamera(mouse, camera)
     }
 
     const onMouseMove = e => {
-      toNDC(e.clientX, e.clientY)
+      toNDC(e.clientX, e.clientY, e.pointerType === 'touch')
       const hits  = ray.intersectObject(acPts)
       const newId = hits.length ? int.current.acIds?.[hits[0].index] : null
       const prevId = int.current.hoveredId
@@ -1500,6 +1523,49 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
     el.addEventListener('mousemove', onMouseMove)
 
+    // ── GPU color pick (close zoom, pixel-perfect) ───────────────────
+    // Called from onPointerUp when camDist < PICK_GPU_DIST.
+    // Renders the pick scene (flat unique-color instances) to an offscreen
+    // target, samples the pixel under the cursor, decodes to aircraft ID.
+    const _savedClearColor = new Color()
+    const _pickPixel       = new Uint8Array(4)
+    const gpuPick = (clientX, clientY) => {
+      const pt = int.current.pickTarget
+      const ps = int.current.pickScene
+      if (!pt || !ps) return null
+
+      // Sync pick mesh counts so they match display meshes exactly
+      const pm = int.current.pickMeshes
+      if (pm) {
+        for (const cat of PICK_CAT_ORDER) {
+          const disp = { plane: planeMesh, heavy: heavyMesh, regional: regionalMesh,
+                         helicopter: heliMesh, satellite: satMesh, ship: shipMesh }[cat]
+          if (pm[cat] && disp) pm[cat].count = disp.count
+        }
+      }
+
+      // Save + override clear color, render pick scene, restore
+      const savedAlpha = renderer.getClearAlpha()
+      renderer.getClearColor(_savedClearColor)
+      renderer.setRenderTarget(pt)
+      renderer.setClearColor(0x000000, 1)
+      renderer.clear()
+      renderer.render(ps, camera)
+      renderer.setRenderTarget(null)
+      renderer.setClearColor(_savedClearColor, savedAlpha)
+
+      // Sample the pixel under the cursor (WebGL Y is flipped)
+      const rect   = el.getBoundingClientRect()
+      const px     = Math.round(clientX - rect.left)
+      const py     = pt.height - 1 - Math.round(clientY - rect.top)
+      renderer.readRenderTargetPixels(pt, px, py, 1, 1, _pickPixel)
+
+      // Decode: pickId=0 means background (no hit)
+      const pickId = (_pickPixel[0] << 16) | (_pickPixel[1] << 8) | _pickPixel[2]
+      if (pickId === 0) return null
+      return int.current.pickIdToAcId?.get(pickId) ?? null
+    }
+
     let downAt = null
     const onPointerDown = e => { downAt = { x: e.clientX, y: e.clientY } }
     const onPointerUp   = e => {
@@ -1507,8 +1573,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const dx = Math.abs(e.clientX - downAt.x)
       const dy = Math.abs(e.clientY - downAt.y)
       downAt = null
-      if (dx > 14 || dy > 14) return
-      toNDC(e.clientX, e.clientY)
+      // Allow a bit more drag tolerance on touch
+      const dragLimit = e.pointerType === 'touch' ? 20 : 14
+      if (dx > dragLimit || dy > dragLimit) return
+      toNDC(e.clientX, e.clientY, e.pointerType === 'touch')
 
       // ── Solar scale: check planet meshes first ────────────────────────
       if (int.current.targetCameraScale === 'solar' && solarSystem.solarGroup.visible) {
@@ -1520,10 +1588,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
       }
 
+      const camDist = int.current.camDist || camera.position.length()
+
+      // ── GPU color pick: zoomed in close to Earth surface ─────────────
+      // Pixel-perfect — no threshold needed, works on touch and mouse.
+      if (camDist < PICK_GPU_DIST && int.current.targetCameraScale === 'earth') {
+        const acId = gpuPick(e.clientX, e.clientY)
+        if (acId) int.current.onAircraftClick?.(acId)
+        return
+      }
+
+      // ── Raycaster: far zoom / solar scale ────────────────────────────
+      // Best-hit by NDC proximity to the actual click point.
       const hits = ray.intersectObject(acPts)
       if (hits.length) {
-        // Project every hit to screen space and pick the one closest to the actual click pixel.
-        // This avoids selecting a nearby entity that happens to be first along the ray axis.
         let bestId = null, bestDist = Infinity
         for (const hit of hits) {
           const ndc = hit.point.clone().project(camera)
@@ -1549,6 +1627,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       camera.aspect = el.clientWidth / el.clientHeight
       camera.updateProjectionMatrix()
       renderer.setSize(el.clientWidth, el.clientHeight)
+      pickTarget.setSize(el.clientWidth, el.clientHeight)
     }
     window.addEventListener('resize', onResize)
 
@@ -1678,40 +1757,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         solarSystem.animateExtra()
       }
 
-      // ── Place markers — Points visibility + DOM label projection ─────────────
-      {
-        const _d       = camera.position.length()
-        const onEarth  = targetScale === 'earth'
-        placeTier1.pts.visible = onEarth && _d < 2.0
-        placeTier2.pts.visible = onEarth && _d < 1.5
-        placeTier3.pts.visible = onEarth && _d < 1.15
-
-        const _lc = int.current.placeLabelsContainer
-        if (_lc) {
-          const _cw  = el.clientWidth  || 1920
-          const _ch  = el.clientHeight || 1080
-          const _fwd = camera.position.clone().normalize()
-          const _els = _lc.children
-          for (let _i = 0; _i < PLACES.length; _i++) {
-            const _p  = PLACES[_i]
-            const _le = _els[_i]
-            if (!_le) continue
-            const _thresh = _p.tier === 1 ? 2.0 : _p.tier === 2 ? 1.5 : 1.15
-            const _wp = placeWorldPos[_i]
-            const _facing = _wp.x * _fwd.x + _wp.y * _fwd.y + _wp.z * _fwd.z
-            if (!onEarth || _d > _thresh || _facing < 0.12) {
-              _le.style.display = 'none'; continue
-            }
-            _projVec.copy(_wp).project(camera)
-            if (_projVec.z > 1) { _le.style.display = 'none'; continue }
-            const _sx = (_projVec.x + 1) * 0.5 * _cw
-            const _sy = (1 - _projVec.y) * 0.5 * _ch
-            _le.style.display = 'block'
-            _le.style.transform = `translate3d(${Math.round(_sx)}px,${Math.round(_sy)}px,0) translate(-50%,-130%)`
-          }
-        }
-      }
-
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
       // log curve: ramps up quickly leaving the surface, levels off when far out
       // so zoomed-out feels fast, zoomed-in feels precise, no jarring threshold.
@@ -1721,12 +1766,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        controls.rotateSpeed   = 0.01 + t * 0.69   // 0.01 at surface → 0.70 at max
-        controls.zoomSpeed     = 0.02 + t * 0.68   // 0.02 at surface → 0.70 at max
-        // Extra stiffness below 250 km — damping clamps to 0.75 in that band
+        controls.rotateSpeed   = 0.005 + t * 0.34   // slower: 0.005 at surface → 0.345 at max
+        controls.zoomSpeed     = 0.02  + t * 0.68   // zoom unchanged
+        // Stiffer damping across the board — higher base, tighter at surface
         const ALT_250KM = 1.03924  // (6371+250)/6371
-        const dampBase  = dist < ALT_250KM ? 0.88 : 0.65
-        controls.dampingFactor = dampBase - t * 0.52
+        const dampBase  = dist < ALT_250KM ? 0.92 : 0.78
+        controls.dampingFactor = dampBase - t * 0.40
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -1912,6 +1957,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       acIds: [],
       catAlloc: null,      // lazily initialised by syncInstances on first call
       idToInstance: null,
+      pickIdToAcId: null,  // lazily initialised by syncInstances
+      pickScene,
+      pickTarget,
+      pickMeshes,
       hoveredId: null,
       hoverPos: null,
       setHoverTooltip: (...args) => setHoverTooltipRef.current?.(...args),
@@ -1937,7 +1986,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       solarFlyTarget: null,         // planet fly-to destination (Vector3)
       solarFlyStart:  null,
       solarFlyFrom:   null,
-      placeLabelsContainer: null,   // set by JSX ref callback below
     }
 
     tick()
@@ -1951,7 +1999,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
       clearTiles()
-      for (const t of [placeTier1, placeTier2, placeTier3]) { scene.remove(t.pts); t.geo.dispose(); t.mat.dispose() }
+      pickTarget.dispose()
       solarSystem.dispose()
       galaxySystem.dispose()
       controls.dispose()
@@ -2142,32 +2190,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         document.body
       )}
 
-      {/* Place labels — DOM-positioned via world→screen projection in tick loop */}
-      <div
-        ref={el => { if (int.current) int.current.placeLabelsContainer = el }}
-        style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}
-      >
-        {PLACES.map(p => (
-          <div
-            key={p.name + p.lat}
-            style={{
-              position: 'absolute', display: 'none', left: 0, top: 0,
-              fontFamily: '"IBM Plex Mono","Courier New",monospace',
-              fontSize: p.tier === 3 ? '9px' : p.tier === 2 ? '10px' : '11px',
-              fontWeight: p.tier === 1 ? 600 : 400,
-              letterSpacing: '0.06em',
-              whiteSpace: 'nowrap',
-              color: p.type === 'airport' ? 'rgba(255,180,0,0.92)'
-                   : p.type === 'port'    ? 'rgba(0,230,150,0.88)'
-                   :                        'rgba(195,245,255,0.88)',
-              textShadow: '0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8)',
-              lineHeight: 1,
-            }}
-          >
-            {p.name}
-          </div>
-        ))}
-      </div>
     </div>
   )
 })
