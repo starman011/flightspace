@@ -132,17 +132,6 @@ function greatCirclePoints(pts, r = EARTH_R + 0.035, steps = 40) {
 // ── Vector-map helpers ────────────────────────────────────────────────────
 
 // Fetch world-atlas TopoJSON and decode to [[lon,lat],…] polylines (country borders).
-async function loadWorldLines() {
-  try {
-    const res  = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
-    const topo = await res.json()
-    const { scale: [sx, sy], translate: [tx, ty] } = topo.transform
-    return topo.arcs.map(arc => {
-      let x = 0, y = 0
-      return arc.map(([dx, dy]) => { x += dx; y += dy; return [x * sx + tx, y * sy + ty] })
-    })
-  } catch { return [] }
-}
 
 // ── Place label sprite ────────────────────────────────────────────────────────
 // Module-level scratch for world→screen projection (avoids per-frame allocation)
@@ -1212,30 +1201,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     graticuleMesh.renderOrder = 1
     scene.add(graticuleMesh)
 
-    // ── Vector map: country borders (async fetch, added when ready) ───
     let mapDestroyed = false
-    let borderMat    = null   // keep a reference for per-frame fade
-    loadWorldLines().then(lines => {
-      if (mapDestroyed || !lines.length) return
-      const pts = []
-      const R   = EARTH_R + 0.003   // above tile layer (tiles sit at 1.0015)
-      for (const line of lines) {
-        for (let i = 0; i < line.length - 1; i++) {
-          const [lo0, la0] = line[i], [lo1, la1] = line[i + 1]
-          const v0 = ll2v(la0, lo0, R), v1 = ll2v(la1, lo1, R)
-          pts.push(v0.x, v0.y, v0.z, v1.x, v1.y, v1.z)
-        }
-      }
-      const borderGeo  = new BufferGeometry()
-      borderGeo.setAttribute('position', new BufferAttribute(new Float32Array(pts), 3))
-      borderMat = new LineBasicMaterial({
-        color: 0x00e87a, transparent: true, opacity: 0.55,
-        depthWrite: false, blending: AdditiveBlending,
-      })
-      const borderMesh = new LineSegments(borderGeo, borderMat)
-      borderMesh.renderOrder = 4   // above tiles (0-1) and earth (default)
-      scene.add(borderMesh)
-    })
 
     // ── Tile system: priority-queue quadtree loader ───────────────────
     // Tiles sit at two elevations:
@@ -1816,7 +1782,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Fade vector overlays out as tiles take over; fade back in when zoomed out
       const overlayAlpha = MathUtils.clamp((dist - TILE_DIST_THRESHOLD + 0.4) / 0.4, 0, 1)
       graticuleMat.opacity = 0.45 * overlayAlpha
-      if (borderMat) borderMat.opacity = 0.55 * overlayAlpha
 
       updateTiles()
 
