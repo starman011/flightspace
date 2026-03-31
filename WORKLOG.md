@@ -33,6 +33,12 @@ Tracks all significant changes made during development sessions.
 | Tile-embedded labels (CartoDB) for cities, DOM labels for airports | CartoDB Voyager tiles already contain Apple Maps-quality progressive city/street labels. Adding our own would create visual clutter and duplicate information. Airports need IATA codes + click targets (not in tiles). |
 | ETA from live ADS-B data, no external API | Aircraft positions + ground speed + heading are already in Redis. Haversine + bearing filter computes ETA with ~2-5 minute accuracy. $0 cost, no API dependency. |
 
+### Research Completed
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **F4: Night Sky / Stellarium — full research** | Evaluated star catalogs (Yale BSC5: 9,110 stars, ~200KB trimmed), constellation data (d3-celestial GeoJSON: 88 constellations), planet ephemeris (astronomy-engine: 116KB, VSOP87, ±1 arcmin), Milky Way panorama (ESO CC-BY 4.0, 200KB), DeviceOrientation AR (iOS permission flow, compass heading, ZXY camera rotation), coordinate math (RA/Dec→XYZ, GMST, LST, Alt/Az). Total data budget: ~570KB lazy-loaded. Full document at `specs/002-critical-features/f4-night-sky-research.md`. |
+
 ---
 
 ## Session: 2026-03-30

@@ -66,3 +66,30 @@ Problems that required research beyond simple debugging. Each entry documents th
 4. Accuracy: ~2-5 min for aircraft within 500km (doesn't account for approach patterns, wind, ATC holds)
 
 $0 cost, no external API, uses data already flowing through the system.
+
+---
+
+## 4. Night Sky / Stellarium-Style Renderer
+
+**Problem:** Need a Stellarium-like night sky view showing real star positions, constellations, planets, and AR "point at sky" mode — entirely in Three.js, no external planetarium engine.
+
+**Research:**
+- Stellarium Web Engine: C→WASM, GPL license, uses Gaia catalog (1.7B stars). Too heavy and license-incompatible.
+- Yale Bright Star Catalog (BSC5): 9,110 stars, all naked-eye visible (mag < 6.5), JSON available, J2000 epoch RA/Dec. Perfect scope.
+- d3-celestial: GeoJSON constellation lines for all 88 IAU constellations. Battle-tested data, trivial to parse.
+- astronomy-engine (npm): 116KB, VSOP87-based, ±1 arcmin accuracy for all planets + Moon + Sun. Built-in RA/Dec→Alt/Az transforms.
+- ESO Milky Way panorama: 800M pixel equirectangular, CC-BY 4.0, downscales to 200KB JPEG at 2048×1024.
+- DeviceOrientation API: alpha/beta/gamma for AR mode. iOS requires `requestPermission()` since iOS 13, HTTPS + user gesture.
+- Key insight: 9,110 stars + 88 constellations + 10 planets is <600KB total. Single `THREE.Points` draw call for stars, `LineSegments` for constellations, astronomy-engine for live planet positions.
+
+**Solution architecture:**
+1. Stars: BSC5 → `THREE.Points` with `ShaderMaterial` (magnitude→size, B-V→color), `sizeAttenuation: false`
+2. Constellations: d3-celestial GeoJSON → `THREE.LineSegments`, low opacity
+3. Milky Way: ESO panorama on inverted `SphereGeometry` as skybox
+4. Planets: `astronomy-engine` Equator() → RA/Dec → XYZ, distinct markers with labels
+5. AR: DeviceOrientation → camera rotation (ZXY order), RA/Dec→Alt/Az for correct positioning
+6. All assets lazy-loaded on scale transition to `'galaxy'`
+
+**Full research document:** `specs/002-critical-features/f4-night-sky-research.md`
+
+**Sources:** Yale BSC5, d3-celestial, astronomy-engine (cosinekitty), ESO, MDN DeviceOrientationEvent, Stellarium Web Engine (reference only)
