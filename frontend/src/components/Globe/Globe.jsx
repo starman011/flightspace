@@ -19,6 +19,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createGalaxyScene } from './GalaxyScene.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
+import KDBush from 'kdbush'
+import { PLACES } from './placeData.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -793,7 +795,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, neoData }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, neoData }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -886,8 +888,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     },
   }), [drawTrail, setCameraScale])
 
-  // Sync onPlanetClick prop into int.current so native event closures can read it
+  // Sync click callbacks into int.current so native event closures can read them
   useEffect(() => { int.current.onPlanetClick = onPlanetClick }, [onPlanetClick])
+  useEffect(() => { int.current.onAirportClick = onAirportClick }, [onAirportClick])
 
   // Push NEO asteroid data into the solar scene whenever it arrives
   useEffect(() => {
@@ -899,7 +902,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const el = mountRef.current
     if (!el) return
 
-    const renderer = new WebGLRenderer({ antialias: true })
+    const renderer = new WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(el.clientWidth, el.clientHeight)
     renderer.setClearColor(0x0f1419)
@@ -1095,7 +1098,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const pickMat   = new MeshBasicMaterial({ vertexColors: true, side: DoubleSide })
     const pickScene = new Scene()
     const _mkPickMesh = (displayMesh) => {
-      const pm = new InstancedMesh(new PlaneGeometry(1, 1), pickMat, MAX_AC)
+      const pm = new InstancedMesh(new PlaneGeometry(1.8, 1.8), pickMat, MAX_AC)
       pm.instanceMatrix = displayMesh.instanceMatrix   // share transform data
       pm.instanceColor  = new InstancedBufferAttribute(new Float32Array(MAX_AC * 3), 3)
       pm.count = 0; pm.frustumCulled = false
@@ -1110,7 +1113,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       satellite:  _mkPickMesh(satMesh),
       ship:       _mkPickMesh(shipMesh),
     }
-    const pickTarget = new WebGLRenderTarget(el.clientWidth, el.clientHeight)
+    const _dpr = renderer.getPixelRatio()
+    const pickTarget = new WebGLRenderTarget(Math.floor(el.clientWidth * _dpr), Math.floor(el.clientHeight * _dpr))
 
     // ── Solar system ──────────────────────────────────────────────────
     // Hidden by default; shown when cameraScale transitions to 'solar'.
@@ -1201,12 +1205,52 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     graticuleMesh.renderOrder = 1
     scene.add(graticuleMesh)
 
+    // ── Place dots — faint grey markers for all locations ──────────────
+    // City names come from CartoDB Voyager tiles (Apple Maps-style progressive LOD).
+    // DOM labels are only for airports (IATA codes, clickable) and ports.
+    const PLACE_R = EARTH_R * 1.001
+    const placePosArr = new Float32Array(PLACES.length * 3)
+    const placeSizeArr = new Float32Array(PLACES.length)
+    for (let i = 0; i < PLACES.length; i++) {
+      const v = ll2v(PLACES[i].lat, PLACES[i].lon, PLACE_R)
+      placePosArr[i * 3] = v.x; placePosArr[i * 3 + 1] = v.y; placePosArr[i * 3 + 2] = v.z
+      placeSizeArr[i] = PLACES[i].type === 'city' ? (PLACES[i].tier === 1 ? 3.5 : 2.5) : 2.0
+    }
+    const placeGeo = new BufferGeometry()
+    placeGeo.setAttribute('position', new BufferAttribute(placePosArr, 3))
+    placeGeo.setAttribute('size', new BufferAttribute(placeSizeArr, 1))
+    const placeDots = new Points(placeGeo, new PointsMaterial({
+      color: 0x8899aa, transparent: true, opacity: 0.18, sizeAttenuation: false, depthWrite: false,
+    }))
+    placeDots.renderOrder = 3
+    scene.add(placeDots)
+
+    // DOM labels only for airports + ports (cities get names from tile imagery)
+    const labelContainer = document.createElement('div')
+    labelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden'
+    el.appendChild(labelContainer)
+    const _projV = new Vector3()
+    const labelledPlaces = PLACES.filter(p => p.type === 'airport' || p.type === 'port')
+    const placeLabelEls = labelledPlaces.map(p => {
+      const div = document.createElement('div')
+      const isAirport = p.type === 'airport'
+      div.textContent = p.name
+      div.style.cssText = `position:absolute;color:rgba(160,180,200,${isAirport ? '0.65' : '0.4'});font:600 ${isAirport ? 9 : 8}px/1 -apple-system,system-ui,sans-serif;white-space:nowrap;transform:translate(-50%,-100%);padding:${isAirport ? '4px 8px' : '2px 4px'};display:none;letter-spacing:0.08em;${isAirport ? 'pointer-events:auto;cursor:pointer;border-radius:3px;' : ''}`
+      if (isAirport) {
+        div.addEventListener('click', () => { int.current.onAirportClick?.(p.name) })
+        div.addEventListener('mouseenter', () => { div.style.color = 'rgba(100,180,255,0.9)'; div.style.background = 'rgba(40,80,140,0.15)' })
+        div.addEventListener('mouseleave', () => { div.style.color = 'rgba(160,180,200,0.65)'; div.style.background = 'none' })
+      }
+      labelContainer.appendChild(div)
+      return { div, lat: p.lat, lon: p.lon, tier: p.tier, type: p.type, name: p.name }
+    })
+
     let mapDestroyed = false
 
     // ── Tile system: priority-queue quadtree loader ───────────────────
-    // Tiles sit at two elevations:
-    //   Parent placeholders (z-2): EARTH_R * 1.000005, renderOrder 0
-    //   Full-detail tiles   (z)  : EARTH_R * 1.00001,  renderOrder 1
+    // Tiles sit at two elevations (logarithmic depth buffer resolves these cleanly):
+    //   Parent placeholders (z-2): EARTH_R * 1.0002, renderOrder 0
+    //   Full-detail tiles   (z)  : EARTH_R * 1.0004, renderOrder 1
     // Stale tiles stay visible on zoom change — they cover the surface
     // while new tiles load, preventing the earth base color from showing.
     const tileCache   = new Map()   // tileKey → {mesh, mat, geo, tx, ty, z, parent}
@@ -1245,14 +1289,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // so the camera is always above the tile mesh → front face always visible.
         // Old values (1.001 / 1.0015) were 6.4 km / 9.5 km — caused blank screen
         // when zooming below those altitudes.
-        const r    = item.isParent ? EARTH_R * 1.000005 : EARTH_R * 1.00001
+        const r    = item.isParent ? EARTH_R * 1.0002 : EARTH_R * 1.0004
         const geo  = buildTileGeo(item.tx, item.ty, item.z, r)
         const mat  = new MeshBasicMaterial({
           transparent: true, opacity: 0, side: FrontSide,
           depthWrite: false,
           polygonOffset: true,
-          polygonOffsetFactor: item.isParent ? -4 : -6,
-          polygonOffsetUnits:  item.isParent ? -4 : -6,
+          polygonOffsetFactor: item.isParent ? -1 : -2,
+          polygonOffsetUnits:  item.isParent ? -1 : -2,
         })
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
@@ -1436,23 +1480,52 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const ray   = new Raycaster()
     const mouse = new Vector2()
 
-    // isTouch: use a larger hit target for fingers vs mouse pointer
-    const toNDC = (clientX, clientY, isTouch = false) => {
+    const toNDC = (clientX, clientY) => {
       const rect = el.getBoundingClientRect()
       mouse.set(
         ((clientX - rect.left) / rect.width)  * 2 - 1,
         -((clientY - rect.top) / rect.height) * 2 + 1,
       )
-      const _screenH = el.clientHeight || 1080
-      const _hitPx   = isTouch ? 40 : 18   // fingers need ~44px; mouse ~18px
-      ray.params.Points.threshold = (2 * camera.position.length() * Math.tan((40 / 2) * Math.PI / 180)) / _screenH * _hitPx
       ray.setFromCamera(mouse, camera)
     }
 
+    // Screen-space spatial pick — projects all aircraft to 2D, builds KD-tree, queries
+    const _ssV = new Vector3()
+    const screenPick = (clientX, clientY, isTouch = false) => {
+      const ids = int.current.acIds
+      if (!ids?.length) return null
+      const rect = el.getBoundingClientRect()
+      const w = rect.width, h = rect.height
+      const tapR = isTouch ? 44 : 20
+      const n = Math.min(ids.length, acGeo.drawRange.count)
+      if (n === 0) return null
+
+      const xs = new Float64Array(n)
+      const ys = new Float64Array(n)
+      for (let i = 0; i < n; i++) {
+        _ssV.set(acPos[i * 3], acPos[i * 3 + 1], acPos[i * 3 + 2]).project(camera)
+        xs[i] = (_ssV.x * 0.5 + 0.5) * w
+        ys[i] = (-_ssV.y * 0.5 + 0.5) * h
+      }
+
+      const index = new KDBush(n)
+      for (let j = 0; j < n; j++) index.add(xs[j], ys[j])
+      index.finish()
+
+      const cx = clientX - rect.left, cy = clientY - rect.top
+      const nearby = index.range(cx - tapR, cy - tapR, cx + tapR, cy + tapR)
+
+      let bestId = null, bestDist = Infinity
+      for (const idx of nearby) {
+        const dx = xs[idx] - cx, dy = ys[idx] - cy
+        const d = dx * dx + dy * dy
+        if (d < bestDist && d <= tapR * tapR) { bestDist = d; bestId = ids[idx] }
+      }
+      return bestId
+    }
+
     const onMouseMove = e => {
-      toNDC(e.clientX, e.clientY, e.pointerType === 'touch')
-      const hits  = ray.intersectObject(acPts)
-      const newId = hits.length ? int.current.acIds?.[hits[0].index] : null
+      const newId = screenPick(e.clientX, e.clientY, false)
       const prevId = int.current.hoveredId
 
       if (newId !== prevId) {
@@ -1495,7 +1568,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Renders the pick scene (flat unique-color instances) to an offscreen
     // target, samples the pixel under the cursor, decodes to aircraft ID.
     const _savedClearColor = new Color()
-    const _pickPixel       = new Uint8Array(4)
+    const PICK_SAMPLE_R = 3
+    const PICK_SAMPLE_SIDE = PICK_SAMPLE_R * 2 + 1
+    const _pickArea = new Uint8Array(PICK_SAMPLE_SIDE * PICK_SAMPLE_SIDE * 4)
     const gpuPick = (clientX, clientY) => {
       const pt = int.current.pickTarget
       const ps = int.current.pickScene
@@ -1521,16 +1596,30 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       renderer.setRenderTarget(null)
       renderer.setClearColor(_savedClearColor, savedAlpha)
 
-      // Sample the pixel under the cursor (WebGL Y is flipped)
-      const rect   = el.getBoundingClientRect()
-      const px     = Math.round(clientX - rect.left)
-      const py     = pt.height - 1 - Math.round(clientY - rect.top)
-      renderer.readRenderTargetPixels(pt, px, py, 1, 1, _pickPixel)
+      // Sample a 7x7 pixel neighborhood (DPI-corrected) — nearest non-zero ID wins
+      const rect = el.getBoundingClientRect()
+      const dpr  = renderer.getPixelRatio()
+      const cx   = Math.round((clientX - rect.left) * dpr)
+      const cy   = pt.height - 1 - Math.round((clientY - rect.top) * dpr)
+      const x0   = Math.max(0, cx - PICK_SAMPLE_R)
+      const y0   = Math.max(0, cy - PICK_SAMPLE_R)
+      const w    = Math.min(PICK_SAMPLE_SIDE, pt.width - x0)
+      const h    = Math.min(PICK_SAMPLE_SIDE, pt.height - y0)
+      renderer.readRenderTargetPixels(pt, x0, y0, w, h, _pickArea)
 
-      // Decode: pickId=0 means background (no hit)
-      const pickId = (_pickPixel[0] << 16) | (_pickPixel[1] << 8) | _pickPixel[2]
-      if (pickId === 0) return null
-      return int.current.pickIdToAcId?.get(pickId) ?? null
+      let bestId = 0, bestDist = Infinity
+      for (let row = 0; row < h; row++) {
+        for (let col = 0; col < w; col++) {
+          const i  = (row * w + col) * 4
+          const id = (_pickArea[i] << 16) | (_pickArea[i + 1] << 8) | _pickArea[i + 2]
+          if (id === 0) continue
+          const dx = col - (cx - x0), dy = row - (cy - y0)
+          const d  = dx * dx + dy * dy
+          if (d < bestDist) { bestDist = d; bestId = id }
+        }
+      }
+      if (bestId === 0) return null
+      return int.current.pickIdToAcId?.get(bestId) ?? null
     }
 
     let downAt = null
@@ -1543,10 +1632,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Allow a bit more drag tolerance on touch
       const dragLimit = e.pointerType === 'touch' ? 20 : 14
       if (dx > dragLimit || dy > dragLimit) return
-      toNDC(e.clientX, e.clientY, e.pointerType === 'touch')
+      const isTouch = e.pointerType === 'touch'
 
       // ── Solar scale: check planet meshes first ────────────────────────
       if (int.current.targetCameraScale === 'solar' && solarSystem.solarGroup.visible) {
+        toNDC(e.clientX, e.clientY)
         const planetMeshList = Object.values(solarSystem.planetMeshes)
         const planetHits = ray.intersectObjects(planetMeshList, false)
         if (planetHits.length) {
@@ -1558,25 +1648,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const camDist = int.current.camDist || camera.position.length()
 
       // ── GPU color pick: zoomed in close to Earth surface ─────────────
-      // Pixel-perfect — no threshold needed, works on touch and mouse.
       if (camDist < PICK_GPU_DIST && int.current.targetCameraScale === 'earth') {
         const acId = gpuPick(e.clientX, e.clientY)
         if (acId) int.current.onAircraftClick?.(acId)
         return
       }
 
-      // ── Raycaster: far zoom / solar scale ────────────────────────────
-      // Best-hit by NDC proximity to the actual click point.
-      const hits = ray.intersectObject(acPts)
-      if (hits.length) {
-        let bestId = null, bestDist = Infinity
-        for (const hit of hits) {
-          const ndc = hit.point.clone().project(camera)
-          const d   = (ndc.x - mouse.x) ** 2 + (ndc.y - mouse.y) ** 2
-          if (d < bestDist) { bestDist = d; bestId = int.current.acIds?.[hit.index] }
-        }
-        if (bestId) int.current.onAircraftClick?.(bestId)
-      }
+      // ── Screen-space spatial pick: far zoom ────────────────────────────
+      const acId = screenPick(e.clientX, e.clientY, isTouch)
+      if (acId) int.current.onAircraftClick?.(acId)
     }
     el.addEventListener('pointerdown', onPointerDown)
     el.addEventListener('pointerup',   onPointerUp)
@@ -1594,7 +1674,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       camera.aspect = el.clientWidth / el.clientHeight
       camera.updateProjectionMatrix()
       renderer.setSize(el.clientWidth, el.clientHeight)
-      pickTarget.setSize(el.clientWidth, el.clientHeight)
+      const _rdpr = renderer.getPixelRatio()
+      pickTarget.setSize(Math.floor(el.clientWidth * _rdpr), Math.floor(el.clientHeight * _rdpr))
     }
     window.addEventListener('resize', onResize)
 
@@ -1786,6 +1867,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       updateTiles()
 
+      // ── Place markers + airport/port labels ────────────────────────────
+      // City dots: faint markers visible from regional zoom (tiles handle city names)
+      // Airport/port DOM labels: visible at close zoom for IATA codes + click targets
+      if (isSolar || isGalaxy) {
+        labelContainer.style.display = 'none'
+        placeDots.visible = false
+      } else {
+        placeDots.visible = dist < 2.5
+        placeDots.material.opacity = MathUtils.clamp(0.18 * (2.5 - dist) / 0.5, 0, 0.18)
+        const showLabels = dist < 1.25
+        labelContainer.style.display = showLabels ? '' : 'none'
+        if (showLabels) {
+          const halfW = el.clientWidth * 0.5, halfH = el.clientHeight * 0.5
+          for (let i = 0; i < placeLabelEls.length; i++) {
+            const pl = placeLabelEls[i]
+            _projV.copy(ll2v(pl.lat, pl.lon, PLACE_R)).project(camera)
+            if (_projV.z > 1) { pl.div.style.display = 'none'; continue }
+            pl.div.style.display = ''
+            pl.div.style.transform = `translate3d(${(_projV.x * halfW + halfW)|0}px,${(-_projV.y * halfH + halfH - 6)|0}px,0) translate(-50%,-100%)`
+          }
+        }
+      }
+
       // ── Camera info HUD (altitude + scale bar) — throttled to 100 ms ─────
       const now = Date.now()
       if (now - (int.current.lastHudUpdate || 0) > 100) {
@@ -1965,6 +2069,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('pointerup',   onPointerUp)
       mapDestroyed = true
       clearTiles()
+      placeGeo.dispose()
+      placeDots.material.dispose()
+      if (el.contains(labelContainer)) el.removeChild(labelContainer)
       pickTarget.dispose()
       solarSystem.dispose()
       galaxySystem.dispose()

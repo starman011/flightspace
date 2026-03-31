@@ -206,17 +206,21 @@ Each aircraft category (plane, heavy regional, helicopter, satellite, ship) gets
 For click detection a parallel flat `Points` geometry mirrors every aircraft position. Only one raycasting pass runs per click — against points, not meshes — which is orders of magnitude cheaper than intersecting 12,000 mesh instances.
 
 ### Picking the right aircraft when dots overlap
-**Technique: Screen-space closest-point disambiguation**
+**Technique: Dual-mode screen-space picking (KD-tree + GPU color ID)**
 
-Three.js `Raycaster.intersectObject` returns all hits sorted by depth along the ray — which means a nearby aircraft that happens to be behind the cursor on the z-axis wins. Instead, every hit's 3D position is projected into NDC screen space and the one whose 2D screen coordinate is geometrically closest to the actual click pixel is selected. This means "the dot you tapped" always wins over "the dot closest to the camera on that ray."
+Three.js `Raycaster` operates in world space — its threshold is a sphere radius that doesn't correspond to screen pixels, especially on a spherical projection where foreshortening compresses dots near the horizon. FlightRadar24 and FlightAware solve this by picking entirely in screen space.
+
+**Far zoom (>320km altitude):** All 12K aircraft 3D positions are projected to screen coordinates via `Vector3.project(camera)`, inserted into a `kdbush` KD-tree (~3KB, zero deps), and queried with a pixel-radius range search. The nearest-to-cursor aircraft wins. Total cost: ~2ms on click, 0ms per frame (lazy).
+
+**Close zoom (<320km):** GPU color-ID picking renders each aircraft as a unique RGB-encoded quad to an offscreen FBO. A 7×7 pixel neighborhood is sampled (DPI-corrected) and the nearest non-zero ID to center wins. Pick mesh geometry is 1.8× larger than display geometry for a generous hit area without visual change.
 
 ```js
-// Globe.jsx — pick loop
-for (const hit of hits) {
-  const ndc = hit.point.clone().project(camera)
-  const d   = (ndc.x - mouse.x) ** 2 + (ndc.y - mouse.y) ** 2
-  if (d < bestDist) { bestDist = d; bestId = acIds[hit.index] }
-}
+// Screen-space KD-tree pick (far zoom)
+const index = new KDBush(n)
+for (let j = 0; j < n; j++) index.add(screenX[j], screenY[j])
+index.finish()
+const nearby = index.range(cx - tapR, cy - tapR, cx + tapR, cy + tapR)
+// → nearest by pixel distance wins
 ```
 
 ### Streaming 12,000 positions with minimal bandwidth
@@ -267,9 +271,16 @@ Globe is lazy-loaded via `React.lazy`. When `navigate()` fires synchronously ins
 Aircraft that stop broadcasting (landed, out of range, ADS-B off) will never appear in a future delta's `removed` list if the server's poller missed the disappearance. A `setInterval` every 10 seconds scans the client-side `Map` and removes any entry whose `receivedAt` timestamp is older than 120 seconds. This keeps the globe clean without requiring a server-side tombstone mechanism.
 
 ### Tile map system
-**Technique: Priority-queue quadtree loader with parent-tile placeholders**
+**Technique: Priority-queue quadtree loader with parent-tile placeholders + logarithmic depth buffer**
 
-When the camera zooms in, the tile system determines the required zoom level and builds a priority queue ordered by distance from the viewport center. At most 6 tiles load concurrently (preventing network saturation). For any tile at zoom Z, the parent tile at Z-2 is queued first as a low-resolution placeholder — the user sees a blurry but immediate map image while the sharp tile loads behind it. Tiles outside the view frustum plus a margin are evicted via lazy disposal to bound GPU memory.
+When the camera zooms in, the tile system determines the required zoom level and builds a priority queue ordered by distance from the viewport center. At most 10 tiles load concurrently. For any tile at zoom Z, the parent tile at Z-2 is queued first as a low-resolution placeholder — the user sees a blurry but immediate map image while the sharp tile loads behind it. Tiles outside the view frustum plus a margin are evicted via lazy disposal to bound GPU memory.
+
+The renderer uses `logarithmicDepthBuffer: true` to provide uniform depth precision from 127m altitude to 51,000km. Without this, the standard 24-bit depth buffer's near/far ratio (67M:1 at close zoom) causes z-fighting between tile layers. Tile layers are separated by ~1.3km (parent at `1.0002R`, detail at `1.0004R`) — far enough for clean depth resolution, close enough to look flush on the sphere surface.
+
+### Airport arrival ETA from live ADS-B data
+**Technique: Haversine + bearing filter + ground-speed division**
+
+No external flight data API is needed. The backend scans all ~12K live aircraft in Redis, filters to those within 500km of the airport and heading within 45° of the bearing toward the airport, then computes ETA = great-circle distance / ground speed. Accuracy is ~2-5 minutes (doesn't model approach patterns or ATC holds). Total computation: <5ms for 12K aircraft, served from `GET /api/v1/airports/{iata}/arrivals`.
 
 ### Country borders without a mapping library
 **Technique: `world-atlas` TopoJSON → Three.js `LineSegments` with additive blending**

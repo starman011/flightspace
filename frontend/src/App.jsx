@@ -26,6 +26,7 @@ import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCente
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
 import PlanetPanel from './components/PlanetPanel/PlanetPanel'
+import AirportPanel from './components/AirportPanel/AirportPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import { useSession } from './hooks/useSession'
@@ -127,6 +128,7 @@ export default function App() {
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
+  const [selectedAirport, setSelectedAirport] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const [pinnedLaunch, setPinnedLaunch]     = useState(null)
   const [returnMission, setReturnMission]   = useState(null)
@@ -180,6 +182,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   const handlePlanetClick = useCallback((name) => setSelectedPlanet(name), [])
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
+  const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
+  const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
 
   // Central reset: clears filter + returns camera to earth (used by DeepSpacePanel close)
   const handleClearFilter = useCallback(() => {
@@ -269,6 +273,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
           onInteract={handleGlobeInteract}
           onPlanetClick={handlePlanetClick}
+          onAirportClick={handleAirportClick}
           neoData={asteroids}
         />
       </Suspense>
@@ -338,6 +343,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           sessionToken={sessionToken}
           isTracking={trackingId === selectedIcao24}
           onTrack={setTrackingId}
+        />
+      )}
+
+      {selectedAirport && !selectedIcao24 && (
+        <AirportPanel
+          iata={selectedAirport}
+          onClose={handleAirportClose}
+          onFlightClick={handleAircraftClick}
         />
       )}
 

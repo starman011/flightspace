@@ -29,6 +29,7 @@ func Setup(
 	asteroid := controllers.NewAsteroidController(rdb)
 	apod     := controllers.NewAPODController(rdb, nasaAPIKey)
 	waitlist := controllers.NewWaitlistController(pool)
+	airport  := controllers.NewAirportController(rdb)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -61,6 +62,9 @@ func Setup(
 	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))
 	mux.Handle("GET /api/v1/asteroids", rateLimit(http.HandlerFunc(asteroid.GetAsteroids)))
 	mux.Handle("GET /api/v1/apod", rateLimit(http.HandlerFunc(apod.GetAPOD)))
+
+	// Airports
+	mux.Handle("GET /api/v1/airports/{iata}/arrivals", rateLimit(http.HandlerFunc(airport.GetArrivals)))
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
