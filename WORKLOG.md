@@ -39,6 +39,26 @@ Tracks all significant changes made during development sessions.
 |---|------|--------|
 | 1 | **F4: Night Sky / Stellarium — full research** | Evaluated star catalogs (Yale BSC5: 9,110 stars, ~200KB trimmed), constellation data (d3-celestial GeoJSON: 88 constellations), planet ephemeris (astronomy-engine: 116KB, VSOP87, ±1 arcmin), Milky Way panorama (ESO CC-BY 4.0, 200KB), DeviceOrientation AR (iOS permission flow, compass heading, ZXY camera rotation), coordinate math (RA/Dec→XYZ, GMST, LST, Alt/Az). Total data budget: ~570KB lazy-loaded. Full document at `specs/002-critical-features/f4-night-sky-research.md`. |
 
+### Implementation: F4 Night Sky
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Real star field (8,404 stars)** | Yale BSC5 catalog trimmed to naked-eye stars (mag ≤ 6.5). Custom ShaderMaterial: magnitude→point size, B-V color index→realistic star color. Single `THREE.Points` draw call. Replaces procedural 7,000 fibonacci stars. |
+| 2 | **89 constellation stick figures** | d3-celestial GeoJSON parsed to `THREE.LineSegments`. Low-opacity lines (0.25) with rank-filtered name labels (Sprites). RA/Dec lon/lat→XYZ conversion on the celestial sphere. |
+| 3 | **Live planet positions** | `astronomy-engine` (npm, 116KB) computes RA/Dec for Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn every 30s. Placed on celestial sphere as distinct colored markers with name labels. |
+| 4 | **Sky object selection** | Screen-space picking for stars (named stars with mag < 3.0), constellation labels, and planet markers. SkyObjectPanel shows star stats (magnitude, spectral type, coordinates), constellation mythology, or planet info. |
+| 5 | **DeviceOrientation AR mode** | "Point at Sky" button in galaxy view. Requests iOS `requestPermission()`, maps compass heading→azimuth, beta→altitude, gamma→roll to camera rotation (ZXY order). Disables OrbitControls while active. Desktop fallback: mouse drag. |
+| 6 | **Milky Way skybox upgrade** | Canvas-generated 2048×1024 equirectangular texture with improved galactic band, centre glow, nebula blobs, and 15K scattered pixel-stars for density. |
+
+### Architecture Decisions
+
+| Decision | Why |
+|----------|-----|
+| NightSkyScene replaces GalaxyScene (same API: show/hide/dispose) | Drop-in replacement — Globe.jsx transition logic unchanged. Real data instead of procedural. |
+| BSC5 as JS module, not fetched at runtime | ~305KB in source but gzips to ~50KB in the chunk. Eliminates a network request and loading state. Lazy-loaded with Globe chunk only when needed. |
+| astronomy-engine over manual VSOP87 | 116KB for ±1 arcminute accuracy across all planets, coordinate transforms, rise/set times. Would take months to implement from scratch. |
+| Screen-space star picking reuses aircraft pick pattern | Same approach as kdbush aircraft picker — project to screen coords, test pixel radius. Consistent UX across all scales. |
+
 ---
 
 ## Session: 2026-03-30

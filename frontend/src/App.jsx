@@ -27,6 +27,7 @@ import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
 import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import AirportPanel from './components/AirportPanel/AirportPanel'
+import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import { useSession } from './hooks/useSession'
@@ -129,10 +130,12 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
+  const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const [pinnedLaunch, setPinnedLaunch]     = useState(null)
   const [returnMission, setReturnMission]   = useState(null)
   const [streamCollapsed, setStreamCollapsed] = useState(false)
+  const [arActive, setArActive] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
 
@@ -178,12 +181,29 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleCameraScale = useCallback((scale) => {
     setActiveScale(scale)
     globeRef.current?.setCameraScale?.(scale)
-  }, [])
+    // Disable AR when leaving galaxy scale
+    if (scale !== 'galaxy' && arActive) {
+      globeRef.current?.disableAR?.()
+      setArActive(false)
+    }
+  }, [arActive])
 
   const handlePlanetClick = useCallback((name) => setSelectedPlanet(name), [])
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
   const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
+  const handleSkyObjectClick = useCallback((obj) => setSelectedSkyObject(obj), [])
+  const handleSkyObjectClose = useCallback(() => setSelectedSkyObject(null), [])
+
+  const handleARToggle = useCallback(async () => {
+    if (arActive) {
+      globeRef.current?.disableAR?.()
+      setArActive(false)
+    } else {
+      const ok = await globeRef.current?.enableAR?.()
+      if (ok) setArActive(true)
+    }
+  }, [arActive])
 
   // Central reset: clears filter + returns camera to earth (used by DeepSpacePanel close)
   const handleClearFilter = useCallback(() => {
@@ -274,6 +294,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onInteract={handleGlobeInteract}
           onPlanetClick={handlePlanetClick}
           onAirportClick={handleAirportClick}
+          onSkyObjectClick={handleSkyObjectClick}
           neoData={asteroids}
         />
       </Suspense>
@@ -360,6 +381,34 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onClose={handlePlanetClose}
           onFocus={() => globeRef.current?.flyToPlanet?.(selectedPlanet)}
         />
+      )}
+
+      {selectedSkyObject && activeScale === 'galaxy' && (
+        <SkyObjectPanel
+          skyObject={selectedSkyObject}
+          onClose={handleSkyObjectClose}
+        />
+      )}
+
+      {activeScale === 'galaxy' && (
+        <button
+          onClick={handleARToggle}
+          style={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
+            background: arActive ? 'rgba(0,229,255,0.18)' : 'rgba(6,12,18,0.85)',
+            backdropFilter: 'blur(16px)',
+            border: `1px solid ${arActive ? 'rgba(0,229,255,0.5)' : 'rgba(0,229,255,0.2)'}`,
+            borderRadius: 12, padding: '10px 20px', cursor: 'pointer',
+            color: arActive ? '#00e5ff' : 'rgba(195,245,255,0.7)',
+            fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            boxShadow: arActive ? '0 0 30px rgba(0,229,255,0.15)' : 'none',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {arActive ? 'Exit AR' : 'Point at Sky'}
+        </button>
       )}
 
       <WaitlistPopup />

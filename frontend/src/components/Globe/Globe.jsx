@@ -17,7 +17,8 @@ import {
 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
-import { createGalaxyScene } from './GalaxyScene.js'
+import { createNightSkyScene } from './NightSkyScene.js'
+import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
@@ -795,7 +796,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, neoData }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -871,6 +872,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
+    enableAR: async () => {
+      try { await arController.enable(); return true }
+      catch { return false }
+    },
+    disableAR: () => arController.disable(),
+    isARSupported: () => arController.isMobile() && arController.isSupported(),
     flyToPlanet: (name) => {
       const { camera, solarSystem } = int.current
       if (!camera || !solarSystem) return
@@ -891,6 +898,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   // Sync click callbacks into int.current so native event closures can read them
   useEffect(() => { int.current.onPlanetClick = onPlanetClick }, [onPlanetClick])
   useEffect(() => { int.current.onAirportClick = onAirportClick }, [onAirportClick])
+  useEffect(() => { int.current.onSkyObjectClick = onSkyObjectClick }, [onSkyObjectClick])
 
   // Push NEO asteroid data into the solar scene whenever it arrives
   useEffect(() => {
@@ -1121,7 +1129,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const solarSystem = createSolarSystem(scene, renderer)
 
     // Hidden by default; shown when cameraScale transitions to 'galaxy'.
-    const galaxySystem = createGalaxyScene(scene)
+    const galaxySystem = createNightSkyScene(scene)
+
+    // AR controller for night sky — device orientation-driven camera
+    const arController = createDeviceOrientationAR(camera, controls)
 
     // ── Hidden Points layer (invisible, used only for raycasting) ─────
     // PointsMaterial threshold-based picking is O(n) and very fast.
@@ -1634,6 +1645,65 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (dx > dragLimit || dy > dragLimit) return
       const isTouch = e.pointerType === 'touch'
 
+      // ── Galaxy scale: pick stars, planets, constellations ───────────
+      if (int.current.targetCameraScale === 'galaxy' && galaxySystem.skyGroup.visible) {
+        toNDC(e.clientX, e.clientY)
+        // Check planet markers first (largest targets)
+        for (const pm of galaxySystem.planetMarkers) {
+          if (!pm.dot.visible) continue
+          const hits = ray.intersectObject(pm.dot, false)
+          if (hits.length) {
+            int.current.onSkyObjectClick?.({ type: 'planet', name: pm.key })
+            return
+          }
+        }
+        // Check stars via screen-space proximity (same as aircraft pick)
+        const rect = el.getBoundingClientRect()
+        const w = rect.width, h = rect.height
+        const cx = e.clientX - rect.left, cy = e.clientY - rect.top
+        const tapR = isTouch ? 28 : 16
+        const starNames = galaxySystem.starData
+        const _v = new Vector3()
+        let bestId = null, bestDist = Infinity
+        for (const hr of Object.keys(starNames)) {
+          const s = starNames[hr]
+          const [raH, decDeg] = [s.ra, s.dec]
+          const raRad = raH * (Math.PI / 12), decRad = decDeg * (Math.PI / 180)
+          const R = 5390 * 0.98 // STAR_RADIUS relative factor (approx)
+          _v.set(
+            R * Math.cos(decRad) * Math.cos(raRad),
+            R * Math.sin(decRad),
+            -R * Math.cos(decRad) * Math.sin(raRad),
+          ).project(camera)
+          const sx = (_v.x * 0.5 + 0.5) * w
+          const sy = (-_v.y * 0.5 + 0.5) * h
+          const dx = sx - cx, dy = sy - cy
+          const d2 = dx * dx + dy * dy
+          if (d2 < tapR * tapR && d2 < bestDist) { bestDist = d2; bestId = hr }
+        }
+        if (bestId) {
+          const s = starNames[bestId]
+          int.current.onSkyObjectClick?.({ type: 'star', name: s.name, hr: +bestId, vmag: s.vmag, bv: s.bv, ra: s.ra, dec: s.dec })
+          return
+        }
+        // Check constellation label proximity
+        const constData = galaxySystem.constellationData
+        let bestConst = null, bestCDist = Infinity
+        for (const cm of constData) {
+          _v.set(cm.cx, cm.cy, cm.cz).project(camera)
+          const sx = (_v.x * 0.5 + 0.5) * w
+          const sy = (-_v.y * 0.5 + 0.5) * h
+          const dx = sx - cx, dy = sy - cy
+          const d2 = dx * dx + dy * dy
+          if (d2 < 40 * 40 && d2 < bestCDist) { bestCDist = d2; bestConst = cm }
+        }
+        if (bestConst) {
+          int.current.onSkyObjectClick?.({ type: 'constellation', id: bestConst.id, name: bestConst.name })
+          return
+        }
+        return
+      }
+
       // ── Solar scale: check planet meshes first ────────────────────────
       if (int.current.targetCameraScale === 'solar' && solarSystem.solarGroup.visible) {
         toNDC(e.clientX, e.clientY)
@@ -1803,6 +1873,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (solarSystem.solarGroup.visible) {
         solarSystem.update(int.current.planetPositions)
         solarSystem.animateExtra()
+      }
+
+      // ── Night sky per-frame update (planet positions refresh every 30s) ──
+      if (galaxySystem.skyGroup.visible) {
+        galaxySystem.update()
+        if (arController.isActive()) arController.update()
       }
 
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
@@ -2044,6 +2120,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       clearTiles,
       solarSystem,
       galaxySystem,
+      arController,
       targetCameraScale: 'earth',   // set by setCameraScale via imperative handle
       camTweenStart: null,          // timestamp when tween began
       camTweenFrom: null,           // Vector3 camera start position
@@ -2075,6 +2152,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       pickTarget.dispose()
       solarSystem.dispose()
       galaxySystem.dispose()
+      if (arController.isActive()) arController.disable()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
