@@ -10,9 +10,9 @@ Tracks all significant changes made during development sessions.
 
 | # | What | Detail |
 |---|------|--------|
-| 1 | **Ghosting at ~4000m altitude** | Aircraft icons flickered/disappeared at intermediate zoom. Root cause: scale-change threshold (`0.000005` absolute) too sensitive — tiny zoom increments triggered full 12K-aircraft instance rebuild every frame. Fix: switched to 5% relative hysteresis threshold (`scaleRatio > 0.05`). |
-| 2 | **Blue glitch on zoom** | Dark blue earth base material (`0x1a5276`) flashed through during tile zoom transitions. Two causes: (a) stale tiles evicted too aggressively (`radius + 1`), (b) new tiles appeared at `opacity: 0` with no fade-in. Fix: widened stale eviction to `radius + 4`, added per-frame tile opacity ramp (+0.08/frame ≈ 200ms fade-in). |
-| 3 | **Mobile reload on select/unselect** | Selecting an aircraft triggered URL sync via `navigate()`, causing full React Router reconciliation. On mobile with 12K aircraft, this stalled the render. Fix: (a) debounced URL sync with 80ms `setTimeout`, (b) added fast-path selection effect that updates only 2 instance colors instead of running full `syncInstances` on all 12K aircraft. |
+| 1 | **Ghosting at ~4000m altitude** | Two root causes: (a) scale-change threshold too sensitive — 5% relative hysteresis added, (b) `buildMatrix` recalculated aircraft radius as `camDist - altUnit*0.5` every frame when camera below `AC_R`, causing position oscillation. Fix: pin aircraft to fixed `EARTH_R * 1.0005` when camera is below aircraft layer — stable, no jitter. |
+| 2 | **Blue glitch on zoom** | `clearTiles()` destroyed ALL cached tiles when crossing `TILE_DIST_THRESHOLD = 2.5`. Zooming back in meant reloading from scratch, exposing the blue base sphere. Fix: replaced `clearTiles()` with gradual fade-out (opacity -= 0.03/frame), tiles disposed only when fully transparent. New tiles fade in (+0.08/frame). Tile cache persists across threshold crossings. |
+| 3 | **Mobile reload on select/unselect** | Three causes: (a) URL sync `navigate()` triggered full React Router re-render (fixed: 80ms debounce), (b) aircraft `useEffect` had `selectedId` in deps — every tap triggered full `syncInstances` on 12K aircraft + trail rebuild (fixed: removed `selectedId` from deps), (c) added fast-path selection effect that updates only 2 instance colors. Net result: selection is now O(1) instead of O(12K). |
 
 ### Features Added
 

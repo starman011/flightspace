@@ -603,15 +603,12 @@ function buildMatrix(a, cat, planeScale, camDist) {
   else if (cat === 'ship') r = EARTH_R * 1.002   // same layer as aircraft, above tiles
   // (plane/heli/heavy/regional all default to AC_R = 1.002)
 
-  // Universal clamp: if the entity layer is at or behind the camera, pull it just
-  // in front so it never clips past the near plane at close zoom.
+  // When camera is below the aircraft layer, pin aircraft to the tile surface
+  // at a FIXED radius. Using a camDist-relative value causes frame-by-frame
+  // oscillation (the "ghosting" at ~4000m altitude).
   // Satellites are exempt — they orbit above the camera at street-level zoom.
-  // Clamp non-satellite entities to always appear in front of the camera near-clip.
-  // Offset = 50 % of camera altitude, ensuring the entity is past the near plane
-  // (near = altUnit * 0.1) with plenty of margin at any zoom level.
   if (cat !== 'satellite' && camDist !== undefined && r >= camDist) {
-    const _altUnit = camDist - EARTH_R
-    r = Math.max(EARTH_R + 0.00001, camDist - _altUnit * 0.5)
+    r = EARTH_R * 1.0005  // just above tiles (1.0004), below camera min (1.00002 WU = 127m)
   }
 
   const pos = ll2v(a.lat, a.lon, r)
@@ -1386,9 +1383,30 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const updateTiles = () => {
       const dist = camera.position.length()
 
-      // ── Globe mode: far zoom → pure blue-marble, no tiles ─────────────────
+      // ── Globe mode: far zoom → no new tile loads, but keep existing tiles ──
+      // Old code called clearTiles() here, which destroyed all tiles and caused
+      // the blue base-sphere flash when zooming back in. Now we just stop
+      // loading new tiles and let existing ones fade out naturally.
       if (dist > TILE_DIST_THRESHOLD) {
-        if (inTileMode) { clearTiles(); inTileMode = false }
+        if (inTileMode) {
+          // Mark all tiles as stale so they fade out and get evicted gradually
+          for (const [, t] of tileCache) {
+            if (t) t.isStale = true
+          }
+          tileQueue = []
+          inTileMode = false
+          lastTileZ = lastTileCX = lastTileCY = -1
+        }
+        // Fade out tiles smoothly when zoomed out past threshold
+        for (const [key, t] of tileCache) {
+          if (!t) { tileCache.delete(key); continue }
+          t.mat.opacity = Math.max(0, t.mat.opacity - 0.03)
+          t.mat.needsUpdate = true
+          // Dispose fully-transparent tiles
+          if (t.mat.opacity <= 0) {
+            scene.remove(t.mesh); t.geo.dispose(); t.mat.dispose(); tileCache.delete(key)
+          }
+        }
         return
       }
       inTileMode = true
@@ -1993,14 +2011,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       updateTiles()
 
-      // ── Smooth tile fade-in: ramp new tiles from 0 → target over ~200ms ───
-      // This prevents the blue base material from flashing through on zoom.
-      for (const [, t] of tileCache) {
-        if (!t || !t.mat.map) continue
-        const target = t.isParent ? 0.88 : 1.0
-        if (t.mat.opacity < target) {
-          t.mat.opacity = Math.min(target, t.mat.opacity + 0.08)
-          t.mat.needsUpdate = true
+      // ── Smooth tile fade-in: ramp loaded tiles from 0 → target over ~200ms ──
+      // Only fade in when in tile mode (not when tiles are fading out).
+      if (inTileMode) {
+        for (const [, t] of tileCache) {
+          if (!t || !t.mat.map) continue
+          const target = t.isParent ? 0.88 : 1.0
+          if (t.mat.opacity < target) {
+            t.mat.opacity = Math.min(target, t.mat.opacity + 0.08)
+            t.mat.needsUpdate = true
+          }
         }
       }
 
@@ -2300,14 +2320,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Update aircraft positions, planes, and trails ─────────────────────────
+  // NOTE: selectedId is NOT in deps — selection colors are handled by the
+  // fast-path effect above. This prevents 12K full sync + trail rebuild on every tap.
   useEffect(() => {
     if (!int.current.planeMesh || !int.current.acGeo || !aircraft) return
 
     // Store latest data so the render loop can rebuild instances on zoom change
     int.current.lastAircraft = aircraft
-    int.current.lastSelectedId = selectedId
 
-    syncInstances(int.current, aircraft, selectedId, int.current.hoveredId, false)
+    syncInstances(int.current, aircraft, int.current.lastSelectedId, int.current.hoveredId, false)
 
     // ── Neon sci-fi trails ───────────────────────────────────────────
     const { trailGeo, trailPos, trailCol,
@@ -2399,7 +2420,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     trailGlowGeo.setDrawRange(0, ti)
     trailGlowGeo.attributes.position.needsUpdate = true
     trailGlowGeo.attributes.color.needsUpdate    = true
-  }, [aircraft, selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [aircraft]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={mountRef} className={styles.globe}>
