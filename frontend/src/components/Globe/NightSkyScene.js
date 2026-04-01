@@ -366,11 +366,12 @@ export function createNightSkyScene(scene) {
     if (now - _lastPlanetUpdate < 30000 && _lastPlanetUpdate > 0) return
     _lastPlanetUpdate = now
 
-    const time = new Astronomy.AstroTime(new Date())
+    const time = Astronomy.MakeTime(new Date())
+    const observer = new Astronomy.Observer(0, 0, 0)
 
     for (const pm of planetMarkers) {
       try {
-        const eq = Astronomy.Equator(pm.key, time, null, true, true)
+        const eq = Astronomy.Equator(pm.key, time, observer, true, true)
         const [x, y, z] = raDecToXYZ(eq.ra, eq.dec, PLANET_DIST)
         pm.dot.position.set(x, y, z)
         // Label offset slightly above the dot
@@ -413,14 +414,14 @@ export function createNightSkyScene(scene) {
   // ── API ────────────────────────────────────────────────────────────────────
   function show() {
     skyGroup.visible = true
-    updatePlanets()
+    try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
   }
 
   function hide() { skyGroup.visible = false }
 
   function update() {
     if (!skyGroup.visible) return
-    updatePlanets()
+    try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
   }
 
   function dispose() {

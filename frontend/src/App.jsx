@@ -390,7 +390,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {activeScale === 'galaxy' && (
+      {activeScale === 'galaxy' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
         <button
           onClick={handleARToggle}
           style={{

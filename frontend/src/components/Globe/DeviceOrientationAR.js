@@ -43,6 +43,7 @@ export function createDeviceOrientationAR(camera, controls) {
   }
 
   async function enable() {
+    if (!isMobile()) throw new Error('AR requires a mobile device with gyroscope')
     await requestPermission()
 
     // Save camera state
