@@ -809,7 +809,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const setHoverTooltipRef = useRef(null)
   setHoverTooltipRef.current = setHoverTooltip
 
-  // ── API trail: draw departure→arrival path from detail panel ─────────────
+  // ── API trail: draw departure→current path from detail panel ──────────────
   const drawTrail = useCallback((points) => {
     const { scene } = int.current
     if (!scene) return
@@ -855,7 +855,31 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     scene.add(bloomLine)
     scene.add(glowLine)
     scene.add(coreLine)
-    apiTrailRef.current = [coreLine, glowLine, bloomLine]
+    const objects = [coreLine, glowLine, bloomLine]
+
+    // ── Endpoint markers: blue pings at departure and current position ──
+    const MARKER_R = EARTH_R + 0.004
+    const markerGeo = new BufferGeometry()
+    const markerPos = new Float32Array(6) // 2 points × 3 coords
+    const first = points[0], last = points[points.length - 1]
+    const p0 = ll2v(first.latitude, first.longitude, MARKER_R)
+    const p1 = ll2v(last.latitude, last.longitude, MARKER_R)
+    markerPos[0] = p0.x; markerPos[1] = p0.y; markerPos[2] = p0.z
+    markerPos[3] = p1.x; markerPos[4] = p1.y; markerPos[5] = p1.z
+    markerGeo.setAttribute('position', new BufferAttribute(new Float32Array(markerPos), 3))
+    const markerMat = new PointsMaterial({
+      color: 0x2088ff, size: 10, sizeAttenuation: false,
+      transparent: true, opacity: 0.9, depthWrite: false,
+    })
+    const markerPts = new Points(markerGeo, markerMat)
+    markerPts.renderOrder = 13
+    scene.add(markerPts)
+    objects.push(markerPts)
+
+    apiTrailRef.current = objects
+
+    // Store endpoints for fitRoute
+    int.current.trailEndpoints = { first, last }
   }, [])
 
   useImperativeHandle(ref, () => ({
@@ -869,6 +893,28 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const camera = int.current.camera
       const d = camera.position.length()
       int.current.flyToTarget = ll2v(lat, lon, EARTH_R).normalize().multiplyScalar(d)
+      int.current.flyToStart  = Date.now()
+      int.current.flyToFrom   = camera.position.clone()
+    },
+    fitRoute: () => {
+      const ep = int.current.trailEndpoints
+      if (!ep || !int.current?.camera) return
+      const camera = int.current.camera
+      // Midpoint between departure and current position
+      const v0 = ll2v(ep.first.latitude, ep.first.longitude, EARTH_R).normalize()
+      const v1 = ll2v(ep.last.latitude, ep.last.longitude, EARTH_R).normalize()
+      const mid = new Vector3().addVectors(v0, v1).normalize()
+      // Angular distance between endpoints (radians)
+      const angDist = Math.acos(MathUtils.clamp(v0.dot(v1), -1, 1))
+      // Compute camera distance so both endpoints fit in view with padding.
+      // FOV ≈ 40°, so half-FOV = 20°. Distance = R / sin(halfFov) * sin(angDist/2 + padding).
+      const halfFov = 20 * (Math.PI / 180)
+      const padding = 0.15 // extra margin in radians
+      const halfSpan = Math.min(angDist / 2 + padding, Math.PI / 2 - 0.1)
+      const targetDist = EARTH_R * (1 + Math.sin(halfSpan) / Math.sin(halfFov))
+      // Clamp to reasonable zoom range
+      const d = MathUtils.clamp(targetDist, 1.08, 4.0)
+      int.current.flyToTarget = mid.multiplyScalar(d)
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
@@ -1448,7 +1494,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
                  : t.z === pz  ? Math.abs(t.tx - pcx)  + Math.abs(t.ty - pcy)
                  : t.z === gpz ? Math.abs(t.tx - gpcx) + Math.abs(t.ty - gpcy)
                  : 999
-        const evictRadius = t.isStale ? radius + 1 : radius + 5
+        // Keep stale tiles much longer — only evict well outside view.
+        // This prevents the blue earth base material from flashing through during zoom.
+        const evictRadius = t.isStale ? radius + 4 : radius + 5
         if (nt > evictRadius) {
           scene.remove(t.mesh); t.geo.dispose(); t.mat.dispose(); tileCache.delete(key)
         }
@@ -1945,6 +1993,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       updateTiles()
 
+      // ── Smooth tile fade-in: ramp new tiles from 0 → target over ~200ms ───
+      // This prevents the blue base material from flashing through on zoom.
+      for (const [, t] of tileCache) {
+        if (!t || !t.mat.map) continue
+        const target = t.isParent ? 0.88 : 1.0
+        if (t.mat.opacity < target) {
+          t.mat.opacity = Math.min(target, t.mat.opacity + 0.08)
+          t.mat.needsUpdate = true
+        }
+      }
+
       // ── Place markers + airport/port labels ────────────────────────────
       // City dots: faint markers visible from regional zoom (tiles handle city names)
       // Airport/port DOM labels: visible at close zoom for IATA codes + click targets
@@ -2020,8 +2079,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const pixelTarget = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
       const newScale   = MathUtils.clamp(pixelTarget * wuPerPx, 0.00003, 0.02)
 
-      // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom
-      if (Math.abs(newScale - (int.current.planeScale || 0)) > 0.000005) {
+      // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
+      // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
+      const prevScale = int.current.planeScale || 0.01
+      const scaleRatio = Math.abs(newScale - prevScale) / prevScale
+      if (scaleRatio > 0.05) {
         int.current.planeScale = newScale
         int.current.needsInstanceRebuild = true
       }
@@ -2208,6 +2270,34 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     mapStyleRef.current = mapStyle
     int.current?.clearTiles?.()
   }, [mapStyle])
+
+  // ── Selection-only fast path: update just 2 colors instead of full 12K sync ─
+  useEffect(() => {
+    if (!int.current.planeMesh || !int.current.idToInstance) return
+    const prev = int.current.lastSelectedId
+    if (prev === selectedId) return
+    int.current.lastSelectedId = selectedId
+    // Deselect old
+    if (prev) {
+      const inst = int.current.idToInstance.get(prev)
+      if (inst) {
+        const cat = inst.cat
+        const mesh = meshForCat(int.current, cat)
+        if (mesh) { mesh.setColorAt(inst.index, defaultColor(cat)); if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true }
+      }
+    }
+    // Select new
+    if (selectedId) {
+      const inst = int.current.idToInstance.get(selectedId)
+      if (inst) {
+        const mesh = meshForCat(int.current, inst.cat)
+        if (mesh) { mesh.setColorAt(inst.index, _colSelected); if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true }
+        if (inst.pos) int.current.selPos = inst.pos
+      }
+    } else {
+      int.current.selPos = null
+    }
+  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Update aircraft positions, planes, and trails ─────────────────────────
   useEffect(() => {

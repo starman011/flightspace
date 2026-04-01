@@ -6,6 +6,21 @@ Tracks all significant changes made during development sessions.
 
 ## Session: 2026-04-01
 
+### Fixes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Ghosting at ~4000m altitude** | Aircraft icons flickered/disappeared at intermediate zoom. Root cause: scale-change threshold (`0.000005` absolute) too sensitive — tiny zoom increments triggered full 12K-aircraft instance rebuild every frame. Fix: switched to 5% relative hysteresis threshold (`scaleRatio > 0.05`). |
+| 2 | **Blue glitch on zoom** | Dark blue earth base material (`0x1a5276`) flashed through during tile zoom transitions. Two causes: (a) stale tiles evicted too aggressively (`radius + 1`), (b) new tiles appeared at `opacity: 0` with no fade-in. Fix: widened stale eviction to `radius + 4`, added per-frame tile opacity ramp (+0.08/frame ≈ 200ms fade-in). |
+| 3 | **Mobile reload on select/unselect** | Selecting an aircraft triggered URL sync via `navigate()`, causing full React Router reconciliation. On mobile with 12K aircraft, this stalled the render. Fix: (a) debounced URL sync with 80ms `setTimeout`, (b) added fast-path selection effect that updates only 2 instance colors instead of running full `syncInstances` on all 12K aircraft. |
+
+### Features Added
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Route view with endpoint markers** | New "route" button in DetailPanel. Shows departure (first trail point) and current position as blue ping markers on the globe, with great-circle arc between them. Route card in panel shows DEP/NOW coordinates. |
+| 2 | **Auto-zoom fitRoute** | Clicking "route" triggers `fitRoute()` — computes angular distance between trail endpoints, positions camera at the midpoint at a distance that fits both in view (FOV-aware), with smooth flyTo tween. Works for both zoomed-in and zoomed-out states. |
+
 ### Rearchitecture: First-Person Planetarium Night Sky
 
 | # | What | Detail |

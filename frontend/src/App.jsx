@@ -145,10 +145,14 @@ export default function App() {
     collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
   }, [])
 
-  // Sync state → URL whenever relevant state changes
+  // Sync state → URL whenever relevant state changes.
+  // Debounced to prevent mobile browsers from triggering expensive re-renders
+  // on rapid select/unselect cycles (the navigate call causes full React Router reconciliation).
   useEffect(() => {
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
-    if (location.pathname !== path) startTransition(() => navigate(path, { replace: true }))
+    if (location.pathname === path) return
+    const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 80)
+    return () => clearTimeout(t)
   }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
@@ -364,6 +368,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           sessionToken={sessionToken}
           isTracking={trackingId === selectedIcao24}
           onTrack={setTrackingId}
+          onFitRoute={() => globeRef.current?.fitRoute?.()}
         />
       )}
 

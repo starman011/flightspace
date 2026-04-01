@@ -47,7 +47,7 @@ function TelemEntry({ label, value, accent, time }) {
   )
 }
 
-export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, onTrack }) {
+export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, onTrack, onFitRoute }) {
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -136,7 +136,7 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
         )}
       </div>
 
-      {/* Track + close controls */}
+      {/* Track + route + close controls */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           {detail?.operator && (
@@ -146,16 +146,49 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
           )}
         </div>
         <div className={styles.headerRight}>
+          {detail?.trail?.length > 1 && (
+            <button
+              className={styles.routeBtn}
+              onClick={() => {
+                if (!isTracking) onTrack?.(icao24)
+                setTimeout(() => onFitRoute?.(), 200)
+              }}
+              title="Show route — zoom to fit departure and current position"
+            >
+              route
+            </button>
+          )}
           <button
             className={`${styles.trackBtn} ${isTracking ? styles.tracking : ''}`}
             onClick={() => onTrack?.(isTracking ? null : icao24)}
             title={isTracking ? 'stop tracking' : 'track live'}
           >
-            {isTracking ? '⊙ tracking' : '◎ track'}
+            {isTracking ? 'tracking' : 'track'}
           </button>
           <button className={styles.close} onClick={onClose} aria-label="close">×</button>
         </div>
       </div>
+
+      {/* Route summary: departure → current position */}
+      {detail?.trail?.length > 1 && detail?.current && (
+        <div className={styles.routeCard}>
+          <div className={styles.routeEndpoint}>
+            <span className={styles.routeDot} style={{ background: '#2088ff' }} />
+            <span className={styles.routeLabel}>DEP</span>
+            <span className={styles.routeCoord}>
+              {detail.trail[0].latitude.toFixed(2)}°, {detail.trail[0].longitude.toFixed(2)}°
+            </span>
+          </div>
+          <div className={styles.routeLine} />
+          <div className={styles.routeEndpoint}>
+            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
+            <span className={styles.routeLabel}>NOW</span>
+            <span className={styles.routeCoord}>
+              {detail.current.latitude.toFixed(2)}°, {detail.current.longitude.toFixed(2)}°
+            </span>
+          </div>
+        </div>
+      )}
 
       {loading && <p className={styles.state}>loading telemetry…</p>}
       {error   && <p className={styles.state}>error {error}</p>}
