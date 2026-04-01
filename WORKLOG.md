@@ -4,6 +4,31 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-01
+
+### Rearchitecture: First-Person Planetarium Night Sky
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Sky sphere reduced to 480 WU** | Old sky sphere was at `AU_TO_WU * 5500` (~129M WU) — far from camera, no sense of immersion. New sphere is 480 WU with camera at origin (0,0,0), creating a true planetarium perspective. Stars at `0.95R`, constellations at `0.93R`, planets at `0.88R`. |
+| 2 | **Earth horizon hemisphere** | Added a half-sphere below the camera representing the ground. Canvas-generated texture with dark earth surface, blue atmospheric glow at the horizon line, and subtle city light pollution blobs. Standing-on-Earth feeling. |
+| 3 | **Star shader upgrade** | Larger point sizes (Sirius 18px vs old 7px), white-hot core blending into B-V spectral color in the halo, per-star twinkle animation via `uTime + aSeed`. Much brighter and crisper. |
+| 4 | **Milky Way texture upgrade** | 4096×2048 canvas (was 2048×1024). Galactic band with asymmetric centre structure, dark absorption lanes, 6 emission nebulae (red/blue patches), 40K scattered pixel-stars (was 15K). |
+| 5 | **Planet markers enlarged** | Sun 18px, Moon 16px, Venus 10px etc. Glow shader with white core + planet color halo. Labels repositioned with offset above markers. |
+| 6 | **CAM_GALAXY repositioned** | Camera position changed from `[0, AU*10, AU*38]` (40 AU away) to `[0, 0, 0.01]` (origin). minDist/maxDist clamped to prevent zooming out of the sky sphere. |
+| 7 | **Galaxy frustum updated** | `near=0.1, far=600` (was `near=235, far=130M`). Matched to 480 WU sky sphere — eliminates wasted depth precision. |
+| 8 | **Star picking radius updated** | Picking projection radius changed from `5390*0.98` to `480*0.95` to match new `STAR_R`. |
+
+### Architecture Decisions
+
+| Decision | Why |
+|----------|-----|
+| Small sky sphere (480 WU) at origin vs large sphere far away | First-person planetarium requires camera at centre of celestial sphere. 480 WU avoids floating-point precision issues while being large enough that perspective distortion is invisible. |
+| Earth horizon as textured half-sphere vs flat plane | Half-sphere matches the visual curvature of a real horizon. Atmospheric glow texture is cheap (single 512×256 canvas) and sells the "standing on Earth" illusion. |
+| Canvas-generated Milky Way vs downloaded texture | Eliminates a network request, gzips well (~50KB), resolution scales with device, and we control every detail (nebulae, dark lanes, star density). |
+
+---
+
 ## Session: 2026-03-31
 
 ### Fixes

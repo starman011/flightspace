@@ -1669,7 +1669,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const s = starNames[hr]
           const [raH, decDeg] = [s.ra, s.dec]
           const raRad = raH * (Math.PI / 12), decRad = decDeg * (Math.PI / 180)
-          const R = 5390 * 0.98 // STAR_RADIUS relative factor (approx)
+          const R = 480 * 0.95 // STAR_R — matches NightSkyScene sky sphere
           _v.set(
             R * Math.cos(decRad) * Math.cos(raRad),
             R * Math.sin(decRad),
@@ -1912,14 +1912,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Dynamic near/far clip — each scale needs a different frustum.
       // Earth: near = 10% altitude, far = 200 WU.
       // Solar: near = 235 WU, far = 1.41M WU (60 AU).
-      // Galaxy: near = 235 WU, far = 130M WU (5,500 AU — covers sky sphere).
+      // Galaxy: near = 0.1 WU, far = 600 WU (camera at origin, sky sphere = 480 WU).
       const dist    = camera.position.length()
       int.current.camDist = dist
       const altUnit = Math.max(dist - EARTH_R, 1e-7)
       if (isGalaxy) {
-        const FAR_GALAXY = 130_000_000
-        if (camera.near !== 235 || camera.far !== FAR_GALAXY) {
-          camera.near = 235; camera.far = FAR_GALAXY
+        const NEAR_GALAXY = 0.1, FAR_GALAXY = 600
+        if (camera.near !== NEAR_GALAXY || camera.far !== FAR_GALAXY) {
+          camera.near = NEAR_GALAXY; camera.far = FAR_GALAXY
           camera.updateProjectionMatrix()
         }
       } else if (isSolar) {

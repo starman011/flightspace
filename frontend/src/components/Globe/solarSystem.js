@@ -91,11 +91,11 @@ export const CAM_SOLAR = {
 // Far clip for solar camera — must cover camera-at-maxDist + object-at-maxDist
 export const SOLAR_FAR = AU_TO_WU * 480   // ~11.3M WU, 480 AU
 
-// Galaxy / deep-space view — camera sits ~40 AU from the Sun
+// Galaxy / night sky view — camera at origin, inside 480 WU celestial sphere
 export const CAM_GALAXY = {
-  position: [0, AU_TO_WU * 10, AU_TO_WU * 38],
-  minDist:  AU_TO_WU * 5,
-  maxDist:  AU_TO_WU * 600,
+  position: [0, 0, 0.01],
+  minDist:  0.01,
+  maxDist:  2,
 }
 
 export const CAM_EARTH = {
