@@ -390,7 +390,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {activeScale === 'galaxy' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
+      {activeScale === 'galaxy' && (
         <button
           onClick={handleARToggle}
           style={{
@@ -407,7 +407,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             transition: 'all 0.2s ease',
           }}
         >
-          {arActive ? 'Exit AR' : 'Point at Sky'}
+          {arActive ? 'Exit Free Look' : 'Free Look'}
         </button>
       )}
 

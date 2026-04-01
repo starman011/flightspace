@@ -1850,7 +1850,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.camTweenStart = null
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
-          if (isSolar || isGalaxy) solarSystem.show(); else solarSystem.hide()
+          if (isSolar) solarSystem.show(); else solarSystem.hide()
           if (isGalaxy) galaxySystem.show(); else galaxySystem.hide()
         }
       } else {
@@ -1862,9 +1862,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           // Unlock controls limits immediately so scroll during tween works
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
-          // Show solar system immediately when leaving earth scale
-          if (isSolar || isGalaxy) solarSystem.show()
-          if (isGalaxy) galaxySystem.show()
+          // Show the target scene immediately for smooth transition
+          if (isSolar) solarSystem.show()
+          if (isGalaxy) { galaxySystem.show(); solarSystem.hide() }
+          if (!isSolar && !isGalaxy) solarSystem.hide()
           if (!isGalaxy) galaxySystem.hide()
         }
       }
@@ -1904,7 +1905,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         controls.zoomSpeed   = 0.6
       }
 
-      controls.update()
+      // Skip orbit controls when AR mode is driving the camera
+      if (!arController.isActive()) controls.update()
       clouds.rotation.y += 0.000022
 
       // Dynamic near/far clip — each scale needs a different frustum.
