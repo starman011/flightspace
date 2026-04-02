@@ -1342,6 +1342,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           polygonOffset: true,
           polygonOffsetFactor: item.isParent ? -1 : -2,
           polygonOffsetUnits:  item.isParent ? -1 : -2,
+          color: new Color(0.72, 0.72, 0.74),  // darken tiles + slight contrast boost
         })
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
@@ -2078,17 +2079,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Pixel-based scale: icon is N screen-pixels tall, shrinking logarithmically with altitude.
-      // This gives proper visual proportion at every zoom level (airport runway → global orbit):
-      //   orbit  (~1.8 alt): ~26 px — large, easy to click across the whole globe
-      //   500 km (~0.08 alt): ~10 px — clearly shrinking
-      //   140 km (~0.022 alt):  ~6 px — small dot, realistic vs map features
-      //    50 km (~0.008 alt):  ~4 px
-      //     5 km (~0.001 alt):  ~2 px — tiny speck, fits on a runway
+      // Pixel-based scale: icon is N screen-pixels tall, using camera-to-aircraft distance
+      // for perspective-correct sizing. Below ~20 km aircraft appear near real-size.
       const screenW    = el.clientWidth || 1920
-      const wuPerPx    = (2 * dist * Math.tan((40 / 2) * (Math.PI / 180))) / screenW
-      const pixelTarget = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
-      const newScale   = MathUtils.clamp(pixelTarget * wuPerPx, 0.00003, 0.02)
+      const _acR       = EARTH_R * 1.0005
+      const camToAc    = Math.max(dist - _acR, 0.00005)   // camera → aircraft layer
+      const wuPerPxAc  = (2 * camToAc * Math.tan((40 / 2) * (Math.PI / 180))) / screenW
+      const pixelTarget = MathUtils.clamp(5 + 5 * Math.log10(1 + camToAc * 100), 2, 14)
+      const newScale   = MathUtils.clamp(pixelTarget * wuPerPxAc, 0.0000002, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
