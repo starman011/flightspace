@@ -198,7 +198,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {/* ── Hero: photo + overlay ── */}
       <div className={styles.hero}>
         {photo?.url ? (
-          <img src={photo.url} className={styles.heroImg} alt="aircraft" loading="lazy" />
+          <img
+            src={photo.url}
+            className={styles.heroImg}
+            alt="aircraft"
+            loading="lazy"
+            crossOrigin="anonymous"
+            onError={() => setPhoto(null)}
+          />
         ) : (
           <div className={styles.heroPlaceholder}>
             <span className={styles.heroIcon}>

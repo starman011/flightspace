@@ -5,7 +5,7 @@ import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
   PlaneGeometry, SphereGeometry,
-  Mesh, InstancedMesh, Line, LineSegments, Points,
+  Mesh, InstancedMesh, LineSegments, Points,
   MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
@@ -821,53 +821,98 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
     if (!points?.length) return
 
-    const verts = greatCirclePoints(points)
+    const verts = greatCirclePoints(points, EARTH_R + 0.0015)
     if (verts.length < 2) return
 
-    // Build multiple line layers at slightly different radii for visual thickness.
-    // Heights just above tiles (1.0004) and below aircraft (1.002).
     const objects = []
-    const layers = [
-      { r: EARTH_R + 0.0010, color: 0x003366, opacity: 0.25, order: 10 },
-      { r: EARTH_R + 0.0015, color: 0x00aaff, opacity: 0.60, order: 11 },
-      { r: EARTH_R + 0.0018, color: 0x00eeff, opacity: 1.00, order: 12 },
-      { r: EARTH_R + 0.0022, color: 0x00ccff, opacity: 0.45, order: 11 },
-    ]
-    for (const l of layers) {
-      const v = greatCirclePoints(points, l.r)
-      if (v.length < 2) continue
-      const g = new BufferGeometry().setFromPoints(v)
-      const line = new Line(g, new LineBasicMaterial({
-        color: l.color, transparent: true, opacity: l.opacity,
-        depthWrite: false, blending: AdditiveBlending,
-      }))
-      line.renderOrder = l.order
-      scene.add(line)
-      objects.push(line)
+
+    // ── Mesh ribbon: actual filled geometry, visible at any zoom / DPI ──
+    // Width 0.0004 WU ≈ 2.5 km — thin line from orbit, visible from any angle.
+    const RIBBON_W = 0.0004
+    const positions = []
+    const indices   = []
+    const _t = new Vector3(), _n = new Vector3(), _s = new Vector3()
+
+    for (let i = 0; i < verts.length; i++) {
+      _n.copy(verts[i]).normalize()                                      // surface normal
+      if (i === 0) _t.subVectors(verts[1], verts[0])
+      else if (i === verts.length - 1) _t.subVectors(verts[i], verts[i - 1])
+      else _t.subVectors(verts[i + 1], verts[i - 1])
+      _t.normalize()
+      _s.crossVectors(_t, _n).normalize().multiplyScalar(RIBBON_W * 0.5) // side vector
+
+      positions.push(
+        verts[i].x + _s.x, verts[i].y + _s.y, verts[i].z + _s.z,       // left
+        verts[i].x - _s.x, verts[i].y - _s.y, verts[i].z - _s.z,       // right
+      )
+      if (i > 0) {
+        const b = (i - 1) * 2
+        indices.push(b, b + 1, b + 2,  b + 1, b + 3, b + 2)
+      }
     }
 
-    // ── Endpoint markers: blue pings at departure and current position ──
+    // Core ribbon (bright cyan)
+    const ribGeo = new BufferGeometry()
+    ribGeo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
+    ribGeo.setIndex(indices)
+    const ribMat = new MeshBasicMaterial({
+      color: 0x00ddff, transparent: true, opacity: 0.85,
+      side: DoubleSide, depthWrite: false,
+    })
+    const ribMesh = new Mesh(ribGeo, ribMat)
+    ribMesh.renderOrder = 12
+    scene.add(ribMesh)
+    objects.push(ribMesh)
+
+    // Outer glow ribbon (wider, translucent)
+    const glowVerts = greatCirclePoints(points, EARTH_R + 0.0012)
+    if (glowVerts.length >= 2) {
+      const gp = [], gi = []
+      const GLOW_W = 0.001
+      for (let i = 0; i < glowVerts.length; i++) {
+        _n.copy(glowVerts[i]).normalize()
+        if (i === 0) _t.subVectors(glowVerts[1], glowVerts[0])
+        else if (i === glowVerts.length - 1) _t.subVectors(glowVerts[i], glowVerts[i - 1])
+        else _t.subVectors(glowVerts[i + 1], glowVerts[i - 1])
+        _t.normalize()
+        _s.crossVectors(_t, _n).normalize().multiplyScalar(GLOW_W * 0.5)
+        gp.push(
+          glowVerts[i].x + _s.x, glowVerts[i].y + _s.y, glowVerts[i].z + _s.z,
+          glowVerts[i].x - _s.x, glowVerts[i].y - _s.y, glowVerts[i].z - _s.z,
+        )
+        if (i > 0) { const b = (i - 1) * 2; gi.push(b, b + 1, b + 2, b + 1, b + 3, b + 2) }
+      }
+      const gg = new BufferGeometry()
+      gg.setAttribute('position', new BufferAttribute(new Float32Array(gp), 3))
+      gg.setIndex(gi)
+      const gm = new MeshBasicMaterial({
+        color: 0x0066aa, transparent: true, opacity: 0.3,
+        side: DoubleSide, depthWrite: false, blending: AdditiveBlending,
+      })
+      const gmesh = new Mesh(gg, gm)
+      gmesh.renderOrder = 11
+      scene.add(gmesh)
+      objects.push(gmesh)
+    }
+
+    // ── Endpoint markers: larger dots at departure and current position ──
     const MARKER_R = EARTH_R + 0.0025
-    const markerGeo = new BufferGeometry()
-    const markerPos = new Float32Array(6) // 2 points × 3 coords
     const first = points[0], last = points[points.length - 1]
     const p0 = ll2v(first.latitude, first.longitude, MARKER_R)
     const p1 = ll2v(last.latitude, last.longitude, MARKER_R)
-    markerPos[0] = p0.x; markerPos[1] = p0.y; markerPos[2] = p0.z
-    markerPos[3] = p1.x; markerPos[4] = p1.y; markerPos[5] = p1.z
-    markerGeo.setAttribute('position', new BufferAttribute(new Float32Array(markerPos), 3))
-    const markerMat = new PointsMaterial({
-      color: 0x2088ff, size: 14, sizeAttenuation: false,
+    const mkPos = new Float32Array([p0.x, p0.y, p0.z, p1.x, p1.y, p1.z])
+    const mkGeo = new BufferGeometry()
+    mkGeo.setAttribute('position', new BufferAttribute(mkPos, 3))
+    const mkMat = new PointsMaterial({
+      color: 0x2088ff, size: 16, sizeAttenuation: false,
       transparent: true, opacity: 0.95, depthWrite: false,
     })
-    const markerPts = new Points(markerGeo, markerMat)
-    markerPts.renderOrder = 13
-    scene.add(markerPts)
-    objects.push(markerPts)
+    const mkPts = new Points(mkGeo, mkMat)
+    mkPts.renderOrder = 13
+    scene.add(mkPts)
+    objects.push(mkPts)
 
     apiTrailRef.current = objects
-
-    // Store endpoints for fitRoute
     int.current.trailEndpoints = { first, last }
   }, [])
 
