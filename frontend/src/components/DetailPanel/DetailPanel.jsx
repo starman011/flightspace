@@ -32,19 +32,33 @@ function formatAge(timestamp) {
   return `${Math.floor(secs / 3600)}h ago`
 }
 
-function TelemEntry({ label, value, accent, time }) {
-  if (value == null) return null
-  return (
-    <div className={styles.telemEntry}>
-      <div className={styles.telemEntryHeader}>
-        <span className={styles.telemKey}>{label}</span>
-        {time && <span className={styles.telemTime}>{time}</span>}
-      </div>
-      <div className={`${accent === 'up' ? styles.telemValueAccent : accent === 'down' ? styles.telemValueDown : ''}`}>
-        <span className={styles.telemValue}>{value}</span>
-      </div>
-    </div>
-  )
+// Compute distance in km between two lat/lon points (haversine)
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// Format distance
+function fmtDist(km) {
+  if (km < 1) return `${Math.round(km * 1000)} m`
+  if (km < 100) return `${km.toFixed(1)} km`
+  return `${Math.round(km)} km`
+}
+
+// Compute ETA string from distance and velocity (knots)
+function computeETA(distKm, velocityKts) {
+  if (!velocityKts || velocityKts < 10) return null
+  const velKmh = velocityKts * 1.852
+  const hours = distKm / velKmh
+  if (hours < 0.0167) return '< 1 min'
+  if (hours < 1) return `${Math.round(hours * 60)} min`
+  const h = Math.floor(hours)
+  const m = Math.round((hours - h) * 60)
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
 export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, onTrack, onFitRoute }) {
@@ -93,13 +107,9 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Outside-click closes the panel. Use pointerdown + ignore canvas taps (which
-  // trigger aircraft selection via a separate handler). Without this guard, tapping
-  // a new aircraft on mobile fires onClose→null→reselect, causing a flash.
   useEffect(() => {
     const handler = e => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
-        // Ignore taps on the globe canvas — those are aircraft selections, not dismissals
         if (e.target?.tagName === 'CANVAS') return
         onClose?.()
       }
@@ -110,182 +120,132 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
 
   if (!icao24) return null
 
-  const vr    = detail?.current?.vertical_rate
+  const cur = detail?.current
+  const vr    = cur?.vertical_rate
   const vrDir = vr == null ? null : vr > 100 ? 'up' : vr < -100 ? 'down' : null
-  const now   = new Date().toISOString().slice(11, 19)
+
+  // Route info from trail
+  const trail = detail?.trail
+  const dep = trail?.[0]
+  const hasRoute = dep && cur
+  const distKm = hasRoute ? haversineKm(dep.latitude, dep.longitude, cur.latitude, cur.longitude) : null
+  const eta = distKm && cur?.velocity ? computeETA(distKm, cur.velocity) : null
 
   return (
     <aside ref={panelRef} className={styles.panel}>
 
-      {/* System status bar */}
-      <div className={styles.topBar}>
-        <span className={styles.nominalBadge}>SYSTEM: NOMINAL</span>
-        <span className={styles.locLabel}>
-          {detail?.current?.lat != null
-            ? `${detail.current.lat.toFixed(4)}° N, ${detail.current.lon?.toFixed(4)}° W`
-            : 'LOC: ---'}
-        </span>
-      </div>
-
-      {/* Page header */}
-      <div className={styles.pageHeader}>
-        <p className={styles.pageTitle}>Data Explorer</p>
-        <div className={styles.callsignRow}>
-          <span className={styles.callsign}>
-            {detail?.callsign ? formatCallsign(detail.callsign) : icao24.toUpperCase()}
-          </span>
-          {detail?.type_code && (
-            <span className={styles.typeCode}>{detail.type_code}</span>
+      {/* ── Hero: photo + overlay ── */}
+      <div className={styles.hero}>
+        {photo?.url ? (
+          <img src={photo.url} className={styles.heroImg} alt="aircraft" loading="lazy" />
+        ) : (
+          <div className={styles.heroPlaceholder} />
+        )}
+        <div className={styles.heroOverlay}>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="close">×</button>
+          <div className={styles.heroInfo}>
+            <span className={styles.callsign}>
+              {detail?.callsign ? formatCallsign(detail.callsign) : icao24.toUpperCase()}
+            </span>
+            {detail?.type_code && <span className={styles.typeCode}>{detail.type_code}</span>}
+          </div>
+          {detail?.type_description && (
+            <p className={styles.heroDesc}>{detail.type_description}</p>
+          )}
+          {detail?.operator && (
+            <p className={styles.heroOp}>{detail.operator}</p>
           )}
         </div>
-        {detail?.type_description && (
-          <p className={styles.pageDesc}>{detail.type_description}</p>
+        {photo?.photographer && (
+          <span className={styles.photoCredit}>{photo.photographer}</span>
         )}
       </div>
 
-      {/* Controls: track + close */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          {detail?.operator && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-label-sm)', color: 'var(--on-surface-variant)' }}>
-              {detail.operator}
-            </span>
-          )}
-        </div>
-        <div className={styles.headerRight}>
-          <button className={styles.close} onClick={onClose} aria-label="close">×</button>
-        </div>
-      </div>
+      {loading && <p className={styles.state}>loading…</p>}
+      {error   && <p className={styles.state}>error {error}</p>}
 
-      {/* Primary action: Track & Show Route */}
+      {/* ── Route card: DEP → NOW ── */}
+      {hasRoute && (
+        <div className={styles.routeCard}>
+          <div className={styles.routeCol}>
+            <span className={styles.routeDot} style={{ background: '#2088ff' }} />
+            <span className={styles.routeCode}>DEP</span>
+            <span className={styles.routeCoord}>
+              {dep.latitude.toFixed(2)}°, {dep.longitude.toFixed(2)}°
+            </span>
+          </div>
+          <div className={styles.routeCenter}>
+            <div className={styles.routeArc} />
+            {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
+            {eta && <span className={styles.routeEta}>ETA {eta}</span>}
+          </div>
+          <div className={styles.routeCol}>
+            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
+            <span className={styles.routeCode}>NOW</span>
+            <span className={styles.routeCoord}>
+              {cur.latitude.toFixed(2)}°, {cur.longitude.toFixed(2)}°
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Track button ── */}
       {detail && (
-        <div className={styles.trackCard}>
+        <div className={styles.trackRow}>
           <button
-            className={`${styles.trackBtnPrimary} ${isTracking ? styles.trackBtnActive : ''}`}
+            className={`${styles.trackBtn} ${isTracking ? styles.trackBtnActive : ''}`}
             onClick={() => {
               if (isTracking) {
                 onTrack?.(null)
               } else {
                 onTrack?.(icao24)
-                if (detail?.trail?.length > 1) {
-                  setTimeout(() => onFitRoute?.(), 250)
-                }
+                if (trail?.length > 1) setTimeout(() => onFitRoute?.(), 250)
               }
             }}
           >
-            <span className={styles.trackIcon}>{isTracking ? '◉' : '◎'}</span>
-            <span>{isTracking ? 'Stop Tracking' : 'Track Flight'}</span>
+            {isTracking ? 'Stop Tracking' : 'Track Flight'}
           </button>
-          {isTracking && detail?.trail?.length > 1 && (
-            <button
-              className={styles.fitBtn}
-              onClick={() => onFitRoute?.()}
-              title="Zoom to fit route"
-            >
-              fit route
-            </button>
+          {isTracking && trail?.length > 1 && (
+            <button className={styles.fitBtn} onClick={() => onFitRoute?.()}>fit</button>
           )}
         </div>
       )}
 
-      {/* Route summary: departure → current position */}
-      {detail?.trail?.length > 1 && detail?.current && (
-        <div className={styles.routeCard}>
-          <div className={styles.routeEndpoint}>
-            <span className={styles.routeDot} style={{ background: '#2088ff' }} />
-            <span className={styles.routeLabel}>DEP</span>
-            <span className={styles.routeCoord}>
-              {detail.trail[0].latitude.toFixed(2)}°, {detail.trail[0].longitude.toFixed(2)}°
-            </span>
-          </div>
-          <div className={styles.routeLine} />
-          <div className={styles.routeEndpoint}>
-            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
-            <span className={styles.routeLabel}>NOW</span>
-            <span className={styles.routeCoord}>
-              {detail.current.latitude.toFixed(2)}°, {detail.current.longitude.toFixed(2)}°
-            </span>
-          </div>
-        </div>
-      )}
-
-      {loading && <p className={styles.state}>loading telemetry…</p>}
-      {error   && <p className={styles.state}>error {error}</p>}
-
-      {/* Aircraft photo */}
-      {photo?.url && (
-        <a
-          href={photo.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.photoWrap}
-        >
-          <img src={photo.url} className={styles.photo} alt="aircraft" loading="lazy" />
-          {photo.photographer && (
-            <span className={styles.photoCredit}>{photo.photographer}</span>
-          )}
-        </a>
-      )}
-
-      {/* Signal precision */}
-      {detail?.current && (
-        <div className={styles.precisionCard}>
-          <div>
-            <p className={styles.precisionLabel}>Signal Precision</p>
-            <p className={styles.precisionSub}>PEAK DETECTION: ALPHA-7</p>
-          </div>
-          <span className={styles.precisionValue}>98.4%</span>
-        </div>
-      )}
-
-      {/* Telemetry stream */}
-      {detail && (
-        <div className={styles.body}>
-          <div className={styles.streamHead}>
-            <span className={styles.streamHeadLabel}>Live Telemetry Stream</span>
-            <span className={styles.streamLiveDot} />
-          </div>
-
-          <div className={styles.telemSection}>
-            {/* Identity */}
-            {detail.registration && (
-              <TelemEntry label="REG" value={detail.registration} time={now} />
+      {/* ── Telemetry ── */}
+      {cur && (
+        <div className={styles.telemetry}>
+          <div className={styles.telemGrid}>
+            {cur.altitude != null && (
+              <div className={styles.telemCell}>
+                <span className={styles.telemLabel}>ALT</span>
+                <span className={styles.telemVal}>{formatAltitude(cur.altitude)}</span>
+              </div>
             )}
-            {detail.operator && (
-              <TelemEntry label="OPERATOR" value={detail.operator} time={now} />
+            {cur.velocity != null && (
+              <div className={styles.telemCell}>
+                <span className={styles.telemLabel}>SPD</span>
+                <span className={styles.telemVal}>{formatSpeed(cur.velocity)}</span>
+              </div>
             )}
-
-            {/* Live telemetry */}
-            {detail.current && (
-              <>
-                {detail.current.altitude != null && (
-                  <TelemEntry label="ALTITUDE" value={formatAltitude(detail.current.altitude)} time={now} />
-                )}
-                {detail.current.velocity != null && (
-                  <TelemEntry label="VELOCITY" value={formatSpeed(detail.current.velocity)} time={now} />
-                )}
-                {detail.current.heading != null && (
-                  <TelemEntry label="HEADING" value={formatHeading(detail.current.heading)} time={now} />
-                )}
-                {vr != null && (
-                  <TelemEntry
-                    label="VERT RATE"
-                    value={`${vr > 0 ? '+' : ''}${Math.round(vr)} fpm`}
-                    accent={vrDir}
-                    time={now}
-                  />
-                )}
-                <TelemEntry
-                  label="ON GROUND"
-                  value={detail.current.on_ground ? 'YES' : 'NO'}
-                  time={formatAge(detail.current.timestamp)}
-                />
-              </>
+            {cur.heading != null && (
+              <div className={styles.telemCell}>
+                <span className={styles.telemLabel}>HDG</span>
+                <span className={styles.telemVal}>{formatHeading(cur.heading)}</span>
+              </div>
             )}
-
-            {detail.trail?.length > 0 && (
-              <TelemEntry label="TRAIL PTS" value={`${detail.trail.length}`} time={now} />
+            {vr != null && (
+              <div className={styles.telemCell}>
+                <span className={styles.telemLabel}>V/S</span>
+                <span className={`${styles.telemVal} ${vrDir === 'up' ? styles.up : vrDir === 'down' ? styles.down : ''}`}>
+                  {vr > 0 ? '+' : ''}{Math.round(vr)}
+                </span>
+              </div>
             )}
+          </div>
+          <div className={styles.telemMeta}>
+            {detail.registration && <span>{detail.registration}</span>}
+            <span>{cur.on_ground ? 'ON GROUND' : 'AIRBORNE'}</span>
+            <span>{formatAge(cur.timestamp)}</span>
           </div>
         </div>
       )}

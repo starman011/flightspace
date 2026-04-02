@@ -1,12 +1,12 @@
-/* ── Data Explorer (Final) — Stitch design ──────────────────────────────── */
+/* ── DetailPanel — Caller-style flight card ─────────────────────────────── */
 
 .panel {
   position: fixed;
   top: 0;
   right: 0;
-  height: calc(100dvh - 64px);
+  height: 100dvh;
   width: 340px;
-  background: rgba(23, 28, 34, 0.88);
+  background: rgba(15, 18, 22, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-left: 1px solid rgba(59, 73, 76, 0.15);
@@ -14,410 +14,287 @@
   display: flex;
   flex-direction: column;
   font-family: var(--font-mono);
-  font-size: var(--text-label-md);
-  overflow: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Panel top bar ──────────────────────────────────────────────────────── */
+/* ── Hero: flight image + info overlay ─────────────────────────────────── */
 
-.topBar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  background: rgba(15, 20, 25, 0.6);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
-  flex-shrink: 0;
-}
-
-.nominalBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(34, 239, 126, 0.1);
-  border: 1px solid rgba(34, 239, 126, 0.2);
-  font-size: 10px;
-  color: var(--tertiary-container);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  flex-shrink: 0;
-}
-
-.locLabel {
-  font-size: 10px;
-  color: var(--outline);
-  letter-spacing: 0.05em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-/* ── Page header ────────────────────────────────────────────────────────── */
-
-.pageHeader {
-  padding: var(--space-5) var(--space-5) var(--space-3);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-family: var(--font-display);
-  font-size: var(--text-display-md);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--on-surface);
-  margin-bottom: 4px;
-}
-
-.callsignRow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.callsign {
-  font-family: var(--font-display);
-  font-size: var(--text-headline);
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: 0.04em;
-}
-
-.typeCode {
-  font-size: var(--text-label-sm);
-  color: var(--on-surface-variant);
-  letter-spacing: 0.04em;
-}
-
-.pageDesc {
-  font-family: var(--font-body);
-  font-size: var(--text-label-md);
-  color: var(--on-surface-variant);
-  line-height: 1.5;
-}
-
-/* Header right controls */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
-  flex-shrink: 0;
-  gap: var(--space-2);
-}
-
-.headerLeft {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-/* ── Track card: primary action ──────────────────────────────────────────── */
-.trackCard {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
-  flex-shrink: 0;
-}
-.trackBtnPrimary {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  background: rgba(32, 136, 255, 0.12);
-  border: 1px solid rgba(32, 136, 255, 0.35);
-  font-family: var(--font-mono);
-  font-size: var(--text-label-md);
-  cursor: pointer;
-  color: #2088ff;
-  padding: var(--space-3) var(--space-4);
-  letter-spacing: 0.05em;
-  border-radius: var(--radius-md);
-  transition: all var(--duration-fast);
-}
-.trackBtnPrimary:hover {
-  background: rgba(32, 136, 255, 0.22);
-  border-color: #2088ff;
-}
-.trackBtnActive {
-  background: rgba(34, 239, 126, 0.12);
-  border-color: rgba(34, 239, 126, 0.4);
-  color: var(--tertiary-container);
-  box-shadow: 0 0 12px rgba(34, 239, 126, 0.15);
-}
-.trackBtnActive:hover {
-  background: rgba(34, 239, 126, 0.22);
-  border-color: var(--tertiary-container);
-}
-.trackIcon {
-  font-size: 16px;
-  line-height: 1;
-}
-.fitBtn {
-  background: none;
-  border: 1px solid rgba(32, 136, 255, 0.3);
-  font-family: var(--font-mono);
-  font-size: var(--text-label-sm);
-  cursor: pointer;
-  color: #2088ff;
-  padding: var(--space-2) var(--space-3);
-  letter-spacing: 0.05em;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  transition: all var(--duration-fast);
-}
-.fitBtn:hover { background: rgba(32, 136, 255, 0.12); border-color: #2088ff; }
-
-.routeCard {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  background: rgba(32, 136, 255, 0.06);
-  border-top: 1px solid rgba(32, 136, 255, 0.12);
-  border-bottom: 1px solid rgba(32, 136, 255, 0.12);
-}
-.routeEndpoint {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex: 1;
-}
-.routeDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.routeLabel {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: var(--on-surface-variant);
-  font-weight: 600;
-}
-.routeCoord {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.55);
-  font-variant-numeric: tabular-nums;
-}
-.routeLine {
-  flex: 0 0 20px;
-  height: 1px;
-  background: linear-gradient(90deg, #2088ff, #00eeff);
-  opacity: 0.4;
-}
-
-.close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--on-surface-variant);
-  line-height: 1;
-  padding: 0;
-  font-family: var(--font-mono);
-  transition: color var(--duration-fast);
-}
-
-.close:hover { color: var(--on-surface); }
-
-/* ── State messages ─────────────────────────────────────────────────────── */
-
-.state {
-  padding: var(--space-3) var(--space-5);
-  color: var(--on-surface-variant);
-  font-size: var(--text-label-sm);
-}
-
-/* ── Aircraft photo ─────────────────────────────────────────────────────── */
-
-.photoWrap {
-  display: block;
+.hero {
   position: relative;
   flex-shrink: 0;
+  min-height: 180px;
+  background: #0a0d10;
+  overflow: hidden;
 }
 
-.photo {
+.heroImg {
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: cover;
   display: block;
 }
 
+.heroPlaceholder {
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10,13,16,0.95) 0%, rgba(10,13,16,0.4) 50%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  gap: 2px;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.closeBtn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.heroInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.callsign {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.typeCode {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.04em;
+}
+
+.heroDesc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.3;
+}
+
+.heroOp {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.04em;
+}
+
 .photoCredit {
   position: absolute;
-  bottom: 4px;
-  right: 6px;
-  font-size: var(--text-label-sm);
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.45);
-  padding: 1px 4px;
+  top: 6px;
+  left: 8px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  background: rgba(0,0,0,0.4);
+  padding: 1px 5px;
+  border-radius: 3px;
   pointer-events: none;
 }
 
-/* ── Telemetry stream (body) ────────────────────────────────────────────── */
+/* ── State messages ────────────────────────────────────────────────────── */
 
-.body {
-  flex: 1;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--surface-container-highest) transparent;
+.state {
+  padding: 12px 16px;
+  color: var(--on-surface-variant);
+  font-size: 12px;
 }
 
-/* Stream header */
-.streamHead {
+/* ── Route card: DEP → NOW ─────────────────────────────────────────────── */
+
+.routeCard {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.routeCol {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: var(--space-3) var(--space-5) var(--space-2);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
 }
 
-.streamHeadLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--outline);
+.routeCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 80px;
+  padding-top: 6px;
 }
 
-.streamLiveDot {
+.routeArc {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, #2088ff, #00eeff);
+  opacity: 0.5;
+}
+
+.routeDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--tertiary-container);
-  box-shadow: 0 0 8px #22ef7e;
-  animation: pulse 2s infinite;
+  flex-shrink: 0;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
+.routeCode {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
 }
 
-/* Telemetry rows */
-.telemSection {
-  padding: var(--space-2) var(--space-3);
+.routeCoord {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.routeDist {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+.routeEta {
+  font-size: 10px;
+  font-weight: 600;
+  color: #00eeff;
+  letter-spacing: 0.04em;
+}
+
+/* ── Track button row ──────────────────────────────────────────────────── */
+
+.trackRow {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.trackBtn {
+  flex: 1;
+  background: rgba(32, 136, 255, 0.10);
+  border: 1px solid rgba(32, 136, 255, 0.30);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  color: #2088ff;
+  padding: 10px 0;
+  letter-spacing: 0.06em;
+  border-radius: 8px;
+  transition: all 0.15s;
+  text-align: center;
+}
+.trackBtn:hover {
+  background: rgba(32, 136, 255, 0.20);
+  border-color: #2088ff;
+}
+.trackBtnActive {
+  background: rgba(34, 239, 126, 0.10);
+  border-color: rgba(34, 239, 126, 0.35);
+  color: var(--tertiary-container);
+}
+.trackBtnActive:hover {
+  background: rgba(34, 239, 126, 0.20);
+}
+
+.fitBtn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+.fitBtn:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+/* ── Telemetry grid ────────────────────────────────────────────────────── */
+
+.telemetry {
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+
+.telemGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.telemCell {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 2px;
 }
 
-.telemEntry {
-  padding: var(--space-3);
-  background: rgba(15, 20, 25, 0.4);
-  border-radius: var(--radius-md);
-  border-left: 2px solid rgba(195, 245, 255, 0.2);
+.telemLabel {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
 }
 
-.telemEntryHeader {
+.telemVal {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemVal.up   { color: var(--tertiary-container); }
+.telemVal.down { color: var(--on-error); }
+
+.telemMeta {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   font-size: 10px;
-  margin-bottom: 4px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.04em;
 }
 
-.telemKey {
-  color: var(--primary-container);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.telemTime {
-  color: var(--outline);
-}
-
-.telemValue {
-  font-size: var(--text-label-md);
-  color: var(--on-surface);
-}
-
-.telemValueAccent {
-  color: var(--tertiary-container);
-}
-
-.telemValueDown {
-  color: var(--on-error);
-}
-
-/* Simple data rows */
-.divider {
-  height: 1px;
-  background: rgba(59, 73, 76, 0.15);
-  margin: var(--space-2) 0;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: var(--space-2);
-  align-items: baseline;
-  padding: 2px 0;
-}
-
-.label {
-  color: var(--on-surface-variant);
-  text-transform: lowercase;
-  font-size: var(--text-label-sm);
-}
-
-.value {
-  color: var(--on-surface);
-  font-size: var(--text-label-md);
-}
-
-.value.up   { color: var(--tertiary-container); }
-.value.down { color: var(--on-error); }
-
-/* Signal precision display */
-.precisionCard {
-  margin: var(--space-2) var(--space-3);
-  background: rgba(23, 28, 34, 0.8);
-  border: 1px solid rgba(59, 73, 76, 0.15);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.precisionLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--outline);
-}
-
-.precisionValue {
-  font-family: var(--font-display);
-  font-size: var(--text-display-md);
-  font-weight: 700;
-  color: var(--primary-container);
-}
-
-.precisionSub {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tertiary-container);
-}
-
-/* ── Mobile: bottom sheet ───────────────────────────────────────────────── */
+/* ── Mobile: bottom sheet ──────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
   .panel {
@@ -426,13 +303,17 @@
     left: 0;
     right: 0;
     width: 100%;
-    height: 60dvh;
+    max-height: 70dvh;
+    height: auto;
     border-left: none;
-    border-top: 1px solid rgba(0, 229, 255, 0.1);
+    border-top: 1px solid rgba(0, 229, 255, 0.08);
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6);
-    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
-  .photo { height: 120px; }
+
+  .hero { min-height: 140px; }
+  .heroImg { height: 140px; }
+  .heroPlaceholder { height: 140px; }
+  .callsign { font-size: 18px; }
 }

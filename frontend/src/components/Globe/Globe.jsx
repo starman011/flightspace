@@ -824,35 +824,26 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const verts = greatCirclePoints(points)
     if (verts.length < 2) return
 
-    const geo = new BufferGeometry().setFromPoints(verts)
-
-    // Core: bright cyan-white
-    const coreLine = new Line(geo, new LineBasicMaterial({
-      color: 0x00eeff, transparent: true, opacity: 0.95,
-      depthWrite: false, blending: AdditiveBlending,
-    }))
-    coreLine.renderOrder = 12
-
-    // Inner glow: tighter cyan
-    const geo2     = new BufferGeometry().setFromPoints(verts)
-    const glowLine = new Line(geo2, new LineBasicMaterial({
-      color: 0x00aaff, transparent: true, opacity: 0.45,
-      depthWrite: false, blending: AdditiveBlending,
-    }))
-    glowLine.renderOrder = 11
-
-    // Outer bloom: wide, very soft
-    const geo3      = new BufferGeometry().setFromPoints(verts)
-    const bloomLine = new Line(geo3, new LineBasicMaterial({
-      color: 0x003366, transparent: true, opacity: 0.20,
-      depthWrite: false, blending: AdditiveBlending,
-    }))
-    bloomLine.renderOrder = 10
-
-    scene.add(bloomLine)
-    scene.add(glowLine)
-    scene.add(coreLine)
-    const objects = [coreLine, glowLine, bloomLine]
+    // Build multiple line layers at slightly different radii for visual thickness
+    const objects = []
+    const layers = [
+      { r: EARTH_R + 0.030, color: 0x003366, opacity: 0.20, order: 10 }, // outer bloom
+      { r: EARTH_R + 0.033, color: 0x00aaff, opacity: 0.55, order: 11 }, // glow
+      { r: EARTH_R + 0.035, color: 0x00eeff, opacity: 0.95, order: 12 }, // core
+      { r: EARTH_R + 0.037, color: 0x00ccff, opacity: 0.40, order: 11 }, // upper glow
+    ]
+    for (const l of layers) {
+      const v = greatCirclePoints(points, l.r)
+      if (v.length < 2) continue
+      const g = new BufferGeometry().setFromPoints(v)
+      const line = new Line(g, new LineBasicMaterial({
+        color: l.color, transparent: true, opacity: l.opacity,
+        depthWrite: false, blending: AdditiveBlending,
+      }))
+      line.renderOrder = l.order
+      scene.add(line)
+      objects.push(line)
+    }
 
     // ── Endpoint markers: blue pings at departure and current position ──
     const MARKER_R = EARTH_R + 0.004
