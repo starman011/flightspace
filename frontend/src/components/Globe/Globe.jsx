@@ -2079,14 +2079,34 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Pixel-based scale: icon is N screen-pixels tall, using camera-to-aircraft distance
-      // for perspective-correct sizing. Below ~20 km aircraft appear near real-size.
+      // Two-regime aircraft scaling:
+      //   Above ~30 km: original dist-based formula (large visible icons)
+      //   Below ~15 km: perspective-correct camToAc formula (real-sized on street map)
+      //   15–30 km: smooth blend between the two
       const screenW    = el.clientWidth || 1920
-      const _acR       = EARTH_R * 1.0005
-      const camToAc    = Math.max(dist - _acR, 0.00005)   // camera → aircraft layer
-      const wuPerPxAc  = (2 * camToAc * Math.tan((40 / 2) * (Math.PI / 180))) / screenW
-      const pixelTarget = MathUtils.clamp(5 + 5 * Math.log10(1 + camToAc * 100), 2, 14)
-      const newScale   = MathUtils.clamp(pixelTarget * wuPerPxAc, 0.0000002, 0.02)
+      const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
+      const altKm      = altUnit * 6371
+
+      // Old formula (unchanged look from above)
+      const wuPerPxOld  = (2 * dist * tanHalf) / screenW
+      const ptOld       = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
+
+      // New formula (perspective-correct at street level)
+      const _acR        = EARTH_R * 1.0005
+      const camToAc     = Math.max(dist - _acR, 0.00005)
+      const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
+      const ptNew       = MathUtils.clamp(4 + 3 * Math.log10(1 + camToAc * 80), 2, 10)
+
+      let newScale
+      if (altKm >= 30) {
+        newScale = ptOld * wuPerPxOld
+      } else if (altKm <= 15) {
+        newScale = ptNew * wuPerPxNew
+      } else {
+        const t = (altKm - 15) / 15            // 0 at 15 km, 1 at 30 km
+        newScale = MathUtils.lerp(ptNew * wuPerPxNew, ptOld * wuPerPxOld, t)
+      }
+      newScale = MathUtils.clamp(newScale, 0.00003, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
