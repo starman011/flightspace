@@ -824,13 +824,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const verts = greatCirclePoints(points)
     if (verts.length < 2) return
 
-    // Build multiple line layers at slightly different radii for visual thickness
+    // Build multiple line layers at slightly different radii for visual thickness.
+    // Heights just above tiles (1.0004) and below aircraft (1.002).
     const objects = []
     const layers = [
-      { r: EARTH_R + 0.030, color: 0x003366, opacity: 0.20, order: 10 }, // outer bloom
-      { r: EARTH_R + 0.033, color: 0x00aaff, opacity: 0.55, order: 11 }, // glow
-      { r: EARTH_R + 0.035, color: 0x00eeff, opacity: 0.95, order: 12 }, // core
-      { r: EARTH_R + 0.037, color: 0x00ccff, opacity: 0.40, order: 11 }, // upper glow
+      { r: EARTH_R + 0.0010, color: 0x003366, opacity: 0.25, order: 10 },
+      { r: EARTH_R + 0.0015, color: 0x00aaff, opacity: 0.60, order: 11 },
+      { r: EARTH_R + 0.0018, color: 0x00eeff, opacity: 1.00, order: 12 },
+      { r: EARTH_R + 0.0022, color: 0x00ccff, opacity: 0.45, order: 11 },
     ]
     for (const l of layers) {
       const v = greatCirclePoints(points, l.r)
@@ -846,7 +847,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
 
     // ── Endpoint markers: blue pings at departure and current position ──
-    const MARKER_R = EARTH_R + 0.004
+    const MARKER_R = EARTH_R + 0.0025
     const markerGeo = new BufferGeometry()
     const markerPos = new Float32Array(6) // 2 points × 3 coords
     const first = points[0], last = points[points.length - 1]
@@ -856,8 +857,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     markerPos[3] = p1.x; markerPos[4] = p1.y; markerPos[5] = p1.z
     markerGeo.setAttribute('position', new BufferAttribute(new Float32Array(markerPos), 3))
     const markerMat = new PointsMaterial({
-      color: 0x2088ff, size: 10, sizeAttenuation: false,
-      transparent: true, opacity: 0.9, depthWrite: false,
+      color: 0x2088ff, size: 14, sizeAttenuation: false,
+      transparent: true, opacity: 0.95, depthWrite: false,
     })
     const markerPts = new Points(markerGeo, markerMat)
     markerPts.renderOrder = 13

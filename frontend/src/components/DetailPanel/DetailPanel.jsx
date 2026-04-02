@@ -14,15 +14,13 @@ function nearestAirport(lat, lon) {
     const d = haversineKm(lat, lon, a.lat, a.lon)
     if (d < bestD) { bestD = d; best = a }
   }
-  return bestD < 150 ? best : null   // only match within 150 km
+  return bestD < 150 ? best : null
 }
 
-/* ── Photo fetch ───────────────────────────────────────────────────────────── */
-async function fetchPhoto(icao24) {
+/* ── Photo fetch — tries hex, then registration ────────────────────────────── */
+async function fetchPhotoFromUrl(url) {
   try {
-    const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${icao24}`, {
-      credentials: 'omit',
-    })
+    const res = await fetch(url, { credentials: 'omit' })
     if (!res.ok) return null
     const data = await res.json()
     if (data.photos?.length > 0) {
@@ -87,6 +85,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const [error,   setError]   = useState(null)
   const [photo,   setPhoto]   = useState(null)
   const panelRef = useRef(null)
+  const photoTriedReg = useRef(false)
 
   const cat = liveData?.cat || 'plane'
   const isFlight = cat === 'plane' || cat === 'helicopter'
@@ -107,8 +106,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     setDetail(null)
     setPhoto(null)
     setError(null)
+    photoTriedReg.current = false
 
-    // Only fetch aircraft detail API for flights/helicopters
     if (isFlight) {
       setLoading(true)
       fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
@@ -120,12 +119,22 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         .catch(e => setError(e.message))
         .finally(() => setLoading(false))
 
-      fetchPhoto(icao24).then(setPhoto)
+      // Fetch photo by hex code
+      fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`).then(setPhoto)
 
       const iv = setInterval(refreshLive, 15000)
       return () => clearInterval(iv)
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fallback: try registration-based photo if hex returned nothing
+  useEffect(() => {
+    if (photo || !detail?.registration || photoTriedReg.current) return
+    photoTriedReg.current = true
+    fetchPhotoFromUrl(
+      `https://api.planespotters.net/pub/photos/reg/${detail.registration}`
+    ).then(p => { if (p) setPhoto(p) })
+  }, [photo, detail?.registration])
 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose?.() }
@@ -146,11 +155,10 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
   if (!icao24) return null
 
-  /* ── Derive display data from API detail (flights) or liveData (satellites/ships) ── */
+  /* ── Derive display data ─────────────────────────────────────────────────── */
   const cur = detail?.current
   const trail = detail?.trail
 
-  // For flights: use API data. For satellites/ships: use liveData directly
   const displayLat = cur?.latitude ?? liveData?.lat
   const displayLon = cur?.longitude ?? liveData?.lon
   const displayAlt = cur?.altitude ?? liveData?.alt
@@ -163,29 +171,26 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const vr    = displayVR
   const vrDir = vr == null ? null : vr > 100 ? 'up' : vr < -100 ? 'down' : null
 
-  // Title / identity
   const displayName = detail?.callsign
     ? formatCallsign(detail.callsign)
     : liveData?.cs
       ? formatCallsign(liveData.cs)
-      : liveData?.name
-        ? liveData.name
-        : icao24.toUpperCase()
+      : liveData?.name ?? icao24.toUpperCase()
 
   const typeCode = detail?.type_code ?? liveData?.t
   const typeDesc = detail?.type_description
   const operator = detail?.operator
 
-  // Route: departure airport + distance + duration
-  const dep = trail?.[0]
-  const hasRoute = dep && displayLat != null
+  // Route: trail-based (DEP→NOW) or position-only
+  const dep = trail?.length > 0 ? trail[0] : null
+  const hasTrailRoute = dep && displayLat != null
   const depAirport = dep ? nearestAirport(dep.latitude, dep.longitude) : null
   const nowAirport = displayLat != null ? nearestAirport(displayLat, displayLon) : null
-  const distKm = hasRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon) : null
+  const distKm = hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon) : null
   const flightDuration = dep?.timestamp ? fmtDuration(dep.timestamp) : null
 
-  // Satellite-specific
   const altKm = liveData?.alt_km
+  const hasPosition = displayLat != null
 
   return (
     <aside ref={panelRef} className={styles.panel}>
@@ -219,8 +224,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {loading && <p className={styles.state}>loading…</p>}
       {error && isFlight && <p className={styles.state}>error {error}</p>}
 
-      {/* ── Route card: ORIGIN → NOW (flights only) ── */}
-      {hasRoute && (
+      {/* ── Route card: DEP → NOW (when trail exists) ── */}
+      {hasTrailRoute && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#2088ff' }} />
@@ -244,20 +249,24 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         </div>
       )}
 
-      {/* ── Satellite / Ship info card (no API trail) ── */}
-      {!isFlight && displayLat != null && (
+      {/* ── Position card: when no trail but we have position (always visible) ── */}
+      {!hasTrailRoute && hasPosition && (
         <div className={styles.routeCard}>
-          <div className={styles.routeCol} style={{ flex: 'unset', width: '100%', alignItems: 'flex-start', paddingLeft: 4 }}>
-            <span className={styles.routeCode}>POSITION</span>
+          <div className={styles.routeCol}>
+            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
+            <span className={styles.routeCode}>{nowAirport?.name ?? 'POS'}</span>
             <span className={styles.routeCoord}>
-              {displayLat.toFixed(4)}°, {displayLon.toFixed(4)}°
+              {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
             </span>
-            {altKm != null && (
-              <span className={styles.routeCoord} style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Altitude: {Math.round(altKm)} km
-              </span>
-            )}
           </div>
+          {altKm != null && (
+            <div className={styles.routeCol}>
+              <span className={styles.routeCode}>ORBIT</span>
+              <span className={styles.routeCoord} style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {Math.round(altKm)} km
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -271,6 +280,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 onTrack?.(null)
               } else {
                 onTrack?.(icao24)
+                if (trail?.length) onTrailData?.(trail)
                 if (trail?.length > 1) setTimeout(() => onFitRoute?.(), 250)
               }
             }}
@@ -283,8 +293,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         </div>
       )}
 
-      {/* ── Telemetry ── */}
-      {(cur || !isFlight) && displayLat != null && (
+      {/* ── Telemetry (always show when we have position data) ── */}
+      {hasPosition && (
         <div className={styles.telemetry}>
           <div className={styles.telemGrid}>
             {displayAlt != null && (
