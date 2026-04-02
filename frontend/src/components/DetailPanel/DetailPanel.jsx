@@ -93,12 +93,19 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
+  // Outside-click closes the panel. Use pointerdown + ignore canvas taps (which
+  // trigger aircraft selection via a separate handler). Without this guard, tapping
+  // a new aircraft on mobile fires onClose→null→reselect, causing a flash.
   useEffect(() => {
     const handler = e => {
-      if (panelRef.current && !panelRef.current.contains(e.target)) onClose?.()
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        // Ignore taps on the globe canvas — those are aircraft selections, not dismissals
+        if (e.target?.tagName === 'CANVAS') return
+        onClose?.()
+      }
     }
-    const t = setTimeout(() => document.addEventListener('mousedown', handler), 120)
-    return () => { clearTimeout(t); document.removeEventListener('mousedown', handler) }
+    const t = setTimeout(() => document.addEventListener('pointerdown', handler), 200)
+    return () => { clearTimeout(t); document.removeEventListener('pointerdown', handler) }
   }, [onClose])
 
   if (!icao24) return null
@@ -136,7 +143,7 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
         )}
       </div>
 
-      {/* Track + route + close controls */}
+      {/* Controls: track + close */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           {detail?.operator && (
@@ -146,28 +153,40 @@ export default function DetailPanel({ icao24, onClose, onTrailData, isTracking, 
           )}
         </div>
         <div className={styles.headerRight}>
-          {detail?.trail?.length > 1 && (
-            <button
-              className={styles.routeBtn}
-              onClick={() => {
-                if (!isTracking) onTrack?.(icao24)
-                setTimeout(() => onFitRoute?.(), 200)
-              }}
-              title="Show route — zoom to fit departure and current position"
-            >
-              route
-            </button>
-          )}
-          <button
-            className={`${styles.trackBtn} ${isTracking ? styles.tracking : ''}`}
-            onClick={() => onTrack?.(isTracking ? null : icao24)}
-            title={isTracking ? 'stop tracking' : 'track live'}
-          >
-            {isTracking ? 'tracking' : 'track'}
-          </button>
           <button className={styles.close} onClick={onClose} aria-label="close">×</button>
         </div>
       </div>
+
+      {/* Primary action: Track & Show Route */}
+      {detail && (
+        <div className={styles.trackCard}>
+          <button
+            className={`${styles.trackBtnPrimary} ${isTracking ? styles.trackBtnActive : ''}`}
+            onClick={() => {
+              if (isTracking) {
+                onTrack?.(null)
+              } else {
+                onTrack?.(icao24)
+                if (detail?.trail?.length > 1) {
+                  setTimeout(() => onFitRoute?.(), 250)
+                }
+              }
+            }}
+          >
+            <span className={styles.trackIcon}>{isTracking ? '◉' : '◎'}</span>
+            <span>{isTracking ? 'Stop Tracking' : 'Track Flight'}</span>
+          </button>
+          {isTracking && detail?.trail?.length > 1 && (
+            <button
+              className={styles.fitBtn}
+              onClick={() => onFitRoute?.()}
+              title="Zoom to fit route"
+            >
+              fit route
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Route summary: departure → current position */}
       {detail?.trail?.length > 1 && detail?.current && (

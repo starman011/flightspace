@@ -4,6 +4,25 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-02
+
+### Fixes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **DetailPanel not scrollable on mobile** | Panel had `overflow: hidden` and mobile bottom-sheet (60dvh) clipped content. Added `overflow-y: auto` + `-webkit-overflow-scrolling: touch` to mobile media query. Also reduced photo height to 120px on mobile. |
+| 2 | **Galaxy flash on mobile re-selection** | Outside-click handler used `mousedown` which fired on canvas taps before the globe's `pointerup` picked the new aircraft. Sequence: `onClose()→null→reselect` caused brief state flash showing galaxy view via URL sync. Fix: ignore `CANVAS` element taps in outside-click handler. |
+| 3 | **Track mode: other aircraft dimmed** | When tracking is active, all 6 aircraft InstancedMesh materials are dimmed to 12% opacity. Only the tracked craft's selection ring, neon trail, and API trail arc remain bright. Trails use `AdditiveBlending` on separate `LineSegments` — unaffected by aircraft opacity. |
+
+### Features Added
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Redesigned Track button** | Replaced small text button with full-width primary action card. Blue background when idle (`Track Flight`), green glow when active (`Stop Tracking`). `fitRoute` button appears alongside when tracking with trail data. |
+| 2 | **Route card with DEP/NOW** | Persistent route summary below track button showing departure coordinates (first trail point) and current position with colored dots and gradient line between them. |
+
+---
+
 ## Session: 2026-04-01
 
 ### Fixes

@@ -126,40 +126,63 @@
   flex-shrink: 0;
 }
 
-.trackBtn {
-  background: none;
-  border: var(--glass-border);
+/* ── Track card: primary action ──────────────────────────────────────────── */
+.trackCard {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+  flex-shrink: 0;
+}
+.trackBtnPrimary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: rgba(32, 136, 255, 0.12);
+  border: 1px solid rgba(32, 136, 255, 0.35);
   font-family: var(--font-mono);
-  font-size: var(--text-label-sm);
+  font-size: var(--text-label-md);
   cursor: pointer;
-  color: var(--on-surface-variant);
-  padding: var(--space-1) var(--space-2);
-  letter-spacing: 0.04em;
-  border-radius: var(--radius-sm);
-  transition: color var(--duration-fast), border-color var(--duration-fast);
+  color: #2088ff;
+  padding: var(--space-3) var(--space-4);
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast);
 }
-
-.trackBtn:hover { color: var(--primary); border-color: var(--primary); }
-
-.trackBtn.tracking {
+.trackBtnPrimary:hover {
+  background: rgba(32, 136, 255, 0.22);
+  border-color: #2088ff;
+}
+.trackBtnActive {
+  background: rgba(34, 239, 126, 0.12);
+  border-color: rgba(34, 239, 126, 0.4);
   color: var(--tertiary-container);
-  border-color: var(--tertiary-container);
-  box-shadow: var(--chip-glow-active);
+  box-shadow: 0 0 12px rgba(34, 239, 126, 0.15);
 }
-
-.routeBtn {
+.trackBtnActive:hover {
+  background: rgba(34, 239, 126, 0.22);
+  border-color: var(--tertiary-container);
+}
+.trackIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+.fitBtn {
   background: none;
-  border: 1px solid rgba(32, 136, 255, 0.4);
+  border: 1px solid rgba(32, 136, 255, 0.3);
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
   cursor: pointer;
   color: #2088ff;
-  padding: var(--space-1) var(--space-2);
-  letter-spacing: 0.06em;
+  padding: var(--space-2) var(--space-3);
+  letter-spacing: 0.05em;
   border-radius: var(--radius-sm);
-  transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
+  white-space: nowrap;
+  transition: all var(--duration-fast);
 }
-.routeBtn:hover { background: rgba(32, 136, 255, 0.12); border-color: #2088ff; }
+.fitBtn:hover { background: rgba(32, 136, 255, 0.12); border-color: #2088ff; }
 
 .routeCard {
   display: flex;
@@ -408,5 +431,8 @@
     border-top: 1px solid rgba(0, 229, 255, 0.1);
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
+  .photo { height: 120px; }
 }

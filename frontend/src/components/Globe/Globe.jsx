@@ -2114,6 +2114,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         syncInstances(int.current, int.current.lastAircraft, int.current.lastSelectedId, int.current.hoveredId, true)
       }
 
+      // ── Track mode: dim all aircraft so only tracked craft + route are visible ──
+      const _isTracking = int.current.trackingId != null
+      const trackOpacity = _isTracking ? 0.12 : 1.0
+      for (const m of [planeMesh, heavyMesh, regionalMesh, heliMesh, satMesh, shipMesh]) {
+        if (m.material.opacity !== trackOpacity) {
+          m.material.opacity = trackOpacity
+          m.material.needsUpdate = true
+        }
+      }
+
       // Pulsing selection ring
       const selPos = int.current.selPos
       if (selPos) {
