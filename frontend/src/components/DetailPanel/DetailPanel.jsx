@@ -63,6 +63,15 @@ function fmtDuration(startTimestamp) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+function fmtEta(minutes) {
+  if (minutes == null) return null
+  if (minutes < 1) return '< 1 min'
+  if (minutes < 60) return `${Math.round(minutes)} min`
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
 function formatAge(timestamp) {
   if (!timestamp) return null
   const secs = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
@@ -84,6 +93,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [photo,   setPhoto]   = useState(null)
+  const [route,   setRoute]   = useState(null)
   const panelRef = useRef(null)
   const photoTriedReg = useRef(false)
 
@@ -105,6 +115,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     if (!icao24) return
     setDetail(null)
     setPhoto(null)
+    setRoute(null)
     setError(null)
     photoTriedReg.current = false
 
@@ -118,6 +129,12 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         })
         .catch(e => setError(e.message))
         .finally(() => setLoading(false))
+
+      // Fetch route (departure/arrival airports)
+      fetch(`${API}/api/v1/aircraft/${icao24}/route`, { credentials: 'include' })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setRoute(d) })
+        .catch(() => {})
 
       // Fetch photo by hex code
       fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`).then(setPhoto)
@@ -181,12 +198,17 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const typeDesc = detail?.type_description
   const operator = detail?.operator
 
-  // Route: trail-based (DEP→NOW) or position-only
+  // Route: from API (real airports) or trail-based fallback
   const dep = trail?.length > 0 ? trail[0] : null
   const hasTrailRoute = dep && displayLat != null
-  const depAirport = dep ? nearestAirport(dep.latitude, dep.longitude) : null
-  const nowAirport = displayLat != null ? nearestAirport(displayLat, displayLon) : null
-  const distKm = hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon) : null
+
+  // Prefer route API data for airport names
+  const depName = route?.departure_iata || route?.departure_name || (dep ? nearestAirport(dep.latitude, dep.longitude)?.name : null) || 'DEP'
+  const arrName = route?.arrival_iata || route?.arrival_name || (displayLat != null ? nearestAirport(displayLat, displayLon)?.name : null) || 'NOW'
+  const etaMin = route?.eta_min
+  const distKm = hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon)
+    : (route?.dep_lat != null && displayLat != null) ? haversineKm(route.dep_lat, route.dep_lon, displayLat, displayLon)
+    : null
   const flightDuration = dep?.timestamp ? fmtDuration(dep.timestamp) : null
 
   const altKm = liveData?.alt_km
@@ -203,7 +225,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             className={styles.heroImg}
             alt="aircraft"
             loading="lazy"
-            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
             onError={() => setPhoto(null)}
           />
         ) : (
@@ -231,37 +253,42 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {loading && <p className={styles.state}>loading…</p>}
       {error && isFlight && <p className={styles.state}>error {error}</p>}
 
-      {/* ── Route card: DEP → NOW (when trail exists) ── */}
-      {hasTrailRoute && (
+      {/* ── Route card: DEP → ARR (real airport names from API) ── */}
+      {(hasTrailRoute || route?.departure_name) && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#2088ff' }} />
-            <span className={styles.routeCode}>{depAirport?.name ?? 'DEP'}</span>
-            <span className={styles.routeCoord}>
-              {dep.latitude.toFixed(2)}°, {dep.longitude.toFixed(2)}°
-            </span>
+            <span className={styles.routeCode}>{depName}</span>
+            {dep && (
+              <span className={styles.routeCoord}>
+                {dep.latitude.toFixed(2)}°, {dep.longitude.toFixed(2)}°
+              </span>
+            )}
           </div>
           <div className={styles.routeCenter}>
             <div className={styles.routeArc} />
             {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
             {flightDuration && <span className={styles.routeEta}>{flightDuration}</span>}
+            {etaMin != null && <span className={styles.routeEta}>ETA {fmtEta(etaMin)}</span>}
           </div>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#00eeff' }} />
-            <span className={styles.routeCode}>{nowAirport?.name ?? 'NOW'}</span>
-            <span className={styles.routeCoord}>
-              {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
-            </span>
+            <span className={styles.routeCode}>{arrName}</span>
+            {displayLat != null && (
+              <span className={styles.routeCoord}>
+                {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
+              </span>
+            )}
           </div>
         </div>
       )}
 
-      {/* ── Position card: when no trail but we have position (always visible) ── */}
-      {!hasTrailRoute && hasPosition && (
+      {/* ── Position card: when no route data but we have position ── */}
+      {!hasTrailRoute && !route?.departure_name && hasPosition && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#00eeff' }} />
-            <span className={styles.routeCode}>{nowAirport?.name ?? 'POS'}</span>
+            <span className={styles.routeCode}>{arrName !== 'NOW' ? arrName : nearestAirport(displayLat, displayLon)?.name ?? 'POS'}</span>
             <span className={styles.routeCoord}>
               {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
             </span>
