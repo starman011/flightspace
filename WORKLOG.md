@@ -4,6 +4,24 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-06
+
+### Features Added
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Real airport names (departure/arrival)** | New backend endpoint `GET /api/v1/aircraft/{icao24}/route` calls OpenSky Network flights API to get `estDepartureAirport` / `estArrivalAirport` ICAO codes. Enriched with 120+ airport database (ICAO→IATA/name/coordinates). Falls back to trail-based estimation (nearest airport to trail[0], heading-based arrival guess) when OpenSky is rate-limited. |
+| 2 | **ETA to destination** | Route endpoint computes ETA from current position/speed to arrival airport coordinates. Displayed as "ETA 2h 15m" in the route card. |
+| 3 | **ICAO airport database** | New `backend/src/data/airports.go` with 120+ airports worldwide: North America (36), Europe (31), Middle East (8), Asia (24), Oceania (5), South America (6), Africa (7). Maps ICAO codes to IATA, name, and lat/lon. |
+
+### Fixes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Aircraft photo not loading** | Removed `crossOrigin="anonymous"` from img tag — planespotters CDN images loaded fine without CORS but the attribute forced the browser to enforce CORS on the image request, blocking rendering. Replaced with `referrerPolicy="no-referrer"`. |
+
+---
+
 ## Session: 2026-04-02
 
 ### Fixes
