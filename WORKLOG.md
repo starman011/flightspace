@@ -14,12 +14,22 @@ Tracks all significant changes made during development sessions.
 | 2 | **Galaxy flash on mobile re-selection** | Outside-click handler used `mousedown` which fired on canvas taps before the globe's `pointerup` picked the new aircraft. Sequence: `onClose()→null→reselect` caused brief state flash showing galaxy view via URL sync. Fix: ignore `CANVAS` element taps in outside-click handler. |
 | 3 | **Track mode: other aircraft dimmed** | When tracking is active, all 6 aircraft InstancedMesh materials are dimmed to 12% opacity. Only the tracked craft's selection ring, neon trail, and API trail arc remain bright. Trails use `AdditiveBlending` on separate `LineSegments` — unaffected by aircraft opacity. |
 
+| 4 | **Removed fake signal precision data** | Hardcoded "PEAK DETECTION: ALPHA-7 98.4%" and "SYSTEM: NOMINAL" badge were not sourced from real data. Removed entirely. |
+| 5 | **Trail arc invisible** | `THREE.Line` always renders 1px in WebGL (spec limitation) — invisible on Retina/mobile, and 4 overlapping 1px lines from above still look like 1px. Also trail was at 191-236km altitude (above the camera). **Fix**: replaced with mesh ribbon geometry (actual filled quads along the path). Core ribbon 0.0004 WU + glow ribbon 0.001 WU, both at 6-10km altitude. Endpoint markers at 16px. Guaranteed visible at any DPI/zoom. |
+| 6 | **Aircraft icons district-sized at low zoom** | Scale formula used `dist` (camera-to-earth-center) for wuPerPx. At 20km zoom, aircraft at radius 1.0005 are only 17km from camera — perspective projection made 1px target render as 300+ screen pixels. Fix: use `camToAc = dist - acRadius` for perspective-correct sizing. Below 20km aircraft appear near real size (~40m). |
+| 7 | **Satellite/ship click → 400 error** | `/api/v1/aircraft/{id}` queries `aircraft_static` table which has no satellite/ship entries. Fix: DetailPanel skips API call for non-flight categories, renders directly from WebSocket live data. |
+| 8 | **Close panel triggers mobile reload** | `navigate(path, {replace: true})` caused full React Router reconciliation on state change. Fix: close handler uses `window.history.replaceState` directly, bypassing React Router. URL sync effect skips navigation when panel just closed. |
+| 9 | **Airborne duration showed last-update age** | `formatAge(cur.timestamp)` showed when the ADS-B update arrived, not how long the flight has been airborne. Fix: route card shows flight duration from `trail[0].timestamp` (departure time). |
+
 ### Features Added
 
 | # | What | Detail |
 |---|------|--------|
-| 1 | **Redesigned Track button** | Replaced small text button with full-width primary action card. Blue background when idle (`Track Flight`), green glow when active (`Stop Tracking`). `fitRoute` button appears alongside when tracking with trail data. |
-| 2 | **Route card with DEP/NOW** | Persistent route summary below track button showing departure coordinates (first trail point) and current position with colored dots and gradient line between them. |
+| 1 | **Caller-style DetailPanel redesign** | Complete rewrite of DetailPanel as phone-call-screen style card. Hero section with aircraft photo (from planespotters.net) + gradient overlay showing callsign, type, operator. Route card with DEP→NOW columns, distance, and ETA. 2×2 telemetry grid (ALT, SPD, HDG, V/S). Metadata row (registration, airborne/ground, age). Mobile: bottom sheet with `max-height: 70dvh`. |
+| 2 | **Nearest airport lookup** | Route card shows nearest IATA airport code (within 150km) for departure point and current position instead of raw coordinates. Uses placeData.js airport table with haversine distance matching. |
+| 3 | **Dynamic panel title** | Panel title changes based on entity category: "Flight Details", "Satellite Details", "Vessel Details", "Helicopter Details". Satellites/ships show position card with orbital altitude. |
+| 4 | **Tile contrast boost** | Tile material color set to 72% brightness (`new Color(0.72, 0.72, 0.74)`) for reduced glare and better visual contrast at street level. |
+| 5 | **Redesigned Track button** | Full-width primary action button. Blue when idle (`Track Flight`), green glow when active (`Stop Tracking`). `fit` button appears alongside when tracking with trail data. |
 
 ---
 

@@ -45,6 +45,7 @@ func Setup(
 	// Aircraft
 	mux.Handle("GET /api/v1/aircraft/search", rateLimit(authOpt(http.HandlerFunc(aircraft.Search))))
 	mux.Handle("GET /api/v1/aircraft/{icao24}", rateLimit(authOpt(http.HandlerFunc(aircraft.GetDetail))))
+	mux.Handle("GET /api/v1/aircraft/{icao24}/route", rateLimit(authOpt(http.HandlerFunc(aircraft.GetRoute))))
 
 	// Auth
 	mux.Handle("POST /api/v1/auth/register", rateLimit(http.HandlerFunc(auth.Register)))

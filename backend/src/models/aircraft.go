@@ -89,6 +89,23 @@ type TrailPoint struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// RouteResponse is the response for GET /aircraft/{icao24}/route.
+type RouteResponse struct {
+	ICAO24        string   `json:"icao24"`
+	DepartureICAO *string  `json:"departure_icao,omitempty"`
+	DepartureIATA *string  `json:"departure_iata,omitempty"`
+	DepartureName *string  `json:"departure_name,omitempty"`
+	DepLat        *float64 `json:"dep_lat,omitempty"`
+	DepLon        *float64 `json:"dep_lon,omitempty"`
+	ArrivalICAO   *string  `json:"arrival_icao,omitempty"`
+	ArrivalIATA   *string  `json:"arrival_iata,omitempty"`
+	ArrivalName   *string  `json:"arrival_name,omitempty"`
+	ArrLat        *float64 `json:"arr_lat,omitempty"`
+	ArrLon        *float64 `json:"arr_lon,omitempty"`
+	ETAMin        *float64 `json:"eta_min,omitempty"`
+	Source        string   `json:"source"`
+}
+
 // SearchResult is one item in the search response.
 type SearchResult struct {
 	ICAO24          string   `json:"icao24"`
