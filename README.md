@@ -282,6 +282,22 @@ The renderer uses `logarithmicDepthBuffer: true` to provide uniform depth precis
 
 No external flight data API is needed. The backend scans all ~12K live aircraft in Redis, filters to those within 500km of the airport and heading within 45° of the bearing toward the airport, then computes ETA = great-circle distance / ground speed. Accuracy is ~2-5 minutes (doesn't model approach patterns or ATC holds). Total computation: <5ms for 12K aircraft, served from `GET /api/v1/airports/{iata}/arrivals`.
 
+### Flight route lookup without external APIs
+**Technique: Embedded OpenFlights database + callsign-based route matching**
+
+The route endpoint (`GET /api/v1/aircraft/{icao24}/route`) identifies departure and arrival airports using two strategies, zero external API calls:
+
+**Primary — callsign-based route matching:** The backend embeds the full OpenFlights dataset at compile time via Go `//go:embed`: 67K airline routes, 6K airlines (ICAO↔IATA mapping), and 7,700+ airports with coordinates. Given a callsign like `UAL1234`, the system extracts the airline code (`UAL`), maps it to IATA (`UA`), finds all routes for that airline, and scores each route by whether the aircraft's current position lies on the great-circle path between the route's endpoints (30% detour tolerance). The best-scoring route gives exact departure and arrival airports.
+
+**Fallback — heading-based estimation:** When no callsign route matches, the system searches all 7,700 airports in the OpenFlights database. It looks behind the aircraft (reverse heading, 3000km, 70° cone) for departure, and ahead (forward heading, 3000km, 50° cone) for arrival. If no airport is found behind, it falls back to the nearest airport within 3000km. ETA is computed from arrival distance divided by ground speed.
+
+### Flight isolation mode
+**Technique: GPU instance matrix zeroing**
+
+When a user tracks a flight, all other aircraft are hidden by setting their `InstancedMesh` transform matrices to a zero matrix. This is a frontend-only optimization — no backend change, no additional filtering — that eliminates ~12K draw instances from the GPU pipeline. The isolation toggles automatically when tracking starts/stops via a `needsInstanceRebuild` flag.
+
+The tracked aircraft's trail is enriched with route data: departure airport coordinates are prepended and arrival airport coordinates are appended to the recorded trail points (if >20km from the first/last DB position). The globe auto-fits to show both departure and arrival airports using spherical midpoint + angular distance camera positioning.
+
 ### Country borders without a mapping library
 **Technique: `world-atlas` TopoJSON → Three.js `LineSegments` with additive blending**
 
@@ -365,13 +381,17 @@ flightspace/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
-│   │   │   ├── aircraft.go          # Detail + search endpoints
+│   │   │   ├── aircraft.go          # Detail + search + route endpoints
 │   │   │   ├── ws.go                # WebSocket upgrade + hub
 │   │   │   ├── launch_poller.go     # Launch Library 2 — 15 min
 │   │   │   ├── satellite_poller.go  # CelesTrak TLE + SGP4 — 30 s
 │   │   │   ├── asteroid_controller.go  # NASA NeoWs — 1 hr
 │   │   │   ├── apod_controller.go   # NASA APOD proxy — 24 hr
 │   │   │   └── solar_poller.go      # NASA Horizons — 5 min
+│   │   ├── data/
+│   │   │   ├── routes.go            # OpenFlights route/airline/airport DB
+│   │   │   ├── airports.go          # ICAO airport lookup table
+│   │   │   └── openflights/         # Embedded datasets (67K routes, 7.7K airports)
 │   │   ├── db/                      # PostgreSQL + Redis connections
 │   │   ├── middlewares/             # CORS, security headers, logger
 │   │   ├── models/                  # Shared Go structs
@@ -467,6 +487,7 @@ Vite proxies `/api/*` and `/ws` to `localhost:8080` automatically.
 | `POST` | `/api/v1/session` | Issue anonymous JWT session |
 | `GET` | `/api/v1/aircraft/search?q=` | Search live traffic by callsign / ICAO |
 | `GET` | `/api/v1/aircraft/:icao24` | Flight detail + last 200 trail points |
+| `GET` | `/api/v1/aircraft/:icao24/route` | Route info — departure/arrival airports + ETA |
 | `GET` | `/api/v1/launches` | Upcoming + recent rocket launches |
 | `GET` | `/api/v1/asteroids` | Near-Earth asteroid close approaches |
 | `GET` | `/api/v1/apod` | Astronomy Picture of the Day (proxied) |

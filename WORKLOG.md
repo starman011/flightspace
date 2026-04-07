@@ -19,6 +19,15 @@ Tracks all significant changes made during development sessions.
 | 7 | **Route endpoint rewrite** | Removed OpenSky API dependency (unreliable, rate-limited). New priority: 1) OpenFlights route DB via callsign matching, 2) heading-based estimation fallback. Route lookups are now instant (in-memory) with zero external API calls. |
 | 8 | **Trail extends to dep/arr airports** | Frontend enriches trail when route data is available: prepends departure airport coords and appends arrival airport coords to trail points (if >20km from first/last trail point). Trail now visually connects departure → tracked positions → arrival. |
 
+### Fixes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Heading fallback uses 7700-airport DB** | Old heading-based estimation used a tiny 120-airport `AirportByICAO` table — missed most airports worldwide. Switched to `data.FindAirportInDirection` and `data.FindNearestAirport` which search the full 7,700-airport OpenFlights `AirportByIATA` map. Departure/arrival now returns real airports even when callsign route matching fails. |
+| 2 | **Camera flyTo priority over tracking lock** | Tracking camera lock was overriding the flyTo tween, so "fit to route" had no visible effect while tracking was active. Restructured the render loop: flyTo tween runs first and takes priority; tracking camera lock only runs when no flyTo is active. |
+| 3 | **Auto-fit re-triggers on route arrival** | Initial auto-fit fired before route API returned (only had trail data). Added `didAutoFit` ref that tracks whether fit used 'trail' or 'route' coords — re-triggers with route coords when they arrive, giving accurate dep/arr framing instead of just trail endpoints. |
+| 4 | **Trail enrichment as single source** | Removed raw `onTrailData` calls from initial fetch and refreshLive. A single `useEffect` now enriches trail with dep/arr airport coords from route data before passing to Globe, preventing trail from showing only DB-start positions. |
+
 ### Research
 
 | # | What | Detail |
@@ -211,4 +220,3 @@ Tracks all significant changes made during development sessions.
 
 - [ ] Flight path dead-reckoning interpolation (smooth movement between 5–10 s ADS-B updates)
 - [ ] Accurate landing visuals — aircraft align with runway heading when alt < 500 ft, speed < 160 kt
-- [ ] 5 major improvements requested by user (to be listed once specified)
