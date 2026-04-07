@@ -4,7 +4,7 @@ import {
   Vector3, Vector2, Matrix4, Color, MathUtils,
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
-  PlaneGeometry, SphereGeometry,
+  PlaneGeometry, SphereGeometry, TubeGeometry, CatmullRomCurve3,
   Mesh, InstancedMesh, LineSegments, Points,
   MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
@@ -827,8 +827,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (apiTrailRef.current) {
       apiTrailRef.current.forEach(obj => {
         scene.remove(obj)
-        obj.geometry.dispose()
-        obj.material.dispose()
+        obj.geometry?.dispose()
+        obj.material?.dispose()
       })
       apiTrailRef.current = null
     }
@@ -836,133 +836,83 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // ── Build full path: departure airport → DB trail → arrival airport ──
     const fullPath = []
-
-    // Prepend departure airport from route API
     if (routeData?.dep_lat != null) {
       fullPath.push({ latitude: routeData.dep_lat, longitude: routeData.dep_lon })
     }
-
-    // Add all DB trail points
     if (points?.length) {
       for (const p of points) fullPath.push(p)
     }
-
-    // Append arrival airport from route API
     if (routeData?.arr_lat != null) {
       fullPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
     }
-
     if (fullPath.length < 2) return
 
     const objects = []
-    const TRAIL_HEIGHT = EARTH_R + 0.005
-    const GLOW_HEIGHT  = EARTH_R + 0.004
+    const TRAIL_R = EARTH_R + 0.006
 
-    // ── Core ribbon (warm gold, fat) ──
-    const verts = greatCirclePoints(fullPath, TRAIL_HEIGHT)
-    if (verts.length < 2) return
+    // ── Convert to 3D points via great-circle interpolation ──
+    const gcPoints = greatCirclePoints(fullPath, TRAIL_R)
+    if (gcPoints.length < 2) return
 
-    const RIBBON_W = 0.004
-    const positions = []
-    const indices   = []
-    const _t = new Vector3(), _n = new Vector3(), _s = new Vector3()
-
-    for (let i = 0; i < verts.length; i++) {
-      _n.copy(verts[i]).normalize()
-      if (i === 0) _t.subVectors(verts[1], verts[0])
-      else if (i === verts.length - 1) _t.subVectors(verts[i], verts[i - 1])
-      else _t.subVectors(verts[i + 1], verts[i - 1])
-      _t.normalize()
-      _s.crossVectors(_t, _n).normalize().multiplyScalar(RIBBON_W * 0.5)
-
-      positions.push(
-        verts[i].x + _s.x, verts[i].y + _s.y, verts[i].z + _s.z,
-        verts[i].x - _s.x, verts[i].y - _s.y, verts[i].z - _s.z,
-      )
-      if (i > 0) {
-        const b = (i - 1) * 2
-        indices.push(b, b + 1, b + 2, b + 1, b + 3, b + 2)
-      }
-    }
-
-    const ribGeo = new BufferGeometry()
-    ribGeo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
-    ribGeo.setIndex(indices)
-    const ribMat = new MeshBasicMaterial({
-      color: 0xffaa22, transparent: true, opacity: 0.95,
-      side: DoubleSide, depthWrite: false,
+    // ── Core trail: TubeGeometry (real 3D tube, visible from any angle) ──
+    const curve = new CatmullRomCurve3(gcPoints, false, 'centripetal')
+    const tubeGeo = new TubeGeometry(curve, gcPoints.length, 0.003, 8, false)
+    const tubeMat = new MeshBasicMaterial({
+      color: 0xffaa22, depthTest: false, depthWrite: false,
+      transparent: true, opacity: 0.92, side: DoubleSide,
     })
-    const ribMesh = new Mesh(ribGeo, ribMat)
-    ribMesh.renderOrder = 12
-    scene.add(ribMesh)
-    objects.push(ribMesh)
+    const tubeMesh = new Mesh(tubeGeo, tubeMat)
+    tubeMesh.renderOrder = 20
+    scene.add(tubeMesh)
+    objects.push(tubeMesh)
 
-    // ── Outer glow ribbon (wider, translucent orange) ──
-    const glowVerts = greatCirclePoints(fullPath, GLOW_HEIGHT)
-    if (glowVerts.length >= 2) {
-      const gp = [], gi = []
-      const GLOW_W = 0.01
-      for (let i = 0; i < glowVerts.length; i++) {
-        _n.copy(glowVerts[i]).normalize()
-        if (i === 0) _t.subVectors(glowVerts[1], glowVerts[0])
-        else if (i === glowVerts.length - 1) _t.subVectors(glowVerts[i], glowVerts[i - 1])
-        else _t.subVectors(glowVerts[i + 1], glowVerts[i - 1])
-        _t.normalize()
-        _s.crossVectors(_t, _n).normalize().multiplyScalar(GLOW_W * 0.5)
-        gp.push(
-          glowVerts[i].x + _s.x, glowVerts[i].y + _s.y, glowVerts[i].z + _s.z,
-          glowVerts[i].x - _s.x, glowVerts[i].y - _s.y, glowVerts[i].z - _s.z,
-        )
-        if (i > 0) { const b = (i - 1) * 2; gi.push(b, b + 1, b + 2, b + 1, b + 3, b + 2) }
-      }
-      const gg = new BufferGeometry()
-      gg.setAttribute('position', new BufferAttribute(new Float32Array(gp), 3))
-      gg.setIndex(gi)
-      const gm = new MeshBasicMaterial({
-        color: 0xff6600, transparent: true, opacity: 0.4,
-        side: DoubleSide, depthWrite: false, blending: AdditiveBlending,
-      })
-      const gmesh = new Mesh(gg, gm)
-      gmesh.renderOrder = 11
-      scene.add(gmesh)
-      objects.push(gmesh)
-    }
+    // ── Glow tube (wider, translucent) ──
+    const glowGeo = new TubeGeometry(curve, gcPoints.length, 0.007, 8, false)
+    const glowMat = new MeshBasicMaterial({
+      color: 0xff6600, depthTest: false, depthWrite: false,
+      transparent: true, opacity: 0.25, side: DoubleSide, blending: AdditiveBlending,
+    })
+    const glowMesh = new Mesh(glowGeo, glowMat)
+    glowMesh.renderOrder = 19
+    scene.add(glowMesh)
+    objects.push(glowMesh)
 
-    // ── Airport markers: spheres at ROUTE API coords (not trail endpoints) ──
-    const MARKER_R    = EARTH_R + 0.006
-    const MARKER_SIZE = 0.015  // ~95 km radius — visible from any zoom
-    const RING_SIZE   = 0.028  // glow ring
-
+    // ── Airport markers: spheres at route API coords (depthTest off) ──
     const addMarker = (lat, lon, color) => {
-      const pos = ll2v(lat, lon, MARKER_R)
-      const sGeo = new SphereGeometry(MARKER_SIZE, 16, 12)
-      const sMat = new MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false })
-      const sMesh = new Mesh(sGeo, sMat)
+      const pos = ll2v(lat, lon, TRAIL_R + 0.002)
+      // Core sphere
+      const sg = new SphereGeometry(0.018, 16, 12)
+      const sm = new MeshBasicMaterial({
+        color, depthTest: false, depthWrite: false,
+        transparent: true, opacity: 0.95,
+      })
+      const sMesh = new Mesh(sg, sm)
       sMesh.position.copy(pos)
-      sMesh.renderOrder = 15
+      sMesh.renderOrder = 22
       scene.add(sMesh)
       objects.push(sMesh)
-      // Glow ring
-      const rGeo = new SphereGeometry(RING_SIZE, 16, 12)
-      const rMat = new MeshBasicMaterial({
-        color, transparent: true, opacity: 0.3, depthWrite: false, blending: AdditiveBlending,
+      // Glow sphere
+      const rg = new SphereGeometry(0.032, 16, 12)
+      const rm = new MeshBasicMaterial({
+        color, depthTest: false, depthWrite: false,
+        transparent: true, opacity: 0.3, blending: AdditiveBlending,
       })
-      const rMesh = new Mesh(rGeo, rMat)
+      const rMesh = new Mesh(rg, rm)
       rMesh.position.copy(pos)
-      rMesh.renderOrder = 14
+      rMesh.renderOrder = 21
       scene.add(rMesh)
       objects.push(rMesh)
     }
 
-    // Departure marker (green) — use route API coords, fallback to trail start
+    // Departure marker (green)
     const depLat = routeData?.dep_lat ?? fullPath[0].latitude
     const depLon = routeData?.dep_lon ?? fullPath[0].longitude
-    addMarker(depLat, depLon, 0x22ff88)
+    addMarker(depLat, depLon, 0x00ff66)
 
-    // Arrival marker (orange) — use route API coords, fallback to trail end
+    // Arrival marker (orange)
     const arrLat = routeData?.arr_lat ?? fullPath[fullPath.length - 1].latitude
     const arrLon = routeData?.arr_lon ?? fullPath[fullPath.length - 1].longitude
-    addMarker(arrLat, arrLon, 0xff6622)
+    addMarker(arrLat, arrLon, 0xff4400)
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = {
