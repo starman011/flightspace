@@ -100,16 +100,19 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const cat = liveData?.cat || 'plane'
   const isFlight = cat === 'plane' || cat === 'helicopter'
 
+  const routeRef = useRef(null)
+  useEffect(() => { routeRef.current = route }, [route])
+
   const refreshLive = useCallback(() => {
     if (!icao24 || !isFlight) return
     fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => {
         setDetail(data)
-        if (data.trail?.length) onTrailData?.(data.trail)
+        // Don't send raw trail here — let the enrichment effect handle it
       })
       .catch(() => {})
-  }, [icao24, isFlight, onTrailData])
+  }, [icao24, isFlight])
 
   useEffect(() => {
     if (!icao24) return
@@ -125,7 +128,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
         .then(data => {
           setDetail(data)
-          if (data.trail?.length) onTrailData?.(data.trail)
+          // Trail sent via enrichment effect once route data arrives
         })
         .catch(e => setError(e.message))
         .finally(() => setLoading(false))
@@ -144,13 +147,21 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Enrich trail with route endpoints — extend trail from departure airport to arrival airport
+  // Send trail to Globe — enriched with route endpoints when available
   useEffect(() => {
-    if (!route || !detail?.trail?.length) return
+    if (!detail?.trail?.length) return
     const trail = detail.trail
+
+    // No route yet — send raw trail so something shows immediately
+    if (!route) {
+      onTrailData?.(trail)
+      return
+    }
+
+    // Enrich: extend trail from departure airport to arrival airport
     const enriched = [...trail]
 
-    // Prepend departure airport if we have coords and trail doesn't already start near it
+    // Prepend departure airport
     if (route.dep_lat != null) {
       const firstPt = trail[0]
       const distToDep = haversineKm(firstPt.latitude, firstPt.longitude, route.dep_lat, route.dep_lon)
@@ -164,7 +175,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       }
     }
 
-    // Append arrival airport if we have coords
+    // Append arrival airport
     if (route.arr_lat != null) {
       const lastPt = trail[trail.length - 1]
       const distToArr = haversineKm(lastPt.latitude, lastPt.longitude, route.arr_lat, route.arr_lon)
@@ -178,9 +189,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       }
     }
 
-    if (enriched.length > trail.length) {
-      onTrailData?.(enriched)
-    }
+    onTrailData?.(enriched)
   }, [route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fallback: try registration-based photo if hex returned nothing
@@ -406,7 +415,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             {detail?.registration && <span>{detail.registration}</span>}
             {liveData?.ctry && <span>{liveData.ctry}</span>}
             <span>{displayGrnd ? 'ON GROUND' : cat === 'satellite' ? 'IN ORBIT' : cat === 'ship' ? 'AT SEA' : 'AIRBORNE'}</span>
-            <span>{formatAge(displayTs)}</span>
+            {etaMin != null && <span>ETA {fmtEta(etaMin)}</span>}
           </div>
         </div>
       )}
