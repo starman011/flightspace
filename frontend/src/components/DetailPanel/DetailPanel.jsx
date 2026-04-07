@@ -192,18 +192,22 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     onTrailData?.(enriched)
   }, [route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-fit: when tracking starts and we have route or trail data, zoom to show full route
+  // Auto-fit: when tracking starts, zoom to show full route (dep → arr)
+  // Re-fits when route data arrives (may come after Track click)
   const didAutoFit = useRef(false)
   useEffect(() => {
     if (!isTracking) { didAutoFit.current = false; return }
-    if (didAutoFit.current) return
-    // Wait until we have either route coords or trail data to fit
-    const hasRoute = route?.dep_lat != null || route?.arr_lat != null
+    const hasRouteCoords = route?.dep_lat != null && route?.arr_lat != null
     const hasTrail = detail?.trail?.length > 1
-    if (!hasRoute && !hasTrail) return
-    didAutoFit.current = true
-    // Small delay so drawTrail has time to process the enriched trail
-    setTimeout(() => onFitRoute?.(route), 300)
+    // If we already fit with route coords, don't re-fit with lesser data
+    if (didAutoFit.current === 'route') return
+    // If we already fit with trail and still no route coords, don't re-fit
+    if (didAutoFit.current === 'trail' && !hasRouteCoords) return
+    if (!hasRouteCoords && !hasTrail) return
+
+    didAutoFit.current = hasRouteCoords ? 'route' : 'trail'
+    // Delay so drawTrail processes the enriched trail first
+    setTimeout(() => onFitRoute?.(route), 350)
   }, [isTracking, route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fallback: try registration-based photo if hex returned nothing

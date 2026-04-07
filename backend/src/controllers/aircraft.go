@@ -334,16 +334,16 @@ func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 // getRouteFromHeading estimates departure/arrival airports from live position and heading.
-// Does NOT use first trail point as departure — a plane at 30k feet clearly departed long ago.
+// Uses the large OpenFlights airport database (7700+ airports).
 func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http.Request, icao24 string) {
 	ctx := r.Context()
 
 	result := models.RouteResponse{
 		ICAO24: icao24,
-		Source: "trail",
+		Source: "heading",
 	}
 
-	// Get live position — this is our primary data source
+	// Get live position
 	raw, err := ac.rdb.HGet(ctx, aircraftLiveKey, icao24).Result()
 	if err != nil {
 		utils.JSON(w, http.StatusOK, result)
@@ -356,19 +356,13 @@ func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http
 		return
 	}
 
-	hdg := float64(0)
-	if live.Hdg != nil {
-		hdg = *live.Hdg
-	}
-	vel := float64(0)
-	if live.Vel != nil {
-		vel = *live.Vel
-	}
+	hasHeading := live.Hdg != nil
+	hasSpeed := live.Vel != nil && *live.Vel > 20
 
-	// Departure: look BEHIND the aircraft (reverse heading) for the nearest major airport
-	if vel > 50 {
-		reverseHdg := math.Mod(hdg+180, 360)
-		behind, _ := findAirportInDirection(live.Lat, live.Lon, reverseHdg, 2500, 60)
+	// Departure: look behind aircraft using large airport DB
+	if hasHeading && hasSpeed {
+		reverseHdg := math.Mod(*live.Hdg+180, 360)
+		behind := data.FindAirportInDirection(live.Lat, live.Lon, reverseHdg, 3000, 70)
 		if behind != nil {
 			result.DepartureICAO = &behind.ICAO
 			result.DepartureName = &behind.Name
@@ -377,10 +371,21 @@ func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http
 			result.DepLon = &behind.Lon
 		}
 	}
+	// Fallback: nearest airport behind or just nearest airport
+	if result.DepLat == nil {
+		nearest := data.FindNearestAirport(live.Lat, live.Lon, 3000)
+		if nearest != nil {
+			result.DepartureICAO = &nearest.ICAO
+			result.DepartureName = &nearest.Name
+			result.DepartureIATA = &nearest.IATA
+			result.DepLat = &nearest.Lat
+			result.DepLon = &nearest.Lon
+		}
+	}
 
-	// Arrival: look AHEAD of the aircraft for the nearest airport in its path
-	if vel > 50 {
-		ahead, dist := findAirportInDirection(live.Lat, live.Lon, hdg, 2500, 45)
+	// Arrival: look ahead of aircraft
+	if hasHeading && hasSpeed {
+		ahead := data.FindAirportInDirection(live.Lat, live.Lon, *live.Hdg, 3000, 50)
 		if ahead != nil {
 			result.ArrivalICAO = &ahead.ICAO
 			result.ArrivalName = &ahead.Name
@@ -388,12 +393,11 @@ func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http
 			result.ArrLat = &ahead.Lat
 			result.ArrLon = &ahead.Lon
 
-			// ETA from distance and speed
-			speedKmh := vel * 1.852
+			dist := haversineKmAC(live.Lat, live.Lon, ahead.Lat, ahead.Lon)
+			speedKmh := *live.Vel * 1.852
 			if speedKmh > 0 {
-				etaMin := (dist / speedKmh) * 60
-				rounded := math.Round(etaMin)
-				result.ETAMin = &rounded
+				etaMin := math.Round((dist / speedKmh) * 60)
+				result.ETAMin = &etaMin
 			}
 		}
 	}
@@ -419,46 +423,6 @@ func (ac *AircraftController) computeETA(result *models.RouteResponse, icao24 st
 	}
 }
 
-// findNearestAirport finds the closest airport to a given lat/lon.
-func findNearestAirport(lat, lon float64) (*data.AirportInfo, float64) {
-	var best *data.AirportInfo
-	bestDist := math.Inf(1)
-	for _, a := range data.AirportByICAO {
-		d := haversineKmAC(lat, lon, a.Lat, a.Lon)
-		if d < bestDist {
-			bestDist = d
-			a := a
-			best = &a
-		}
-	}
-	return best, bestDist
-}
-
-// findAirportInDirection finds the nearest airport in a given direction within maxKm and cone degrees.
-func findAirportInDirection(lat, lon, heading, maxKm, coneDeg float64) (*data.AirportInfo, float64) {
-	var best *data.AirportInfo
-	bestDist := math.Inf(1)
-	for _, a := range data.AirportByICAO {
-		d := haversineKmAC(lat, lon, a.Lat, a.Lon)
-		if d > maxKm || d < 10 {
-			continue
-		}
-		brg := bearingAC(lat, lon, a.Lat, a.Lon)
-		diff := math.Abs(brg - heading)
-		if diff > 180 {
-			diff = 360 - diff
-		}
-		if diff > coneDeg {
-			continue
-		}
-		if d < bestDist {
-			bestDist = d
-			a := a
-			best = &a
-		}
-	}
-	return best, bestDist
-}
 
 // haversineKmAC calculates distance in km (avoid collision with airport.go's haversineKm).
 func haversineKmAC(lat1, lon1, lat2, lon2 float64) float64 {
