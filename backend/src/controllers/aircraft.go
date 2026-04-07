@@ -3,8 +3,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"regexp"
@@ -269,8 +267,7 @@ func (ac *AircraftController) Search(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetRoute handles GET /api/v1/aircraft/{icao24}/route.
-// Calls OpenSky Network flights API to get departure/arrival airports,
-// then enriches with airport names and coordinates from our database.
+// Priority: 1) OpenFlights route DB (callsign → airline → route), 2) heading-based estimation.
 func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 	icao24 := strings.ToLower(strings.TrimSpace(r.PathValue("icao24")))
 	if icao24 == "" || !icaoRe.MatchString(icao24) {
@@ -278,88 +275,67 @@ func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Query OpenSky for flights in the last 4 hours
-	now := time.Now().Unix()
-	begin := now - 4*3600
-
-	url := fmt.Sprintf(
-		"https://opensky-network.org/api/flights/aircraft?icao24=%s&begin=%d&end=%d",
-		icao24, begin, now,
-	)
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	// Get live position — needed for route matching and ETA
+	raw, err := ac.rdb.HGet(r.Context(), aircraftLiveKey, icao24).Result()
 	if err != nil {
-		utils.Error(w, http.StatusBadGateway, "failed to reach flight data provider")
+		ac.getRouteFromHeading(w, r, icao24)
 		return
 	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil || resp.StatusCode != 200 {
-		// OpenSky may rate-limit or return no data — fallback to trail-based estimation
-		ac.getRouteFromTrail(w, r, icao24)
+	var live models.LiveAircraft
+	if json.Unmarshal([]byte(raw), &live) != nil {
+		ac.getRouteFromHeading(w, r, icao24)
 		return
 	}
 
-	var flights []struct {
-		DepartureAirport *string `json:"estDepartureAirport"`
-		ArrivalAirport   *string `json:"estArrivalAirport"`
-		FirstSeen        *int64  `json:"firstSeen"`
-		LastSeen         *int64  `json:"lastSeen"`
-		Callsign         *string `json:"callsign"`
+	// Try callsign-based route lookup from OpenFlights database
+	callsign := ""
+	if live.Callsign != nil {
+		callsign = strings.TrimSpace(*live.Callsign)
 	}
+	if callsign != "" {
+		dep, arr := data.LookupRoute(callsign, live.Lat, live.Lon)
+		if dep != nil && arr != nil {
+			result := models.RouteResponse{
+				ICAO24: icao24,
+				Source: "routes_db",
+			}
 
-	if err := json.Unmarshal(body, &flights); err != nil || len(flights) == 0 {
-		ac.getRouteFromTrail(w, r, icao24)
-		return
-	}
+			depICAO := dep.ICAO
+			result.DepartureICAO = &depICAO
+			result.DepartureName = &dep.Name
+			result.DepartureIATA = &dep.IATA
+			result.DepLat = &dep.Lat
+			result.DepLon = &dep.Lon
 
-	// Use the most recent flight
-	latest := flights[len(flights)-1]
+			arrICAO := arr.ICAO
+			result.ArrivalICAO = &arrICAO
+			result.ArrivalName = &arr.Name
+			result.ArrivalIATA = &arr.IATA
+			result.ArrLat = &arr.Lat
+			result.ArrLon = &arr.Lon
 
-	result := models.RouteResponse{
-		ICAO24: icao24,
-	}
+			// Compute ETA from current position to arrival
+			if live.Vel != nil && *live.Vel > 20 {
+				dist := haversineKmAC(live.Lat, live.Lon, arr.Lat, arr.Lon)
+				speedKmh := *live.Vel * 1.852
+				if speedKmh > 0 {
+					etaMin := math.Round((dist / speedKmh) * 60)
+					result.ETAMin = &etaMin
+				}
+			}
 
-	if latest.DepartureAirport != nil && *latest.DepartureAirport != "" {
-		icaoCode := *latest.DepartureAirport
-		result.DepartureICAO = &icaoCode
-		if apt := data.LookupICAO(icaoCode); apt != nil {
-			result.DepartureName = &apt.Name
-			result.DepartureIATA = &apt.IATA
-			result.DepLat = &apt.Lat
-			result.DepLon = &apt.Lon
-		} else {
-			result.DepartureName = &icaoCode
+			utils.JSON(w, http.StatusOK, result)
+			return
 		}
 	}
 
-	if latest.ArrivalAirport != nil && *latest.ArrivalAirport != "" {
-		icaoCode := *latest.ArrivalAirport
-		result.ArrivalICAO = &icaoCode
-		if apt := data.LookupICAO(icaoCode); apt != nil {
-			result.ArrivalName = &apt.Name
-			result.ArrivalIATA = &apt.IATA
-			result.ArrLat = &apt.Lat
-			result.ArrLon = &apt.Lon
-		} else {
-			result.ArrivalName = &icaoCode
-		}
-	}
-
-	// Compute ETA if we have arrival airport coords and current position/speed
-	if result.ArrLat != nil {
-		ac.computeETA(&result, icao24)
-	}
-
-	result.Source = "opensky"
-	utils.JSON(w, http.StatusOK, result)
+	// Fallback: heading-based estimation
+	ac.getRouteFromHeading(w, r, icao24)
 }
 
-// getRouteFromTrail estimates departure/arrival airports from live position and heading.
+// getRouteFromHeading estimates departure/arrival airports from live position and heading.
 // Does NOT use first trail point as departure — a plane at 30k feet clearly departed long ago.
-func (ac *AircraftController) getRouteFromTrail(w http.ResponseWriter, r *http.Request, icao24 string) {
+func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http.Request, icao24 string) {
 	ctx := r.Context()
 
 	result := models.RouteResponse{

@@ -144,6 +144,45 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Enrich trail with route endpoints — extend trail from departure airport to arrival airport
+  useEffect(() => {
+    if (!route || !detail?.trail?.length) return
+    const trail = detail.trail
+    const enriched = [...trail]
+
+    // Prepend departure airport if we have coords and trail doesn't already start near it
+    if (route.dep_lat != null) {
+      const firstPt = trail[0]
+      const distToDep = haversineKm(firstPt.latitude, firstPt.longitude, route.dep_lat, route.dep_lon)
+      if (distToDep > 20) {
+        enriched.unshift({
+          latitude: route.dep_lat,
+          longitude: route.dep_lon,
+          altitude: 0,
+          timestamp: firstPt.timestamp,
+        })
+      }
+    }
+
+    // Append arrival airport if we have coords
+    if (route.arr_lat != null) {
+      const lastPt = trail[trail.length - 1]
+      const distToArr = haversineKm(lastPt.latitude, lastPt.longitude, route.arr_lat, route.arr_lon)
+      if (distToArr > 20) {
+        enriched.push({
+          latitude: route.arr_lat,
+          longitude: route.arr_lon,
+          altitude: 0,
+          timestamp: new Date().toISOString(),
+        })
+      }
+    }
+
+    if (enriched.length > trail.length) {
+      onTrailData?.(enriched)
+    }
+  }, [route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fallback: try registration-based photo if hex returned nothing
   useEffect(() => {
     if (photo || !detail?.registration || photoTriedReg.current) return
@@ -198,8 +237,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const typeDesc = detail?.type_description
   const operator = detail?.operator
 
-  // Route: from API (real airports via OpenSky or heading-based estimation)
-  // Do NOT use trail[0] as departure — DB tracking starts mid-flight
+  // Route: from API (OpenFlights route DB or heading-based estimation)
   const depName = route?.departure_iata || route?.departure_name || 'DEP'
   const arrName = route?.arrival_iata || route?.arrival_name || 'ARR'
   const etaMin = route?.eta_min
