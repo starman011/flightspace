@@ -883,13 +883,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(mesh)
     }
 
-    // Traveled portion — bright cyan
+    // Traveled portion — solid bright green (already flown)
     if (traveledPath.length >= 2) {
-      makeTube(traveledPath, 0x00ccff, 0.85, 0.0008, 20)
+      makeTube(traveledPath, 0x00e676, 0.85, 0.0008, 20)
     }
-    // Remaining portion — dim white dashed-look
+    // Remaining portion — dim orange (yet to fly)
     if (remainingPath.length >= 2) {
-      makeTube(remainingPath, 0xffffff, 0.3, 0.0006, 19)
+      makeTube(remainingPath, 0xff9800, 0.3, 0.0006, 19)
     }
 
     // ── Airport markers: small dots at route API coords ──

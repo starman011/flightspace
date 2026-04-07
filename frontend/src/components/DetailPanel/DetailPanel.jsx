@@ -147,15 +147,21 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Send trail + route to Globe — Globe.drawTrail handles all enrichment
+  // Send trail + route + live position to Globe
   // MUST fire even when trail is empty — route data alone draws dep→arr line + markers
   useEffect(() => {
     if (!detail) return
     const hasTrail = detail.trail?.length > 0
     const hasRoute = route?.dep_lat != null || route?.arr_lat != null
-    if (!hasTrail && !hasRoute) return
-    onTrailData?.(detail.trail || [], route)
-  }, [route, detail]) // eslint-disable-line react-hooks/exhaustive-deps
+    const hasLive = liveData?.lat != null
+    if (!hasTrail && !hasRoute && !hasLive) return
+    // Append current live position so trail connects to the plane
+    const trail = [...(detail.trail || [])]
+    if (hasLive) {
+      trail.push({ latitude: liveData.lat, longitude: liveData.lon, altitude: liveData.alt_baro ?? 0 })
+    }
+    onTrailData?.(trail, route)
+  }, [route, detail, liveData?.lat, liveData?.lon]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-fit: when tracking starts, zoom to show full route (dep → arr)
   // Re-fits when route data arrives (may come after Track click)
