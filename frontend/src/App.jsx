@@ -185,8 +185,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setSearchOpen(false)
   }, [])
 
-  const handleTrailData = useCallback((trailPoints) => {
-    globeRef.current?.drawTrail?.(trailPoints)
+  const handleTrailData = useCallback((trailPoints, routeData) => {
+    globeRef.current?.drawTrail?.(trailPoints, routeData)
   }, [])
 
   const handleCameraScale = useCallback((scale) => {

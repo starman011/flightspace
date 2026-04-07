@@ -147,49 +147,10 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Send trail to Globe — enriched with route endpoints when available
+  // Send trail + route to Globe — Globe.drawTrail handles all enrichment
   useEffect(() => {
     if (!detail?.trail?.length) return
-    const trail = detail.trail
-
-    // No route yet — send raw trail so something shows immediately
-    if (!route) {
-      onTrailData?.(trail)
-      return
-    }
-
-    // Enrich: extend trail from departure airport to arrival airport
-    const enriched = [...trail]
-
-    // Prepend departure airport
-    if (route.dep_lat != null) {
-      const firstPt = trail[0]
-      const distToDep = haversineKm(firstPt.latitude, firstPt.longitude, route.dep_lat, route.dep_lon)
-      if (distToDep > 20) {
-        enriched.unshift({
-          latitude: route.dep_lat,
-          longitude: route.dep_lon,
-          altitude: 0,
-          timestamp: firstPt.timestamp,
-        })
-      }
-    }
-
-    // Append arrival airport
-    if (route.arr_lat != null) {
-      const lastPt = trail[trail.length - 1]
-      const distToArr = haversineKm(lastPt.latitude, lastPt.longitude, route.arr_lat, route.arr_lon)
-      if (distToArr > 20) {
-        enriched.push({
-          latitude: route.arr_lat,
-          longitude: route.arr_lon,
-          altitude: 0,
-          timestamp: new Date().toISOString(),
-        })
-      }
-    }
-
-    onTrailData?.(enriched)
+    onTrailData?.(detail.trail, route)
   }, [route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-fit: when tracking starts, zoom to show full route (dep → arr)

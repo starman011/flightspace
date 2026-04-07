@@ -818,10 +818,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   setHoverTooltipRef.current = setHoverTooltip
 
   // ── API trail: draw departure→current path from detail panel ──────────────
-  const drawTrail = useCallback((points) => {
+  // routeData: { dep_lat, dep_lon, arr_lat, arr_lon, ... } from route API
+  const drawTrail = useCallback((points, routeData) => {
     const { scene } = int.current
     if (!scene) return
 
+    // Clean up previous trail objects
     if (apiTrailRef.current) {
       apiTrailRef.current.forEach(obj => {
         scene.remove(obj)
@@ -830,43 +832,64 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       })
       apiTrailRef.current = null
     }
-    if (!points?.length) return
+    if (!points?.length && !routeData) return
 
-    const verts = greatCirclePoints(points, EARTH_R + 0.004)
-    if (verts.length < 2) return
+    // ── Build full path: departure airport → DB trail → arrival airport ──
+    const fullPath = []
+
+    // Prepend departure airport from route API
+    if (routeData?.dep_lat != null) {
+      fullPath.push({ latitude: routeData.dep_lat, longitude: routeData.dep_lon })
+    }
+
+    // Add all DB trail points
+    if (points?.length) {
+      for (const p of points) fullPath.push(p)
+    }
+
+    // Append arrival airport from route API
+    if (routeData?.arr_lat != null) {
+      fullPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
+    }
+
+    if (fullPath.length < 2) return
 
     const objects = []
+    const TRAIL_HEIGHT = EARTH_R + 0.005
+    const GLOW_HEIGHT  = EARTH_R + 0.004
 
-    // ── Mesh ribbon: actual filled geometry, visible at any zoom / DPI ──
-    const RIBBON_W = 0.003
+    // ── Core ribbon (warm gold, fat) ──
+    const verts = greatCirclePoints(fullPath, TRAIL_HEIGHT)
+    if (verts.length < 2) return
+
+    const RIBBON_W = 0.004
     const positions = []
     const indices   = []
     const _t = new Vector3(), _n = new Vector3(), _s = new Vector3()
 
     for (let i = 0; i < verts.length; i++) {
-      _n.copy(verts[i]).normalize()                                      // surface normal
+      _n.copy(verts[i]).normalize()
       if (i === 0) _t.subVectors(verts[1], verts[0])
       else if (i === verts.length - 1) _t.subVectors(verts[i], verts[i - 1])
       else _t.subVectors(verts[i + 1], verts[i - 1])
       _t.normalize()
-      _s.crossVectors(_t, _n).normalize().multiplyScalar(RIBBON_W * 0.5) // side vector
+      _s.crossVectors(_t, _n).normalize().multiplyScalar(RIBBON_W * 0.5)
 
       positions.push(
-        verts[i].x + _s.x, verts[i].y + _s.y, verts[i].z + _s.z,       // left
-        verts[i].x - _s.x, verts[i].y - _s.y, verts[i].z - _s.z,       // right
+        verts[i].x + _s.x, verts[i].y + _s.y, verts[i].z + _s.z,
+        verts[i].x - _s.x, verts[i].y - _s.y, verts[i].z - _s.z,
       )
       if (i > 0) {
         const b = (i - 1) * 2
-        indices.push(b, b + 1, b + 2,  b + 1, b + 3, b + 2)
+        indices.push(b, b + 1, b + 2, b + 1, b + 3, b + 2)
       }
     }
 
-    // Core ribbon (warm gold)
     const ribGeo = new BufferGeometry()
     ribGeo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
     ribGeo.setIndex(indices)
     const ribMat = new MeshBasicMaterial({
-      color: 0xffaa22, transparent: true, opacity: 0.9,
+      color: 0xffaa22, transparent: true, opacity: 0.95,
       side: DoubleSide, depthWrite: false,
     })
     const ribMesh = new Mesh(ribGeo, ribMat)
@@ -874,11 +897,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     scene.add(ribMesh)
     objects.push(ribMesh)
 
-    // Outer glow ribbon (wider, translucent)
-    const glowVerts = greatCirclePoints(points, EARTH_R + 0.003)
+    // ── Outer glow ribbon (wider, translucent orange) ──
+    const glowVerts = greatCirclePoints(fullPath, GLOW_HEIGHT)
     if (glowVerts.length >= 2) {
       const gp = [], gi = []
-      const GLOW_W = 0.008
+      const GLOW_W = 0.01
       for (let i = 0; i < glowVerts.length; i++) {
         _n.copy(glowVerts[i]).normalize()
         if (i === 0) _t.subVectors(glowVerts[1], glowVerts[0])
@@ -896,7 +919,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       gg.setAttribute('position', new BufferAttribute(new Float32Array(gp), 3))
       gg.setIndex(gi)
       const gm = new MeshBasicMaterial({
-        color: 0xff6600, transparent: true, opacity: 0.35,
+        color: 0xff6600, transparent: true, opacity: 0.4,
         side: DoubleSide, depthWrite: false, blending: AdditiveBlending,
       })
       const gmesh = new Mesh(gg, gm)
@@ -905,39 +928,47 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(gmesh)
     }
 
-    // ── Endpoint markers: departure (green) and arrival (orange) ──
-    const MARKER_R = EARTH_R + 0.003
-    const MARKER_SIZE = 0.012  // sphere radius in world units (~76 km)
-    const RING_SIZE   = 0.022  // outer ring radius
-    const first = points[0], last = points[points.length - 1]
+    // ── Airport markers: spheres at ROUTE API coords (not trail endpoints) ──
+    const MARKER_R    = EARTH_R + 0.006
+    const MARKER_SIZE = 0.015  // ~95 km radius — visible from any zoom
+    const RING_SIZE   = 0.028  // glow ring
 
     const addMarker = (lat, lon, color) => {
       const pos = ll2v(lat, lon, MARKER_R)
-      // Solid sphere
       const sGeo = new SphereGeometry(MARKER_SIZE, 16, 12)
       const sMat = new MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false })
       const sMesh = new Mesh(sGeo, sMat)
       sMesh.position.copy(pos)
-      sMesh.renderOrder = 14
+      sMesh.renderOrder = 15
       scene.add(sMesh)
       objects.push(sMesh)
-      // Outer glow ring
+      // Glow ring
       const rGeo = new SphereGeometry(RING_SIZE, 16, 12)
       const rMat = new MeshBasicMaterial({
-        color, transparent: true, opacity: 0.25, depthWrite: false, blending: AdditiveBlending,
+        color, transparent: true, opacity: 0.3, depthWrite: false, blending: AdditiveBlending,
       })
       const rMesh = new Mesh(rGeo, rMat)
       rMesh.position.copy(pos)
-      rMesh.renderOrder = 13
+      rMesh.renderOrder = 14
       scene.add(rMesh)
       objects.push(rMesh)
     }
 
-    addMarker(first.latitude, first.longitude, 0x22ff88) // departure — green
-    addMarker(last.latitude, last.longitude, 0xff6622)   // arrival — orange
+    // Departure marker (green) — use route API coords, fallback to trail start
+    const depLat = routeData?.dep_lat ?? fullPath[0].latitude
+    const depLon = routeData?.dep_lon ?? fullPath[0].longitude
+    addMarker(depLat, depLon, 0x22ff88)
+
+    // Arrival marker (orange) — use route API coords, fallback to trail end
+    const arrLat = routeData?.arr_lat ?? fullPath[fullPath.length - 1].latitude
+    const arrLon = routeData?.arr_lon ?? fullPath[fullPath.length - 1].longitude
+    addMarker(arrLat, arrLon, 0xff6622)
 
     apiTrailRef.current = objects
-    int.current.trailEndpoints = { first, last }
+    int.current.trailEndpoints = {
+      first: { latitude: depLat, longitude: depLon },
+      last:  { latitude: arrLat, longitude: arrLon },
+    }
   }, [])
 
   useImperativeHandle(ref, () => ({

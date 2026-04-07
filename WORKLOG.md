@@ -30,6 +30,7 @@ Tracks all significant changes made during development sessions.
 | 5 | **Fat visible trail ribbon** | Core ribbon width 0.0004→0.003 WU (~19km), glow width 0.001→0.008 WU (~50km). Trail raised from +0.0015 to +0.004 above Earth surface. Clearly visible from any zoom level. |
 | 6 | **Visible airport markers** | Replaced tiny 20px `Points` (invisible at most angles) with solid `SphereGeometry` markers (0.012 WU radius ≈ 76km) + outer additive-blended glow spheres (0.022 WU). Departure: green, arrival: orange. Visible from orbit. |
 | 7 | **Hide 1px real-time trail when tracking** | Real-time `LineSegments` trails (1px WebGL limitation) now hidden when tracking is active. Only the fat mesh-ribbon API trail renders, preventing the confusing thin trail from DB-start time showing alongside the proper route trail. |
+| 8 | **Trail architecture rewrite** | Root cause of 5-time-recurring trail bug: markers used `points[0]` (DB trail start) instead of route API airport coords. Enrichment was a fragile middleman in DetailPanel. Fix: `drawTrail(points, routeData)` now builds the full path internally — prepends dep airport coords, appends arr airport coords from route API, places markers at actual airport positions. DetailPanel just passes raw trail + route, no enrichment. Ribbon width 0.004 WU core + 0.01 glow. Airport sphere markers 0.015 WU + glow rings 0.028 WU at renderOrder 15. |
 
 ### Research
 
