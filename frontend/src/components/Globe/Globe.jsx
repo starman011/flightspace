@@ -848,71 +848,74 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (fullPath.length < 2) return
 
     const objects = []
-    const TRAIL_R = EARTH_R + 0.006
+    const TRAIL_R = EARTH_R + 0.003  // hug the surface, overlap with plane
 
-    // ── Convert to 3D points via great-circle interpolation ──
-    const gcPoints = greatCirclePoints(fullPath, TRAIL_R)
-    if (gcPoints.length < 2) return
+    // ── Split path into "traveled" (dep → last trail point) and "remaining" (→ arr) ──
+    // Traveled = dep airport + DB trail points, Remaining = last trail point → arr airport
+    const traveledPath = []
+    const remainingPath = []
 
-    // ── Core trail: TubeGeometry (real 3D tube, visible from any angle) ──
-    const curve = new CatmullRomCurve3(gcPoints, false, 'centripetal')
-    const tubeGeo = new TubeGeometry(curve, gcPoints.length, 0.003, 8, false)
-    const tubeMat = new MeshBasicMaterial({
-      color: 0xffaa22, depthTest: false, depthWrite: false,
-      transparent: true, opacity: 0.92, side: DoubleSide,
-    })
-    const tubeMesh = new Mesh(tubeGeo, tubeMat)
-    tubeMesh.renderOrder = 20
-    scene.add(tubeMesh)
-    objects.push(tubeMesh)
+    if (routeData?.dep_lat != null) {
+      traveledPath.push({ latitude: routeData.dep_lat, longitude: routeData.dep_lon })
+    }
+    if (points?.length) {
+      for (const p of points) traveledPath.push(p)
+    }
+    // Remaining starts from last traveled point to arrival
+    if (traveledPath.length > 0 && routeData?.arr_lat != null) {
+      const lastTraveled = traveledPath[traveledPath.length - 1]
+      remainingPath.push(lastTraveled)
+      remainingPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
+    }
 
-    // ── Glow tube (wider, translucent) ──
-    const glowGeo = new TubeGeometry(curve, gcPoints.length, 0.007, 8, false)
-    const glowMat = new MeshBasicMaterial({
-      color: 0xff6600, depthTest: false, depthWrite: false,
-      transparent: true, opacity: 0.25, side: DoubleSide, blending: AdditiveBlending,
-    })
-    const glowMesh = new Mesh(glowGeo, glowMat)
-    glowMesh.renderOrder = 19
-    scene.add(glowMesh)
-    objects.push(glowMesh)
+    const makeTube = (path, color, opacity, radius, order) => {
+      const gc = greatCirclePoints(path, TRAIL_R)
+      if (gc.length < 2) return
+      const c = new CatmullRomCurve3(gc, false, 'centripetal')
+      const geo = new TubeGeometry(c, Math.min(gc.length, 300), radius, 6, false)
+      const mat = new MeshBasicMaterial({
+        color, depthTest: false, depthWrite: false,
+        transparent: true, opacity, side: DoubleSide,
+      })
+      const mesh = new Mesh(geo, mat)
+      mesh.renderOrder = order
+      scene.add(mesh)
+      objects.push(mesh)
+    }
 
-    // ── Airport markers: spheres at route API coords (depthTest off) ──
+    // Traveled portion — bright cyan
+    if (traveledPath.length >= 2) {
+      makeTube(traveledPath, 0x00ccff, 0.85, 0.0008, 20)
+    }
+    // Remaining portion — dim white dashed-look
+    if (remainingPath.length >= 2) {
+      makeTube(remainingPath, 0xffffff, 0.3, 0.0006, 19)
+    }
+
+    // ── Airport markers: small dots at route API coords ──
     const addMarker = (lat, lon, color) => {
-      const pos = ll2v(lat, lon, TRAIL_R + 0.002)
-      // Core sphere
-      const sg = new SphereGeometry(0.018, 16, 12)
+      const pos = ll2v(lat, lon, TRAIL_R + 0.001)
+      const sg = new SphereGeometry(0.005, 12, 8)
       const sm = new MeshBasicMaterial({
         color, depthTest: false, depthWrite: false,
-        transparent: true, opacity: 0.95,
+        transparent: true, opacity: 0.9,
       })
       const sMesh = new Mesh(sg, sm)
       sMesh.position.copy(pos)
       sMesh.renderOrder = 22
       scene.add(sMesh)
       objects.push(sMesh)
-      // Glow sphere
-      const rg = new SphereGeometry(0.032, 16, 12)
-      const rm = new MeshBasicMaterial({
-        color, depthTest: false, depthWrite: false,
-        transparent: true, opacity: 0.3, blending: AdditiveBlending,
-      })
-      const rMesh = new Mesh(rg, rm)
-      rMesh.position.copy(pos)
-      rMesh.renderOrder = 21
-      scene.add(rMesh)
-      objects.push(rMesh)
     }
 
-    // Departure marker (green)
+    // Departure (green dot)
     const depLat = routeData?.dep_lat ?? fullPath[0].latitude
     const depLon = routeData?.dep_lon ?? fullPath[0].longitude
-    addMarker(depLat, depLon, 0x00ff66)
+    addMarker(depLat, depLon, 0x22ff88)
 
-    // Arrival marker (orange)
+    // Arrival (orange dot)
     const arrLat = routeData?.arr_lat ?? fullPath[fullPath.length - 1].latitude
     const arrLon = routeData?.arr_lon ?? fullPath[fullPath.length - 1].longitude
-    addMarker(arrLat, arrLon, 0xff4400)
+    addMarker(arrLat, arrLon, 0xff6622)
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = {
