@@ -707,6 +707,17 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
       }
     }
 
+    // ── Isolation: when tracking, hide all aircraft except the tracked one ──
+    const isolating = state.trackingId != null
+    if (isolating && id !== state.trackingId) {
+      if (inst.lat !== null) {
+        mesh.setMatrixAt(inst.index, _zeroMat)
+        inst.pos = null; inst.lat = null; inst.lon = null; inst.hdg = null
+        meshDirty.add(mesh)
+      }
+      continue
+    }
+
     // ── Skip matrix recomputation if position/heading unchanged ─────────────
     const headDeg = a.hdg ?? a.heading ?? a.trk ?? a.cog ?? 0
     const moved = forceScale
@@ -851,12 +862,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
     }
 
-    // Core ribbon (bright cyan)
+    // Core ribbon (warm gold)
     const ribGeo = new BufferGeometry()
     ribGeo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
     ribGeo.setIndex(indices)
     const ribMat = new MeshBasicMaterial({
-      color: 0x00ddff, transparent: true, opacity: 0.85,
+      color: 0xffaa22, transparent: true, opacity: 0.9,
       side: DoubleSide, depthWrite: false,
     })
     const ribMesh = new Mesh(ribGeo, ribMat)
@@ -886,7 +897,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       gg.setAttribute('position', new BufferAttribute(new Float32Array(gp), 3))
       gg.setIndex(gi)
       const gm = new MeshBasicMaterial({
-        color: 0x0066aa, transparent: true, opacity: 0.3,
+        color: 0xff6600, transparent: true, opacity: 0.35,
         side: DoubleSide, depthWrite: false, blending: AdditiveBlending,
       })
       const gmesh = new Mesh(gg, gm)
@@ -895,22 +906,35 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(gmesh)
     }
 
-    // ── Endpoint markers: larger dots at departure and current position ──
+    // ── Endpoint markers: departure (green) and arrival/current (orange) ──
     const MARKER_R = EARTH_R + 0.0025
     const first = points[0], last = points[points.length - 1]
+
+    // Departure marker (green)
     const p0 = ll2v(first.latitude, first.longitude, MARKER_R)
-    const p1 = ll2v(last.latitude, last.longitude, MARKER_R)
-    const mkPos = new Float32Array([p0.x, p0.y, p0.z, p1.x, p1.y, p1.z])
-    const mkGeo = new BufferGeometry()
-    mkGeo.setAttribute('position', new BufferAttribute(mkPos, 3))
-    const mkMat = new PointsMaterial({
-      color: 0x2088ff, size: 16, sizeAttenuation: false,
+    const depGeo = new BufferGeometry()
+    depGeo.setAttribute('position', new BufferAttribute(new Float32Array([p0.x, p0.y, p0.z]), 3))
+    const depMat = new PointsMaterial({
+      color: 0x22ff88, size: 20, sizeAttenuation: false,
       transparent: true, opacity: 0.95, depthWrite: false,
     })
-    const mkPts = new Points(mkGeo, mkMat)
-    mkPts.renderOrder = 13
-    scene.add(mkPts)
-    objects.push(mkPts)
+    const depPts = new Points(depGeo, depMat)
+    depPts.renderOrder = 13
+    scene.add(depPts)
+    objects.push(depPts)
+
+    // Arrival/current marker (orange)
+    const p1 = ll2v(last.latitude, last.longitude, MARKER_R)
+    const arrGeo = new BufferGeometry()
+    arrGeo.setAttribute('position', new BufferAttribute(new Float32Array([p1.x, p1.y, p1.z]), 3))
+    const arrMat = new PointsMaterial({
+      color: 0xff6622, size: 20, sizeAttenuation: false,
+      transparent: true, opacity: 0.95, depthWrite: false,
+    })
+    const arrPts = new Points(arrGeo, arrMat)
+    arrPts.renderOrder = 13
+    scene.add(arrPts)
+    objects.push(arrPts)
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = { first, last }
@@ -930,23 +954,35 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
-    fitRoute: () => {
-      const ep = int.current.trailEndpoints
-      if (!ep || !int.current?.camera) return
+    fitRoute: (routeData) => {
+      if (!int.current?.camera) return
       const camera = int.current.camera
-      // Midpoint between departure and current position
-      const v0 = ll2v(ep.first.latitude, ep.first.longitude, EARTH_R).normalize()
-      const v1 = ll2v(ep.last.latitude, ep.last.longitude, EARTH_R).normalize()
+      const ep = int.current.trailEndpoints
+
+      // Determine departure and arrival points:
+      // Priority: route API coords > trail endpoints
+      let depLat, depLon, arrLat, arrLon
+      if (routeData?.dep_lat != null && routeData?.arr_lat != null) {
+        depLat = routeData.dep_lat; depLon = routeData.dep_lon
+        arrLat = routeData.arr_lat; arrLon = routeData.arr_lon
+      } else if (routeData?.dep_lat != null && ep?.last) {
+        depLat = routeData.dep_lat; depLon = routeData.dep_lon
+        arrLat = ep.last.latitude; arrLon = ep.last.longitude
+      } else if (ep) {
+        depLat = ep.first.latitude; depLon = ep.first.longitude
+        arrLat = ep.last.latitude;  arrLon = ep.last.longitude
+      } else {
+        return
+      }
+
+      const v0 = ll2v(depLat, depLon, EARTH_R).normalize()
+      const v1 = ll2v(arrLat, arrLon, EARTH_R).normalize()
       const mid = new Vector3().addVectors(v0, v1).normalize()
-      // Angular distance between endpoints (radians)
       const angDist = Math.acos(MathUtils.clamp(v0.dot(v1), -1, 1))
-      // Compute camera distance so both endpoints fit in view with padding.
-      // FOV ≈ 40°, so half-FOV = 20°. Distance = R / sin(halfFov) * sin(angDist/2 + padding).
       const halfFov = 20 * (Math.PI / 180)
-      const padding = 0.15 // extra margin in radians
+      const padding = 0.15
       const halfSpan = Math.min(angDist / 2 + padding, Math.PI / 2 - 0.1)
       const targetDist = EARTH_R * (1 + Math.sin(halfSpan) / Math.sin(halfFov))
-      // Clamp to reasonable zoom range
       const d = MathUtils.clamp(targetDist, 1.08, 4.0)
       int.current.flyToTarget = mid.multiplyScalar(d)
       int.current.flyToStart  = Date.now()
@@ -2169,14 +2205,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         syncInstances(int.current, int.current.lastAircraft, int.current.lastSelectedId, int.current.hoveredId, true)
       }
 
-      // ── Track mode: dim all aircraft so only tracked craft + route are visible ──
+      // ── Track mode: hide all aircraft except the tracked one ──
       const _isTracking = int.current.trackingId != null
-      const trackOpacity = _isTracking ? 0.12 : 1.0
-      for (const m of [planeMesh, heavyMesh, regionalMesh, heliMesh, satMesh, shipMesh]) {
-        if (m.material.opacity !== trackOpacity) {
-          m.material.opacity = trackOpacity
-          m.material.needsUpdate = true
-        }
+      if (_isTracking !== (int.current._wasIsolating ?? false)) {
+        int.current._wasIsolating = _isTracking
+        // Force full instance rebuild so syncInstances applies isolation
+        int.current.needsInstanceRebuild = true
       }
 
       // Pulsing selection ring

@@ -4,6 +4,25 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-07
+
+### Features Added
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Flight isolation mode** | When tracking a plane, all other aircraft are completely hidden (matrices zeroed in syncInstances). Saves GPU resources — only the tracked craft + trail render. Toggled automatically when tracking starts/stops via `_wasIsolating` flag triggering instance rebuild. |
+| 2 | **Fit-to-route with API airports** | `fitRoute()` now accepts route API data. Priority: route API dep/arr coords → trail endpoints. Computes midpoint + angular distance for camera zoom. Both "Track Flight" and "fit" buttons pass route data. |
+| 3 | **Better trail colors** | Core ribbon: cyan → warm gold (`#ffaa22`). Glow ribbon: blue → orange (`#ff6600`). Departure marker: green (`#22ff88`), arrival marker: orange (`#ff6622`). Separate Point meshes for dep/arr instead of single shared mesh. Markers enlarged to 20px. |
+| 4 | **Route data display fix** | Route card now shows whenever route API returns data (not just when trail exists). Distance computed from route API dep→arr coords when available. Departure coordinates fall back to route API when no trail. Arrival label defaults to "ARR" instead of "NOW". |
+
+### Research
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Token optimization** | Researched Google ADK Context Engineering (March 2026): event compaction (60-80% reduction), tiered context (working→session→memory→artifacts), artifact externalization, scoped sub-agent handoffs, context caching. Actionable: slim CLAUDE.md to <2k tokens, use .claudeignore, /compact between tasks, move GitNexus instructions to separate file. |
+
+---
+
 ## Session: 2026-04-06
 
 ### Features Added

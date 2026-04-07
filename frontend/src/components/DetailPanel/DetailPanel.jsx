@@ -204,9 +204,13 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
   // Prefer route API data for airport names
   const depName = route?.departure_iata || route?.departure_name || (dep ? nearestAirport(dep.latitude, dep.longitude)?.name : null) || 'DEP'
-  const arrName = route?.arrival_iata || route?.arrival_name || (displayLat != null ? nearestAirport(displayLat, displayLon)?.name : null) || 'NOW'
+  const arrName = route?.arrival_iata || route?.arrival_name || (displayLat != null ? nearestAirport(displayLat, displayLon)?.name : null) || 'ARR'
   const etaMin = route?.eta_min
-  const distKm = hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon)
+
+  // Distance: prefer route API coords, fallback to trail
+  const distKm = (route?.dep_lat != null && route?.arr_lat != null)
+    ? haversineKm(route.dep_lat, route.dep_lon, route.arr_lat, route.arr_lon)
+    : hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon)
     : (route?.dep_lat != null && displayLat != null) ? haversineKm(route.dep_lat, route.dep_lon, displayLat, displayLon)
     : null
   const flightDuration = dep?.timestamp ? fmtDuration(dep.timestamp) : null
@@ -254,14 +258,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {error && isFlight && <p className={styles.state}>error {error}</p>}
 
       {/* ── Route card: DEP → ARR (real airport names from API) ── */}
-      {(hasTrailRoute || route?.departure_name) && (
+      {(hasTrailRoute || route) && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#2088ff' }} />
+            <span className={styles.routeDot} style={{ background: '#22ff88' }} />
             <span className={styles.routeCode}>{depName}</span>
-            {dep && (
+            {(dep || route?.dep_lat != null) && (
               <span className={styles.routeCoord}>
-                {dep.latitude.toFixed(2)}°, {dep.longitude.toFixed(2)}°
+                {(dep ? dep.latitude : route.dep_lat).toFixed(2)}°, {(dep ? dep.longitude : route.dep_lon).toFixed(2)}°
               </span>
             )}
           </div>
@@ -272,19 +276,23 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             {etaMin != null && <span className={styles.routeEta}>ETA {fmtEta(etaMin)}</span>}
           </div>
           <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
+            <span className={styles.routeDot} style={{ background: '#ff6622' }} />
             <span className={styles.routeCode}>{arrName}</span>
-            {displayLat != null && (
+            {route?.arr_lat != null ? (
+              <span className={styles.routeCoord}>
+                {route.arr_lat.toFixed(2)}°, {route.arr_lon.toFixed(2)}°
+              </span>
+            ) : displayLat != null ? (
               <span className={styles.routeCoord}>
                 {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
               </span>
-            )}
+            ) : null}
           </div>
         </div>
       )}
 
       {/* ── Position card: when no route data but we have position ── */}
-      {!hasTrailRoute && !route?.departure_name && hasPosition && (
+      {!hasTrailRoute && !route && hasPosition && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#00eeff' }} />
@@ -315,14 +323,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               } else {
                 onTrack?.(icao24)
                 if (trail?.length) onTrailData?.(trail)
-                if (trail?.length > 1) setTimeout(() => onFitRoute?.(), 250)
+                setTimeout(() => onFitRoute?.(route), 250)
               }
             }}
           >
             {isTracking ? 'Stop Tracking' : 'Track Flight'}
           </button>
           {isTracking && trail?.length > 1 && (
-            <button className={styles.fitBtn} onClick={() => onFitRoute?.()}>fit</button>
+            <button className={styles.fitBtn} onClick={() => onFitRoute?.(route)}>fit</button>
           )}
         </div>
       )}

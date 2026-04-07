@@ -376,7 +376,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           sessionToken={sessionToken}
           isTracking={trackingId === selectedIcao24}
           onTrack={setTrackingId}
-          onFitRoute={() => globeRef.current?.fitRoute?.()}
+          onFitRoute={(routeData) => globeRef.current?.fitRoute?.(routeData)}
         />
       )}
 
