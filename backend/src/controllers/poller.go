@@ -278,14 +278,24 @@ func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircr
 		  time_position = EXCLUDED.time_position,
 		  updated_at    = NOW()`
 
+	const appendSQL = `
+		INSERT INTO aircraft_positions
+		  (icao24, callsign, longitude, latitude, baro_altitude, velocity, heading, vertical_rate, on_ground, time_position)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10))`
+
 	for _, a := range aircraft {
 		_, err := tx.Exec(ctx, upsertSQL,
 			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
 		)
 		if err != nil {
-			// Abort immediately on transaction-level errors (e.g. 25P02 in-failed-tx, 53100 disk full)
-			// rather than spamming thousands of doomed inserts.
 			return fmt.Errorf("upsert aircraft_latest: %w", err)
+		}
+		// Append to aircraft_positions for trail history
+		_, err = tx.Exec(ctx, appendSQL,
+			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
+		)
+		if err != nil {
+			return fmt.Errorf("append aircraft_positions: %w", err)
 		}
 	}
 
