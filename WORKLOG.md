@@ -14,6 +14,7 @@ Tracks all significant changes made during development sessions.
 | 2 | **Fit-to-route with API airports** | `fitRoute()` now accepts route API data. Priority: route API dep/arr coords → trail endpoints. Computes midpoint + angular distance for camera zoom. Both "Track Flight" and "fit" buttons pass route data. |
 | 3 | **Better trail colors** | Core ribbon: cyan → warm gold (`#ffaa22`). Glow ribbon: blue → orange (`#ff6600`). Departure marker: green (`#22ff88`), arrival marker: orange (`#ff6622`). Separate Point meshes for dep/arr instead of single shared mesh. Markers enlarged to 20px. |
 | 4 | **Route data display fix** | Route card now shows whenever route API returns data (not just when trail exists). Distance computed from route API dep→arr coords when available. Departure coordinates fall back to route API when no trail. Arrival label defaults to "ARR" instead of "NOW". |
+| 5 | **Smart departure/arrival estimation** | Backend trail fallback no longer uses first DB position as departure (wrong for mid-flight aircraft at 30k ft). Now looks BEHIND the aircraft (reverse heading, 2500km range, 60° cone) for departure airport, and AHEAD (2500km, 45° cone) for arrival. ETA computed from arrival distance and speed. |
 
 ### Research
 

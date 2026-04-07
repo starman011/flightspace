@@ -198,22 +198,17 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const typeDesc = detail?.type_description
   const operator = detail?.operator
 
-  // Route: from API (real airports) or trail-based fallback
-  const dep = trail?.length > 0 ? trail[0] : null
-  const hasTrailRoute = dep && displayLat != null
-
-  // Prefer route API data for airport names
-  const depName = route?.departure_iata || route?.departure_name || (dep ? nearestAirport(dep.latitude, dep.longitude)?.name : null) || 'DEP'
-  const arrName = route?.arrival_iata || route?.arrival_name || (displayLat != null ? nearestAirport(displayLat, displayLon)?.name : null) || 'ARR'
+  // Route: from API (real airports via OpenSky or heading-based estimation)
+  // Do NOT use trail[0] as departure — DB tracking starts mid-flight
+  const depName = route?.departure_iata || route?.departure_name || 'DEP'
+  const arrName = route?.arrival_iata || route?.arrival_name || 'ARR'
   const etaMin = route?.eta_min
 
-  // Distance: prefer route API coords, fallback to trail
+  // Distance: route API dep→arr coords
   const distKm = (route?.dep_lat != null && route?.arr_lat != null)
     ? haversineKm(route.dep_lat, route.dep_lon, route.arr_lat, route.arr_lon)
-    : hasTrailRoute ? haversineKm(dep.latitude, dep.longitude, displayLat, displayLon)
     : (route?.dep_lat != null && displayLat != null) ? haversineKm(route.dep_lat, route.dep_lon, displayLat, displayLon)
     : null
-  const flightDuration = dep?.timestamp ? fmtDuration(dep.timestamp) : null
 
   const altKm = liveData?.alt_km
   const hasPosition = displayLat != null
@@ -257,46 +252,41 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {loading && <p className={styles.state}>loading…</p>}
       {error && isFlight && <p className={styles.state}>error {error}</p>}
 
-      {/* ── Route card: DEP → ARR (real airport names from API) ── */}
-      {(hasTrailRoute || route) && (
+      {/* ── Route card: DEP → ARR (from route API) ── */}
+      {route && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#22ff88' }} />
             <span className={styles.routeCode}>{depName}</span>
-            {(dep || route?.dep_lat != null) && (
+            {route.dep_lat != null && (
               <span className={styles.routeCoord}>
-                {(dep ? dep.latitude : route.dep_lat).toFixed(2)}°, {(dep ? dep.longitude : route.dep_lon).toFixed(2)}°
+                {route.dep_lat.toFixed(2)}°, {route.dep_lon.toFixed(2)}°
               </span>
             )}
           </div>
           <div className={styles.routeCenter}>
             <div className={styles.routeArc} />
             {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
-            {flightDuration && <span className={styles.routeEta}>{flightDuration}</span>}
             {etaMin != null && <span className={styles.routeEta}>ETA {fmtEta(etaMin)}</span>}
           </div>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#ff6622' }} />
             <span className={styles.routeCode}>{arrName}</span>
-            {route?.arr_lat != null ? (
+            {route.arr_lat != null && (
               <span className={styles.routeCoord}>
                 {route.arr_lat.toFixed(2)}°, {route.arr_lon.toFixed(2)}°
               </span>
-            ) : displayLat != null ? (
-              <span className={styles.routeCoord}>
-                {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
-              </span>
-            ) : null}
+            )}
           </div>
         </div>
       )}
 
       {/* ── Position card: when no route data but we have position ── */}
-      {!hasTrailRoute && !route && hasPosition && (
+      {!route && hasPosition && (
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#00eeff' }} />
-            <span className={styles.routeCode}>{arrName !== 'NOW' ? arrName : nearestAirport(displayLat, displayLon)?.name ?? 'POS'}</span>
+            <span className={styles.routeDot} style={{ background: '#ff6622' }} />
+            <span className={styles.routeCode}>{nearestAirport(displayLat, displayLon)?.name ?? 'POS'}</span>
             <span className={styles.routeCoord}>
               {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
             </span>
