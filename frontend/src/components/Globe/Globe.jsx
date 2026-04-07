@@ -832,14 +832,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
     if (!points?.length) return
 
-    const verts = greatCirclePoints(points, EARTH_R + 0.0015)
+    const verts = greatCirclePoints(points, EARTH_R + 0.004)
     if (verts.length < 2) return
 
     const objects = []
 
     // ── Mesh ribbon: actual filled geometry, visible at any zoom / DPI ──
-    // Width 0.0004 WU ≈ 2.5 km — thin line from orbit, visible from any angle.
-    const RIBBON_W = 0.0004
+    const RIBBON_W = 0.003
     const positions = []
     const indices   = []
     const _t = new Vector3(), _n = new Vector3(), _s = new Vector3()
@@ -876,10 +875,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     objects.push(ribMesh)
 
     // Outer glow ribbon (wider, translucent)
-    const glowVerts = greatCirclePoints(points, EARTH_R + 0.0012)
+    const glowVerts = greatCirclePoints(points, EARTH_R + 0.003)
     if (glowVerts.length >= 2) {
       const gp = [], gi = []
-      const GLOW_W = 0.001
+      const GLOW_W = 0.008
       for (let i = 0; i < glowVerts.length; i++) {
         _n.copy(glowVerts[i]).normalize()
         if (i === 0) _t.subVectors(glowVerts[1], glowVerts[0])
@@ -906,35 +905,36 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(gmesh)
     }
 
-    // ── Endpoint markers: departure (green) and arrival/current (orange) ──
-    const MARKER_R = EARTH_R + 0.0025
+    // ── Endpoint markers: departure (green) and arrival (orange) ──
+    const MARKER_R = EARTH_R + 0.003
+    const MARKER_SIZE = 0.012  // sphere radius in world units (~76 km)
+    const RING_SIZE   = 0.022  // outer ring radius
     const first = points[0], last = points[points.length - 1]
 
-    // Departure marker (green)
-    const p0 = ll2v(first.latitude, first.longitude, MARKER_R)
-    const depGeo = new BufferGeometry()
-    depGeo.setAttribute('position', new BufferAttribute(new Float32Array([p0.x, p0.y, p0.z]), 3))
-    const depMat = new PointsMaterial({
-      color: 0x22ff88, size: 20, sizeAttenuation: false,
-      transparent: true, opacity: 0.95, depthWrite: false,
-    })
-    const depPts = new Points(depGeo, depMat)
-    depPts.renderOrder = 13
-    scene.add(depPts)
-    objects.push(depPts)
+    const addMarker = (lat, lon, color) => {
+      const pos = ll2v(lat, lon, MARKER_R)
+      // Solid sphere
+      const sGeo = new SphereGeometry(MARKER_SIZE, 16, 12)
+      const sMat = new MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false })
+      const sMesh = new Mesh(sGeo, sMat)
+      sMesh.position.copy(pos)
+      sMesh.renderOrder = 14
+      scene.add(sMesh)
+      objects.push(sMesh)
+      // Outer glow ring
+      const rGeo = new SphereGeometry(RING_SIZE, 16, 12)
+      const rMat = new MeshBasicMaterial({
+        color, transparent: true, opacity: 0.25, depthWrite: false, blending: AdditiveBlending,
+      })
+      const rMesh = new Mesh(rGeo, rMat)
+      rMesh.position.copy(pos)
+      rMesh.renderOrder = 13
+      scene.add(rMesh)
+      objects.push(rMesh)
+    }
 
-    // Arrival/current marker (orange)
-    const p1 = ll2v(last.latitude, last.longitude, MARKER_R)
-    const arrGeo = new BufferGeometry()
-    arrGeo.setAttribute('position', new BufferAttribute(new Float32Array([p1.x, p1.y, p1.z]), 3))
-    const arrMat = new PointsMaterial({
-      color: 0xff6622, size: 20, sizeAttenuation: false,
-      transparent: true, opacity: 0.95, depthWrite: false,
-    })
-    const arrPts = new Points(arrGeo, arrMat)
-    arrPts.renderOrder = 13
-    scene.add(arrPts)
-    objects.push(arrPts)
+    addMarker(first.latitude, first.longitude, 0x22ff88) // departure — green
+    addMarker(last.latitude, last.longitude, 0xff6622)   // arrival — orange
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = { first, last }
@@ -2208,6 +2208,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // Force full instance rebuild so syncInstances applies isolation
         int.current.needsInstanceRebuild = true
       }
+      // Hide real-time 1px LineSegments trail when tracking (API ribbon trail replaces it)
+      if (int.current.trailMesh) int.current.trailMesh.visible = !_isTracking
+      if (int.current.trailGlowMesh) int.current.trailGlowMesh.visible = !_isTracking
 
       // Pulsing selection ring
       const selPos = int.current.selPos

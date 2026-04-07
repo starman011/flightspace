@@ -27,6 +27,9 @@ Tracks all significant changes made during development sessions.
 | 2 | **Camera flyTo priority over tracking lock** | Tracking camera lock was overriding the flyTo tween, so "fit to route" had no visible effect while tracking was active. Restructured the render loop: flyTo tween runs first and takes priority; tracking camera lock only runs when no flyTo is active. |
 | 3 | **Auto-fit re-triggers on route arrival** | Initial auto-fit fired before route API returned (only had trail data). Added `didAutoFit` ref that tracks whether fit used 'trail' or 'route' coords — re-triggers with route coords when they arrive, giving accurate dep/arr framing instead of just trail endpoints. |
 | 4 | **Trail enrichment as single source** | Removed raw `onTrailData` calls from initial fetch and refreshLive. A single `useEffect` now enriches trail with dep/arr airport coords from route data before passing to Globe, preventing trail from showing only DB-start positions. |
+| 5 | **Fat visible trail ribbon** | Core ribbon width 0.0004→0.003 WU (~19km), glow width 0.001→0.008 WU (~50km). Trail raised from +0.0015 to +0.004 above Earth surface. Clearly visible from any zoom level. |
+| 6 | **Visible airport markers** | Replaced tiny 20px `Points` (invisible at most angles) with solid `SphereGeometry` markers (0.012 WU radius ≈ 76km) + outer additive-blended glow spheres (0.022 WU). Departure: green, arrival: orange. Visible from orbit. |
+| 7 | **Hide 1px real-time trail when tracking** | Real-time `LineSegments` trails (1px WebGL limitation) now hidden when tracking is active. Only the fat mesh-ribbon API trail renders, preventing the confusing thin trail from DB-start time showing alongside the proper route trail. |
 
 ### Research
 
