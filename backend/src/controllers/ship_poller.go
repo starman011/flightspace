@@ -3,8 +3,10 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -17,6 +19,12 @@ const (
 	shipLiveKey      = "ship:live"
 	shipStaleSeconds = 600 // ships move slowly; keep for 10 minutes
 	aisStreamURL     = "wss://stream.aisstream.io/v0/stream"
+
+	// Timeout / keep-alive tuning
+	aisReadDeadline  = 120 * time.Second // AISStream can be slow; 120s before we consider it dead
+	aisWriteDeadline = 15 * time.Second  // max time to send the subscription or a pong frame
+	aisPingInterval  = 45 * time.Second  // send a ping this often to keep the connection alive
+	aisMaxBackoff    = 10 * time.Minute  // cap exponential backoff at 10 minutes
 )
 
 // ShipRecord uses LiveAircraft-compatible JSON field names.
@@ -86,14 +94,24 @@ func (sp *ShipPoller) Start(ctx context.Context) {
 
 		err := sp.connect(ctx)
 		if err != nil && ctx.Err() == nil {
-			log.Printf(`{"level":"warn","service":"ship_poller","msg":"disconnected","error":%q,"backoff_s":%d}`, err, int(backoff.Seconds()))
+			// Use "error" level for unexpected failures, "warn" for expected
+			// timeout reconnects so dashboards can distinguish the two.
+			level := "warn"
+			var netErr net.Error
+			if ok := isNetError(err, &netErr); !(ok && netErr.Timeout()) {
+				level = "error"
+			}
+			log.Printf(`{"level":%q,"service":"ship_poller","msg":"disconnected","error":%q,"backoff_s":%d}`, level, err, int(backoff.Seconds()))
 			select {
 			case <-ctx.Done():
 				return
 			case <-time.After(backoff):
 			}
-			if backoff < 5*time.Minute {
+			if backoff < aisMaxBackoff {
 				backoff *= 2
+				if backoff > aisMaxBackoff {
+					backoff = aisMaxBackoff
+				}
 			}
 		} else {
 			backoff = 5 * time.Second
@@ -109,20 +127,33 @@ func (sp *ShipPoller) connect(ctx context.Context) error {
 	}
 	defer conn.Close()
 
-	// Subscribe: all position reports globally
+	// Respond to server pings promptly, and enforce a write deadline on each pong.
+	conn.SetPongHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(aisReadDeadline))
+		return nil
+	})
+
+	// Subscribe: all position reports globally.
+	// Apply a write deadline so a slow/dead connection doesn't block forever.
+	conn.SetWriteDeadline(time.Now().Add(aisWriteDeadline))
 	sub := aisSubscribeMsg{
-		APIKey:       sp.apiKey,
+		APIKey:        sp.apiKey,
 		BoundingBoxes: [][2][2]float64{{{-90, -180}, {90, 180}}},
 		FilterMessageTypes: []string{"PositionReport"},
 	}
 	if err := conn.WriteJSON(sub); err != nil {
-		return err
+		return fmt.Errorf("subscribe write: %w", err)
 	}
 	log.Println(`{"level":"info","service":"ship_poller","msg":"connected to AISStream"}`)
 
-	// Prune stale ships every 5 minutes
+	// Prune stale ships every 5 minutes.
 	pruneTicker := time.NewTicker(5 * time.Minute)
 	defer pruneTicker.Stop()
+
+	// Send a ping on a regular interval to keep the connection alive and
+	// detect dead peers before the OS-level TCP timeout fires.
+	pingTicker := time.NewTicker(aisPingInterval)
+	defer pingTicker.Stop()
 
 	for {
 		select {
@@ -130,12 +161,24 @@ func (sp *ShipPoller) connect(ctx context.Context) error {
 			return nil
 		case <-pruneTicker.C:
 			sp.pruneStale(ctx)
+		case <-pingTicker.C:
+			conn.SetWriteDeadline(time.Now().Add(aisWriteDeadline))
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return fmt.Errorf("ping write: %w", err)
+			}
 		default:
 		}
 
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		conn.SetReadDeadline(time.Now().Add(aisReadDeadline))
 		_, raw, err := conn.ReadMessage()
 		if err != nil {
+			// Distinguish timeout errors (likely a stale connection) from
+			// other errors (auth failure, server close, etc.) so the caller
+			// can log them with the right severity.
+			var netErr net.Error
+			if ok := isNetError(err, &netErr); ok && netErr.Timeout() {
+				return fmt.Errorf("read timeout (no data for %s): %w", aisReadDeadline, err)
+			}
 			return err
 		}
 
@@ -210,4 +253,10 @@ func trimShipName(name string) string {
 		return "Unknown"
 	}
 	return trimmed
+}
+
+// isNetError unwraps err into a net.Error using errors.As and reports whether
+// the unwrap succeeded. This works for wrapped *net.OpError values too.
+func isNetError(err error, target *net.Error) bool {
+	return errors.As(err, target)
 }
