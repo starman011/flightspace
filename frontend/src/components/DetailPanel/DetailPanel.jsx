@@ -192,6 +192,20 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     onTrailData?.(enriched)
   }, [route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-fit: when tracking starts and we have route or trail data, zoom to show full route
+  const didAutoFit = useRef(false)
+  useEffect(() => {
+    if (!isTracking) { didAutoFit.current = false; return }
+    if (didAutoFit.current) return
+    // Wait until we have either route coords or trail data to fit
+    const hasRoute = route?.dep_lat != null || route?.arr_lat != null
+    const hasTrail = detail?.trail?.length > 1
+    if (!hasRoute && !hasTrail) return
+    didAutoFit.current = true
+    // Small delay so drawTrail has time to process the enriched trail
+    setTimeout(() => onFitRoute?.(route), 300)
+  }, [isTracking, route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fallback: try registration-based photo if hex returned nothing
   useEffect(() => {
     if (photo || !detail?.registration || photoTriedReg.current) return
@@ -359,14 +373,13 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 onTrack?.(null)
               } else {
                 onTrack?.(icao24)
-                if (trail?.length) onTrailData?.(trail)
-                setTimeout(() => onFitRoute?.(route), 250)
+                // Trail + fit handled by the autoFit effect below
               }
             }}
           >
             {isTracking ? 'Stop Tracking' : 'Track Flight'}
           </button>
-          {isTracking && trail?.length > 1 && (
+          {isTracking && (
             <button className={styles.fitBtn} onClick={() => onFitRoute?.(route)}>fit</button>
           )}
         </div>

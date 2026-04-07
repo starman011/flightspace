@@ -1894,59 +1894,55 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     let lastSunUpdate = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
-      // ── Live tracking: lock camera rotation onto tracked entity ──────────
-      // The user can still zoom (change distance); only rotation is driven by the entity.
-      const _trackId = int.current.trackingId
-      if (_trackId) {
-        const _trackedInst = int.current.idToInstance?.get(_trackId)
-        if (_trackedInst?.lat != null) {
-          const _d = camera.position.length()
-          const _targetPos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
-            .normalize().multiplyScalar(_d)
-
-          const _tweenStart = int.current.trackTweenStart
-          if (_tweenStart != null) {
-            // Smooth flyTo: slerp along the sphere surface for 1.4 s
-            const _elapsed = Date.now() - _tweenStart
-            const _TWEEN_MS = 1400
-            const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
-            // ease-out cubic
-            const _t = 1 - Math.pow(1 - _rawT, 3)
-            const _from = int.current.trackTweenFrom
-            // Spherical interpolation: lerp then re-normalise to keep on sphere
-            const _interp = new Vector3().lerpVectors(_from, _targetPos, _t)
-            camera.position.copy(_interp.normalize().multiplyScalar(_d))
-            if (_rawT >= 1) {
-              int.current.trackTweenStart = null
-              int.current.trackTweenFrom  = null
-            }
-          } else {
-            // Tween done — lock to aircraft every frame
-            camera.position.copy(_targetPos)
-          }
-
-          camera.lookAt(0, 0, 0)
-          controls.enableRotate = false
+      // ── FlyTo tween (works both when tracking and not) ──────────────
+      const _flyStart = int.current.flyToTarget ? int.current.flyToStart : null
+      if (_flyStart != null) {
+        const _elapsed = Date.now() - _flyStart
+        const _TWEEN_MS = 1600
+        const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
+        const _t = 1 - Math.pow(1 - _rawT, 3)
+        const _interp = new Vector3()
+          .lerpVectors(int.current.flyToFrom, int.current.flyToTarget, _t)
+        camera.position.copy(_interp.normalize().multiplyScalar(int.current.flyToTarget.length()))
+        camera.lookAt(0, 0, 0)
+        controls.enableRotate = false
+        if (_rawT >= 1) {
+          int.current.flyToTarget = null
+          int.current.flyToStart  = null
+          int.current.flyToFrom   = null
         }
       } else {
-        controls.enableRotate = true
+        // ── Live tracking: lock camera when no flyTo is active ────────
+        const _trackId = int.current.trackingId
+        if (_trackId) {
+          const _trackedInst = int.current.idToInstance?.get(_trackId)
+          if (_trackedInst?.lat != null) {
+            const _d = camera.position.length()
+            const _targetPos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
+              .normalize().multiplyScalar(_d)
 
-        // ── One-shot flyTo tween (not tracking — just navigate to a point) ──
-        const _flyStart = int.current.flyToTarget ? int.current.flyToStart : null
-        if (_flyStart != null) {
-          const _elapsed = Date.now() - _flyStart
-          const _TWEEN_MS = 1600
-          const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
-          const _t = 1 - Math.pow(1 - _rawT, 3) // ease-out cubic
-          const _interp = new Vector3()
-            .lerpVectors(int.current.flyToFrom, int.current.flyToTarget, _t)
-          camera.position.copy(_interp.normalize().multiplyScalar(int.current.flyToTarget.length()))
-          camera.lookAt(0, 0, 0)
-          if (_rawT >= 1) {
-            int.current.flyToTarget = null
-            int.current.flyToStart  = null
-            int.current.flyToFrom   = null
+            const _tweenStart = int.current.trackTweenStart
+            if (_tweenStart != null) {
+              const _elapsed = Date.now() - _tweenStart
+              const _TWEEN_MS = 1400
+              const _rawT = Math.min(_elapsed / _TWEEN_MS, 1)
+              const _t = 1 - Math.pow(1 - _rawT, 3)
+              const _from = int.current.trackTweenFrom
+              const _interp = new Vector3().lerpVectors(_from, _targetPos, _t)
+              camera.position.copy(_interp.normalize().multiplyScalar(_d))
+              if (_rawT >= 1) {
+                int.current.trackTweenStart = null
+                int.current.trackTweenFrom  = null
+              }
+            } else {
+              camera.position.copy(_targetPos)
+            }
+
+            camera.lookAt(0, 0, 0)
+            controls.enableRotate = false
           }
+        } else {
+          controls.enableRotate = true
         }
       }
 
