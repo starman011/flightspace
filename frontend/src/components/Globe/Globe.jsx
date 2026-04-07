@@ -848,7 +848,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (fullPath.length < 2) return
 
     const objects = []
-    const TRAIL_R = EARTH_R + 0.003  // hug the surface, overlap with plane
+    const TRAIL_R = AC_R  // same height as aircraft layer
 
     // ── Split path into "traveled" (dep → last trail point) and "remaining" (→ arr) ──
     // Traveled = dep airport + DB trail points, Remaining = last trail point → arr airport
