@@ -246,32 +246,25 @@
   background: rgba(59, 73, 76, 0.25);
 }
 
-/* ── Cosmic Address widget — top-left, below HUD bar ─────────────────────── */
+/* ── Cosmic Address widget — top-right corner, minimal ────────────────────── */
 
 .cosmicWrap {
   position: fixed;
-  top: 80px;
-  left: calc(var(--sidebar-w) + 14px);
-  transition: left var(--duration-panel) var(--ease-panel);
+  top: 14px;
+  right: 14px;
   z-index: 50;
   pointer-events: none;
-  background: rgba(5, 9, 19, 0.90);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  border: 1px solid rgba(0, 229, 255, 0.07);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 229, 255, 0.03);
+  opacity: 0.55;
 }
 
 .cosmicHeader {
   font-family: var(--font-mono);
-  font-size: 7px;
+  font-size: 6px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(0, 229, 255, 0.38);
-  padding: 9px 12px 0;
+  color: rgba(0, 229, 255, 0.5);
+  padding: 0 4px 2px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -279,9 +272,9 @@
 
 .cosmicSvg {
   display: block;
-  width: 218px;
+  width: 170px;
   height: auto;
-  padding: 4px 8px 8px;
+  padding: 0 2px 2px;
 }
 
 /* ── Mobile strip (always visible) ───────────────────────────────────────── */
