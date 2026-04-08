@@ -1075,7 +1075,7 @@ function PinnedCountdown({ launch, onUnpin }) {
 
 export default function CommandCenterOverlay({
   trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
-  activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn,
+  activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
 }) {
   const isLive  = connectionStatus === 'connected'
   const utcTime = useUtcTime()
@@ -1165,7 +1165,7 @@ export default function CommandCenterOverlay({
 
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} style={hidden ? { display: 'none' } : undefined}>
       {/* Background SVG grid — hidden when zoomed in */}
       <div className={`${styles.gridBg} ${zoomedIn ? styles.heroHidden : ''}`}>
         <svg className={styles.gridSvg}>

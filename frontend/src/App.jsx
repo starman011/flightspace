@@ -294,27 +294,26 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onZoomChange={setZoomedIn}
       />
 
-      {showCommandCenter && (
-        <CommandCenterOverlay
-          trackedCount={aircraftWithShips.size}
-          connectionStatus={connectionStatus}
-          issData={aircraftWithShips.get('ISS') ?? null}
-          pinnedLaunch={pinnedLaunch}
-          onUnpinLaunch={() => setPinnedLaunch(null)}
-          forceCollapsed={streamCollapsed}
-          onISSLink={{
-            flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
-            selectISS: ()         => setSelectedIcao24('ISS'),
-            trackISS:  ()         => setTrackingId('ISS'),
-          }}
-          activeFilter={activeFilter}
-          onFiltersChange={setFilters}
-          onCameraScale={handleCameraScale}
-          onActiveFilterChange={setActiveFilter}
-          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
-          zoomedIn={zoomedIn}
-        />
-      )}
+      <CommandCenterOverlay
+        trackedCount={aircraftWithShips.size}
+        connectionStatus={connectionStatus}
+        issData={aircraftWithShips.get('ISS') ?? null}
+        pinnedLaunch={pinnedLaunch}
+        onUnpinLaunch={() => setPinnedLaunch(null)}
+        forceCollapsed={streamCollapsed}
+        onISSLink={{
+          flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
+          selectISS: ()         => setSelectedIcao24('ISS'),
+          trackISS:  ()         => setTrackingId('ISS'),
+        }}
+        activeFilter={activeFilter}
+        onFiltersChange={setFilters}
+        onCameraScale={handleCameraScale}
+        onActiveFilterChange={setActiveFilter}
+        onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        zoomedIn={zoomedIn}
+        hidden={!showCommandCenter}
+      />
 
       {!focusedPad && (
         <OrbitalMapBar
