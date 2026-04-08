@@ -292,6 +292,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onSkyObjectClick={handleSkyObjectClick}
         neoData={asteroids}
         onZoomChange={setZoomedIn}
+        mobilePanel={!!selectedIcao24}
       />
 
       <CommandCenterOverlay

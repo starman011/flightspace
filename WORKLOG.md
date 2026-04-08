@@ -23,6 +23,17 @@ Tracks all significant changes made during development sessions.
 | 4 | **Trail empty-array guard** | `if (!detail?.trail?.length) return` blocked trail rendering because `[].length === 0` is falsy. Fixed: check for route data and live position independently, not just trail length. |
 | 5 | **Trail connects to live plane** | Trail lagged behind live WebSocket data. Now appends `liveData.lat/lon` to trail array before passing to `drawTrail`, so trail always extends to current aircraft position. |
 | 6 | **Darkened map tiles** | Tile material color reduced from `(0.72, 0.72, 0.74)` to `(0.55, 0.55, 0.58)` for easier eye comfort at street level. |
+| 7 | **Mobile tab crash on panel close** | Closing DetailPanel/LaunchPanel caused full page reload (jetsam). Root cause: `CommandCenterOverlay` mount/unmount during WebGL render loop exceeded mobile memory limits. Fix: always-mounted with `display:none` via `hidden` prop — no mount/unmount memory spike. |
+| 8 | **React Router removed** | `useLocation()` caused full App re-renders on every `navigate()` call, contributing to mobile crashes. Replaced with `window.history.replaceState` + path derivation from React state. Zero re-renders from URL changes. |
+| 9 | **Leaked setTimeout / stale setState** | DetailPanel auto-fit `setTimeout` leaked on unmount, causing stale setState. Added cleanup `clearTimeout` + `cancelled` flag pattern on all fetch chains + `mountedRef` guard on refreshLive. |
+| 10 | **Cosmic Address repositioned** | Moved to top-left, made smaller (170px SVG), transparent (55% opacity), no card background. |
+| 11 | **Auto-dock panels on zoom** | Globe emits `onZoomChange(isClose)` at 500km threshold. CommandCenterOverlay auto-collapses, hero/stats hide, HUD shifts, map toggle repositions — all CSS transitions, no re-renders. |
+| 12 | **Mobile DetailPanel 1/3 height** | Changed from `max-height: 70dvh` to `33dvh`. Compacted hero (80px), route card, telemetry grid, track buttons — same data density in 1/3 screen. |
+| 13 | **Full airport names** | Route card now shows "John F Kennedy Intl (JFK)" instead of just "JFK". Falls back gracefully to code-only or name-only. |
+| 14 | **README updated** | Added 3 new engineering problem sections (mobile jetsam fix, router removal, auto-dock). Updated architecture diagram and tech stack to reflect router removal. |
+| 15 | **Mobile tracking: allow panning** | Tracking lock (`controls.enableRotate = false`) prevented all user interaction on mobile. Now pauses tracking for 3s on `pointerdown`, letting the user pan/zoom freely. Camera resumes following the aircraft after the pause. |
+| 16 | **Mobile camera offset with panel** | When DetailPanel is open (bottom 1/3 of screen), camera target is offset downward on the sphere so the tracked aircraft appears in the visible area above the card, not behind it. Applied to both live tracking and fitRoute. |
+| 17 | **Developer tooling docs** | Added Caveman (token reduction) and claude-mem (session memory) to README and constitution (Article XII, v1.3.0). Install instructions, usage, and combined workflow documented. |
 
 ---
 

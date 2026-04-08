@@ -34,7 +34,7 @@ A real-time planetary observatory. One viewport that scales from individual airc
 │  │  WebGL      │  │  + backoff   │  │  + stale pruner    │  │
 │  └─────────────┘  └──────────────┘  └────────────────────┘  │
 │         │                                                    │
-│   URL router (React Router v7) — state ↔ URL sync           │
+│   URL sync (replaceState) — state ↔ URL path                │
 └──────────────────────────────────────────────────────────────┘
                           │  WSS + HTTPS
                           ▼
@@ -154,7 +154,7 @@ A cleanup goroutine runs hourly and deletes `aircraft_positions` older than `RET
 
 ### Frontend architecture
 
-The frontend is a **single-page application** with one full-viewport canvas (`Globe.jsx` → Three.js) and layered UI panels that sit on top in CSS. There is no page reload — navigation between Earth view, launches, and asteroids is React Router state.
+The frontend is a **single-page application** with one full-viewport canvas (`Globe.jsx` → Three.js) and layered UI panels that sit on top in CSS. There is no page reload — navigation between Earth view, launches, and asteroids is `useState` + `window.history.replaceState` (no router library).
 
 ```
 App.jsx  (router, session, WebSocket lifecycle)
@@ -260,10 +260,20 @@ return () => {
 
 When a user navigates away and returns via the browser back button on iOS, the page is restored from memory (BFCache) with all JS state intact but the WebSocket connection dropped. `pagehide` closes the socket cleanly so the server releases the slot. `pageshow` with `e.persisted === true` reconnects immediately without waiting for the next reconnect timer.
 
-### Route-change Suspense flash
-**Technique: `startTransition` around `navigate()`**
+### Mobile tab crash on panel close (jetsam)
+**Technique: Always-mounted heavy components with CSS `display:none`**
 
-Globe is lazy-loaded via `React.lazy`. When `navigate()` fires synchronously inside a state update, React can briefly show the Suspense fallback (a dark screen) while it reconciles. Wrapping navigate in `startTransition` marks it as a non-urgent background update — React holds the current UI stable and never shows the fallback during client-side navigation.
+On mobile Safari and Chrome, closing DetailPanel or LaunchPanel caused a full page reload — the browser killed the tab. Root cause: both panels' close handler conditionally rendered `CommandCenterOverlay`, which mounted a heavy component (DOM insertion + multiple API fetches + WebGL context already running). The simultaneous memory spike from mount + WebGL render loop exceeded mobile browser memory limits, triggering iOS jetsam (OOM kill). Fix: `CommandCenterOverlay` is always mounted in the DOM. A `hidden` prop sets `display:none` — the component stays in memory (cheap) but skips paint. Closing a panel just flips the prop instead of mount/unmounting ~50 DOM nodes and 6 fetch calls.
+
+### URL sync without a router library
+**Technique: `window.history.replaceState` + `useState` path derivation**
+
+React Router was removed entirely after discovering it caused cascading re-renders on every `navigate()` call. `useLocation()` subscribes to the history stack — any `navigate()` triggers a full `App` re-render including the WebGL Globe. On mobile, this was one of the factors behind the tab crash. Replaced with a `useEffect` that derives a URL path from React state (`selectedIcao24`, `activeScale`, etc.) and calls `window.history.replaceState` directly. Initial state is read from `window.location.pathname` on mount. Zero re-renders from URL changes.
+
+### Auto-dock panels on zoom
+**Technique: Globe altitude callback + CSS class toggling**
+
+The Globe's render loop emits an `onZoomChange(isClose)` callback when the camera crosses the 500km altitude threshold. Parent state (`zoomedIn`) propagates to CommandCenterOverlay (auto-collapse stream, hide hero/stats), HUD (shift right position from 376px to 56px), and the map toggle (reposition). All transitions use CSS `transition` on the compositor thread — no React re-renders during the animation.
 
 ### Stale aircraft cleanup without a server round-trip
 **Technique: Client-side TTL pruning on a 10-second tick**
@@ -360,7 +370,7 @@ Hooks for news, Kp index, and APOD store their fetched data in module-scope vari
 |-------|-----------|-----|
 | 3D rendering | Three.js r168 | WebGL scene, instanced meshes, raycasting |
 | Frontend framework | React 18 + Vite | Concurrent features, lazy loading, fast HMR |
-| Routing | React Router v7 | URL ↔ state sync, `startTransition` for Suspense safety |
+| URL sync | `replaceState` + `useState` | Zero-dependency routing, no re-renders from URL changes |
 | Styles | CSS Modules + design tokens | Zero runtime, scoped, no Tailwind dependency |
 | Backend language | Go 1.22 | Goroutine-per-client WS model, zero-cost concurrency |
 | WebSocket | gorilla/websocket | Battle-tested, read/write pump pattern |
@@ -525,6 +535,35 @@ cd frontend && npm run test:e2e      # E2E tests (Playwright)
 # Local infra
 docker compose -f infra/docker-compose.yml up -d    # Start PostgreSQL + Redis
 docker compose -f infra/docker-compose.yml down     # Stop
+```
+
+---
+
+## Developer Tooling
+
+Two tools are used to optimize Claude Code sessions on this project:
+
+### Caveman — Token Reduction (~75% output savings)
+
+[github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)
+
+Strips filler words and verbosity from Claude's output while preserving code accuracy. Three intensity levels (lite/full/ultra). Also compresses CLAUDE.md and memory files for ~45% input token savings.
+
+```bash
+npx skills add JuliusBrussee/caveman   # install
+/caveman                                 # activate in session
+/caveman:compress                        # compress memory files
+```
+
+### claude-mem — Persistent Session Memory
+
+[github.com/thedotmack/claude-mem](https://github.com/thedotmack/claude-mem)
+
+Automatically captures tool interactions during coding sessions, stores them in SQLite, and retrieves relevant context in future sessions using hybrid semantic + keyword search. Web viewer at `localhost:37777`.
+
+```bash
+npx claude-mem install                   # install
+/mem-search <query>                      # search past session context
 ```
 
 ---

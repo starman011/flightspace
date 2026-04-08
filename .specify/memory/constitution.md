@@ -357,6 +357,33 @@ The canonical mobile test viewport is 390×844px (iPhone 14). All layouts must b
 
 ---
 
+## Article XII: Developer Tooling — Token Efficiency & Session Memory
+
+### Section 12.1: Token Efficiency (Caveman)
+
+All Claude Code sessions SHOULD use [Caveman](https://github.com/JuliusBrussee/caveman) to reduce output token usage by ~65–75%. Caveman removes filler words, articles, and unnecessary verbosity while preserving code accuracy and technical substance.
+
+- Install: `npx skills add JuliusBrussee/caveman`
+- Activate: `/caveman` or say "talk like caveman"
+- Use `/caveman:compress` to compress CLAUDE.md and memory files (~45% input token savings)
+- Deactivate: "normal mode"
+
+### Section 12.2: Persistent Session Memory (claude-mem)
+
+All Claude Code sessions SHOULD use [claude-mem](https://github.com/thedotmack/claude-mem) for automatic cross-session context persistence. claude-mem captures tool interactions, compresses observations into summaries, and retrieves relevant past context using hybrid semantic + keyword search.
+
+- Install: `npx claude-mem install`
+- Web viewer: `localhost:37777` for real-time memory streams
+- Search past context: `/mem-search <query>`
+- Privacy: wrap sensitive data in `<private>` tags to exclude from capture
+- Settings: `~/.claude-mem/settings.json` (auto-generated, sensible defaults)
+
+### Section 12.3: Combined Workflow
+
+When both tools are active, caveman reduces token burn on output while claude-mem preserves session continuity across conversations. This combination addresses the two primary cost drivers in long-running Claude Code projects: verbose output and lost context.
+
+---
+
 ## Amendment Log
 
 | Date | Article | Change | Rationale |
@@ -364,6 +391,7 @@ The canonical mobile test viewport is 390×844px (iPhone 14). All layouts must b
 | 2026-03-12 | Initial | Constitution ratified (v1.0.0) | Project inception |
 | 2026-03-15 | Article X | Added Documentation-First Implementation (v1.1.0) | Enforce research-before-build discipline; prevent premature custom solutions |
 | 2026-03-25 | Article XI | Added Mobile-First Parity (v1.2.0) | All features must work on mobile; desktop layout must not be broken |
+| 2026-04-08 | Article XII | Added Developer Tooling — Token Efficiency & Session Memory (v1.3.0) | Adopt caveman + claude-mem for token savings and cross-session context |
 
 ---
 
@@ -390,4 +418,4 @@ This constitution is enforced through:
 No specification, plan, or task SHALL proceed without passing all applicable
 constitutional gates.
 
-**Version**: 1.1.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-03-15
+**Version**: 1.3.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-04-08

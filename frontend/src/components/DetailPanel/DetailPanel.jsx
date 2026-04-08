@@ -234,8 +234,13 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const operator = detail?.operator
 
   // Route: from API (OpenFlights route DB or heading-based estimation)
-  const depName = route?.departure_iata || route?.departure_name || 'DEP'
-  const arrName = route?.arrival_iata || route?.arrival_name || 'ARR'
+  // Show full name + code for readability, e.g. "John F Kennedy Intl (JFK)"
+  const depCode = route?.departure_iata || ''
+  const depFullName = route?.departure_name || ''
+  const depLabel = depFullName && depCode ? `${depFullName} (${depCode})` : depFullName || depCode || 'DEP'
+  const arrCode = route?.arrival_iata || ''
+  const arrFullName = route?.arrival_name || ''
+  const arrLabel = arrFullName && arrCode ? `${arrFullName} (${arrCode})` : arrFullName || arrCode || 'ARR'
   const etaMin = route?.eta_min
 
   // Distance: route API dep→arr coords
@@ -291,7 +296,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         <div className={styles.routeCard}>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#22ff88' }} />
-            <span className={styles.routeCode}>{depName}</span>
+            <span className={styles.routeCode}>{depLabel}</span>
             {route.dep_lat != null && (
               <span className={styles.routeCoord}>
                 {route.dep_lat.toFixed(2)}°, {route.dep_lon.toFixed(2)}°
@@ -305,7 +310,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           </div>
           <div className={styles.routeCol}>
             <span className={styles.routeDot} style={{ background: '#ff6622' }} />
-            <span className={styles.routeCode}>{arrName}</span>
+            <span className={styles.routeCode}>{arrLabel}</span>
             {route.arr_lat != null && (
               <span className={styles.routeCoord}>
                 {route.arr_lat.toFixed(2)}°, {route.arr_lon.toFixed(2)}°

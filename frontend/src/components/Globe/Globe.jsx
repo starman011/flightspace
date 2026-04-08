@@ -804,7 +804,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData, onZoomChange }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData, onZoomChange, mobilePanel }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -968,7 +968,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const halfSpan = Math.min(angDist / 2 + padding, Math.PI / 2 - 0.1)
       const targetDist = EARTH_R * (1 + Math.sin(halfSpan) / Math.sin(halfFov))
       const d = MathUtils.clamp(targetDist, 1.08, 4.0)
-      int.current.flyToTarget = mid.multiplyScalar(d)
+      const target = mid.multiplyScalar(d)
+      // On mobile with panel, offset so route appears in visible area above card
+      if (int.current.mobilePanel && window.innerWidth < 768) {
+        const camDir = target.clone().normalize()
+        const up = new Vector3(0, 1, 0)
+        const right = new Vector3().crossVectors(camDir, up).normalize()
+        const screenUp = new Vector3().crossVectors(right, camDir).normalize()
+        target.addScaledVector(screenUp, -0.15 * (d - EARTH_R))
+        target.normalize().multiplyScalar(d)
+      }
+      int.current.flyToTarget = target
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
@@ -1033,6 +1043,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     renderer.domElement.addEventListener('pointerdown', () => {
       controls.autoRotate = false
       int.current.onInteract?.()
+      // On mobile, pause tracking lock for 3s so user can pan freely
+      if (int.current.trackingId && window.innerWidth < 768) {
+        int.current.trackPausedUntil = Date.now() + 3000
+      }
     })
     renderer.domElement.addEventListener('wheel', () => { int.current.onInteract?.() }, { passive: true })
 
@@ -1909,12 +1923,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       } else {
         // ── Live tracking: lock camera when no flyTo is active ────────
         const _trackId = int.current.trackingId
-        if (_trackId) {
+        const _trackPaused = Date.now() < (int.current.trackPausedUntil || 0)
+        if (_trackId && !_trackPaused) {
           const _trackedInst = int.current.idToInstance?.get(_trackId)
           if (_trackedInst?.lat != null) {
             const _d = camera.position.length()
             const _targetPos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
               .normalize().multiplyScalar(_d)
+
+            // On mobile with panel open, offset camera so aircraft appears in top 2/3
+            if (int.current.mobilePanel && window.innerWidth < 768) {
+              const _up = new Vector3(0, 1, 0)
+              const _camDir = _targetPos.clone().normalize()
+              const _right = new Vector3().crossVectors(_camDir, _up).normalize()
+              const _screenUp = new Vector3().crossVectors(_right, _camDir).normalize()
+              // Shift camera down so the aircraft appears higher on screen (above the card)
+              const _offsetFrac = 0.15 * (_d - EARTH_R)
+              _targetPos.addScaledVector(_screenUp, -_offsetFrac)
+              _targetPos.normalize().multiplyScalar(_d)
+            }
 
             const _tweenStart = int.current.trackTweenStart
             if (_tweenStart != null) {
@@ -1936,6 +1963,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             camera.lookAt(0, 0, 0)
             controls.enableRotate = false
           }
+        } else if (_trackId && _trackPaused) {
+          controls.enableRotate = true
         } else {
           controls.enableRotate = true
         }
@@ -2314,6 +2343,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       flyToTarget: null,            // one-shot flyTo destination (Vector3)
       flyToStart:  null,            // timestamp
       flyToFrom:   null,            // Vector3 camera start
+      trackPausedUntil: 0,          // timestamp — user panning pauses tracking lock until this time
+      mobilePanel: false,           // true when mobile detail panel is open (offset camera target)
       solarFlyTarget: null,         // planet fly-to destination (Vector3)
       solarFlyStart:  null,
       solarFlyFrom:   null,
@@ -2354,6 +2385,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   useEffect(() => {
     if (int.current) int.current.onZoomChange = onZoomChange
   }, [onZoomChange])
+
+  useEffect(() => {
+    if (int.current) int.current.mobilePanel = !!mobilePanel
+  }, [mobilePanel])
 
   useEffect(() => {
     if (int.current) int.current.onInteract = onInteract
