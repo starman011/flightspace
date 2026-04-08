@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef, useMemo, Component, useEffect, useTransition } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useCallback, useRef, useMemo, Component, useEffect } from 'react'
 
 class ErrorBoundary extends Component {
   state = { error: null }
@@ -105,16 +104,12 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
 }
 
 export default function App() {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const [, startTransition] = useTransition()
-
   const { sessionToken, isAuthenticated } = useSession()
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
 
   // Initialise from URL on first render
-  const init = parseInitialState(location.pathname)
+  const init = parseInitialState(window.location.pathname)
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
@@ -144,13 +139,12 @@ export default function App() {
     collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
   }, [])
 
-  // Sync state → URL whenever relevant state changes.
+  // Sync state → URL (replaceState only — no React Router re-renders)
   useEffect(() => {
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
-    if (location.pathname === path) return
-    const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 100)
-    return () => clearTimeout(t)
-  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (window.location.pathname === path) return
+    window.history.replaceState(null, '', path)
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter])
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
