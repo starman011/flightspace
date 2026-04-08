@@ -146,8 +146,9 @@ export default function App() {
   }, [])
 
   // Sync state → URL whenever relevant state changes.
-  // Debounced + startTransition to prevent mobile flash on rapid select/unselect cycles.
+  // Panel close uses replaceState directly to avoid Suspense fallback flash (Globe is lazy).
   useEffect(() => {
+    if (panelClosingRef.current) { panelClosingRef.current = false; return }
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
     if (location.pathname === path) return
     const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 100)
@@ -166,11 +167,19 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setSelectedIcao24(icao24)
   }, [])
 
+  const panelClosingRef = useRef(false)
   const handlePanelClose = useCallback(() => {
+    panelClosingRef.current = true
     setSelectedIcao24(null)
     setTrackingId(null)
     globeRef.current?.drawTrail?.([])
-  }, [])
+    // Use history API directly — navigate() triggers Suspense fallback flash
+    // because Globe is lazy-loaded. replaceState avoids React reconciliation entirely.
+    const target = stateToPath(null, activeScale, launchPanelOpen, activeFilter)
+    if (window.location.pathname !== target) {
+      window.history.replaceState(null, '', target)
+    }
+  }, [activeScale, launchPanelOpen, activeFilter])
 
   const handleSearchSelect = useCallback((result) => {
     setSelectedIcao24(result.icao24)

@@ -251,7 +251,7 @@
 .cosmicWrap {
   position: fixed;
   top: 14px;
-  right: 14px;
+  left: 14px;
   z-index: 50;
   pointer-events: none;
   opacity: 0.55;
