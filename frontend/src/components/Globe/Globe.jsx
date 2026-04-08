@@ -1408,7 +1408,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           polygonOffset: true,
           polygonOffsetFactor: item.isParent ? -1 : -2,
           polygonOffsetUnits:  item.isParent ? -1 : -2,
-          color: new Color(0.72, 0.72, 0.74),  // darken tiles + slight contrast boost
+          color: new Color(0.55, 0.55, 0.58),  // darkened tiles — easy on the eyes
         })
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
