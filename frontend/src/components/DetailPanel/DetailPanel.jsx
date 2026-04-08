@@ -103,14 +103,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const routeRef = useRef(null)
   useEffect(() => { routeRef.current = route }, [route])
 
+  const mountedRef = useRef(true)
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
+
   const refreshLive = useCallback(() => {
     if (!icao24 || !isFlight) return
     fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
-      .then(data => {
-        setDetail(data)
-        // Don't send raw trail here — let the enrichment effect handle it
-      })
+      .then(data => { if (mountedRef.current) setDetail(data) })
       .catch(() => {})
   }, [icao24, isFlight])
 
@@ -121,29 +121,26 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     setRoute(null)
     setError(null)
     photoTriedReg.current = false
+    let cancelled = false
 
     if (isFlight) {
       setLoading(true)
       fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
-        .then(data => {
-          setDetail(data)
-          // Trail sent via enrichment effect once route data arrives
-        })
-        .catch(e => setError(e.message))
-        .finally(() => setLoading(false))
+        .then(data => { if (!cancelled) setDetail(data) })
+        .catch(e => { if (!cancelled) setError(e.message) })
+        .finally(() => { if (!cancelled) setLoading(false) })
 
-      // Fetch route (departure/arrival airports)
       fetch(`${API}/api/v1/aircraft/${icao24}/route`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d) setRoute(d) })
+        .then(d => { if (d && !cancelled) setRoute(d) })
         .catch(() => {})
 
-      // Fetch photo by hex code
-      fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`).then(setPhoto)
+      fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`)
+        .then(p => { if (!cancelled) setPhoto(p) })
 
       const iv = setInterval(refreshLive, 15000)
-      return () => clearInterval(iv)
+      return () => { cancelled = true; clearInterval(iv) }
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -178,7 +175,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
     didAutoFit.current = hasRouteCoords ? 'route' : 'trail'
     // Delay so drawTrail processes the enriched trail first
-    setTimeout(() => onFitRoute?.(route), 350)
+    const t = setTimeout(() => onFitRoute?.(route), 350)
+    return () => clearTimeout(t)
   }, [isTracking, route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fallback: try registration-based photo if hex returned nothing
