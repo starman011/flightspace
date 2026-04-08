@@ -25,6 +25,7 @@ import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
 import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import AirportPanel from './components/AirportPanel/AirportPanel'
 import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
+import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import { useSession } from './hooks/useSession'
@@ -89,6 +90,7 @@ function parseInitialState(pathname) {
   }
   if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',   launchPanelOpen: false, activeFilter: null }
   if (pathname === '/deep-space')   return { selectedIcao24: null, activeScale: 'galaxy',  launchPanelOpen: false, activeFilter: null }
+  if (pathname === '/moon')         return { selectedIcao24: null, activeScale: 'moon',   launchPanelOpen: false, activeFilter: null }
   if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null }
   if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids' }
   return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null }
@@ -100,6 +102,7 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
   if (launchPanelOpen)            return '/launches'
   if (activeScale === 'solar')    return '/solar-system'
   if (activeScale === 'galaxy')   return '/deep-space'
+  if (activeScale === 'moon')     return '/moon'
   return '/'
 }
 
@@ -125,6 +128,7 @@ export default function App() {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
+  const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const [pinnedLaunch, setPinnedLaunch]     = useState(null)
   const [returnMission, setReturnMission]   = useState(null)
@@ -189,6 +193,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
   const handleSkyObjectClick = useCallback((obj) => setSelectedSkyObject(obj), [])
   const handleSkyObjectClose = useCallback(() => setSelectedSkyObject(null), [])
+  const handleMoonSiteClick = useCallback((site) => setSelectedMoonSite(site), [])
+  const handleMoonSiteClose = useCallback(() => setSelectedMoonSite(null), [])
+  const handleMoonFilterChange = useCallback((filter) => {
+    globeRef.current?.setMoonFilter?.(filter)
+  }, [])
+  const handleMoonFlyTo = useCallback((siteId) => {
+    globeRef.current?.flyToMoonSite?.(siteId)
+  }, [])
 
   const handleARToggle = useCallback(async () => {
     if (arActive) {
@@ -227,7 +239,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   }, [])
 
   // Hide CommandCenter while launch panel is open or pad is focused
-  const showCommandCenter = !selectedIcao24 && !launchPanelOpen && !focusedPad && activeFilter !== 'asteroids'
+  const showCommandCenter = !selectedIcao24 && !launchPanelOpen && !focusedPad && activeFilter !== 'asteroids' && activeScale !== 'moon'
 
   return (
     <ErrorBoundary>
@@ -290,6 +302,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onPlanetClick={handlePlanetClick}
         onAirportClick={handleAirportClick}
         onSkyObjectClick={handleSkyObjectClick}
+        onMoonSiteClick={handleMoonSiteClick}
         neoData={asteroids}
         onZoomChange={setZoomedIn}
         mobilePanel={!!selectedIcao24}
@@ -385,6 +398,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <SkyObjectPanel
           skyObject={selectedSkyObject}
           onClose={handleSkyObjectClose}
+        />
+      )}
+
+      {activeScale === 'moon' && (
+        <MoonPanel
+          site={selectedMoonSite}
+          onClose={handleMoonSiteClose}
+          onFlyTo={handleMoonFlyTo}
+          onFilterChange={handleMoonFilterChange}
         />
       )}
 

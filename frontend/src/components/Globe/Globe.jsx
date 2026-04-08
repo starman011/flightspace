@@ -19,7 +19,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
-import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
+import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
+import { createMoonScene } from './MoonScene.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
 import styles from './Globe.module.css'
@@ -804,7 +805,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData, onZoomChange, mobilePanel }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -1003,12 +1004,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.solarFlyStart  = Date.now()
       int.current.solarFlyFrom   = camera.position.clone()
     },
+    setMoonFilter: (filter) => {
+      int.current.moonScene?.setFilter(filter)
+    },
+    flyToMoonSite: (siteId) => {
+      if (!int.current?.camera || !int.current?.moonScene) return
+      const target = int.current.moonScene.flyToSite(siteId)
+      if (!target) return
+      int.current.flyToTarget = target
+      int.current.flyToStart  = Date.now()
+      int.current.flyToFrom   = int.current.camera.position.clone()
+    },
   }), [drawTrail, setCameraScale])
 
   // Sync click callbacks into int.current so native event closures can read them
   useEffect(() => { int.current.onPlanetClick = onPlanetClick }, [onPlanetClick])
   useEffect(() => { int.current.onAirportClick = onAirportClick }, [onAirportClick])
   useEffect(() => { int.current.onSkyObjectClick = onSkyObjectClick }, [onSkyObjectClick])
+  useEffect(() => { int.current.onMoonSiteClick = onMoonSiteClick }, [onMoonSiteClick])
 
   // Push NEO asteroid data into the solar scene whenever it arrives
   useEffect(() => {
@@ -1110,6 +1123,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       color: 0x1a5276, roughness: 0.75, metalness: 0.05,   // mid-ocean blue fallback
     })
     const earth = new Mesh(earthGeo, earthMat)
+    earth.name = 'earthMesh'
     scene.add(earth)
 
     loader.load(
@@ -1244,6 +1258,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // Hidden by default; shown when cameraScale transitions to 'galaxy'.
     const galaxySystem = createNightSkyScene(scene)
+
+    // Hidden by default; shown when cameraScale transitions to 'moon'.
+    const moonScene = createMoonScene(scene)
 
     // AR controller for night sky — device orientation-driven camera
     const arController = createDeviceOrientationAR(camera, controls)
@@ -1853,6 +1870,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         return
       }
 
+      // ── Moon scale: check landing site labels ─────────────────────────
+      if (int.current.targetCameraScale === 'moon' && moonScene.moonGroup.visible) {
+        toNDC(e.clientX, e.clientY)
+        const site = moonScene.getSiteAt(ray)
+        if (site) { int.current.onMoonSiteClick?.(site); return }
+        return
+      }
+
       // ── Solar scale: check planet meshes first ────────────────────────
       if (int.current.targetCameraScale === 'solar' && solarSystem.solarGroup.visible) {
         toNDC(e.clientX, e.clientY)
@@ -1985,11 +2010,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
       }
 
-      // ── Camera scale tween (earth ↔ solar ↔ galaxy) ─────────────────────────
+      // ── Camera scale tween (earth ↔ solar ↔ galaxy ↔ moon) ────────────────
       const targetScale = int.current.targetCameraScale || 'earth'
       const isSolar   = targetScale === 'solar'
       const isGalaxy  = targetScale === 'galaxy'
-      const CAM_TARGET = isGalaxy ? CAM_GALAXY : isSolar ? CAM_SOLAR : CAM_EARTH
+      const isMoon    = targetScale === 'moon'
+      const CAM_TARGET = isMoon ? CAM_MOON : isGalaxy ? CAM_GALAXY : isSolar ? CAM_SOLAR : CAM_EARTH
 
       if (int.current.camTweenStart != null) {
         const elapsed  = Date.now() - int.current.camTweenStart
@@ -2012,6 +2038,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           controls.maxDistance = CAM_TARGET.maxDist
           if (isSolar) solarSystem.show(); else solarSystem.hide()
           if (isGalaxy) galaxySystem.show(); else galaxySystem.hide()
+          if (isMoon) moonScene.show(); else moonScene.hide()
+          const _earthVisible = !isMoon && !isSolar && !isGalaxy
+          int.current.earthMesh.visible = _earthVisible
+          int.current.cloudsMesh.visible = _earthVisible
+          int.current.placeDotsMesh.visible = _earthVisible
         }
       } else {
         const prevScale = int.current._lastAppliedScale || 'earth'
@@ -2019,13 +2050,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current._lastAppliedScale = targetScale
           int.current.camTweenStart = Date.now()
           int.current.camTweenFrom  = camera.position.clone()
-          // Unlock controls limits immediately so scroll during tween works
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
-          // Show the target scene immediately for smooth transition
-          if (isSolar) solarSystem.show()
-          if (isGalaxy) { galaxySystem.show(); solarSystem.hide() }
-          if (!isSolar && !isGalaxy) solarSystem.hide()
+          // Show target scene, hide others
+          const _showEarth = !isMoon && !isSolar && !isGalaxy
+          int.current.earthMesh.visible = _showEarth
+          int.current.cloudsMesh.visible = _showEarth
+          int.current.placeDotsMesh.visible = _showEarth
+          if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
+          else if (isSolar) { solarSystem.show(); moonScene.hide() }
+          else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }
+          else { solarSystem.hide(); moonScene.hide() }
           if (!isGalaxy) galaxySystem.hide()
         }
       }
@@ -2034,6 +2069,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (solarSystem.solarGroup.visible) {
         solarSystem.update(int.current.planetPositions)
         solarSystem.animateExtra()
+      }
+
+      // ── Moon scene per-frame update ─────────────────────────────────────
+      if (moonScene.moonGroup.visible) {
+        moonScene.update()
       }
 
       // ── Night sky per-frame update (planet positions refresh every 30s) ──
@@ -2103,7 +2143,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const overlayAlpha = MathUtils.clamp((dist - TILE_DIST_THRESHOLD + 0.4) / 0.4, 0, 1)
       graticuleMat.opacity = 0.45 * overlayAlpha
 
-      updateTiles()
+      // Skip tile loading in non-Earth views
+      if (targetScale === 'earth') updateTiles()
 
       // ── Smooth tile fade-in: ramp loaded tiles from 0 → target over ~200ms ──
       // Only fade in when in tile mode (not when tiles are fading out).
@@ -2333,6 +2374,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       clearTiles,
       solarSystem,
       galaxySystem,
+      moonScene,
+      earthMesh: earth,
+      cloudsMesh: clouds,
+      placeDotsMesh: placeDots,
       arController,
       targetCameraScale: 'earth',   // set by setCameraScale via imperative handle
       camTweenStart: null,          // timestamp when tween began
@@ -2367,6 +2412,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       pickTarget.dispose()
       solarSystem.dispose()
       galaxySystem.dispose()
+      moonScene.dispose()
       if (arController.isActive()) arController.disable()
       controls.dispose()
       renderer.dispose()

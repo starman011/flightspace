@@ -104,5 +104,11 @@ export const CAM_EARTH = {
   maxDist:  60,             // ~380,000 km (Moon distance)
 }
 
+export const CAM_MOON = {
+  position: [0, 0, 0.8],   // ~550 km above Moon surface (Moon radius = 0.2727 WU)
+  minDist:  0.28,           // just above surface
+  maxDist:  3,              // far enough to see full Moon
+}
+
 // ── Tween duration matches design.md motion spec ──────────────────────────
 export const CAM_TWEEN_MS = 1400

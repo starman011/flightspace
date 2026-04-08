@@ -34,6 +34,7 @@ Tracks all significant changes made during development sessions.
 | 15 | **Mobile tracking: allow panning** | Tracking lock (`controls.enableRotate = false`) prevented all user interaction on mobile. Now pauses tracking for 3s on `pointerdown`, letting the user pan/zoom freely. Camera resumes following the aircraft after the pause. |
 | 16 | **Mobile camera offset with panel** | When DetailPanel is open (bottom 1/3 of screen), camera target is offset downward on the sphere so the tracked aircraft appears in the visible area above the card, not behind it. Applied to both live tracking and fitRoute. |
 | 17 | **Developer tooling docs** | Added Caveman (token reduction) and claude-mem (session memory) to README and constitution (Article XII, v1.3.0). Install instructions, usage, and combined workflow documented. |
+| 18 | **Moon globe view** | New 'moon' scale with full MoonScene: 2K texture on SphereGeometry(0.2727 WU), bump lighting, starfield background. 22 landing sites (Apollo, Luna, Chang'e, Chandrayaan, SLIM, IM-1/2) with pulsing markers + labels. 13 named craters/maria with labels. Mineral overlay system (FeO, TiO₂, water ice, thorium) with toggle filters. MoonPanel shows site details, stats, fly-to, and mineral filters. FilterRail Moon button. URL routing (/moon). Earth mesh, clouds, tiles, place dots hidden during Moon view. Camera preset: 0.8 WU with 0.28–3.0 zoom range. |
 
 ---
 

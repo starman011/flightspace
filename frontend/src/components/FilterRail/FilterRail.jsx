@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { id: 'asteroids',  icon: 'wb_iridescent',    label: 'Asteroids',  type: 'asteroids',  scale: 'solar' },
   { id: 'ships',      icon: 'directions_boat',  label: 'Ships',      type: 'ships',      scale: 'earth' },
   { id: 'rockets',    icon: 'rocket_launch',    label: 'Launches',   type: 'rockets',    scale: 'earth' },
+  { id: 'moon',       icon: 'nightlight',       label: 'Moon',       type: 'moon',       scale: 'moon' },
 ]
 
 export default function FilterRail({
