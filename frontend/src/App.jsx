@@ -146,14 +146,11 @@ export default function App() {
   }, [])
 
   // Sync state → URL whenever relevant state changes.
-  // Debounced to prevent mobile browsers from triggering expensive re-renders
-  // on rapid select/unselect cycles (the navigate call causes full React Router reconciliation).
+  // Debounced + startTransition to prevent mobile flash on rapid select/unselect cycles.
   useEffect(() => {
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
     if (location.pathname === path) return
-    // Panel close already handles URL via history API — skip navigate for that case
-    if (!selectedIcao24 && location.pathname.startsWith('/flight/')) return
-    const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 80)
+    const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 100)
     return () => clearTimeout(t)
   }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -173,12 +170,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setSelectedIcao24(null)
     setTrackingId(null)
     globeRef.current?.drawTrail?.([])
-    // Use history API directly to avoid React Router reconciliation flash on mobile
-    const target = stateToPath(null, activeScale, launchPanelOpen, activeFilter)
-    if (window.location.pathname !== target) {
-      window.history.replaceState(null, '', target)
-    }
-  }, [activeScale, launchPanelOpen, activeFilter])
+  }, [])
 
   const handleSearchSelect = useCallback((result) => {
     setSelectedIcao24(result.icao24)
