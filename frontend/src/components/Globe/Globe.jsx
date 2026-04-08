@@ -1410,6 +1410,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           polygonOffsetUnits:  item.isParent ? -1 : -2,
           color: new Color(0.55, 0.55, 0.58),  // darkened tiles — easy on the eyes
         })
+        // Boost saturation for richer street-view colors
+        mat.onBeforeCompile = shader => {
+          shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <output_fragment>',
+            `
+            float grey = dot(outgoingLight, vec3(0.299, 0.587, 0.114));
+            outgoingLight = mix(vec3(grey), outgoingLight, 1.45);
+            #include <output_fragment>
+            `
+          )
+        }
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
         mesh.frustumCulled = false
@@ -2141,34 +2152,35 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Two-regime aircraft scaling:
-      //   Above ~30 km: original dist-based formula (large visible icons)
-      //   Below ~15 km: perspective-correct camToAc formula (real-sized on street map)
-      //   15–30 km: smooth blend between the two
+      // Aircraft scaling — three regimes:
+      //   Above 50 km: dist-based formula (large visible icons from orbit)
+      //   Below 5 km:  real-world proportional (plane ≈ 40m on the map)
+      //   5–50 km:     smooth blend
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
-      // Old formula (unchanged look from above)
+      // High-altitude formula (unchanged look from orbit)
       const wuPerPxOld  = (2 * dist * tanHalf) / screenW
       const ptOld       = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
 
-      // New formula (perspective-correct at street level)
+      // Low-altitude: perspective-correct, shrinks proportionally to camera distance
       const _acR        = EARTH_R * 1.0005
       const camToAc     = Math.max(dist - _acR, 0.00005)
       const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
-      const ptNew       = MathUtils.clamp(4 + 3 * Math.log10(1 + camToAc * 80), 2, 10)
+      // At 1km: ~40m real plane ≈ 0.0000063 WU. Scale from ~2px at 1km to ~6px at 5km.
+      const ptNew       = MathUtils.clamp(2 + 2 * Math.log10(1 + camToAc * 200), 1.5, 6)
 
       let newScale
-      if (altKm >= 30) {
+      if (altKm >= 50) {
         newScale = ptOld * wuPerPxOld
-      } else if (altKm <= 15) {
+      } else if (altKm <= 5) {
         newScale = ptNew * wuPerPxNew
       } else {
-        const t = (altKm - 15) / 15            // 0 at 15 km, 1 at 30 km
+        const t = (altKm - 5) / 45             // 0 at 5 km, 1 at 50 km
         newScale = MathUtils.lerp(ptNew * wuPerPxNew, ptOld * wuPerPxOld, t)
       }
-      newScale = MathUtils.clamp(newScale, 0.00003, 0.02)
+      newScale = MathUtils.clamp(newScale, 0.000005, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).

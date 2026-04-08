@@ -4,6 +4,28 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-08
+
+### Improvements
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Plane scaling below 50km** | Two-regime scaling now blends between 5–50km altitude. Below 5km, planes use perspective-correct sizing (`camToAc` distance) with logarithmic pixel scaling (2–6px) — a plane at 1km looks ~40m, not city-sized. Min scale lowered from 0.00003 to 0.000005 WU. Smooth lerp transition between street-level and orbit-level regimes. |
+| 2 | **Saturated street-view maps** | Injected saturation boost (1.45×) into tile fragment shader via `onBeforeCompile`. Converts to luminance, then `mix(grey, color, 1.45)` for richer colors while keeping the darkened tile tint (0.55 brightness). Street-level maps now pop without being garish. |
+
+### Fixes (continued from 2026-04-07)
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Trail TubeGeometry rewrite** | Replaced manual ribbon geometry (invisible in WebGL) with `TubeGeometry` + `CatmullRomCurve3`. Two-tone: bright green (traveled, dep→plane) + dim orange (remaining, plane→arr). `depthTest: false` guarantees visibility. Small sphere markers (0.005 WU) at route API airport coords. |
+| 2 | **aircraft_positions table populated** | Poller only wrote to `aircraft_latest` (upsert) — `aircraft_positions` (append-only trail history) was empty. Added INSERT INTO `aircraft_positions` alongside upsert in poll loop. |
+| 3 | **CSP image blocking** | Added `t.plnspttrs.net` (planespotters thumbnails) and `cdn.arstechnica.net` (news images) to `img-src` in both `vercel.json` and `_headers`. |
+| 4 | **Trail empty-array guard** | `if (!detail?.trail?.length) return` blocked trail rendering because `[].length === 0` is falsy. Fixed: check for route data and live position independently, not just trail length. |
+| 5 | **Trail connects to live plane** | Trail lagged behind live WebSocket data. Now appends `liveData.lat/lon` to trail array before passing to `drawTrail`, so trail always extends to current aircraft position. |
+| 6 | **Darkened map tiles** | Tile material color reduced from `(0.72, 0.72, 0.74)` to `(0.55, 0.55, 0.58)` for easier eye comfort at street level. |
+
+---
+
 ## Session: 2026-04-07
 
 ### Features Added
