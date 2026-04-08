@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, lazy, Suspense, Component, useEffect, useTransition } from 'react'
+import { useState, useCallback, useRef, useMemo, Component, useEffect, useTransition } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 class ErrorBoundary extends Component {
@@ -13,9 +13,7 @@ class ErrorBoundary extends Component {
     return this.props.children
   }
 }
-const Globe = lazy(() =>
-  import('./components/Globe/Globe').then(m => ({ default: m.Globe }))
-)
+import { Globe } from './components/Globe/Globe'
 import DetailPanel from './components/DetailPanel/DetailPanel'
 import SearchBar from './components/SearchBar/SearchBar'
 import FilterRail from './components/FilterRail/FilterRail'
@@ -147,9 +145,7 @@ export default function App() {
   }, [])
 
   // Sync state → URL whenever relevant state changes.
-  // Panel close uses replaceState directly to avoid Suspense fallback flash (Globe is lazy).
   useEffect(() => {
-    if (panelClosingRef.current) { panelClosingRef.current = false; return }
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
     if (location.pathname === path) return
     const t = setTimeout(() => startTransition(() => navigate(path, { replace: true })), 100)
@@ -168,19 +164,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setSelectedIcao24(icao24)
   }, [])
 
-  const panelClosingRef = useRef(false)
   const handlePanelClose = useCallback(() => {
-    panelClosingRef.current = true
     setSelectedIcao24(null)
     setTrackingId(null)
     globeRef.current?.drawTrail?.([])
-    // Use history API directly — navigate() triggers Suspense fallback flash
-    // because Globe is lazy-loaded. replaceState avoids React reconciliation entirely.
-    const target = stateToPath(null, activeScale, launchPanelOpen, activeFilter)
-    if (window.location.pathname !== target) {
-      window.history.replaceState(null, '', target)
-    }
-  }, [activeScale, launchPanelOpen, activeFilter])
+  }, [])
 
   const handleSearchSelect = useCallback((result) => {
     setSelectedIcao24(result.icao24)
@@ -295,24 +283,22 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0f1419' }} />}>
-        <Globe
-          ref={globeRef}
-          aircraft={globeAircraft}
-          selectedId={selectedIcao24}
-          onAircraftClick={focusedPad ? null : handleAircraftClick}
-          onViewportChange={setBounds}
-          trackingId={trackingId}
-          solarData={solarData}
-          padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
-          onInteract={handleGlobeInteract}
-          onPlanetClick={handlePlanetClick}
-          onAirportClick={handleAirportClick}
-          onSkyObjectClick={handleSkyObjectClick}
-          neoData={asteroids}
-          onZoomChange={setZoomedIn}
-        />
-      </Suspense>
+      <Globe
+        ref={globeRef}
+        aircraft={globeAircraft}
+        selectedId={selectedIcao24}
+        onAircraftClick={focusedPad ? null : handleAircraftClick}
+        onViewportChange={setBounds}
+        trackingId={trackingId}
+        solarData={solarData}
+        padMarker={focusedPad?.pad_lat && focusedPad?.pad_lon ? { lat: focusedPad.pad_lat, lon: focusedPad.pad_lon } : null}
+        onInteract={handleGlobeInteract}
+        onPlanetClick={handlePlanetClick}
+        onAirportClick={handleAirportClick}
+        onSkyObjectClick={handleSkyObjectClick}
+        neoData={asteroids}
+        onZoomChange={setZoomedIn}
+      />
 
       {showCommandCenter && (
         <CommandCenterOverlay
