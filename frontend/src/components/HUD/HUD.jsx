@@ -6,7 +6,7 @@ function utcNow() {
 }
 
 /** HUD — top-right telemetry: tracked count, feed status, UTC clock */
-export default function HUD({ trackedCount = 0, connectionStatus = 'disconnected' }) {
+export default function HUD({ trackedCount = 0, connectionStatus = 'disconnected', zoomedIn = false }) {
   const [utc, setUtc] = useState(utcNow)
   const [latency, setLatency] = useState('—')
 
@@ -29,7 +29,7 @@ export default function HUD({ trackedCount = 0, connectionStatus = 'disconnected
   return (
     <>
       {/* Top-right: system status */}
-      <div className={`${styles.hud} ${styles.topRight}`} aria-hidden="true">
+      <div className={`${styles.hud} ${styles.topRight} ${zoomedIn ? styles.docked : ''}`} aria-hidden="true">
         <div className={styles.row}>
           <span className={styles.key}>TRACKED</span>
           <span className={styles.val}>{trackedCount.toLocaleString()}</span>

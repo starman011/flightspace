@@ -127,6 +127,7 @@ export default function App() {
 
   const { asteroids } = useAsteroids(activeScale === 'solar')
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
+  const [zoomedIn, setZoomedIn]             = useState(false)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
@@ -273,6 +274,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <HUD
           trackedCount={aircraftWithShips.size}
           connectionStatus={connectionStatus}
+          zoomedIn={zoomedIn}
           cameraAltM={cameraInfo.altM}
           cameraLat={cameraInfo.lat}
           cameraLon={cameraInfo.lon}
@@ -308,6 +310,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onAirportClick={handleAirportClick}
           onSkyObjectClick={handleSkyObjectClick}
           neoData={asteroids}
+          onZoomChange={setZoomedIn}
         />
       </Suspense>
 
@@ -329,6 +332,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onCameraScale={handleCameraScale}
           onActiveFilterChange={setActiveFilter}
           onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+          zoomedIn={zoomedIn}
         />
       )}
 

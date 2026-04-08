@@ -804,7 +804,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, neoData, onZoomChange }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -2143,6 +2143,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         else if (altM < 1e6) altLabel = `${(altM / 1000).toFixed(altM < 10000 ? 1 : 0)} km`
         else altLabel = `${Math.round(altM / 1000).toLocaleString()} km`
         setCameraInfo({ altLabel, scaleLabel, scaleBarPx })
+        // Notify parent when zoom crosses tile threshold (~500km)
+        const isClose = altM < 500_000
+        if (isClose !== int.current._wasZoomedIn) {
+          int.current._wasZoomedIn = isClose
+          int.current.onZoomChange?.(isClose)
+        }
       }
 
       // Update sun direction every 60 s (sun moves ~0.25°/min — imperceptible at lower cadence)
@@ -2346,6 +2352,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   }, [onViewportChange])
 
   useEffect(() => {
+    if (int.current) int.current.onZoomChange = onZoomChange
+  }, [onZoomChange])
+
+  useEffect(() => {
     if (int.current) int.current.onInteract = onInteract
   }, [onInteract])
 
@@ -2518,16 +2528,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
   return (
     <div ref={mountRef} className={styles.globe}>
-      <div className={styles.mapToggle}>
-        <button
-          className={mapStyle === 'street' ? styles.active : ''}
-          onClick={() => setMapStyle('street')}
-        >Street</button>
-        <button
-          className={mapStyle === 'satellite' ? styles.active : ''}
-          onClick={() => setMapStyle('satellite')}
-        >Satellite</button>
-      </div>
+
+      {createPortal(
+        <div className={styles.mapToggle}>
+          <button
+            className={mapStyle === 'street' ? styles.active : ''}
+            onClick={() => setMapStyle('street')}
+          >Street</button>
+          <button
+            className={mapStyle === 'satellite' ? styles.active : ''}
+            onClick={() => setMapStyle('satellite')}
+          >Satellite</button>
+        </div>,
+        document.body
+      )}
 
       {cameraInfo.altLabel && createPortal(
         <div className={styles.cameraHud}>

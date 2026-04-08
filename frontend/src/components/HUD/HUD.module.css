@@ -15,7 +15,8 @@
 }
 
 .topLeft  { top: 16px; left: calc(var(--sidebar-w) + 16px); border-radius: var(--radius-md); transition: left var(--duration-panel) var(--ease-panel); }
-.topRight { top: 16px; right: 376px; border-radius: var(--radius-md); text-align: right; }
+.topRight { top: 16px; right: 376px; border-radius: var(--radius-md); text-align: right; transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.topRight.docked { right: 56px; }
 
 .row {
   display: flex;

@@ -1075,7 +1075,7 @@ function PinnedCountdown({ launch, onUnpin }) {
 
 export default function CommandCenterOverlay({
   trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
-  activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle,
+  activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn,
 }) {
   const isLive  = connectionStatus === 'connected'
   const utcTime = useUtcTime()
@@ -1096,6 +1096,16 @@ export default function CommandCenterOverlay({
   useEffect(() => {
     if (forceCollapsed) setSheetState('peek')
   }, [forceCollapsed])
+
+  // Auto-collapse stream + hide hero when zoomed in close to Earth
+  useEffect(() => {
+    if (zoomedIn) {
+      setDesktopOpen('collapsed')
+      setSheetState('peek')
+    } else {
+      setDesktopOpen('open')
+    }
+  }, [zoomedIn])
   const grabRef       = useRef(null)
   const sheetStateRef = useRef(sheetState)
   useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])
@@ -1156,8 +1166,8 @@ export default function CommandCenterOverlay({
 
   return (
     <div className={styles.overlay}>
-      {/* Background SVG grid */}
-      <div className={styles.gridBg}>
+      {/* Background SVG grid — hidden when zoomed in */}
+      <div className={`${styles.gridBg} ${zoomedIn ? styles.heroHidden : ''}`}>
         <svg className={styles.gridSvg}>
           <defs>
             <pattern id="cc-grid" width="100" height="100" patternUnits="userSpaceOnUse">
@@ -1169,8 +1179,8 @@ export default function CommandCenterOverlay({
         <div className={styles.radialGlow} />
       </div>
 
-      {/* Left hero section */}
-      <div className={styles.hero}>
+      {/* Left hero section — hidden when zoomed in */}
+      <div className={`${styles.hero} ${zoomedIn ? styles.heroHidden : ''}`}>
         <div className={styles.activeTag}>
           <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
           <span className={styles.activeLabel}>
@@ -1327,8 +1337,8 @@ export default function CommandCenterOverlay({
         </div>
       )}
 
-      {/* Encryption watermark */}
-      <div className={styles.watermark}>
+      {/* Encryption watermark — hidden when zoomed in */}
+      <div className={`${styles.watermark} ${zoomedIn ? styles.heroHidden : ''}`}>
         <span>Encryption_Level: AES-256</span>
         <span>Local_Time: {utcTime} UTC</span>
       </div>

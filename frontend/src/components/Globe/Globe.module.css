@@ -9,9 +9,9 @@
 /* !important beats OrbitControls inline style="cursor:grab" */
 .globe canvas.hovered { cursor: pointer !important; }
 
-/* Map style toggle — bottom-right corner */
+/* Map style toggle — bottom-right, portalled to body */
 .mapToggle {
-  position: absolute;
+  position: fixed;
   bottom: 24px;
   right: 24px;
   display: flex;
@@ -20,8 +20,9 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 4px;
   padding: 3px;
-  z-index: 10;
+  z-index: 55;
   pointer-events: all;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .mapToggle button {
   background: transparent;
@@ -37,26 +38,31 @@
 .mapToggle button:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255,255,255,0.85); }
 .mapToggle button.active { background: rgba(80, 160, 255, 0.20); color: #50b4ff; }
 
-/* Camera HUD — altitude + scale bar, portalled to body so it clears all stacking contexts */
+/* Camera HUD — altitude + scale bar, portalled to body */
 .cameraHud {
   position: fixed;
-  right: calc(368px + 22px); /* clear the 368px stream panel */
-  bottom: 70px;
+  right: 24px;
+  bottom: 60px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
   pointer-events: none;
   z-index: 50;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 767px) {
   .cameraHud {
     right: 14px;
-    bottom: 90px; /* sit just above the 80px peek strip */
+    bottom: 90px;
     gap: 5px;
     transform: scale(0.82);
     transform-origin: right bottom;
+  }
+  .mapToggle {
+    right: 14px;
+    bottom: 14px;
   }
 }
 
