@@ -319,7 +319,7 @@
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 33dvh;
+    max-height: 34dvh;
     height: auto;
     border-left: none;
     border-top: 1px solid rgba(0, 229, 255, 0.08);
@@ -328,37 +328,79 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .hero { min-height: 80px; }
-  .heroImg { height: 80px; }
-  .heroPlaceholder { height: 80px; }
-  .heroOverlay { padding: 8px 12px; gap: 1px; }
-  .callsign { font-size: 15px; }
-  .heroDesc { font-size: 10px; }
-  .heroOp { font-size: 9px; }
-  .typeCode { font-size: 9px; }
-  .photoCredit { font-size: 7px; }
+  /* Hero → horizontal layout: thumbnail left, info right */
+  .hero {
+    min-height: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    background: rgba(10, 13, 16, 0.95);
+  }
 
-  .routeCard { padding: 6px 12px; }
-  .routeCode { font-size: 9px; letter-spacing: 0.04em; }
-  .routeCoord { font-size: 8px; }
-  .routeDist { font-size: 8px; }
+  .heroImg {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 0 0 0 0;
+    flex-shrink: 0;
+  }
+
+  .heroPlaceholder {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+  }
+
+  .heroIcon { font-size: 28px; }
+
+  .heroOverlay {
+    position: relative;
+    inset: auto;
+    background: none;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    gap: 2px;
+    justify-content: center;
+  }
+
+  .closeBtn {
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .panelTitle { font-size: 8px; margin-bottom: 1px; }
+  .callsign { font-size: 16px; }
+  .heroDesc { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .heroOp { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .typeCode { font-size: 9px; }
+  .photoCredit { display: none; }
+
+  /* Route card */
+  .routeCard { padding: 8px 12px; }
+  .routeCode { font-size: 9px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .routeCoord { display: none; }
+  .routeDist { font-size: 9px; }
   .routeEta { font-size: 9px; }
   .routeDot { width: 6px; height: 6px; }
-  .routeCenter { flex: 0 0 60px; padding-top: 4px; }
-  .routeArc { width: 40px; }
+  .routeCenter { flex: 0 0 70px; padding-top: 4px; }
+  .routeArc { width: 44px; }
 
+  /* Track buttons */
   .trackRow { padding: 6px 12px; gap: 6px; }
-  .trackBtn { padding: 6px 0; font-size: 10px; border-radius: 6px; }
-  .fitBtn { padding: 6px 10px; font-size: 9px; border-radius: 6px; }
+  .trackBtn { padding: 7px 0; font-size: 11px; border-radius: 6px; }
+  .fitBtn { padding: 7px 12px; font-size: 10px; border-radius: 6px; }
 
+  /* Telemetry */
   .telemetry { padding: 6px 12px; }
   .telemGrid { gap: 4px; margin-bottom: 4px; }
   .telemCell { padding: 6px 8px; border-radius: 6px; }
   .telemLabel { font-size: 7px; }
-  .telemVal { font-size: 12px; }
+  .telemVal { font-size: 13px; }
   .telemMeta { font-size: 8px; gap: 8px; }
 
-  .closeBtn { top: 4px; right: 4px; width: 26px; height: 26px; font-size: 16px; }
-  .panelTitle { font-size: 7px; margin-bottom: 2px; }
   .state { padding: 6px 12px; font-size: 10px; }
 }
