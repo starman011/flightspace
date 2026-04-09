@@ -141,12 +141,18 @@ export function createMoonScene(scene) {
   moonGroup.add(sunLight)
 
   // ── Moon sphere ───────────────────────────────────────────────────────────
-  const moonGeo = new SphereGeometry(MOON_R, 128, 128)
-  const moonTex = loader.load('/textures/planets/moon.jpg')
+  // 4K NASA-derived albedo, 256 segments for crisp limb at close range
+  const moonGeo = new SphereGeometry(MOON_R, 256, 256)
+  const moonTex = loader.load('/textures/planets/moon.jpg', (t) => {
+    t.anisotropy = 16
+    t.colorSpace = 'srgb'
+  })
   const moonMat = new MeshStandardMaterial({
     map: moonTex,
-    roughness: 0.95,
+    roughness: 0.92,
     metalness: 0.0,
+    bumpMap: moonTex,   // reuse albedo as a cheap surface bump
+    bumpScale: 0.0035,
   })
   const moonMesh = new Mesh(moonGeo, moonMat)
   moonGroup.add(moonMesh)

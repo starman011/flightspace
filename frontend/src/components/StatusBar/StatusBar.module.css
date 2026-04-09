@@ -55,7 +55,7 @@
 }
 
 .expanded {
-  width: 580px;
+  width: 640px;
   grid-template-rows: auto 1fr;
   border-color: rgba(0, 229, 255, 0.18);
   box-shadow:

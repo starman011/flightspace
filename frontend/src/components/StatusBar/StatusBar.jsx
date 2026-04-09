@@ -81,6 +81,12 @@ export default function StatusBar({
               />
               <span className={styles.navSep} />
               <NavBtn
+                label="Moon"
+                active={activeScale === 'moon'}
+                onClick={() => { onScaleChange?.('moon'); setExpanded(false) }}
+              />
+              <span className={styles.navSep} />
+              <NavBtn
                 label="Solar System"
                 active={activeScale === 'solar'}
                 onClick={() => { onScaleChange?.('solar'); setExpanded(false) }}

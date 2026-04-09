@@ -10,8 +10,10 @@ Tracks all significant changes made during development sessions.
 
 | # | What | Detail |
 |---|------|--------|
-| 1 | **Moon button missing from mobile notch** | Added Moon to `CATEGORIES` in `OrbitalMapBar.jsx` (icon `nightlight`, type `moon`, scale `moon`) so it renders in the always-visible mobile chip strip alongside desktop filter rail. |
-| 2 | **Mobile DetailPanel hero redesign** | Plane image was skewing on mobile due to `align-items: stretch` on the flex row forcing `object-fit: cover` to distort. Redesigned as a 56×56 rounded avatar (14px radius, box-shadow) with `align-items: center`, transparent hero background, and text info flowing beside. Gradient overlay removed on mobile. |
+| 1 | **Moon entry-point moved to top notch** | Added a `Moon` button to the `StatusBar` scale-nav (Earth · Moon · Solar System · Deep Space). Removed Moon from `FilterRail` and `OrbitalMapBar` mobile chip strip — Moon is now strictly a "scale" alongside the others. Notch expanded width bumped 580 → 640 px to fit four nav items. |
+| 2 | **High-quality Moon texture** | Replaced the 2K Moon texture with a 4K NASA-derived albedo (4096×2048, 3.7 MB). MoonScene now uses 256×256 sphere segments, anisotropy 16, sRGB color space, and reuses the albedo as a cheap bump-map (`bumpScale 0.0035`) for surface relief at close range. |
+| 3 | **MoonPanel visual redesign** | Replaced the 🌙 emoji with a custom inline SVG `MoonGlyph` (radial gradient body + crater speckle). Rebuilt typography hierarchy (eyebrow → display name → subline), added a glowing close button, gradient divider, polished stat grid with tabular numerics, and a gradient fly-to button with hover lift. Mineral filters became a 2-col grid of color-dot pills with chemical formulas. Panel itself uses radial top-glow + saturated backdrop blur. |
+| 4 | **Mobile DetailPanel hero redesign** | Plane image was skewing on mobile due to `align-items: stretch` forcing `object-fit: cover` to distort. Redesigned as a 56×56 rounded avatar with `align-items: center`, transparent hero background, and text info flowing beside. |
 
 ---
 
