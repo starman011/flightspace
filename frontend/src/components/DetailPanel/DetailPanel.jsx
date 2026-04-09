@@ -252,10 +252,16 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const altKm = liveData?.alt_km
   const hasPosition = displayLat != null
 
+  // Derive status label + IATA short codes for route header
+  const statusLabel = displayGrnd ? 'ON GROUND' : cat === 'satellite' ? 'IN ORBIT' : cat === 'ship' ? 'AT SEA' : 'AIRBORNE'
+  const depIata = route?.departure_iata || '---'
+  const arrIata = route?.arrival_iata || '---'
+
   return (
     <aside ref={panelRef} className={styles.panel}>
+      <button className={styles.closeBtn} onClick={onClose} aria-label="close">×</button>
 
-      {/* ── Hero: photo + overlay ── */}
+      {/* ── Hero: full-bleed aircraft photo ── */}
       <div className={styles.hero}>
         {photo?.url ? (
           <img
@@ -273,100 +279,87 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             </span>
           </div>
         )}
-        <div className={styles.heroOverlay}>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="close">×</button>
-          <span className={styles.panelTitle}>{categoryLabel(cat)}</span>
-          <div className={styles.heroInfo}>
-            <span className={styles.callsign}>{displayName}</span>
-            {typeCode && <span className={styles.typeCode}>{typeCode}</span>}
-          </div>
-          {typeDesc && <p className={styles.heroDesc}>{typeDesc}</p>}
-          {operator && <p className={styles.heroOp}>{operator}</p>}
-        </div>
         {photo?.photographer && (
           <span className={styles.photoCredit}>{photo.photographer}</span>
         )}
       </div>
 
+      {/* ── Flight identity ── */}
+      <div className={styles.identity}>
+        <div className={styles.identityRow}>
+          <span className={styles.callsign}>{displayName}</span>
+          {typeCode && <span className={styles.typeCode}>{typeCode}</span>}
+        </div>
+        <div className={styles.identitySub}>
+          {operator && <span>{operator}</span>}
+          {typeDesc && <span>{typeDesc}</span>}
+          {detail?.registration && <span>{detail.registration}</span>}
+        </div>
+      </div>
+
       {loading && <p className={styles.state}>loading…</p>}
       {error && isFlight && <p className={styles.state}>error {error}</p>}
 
-      {/* ── Route card: DEP → ARR (from route API) ── */}
+      {/* ── Route: departure → arrival ── */}
       {route && (
         <div className={styles.routeCard}>
-          <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#22ff88' }} />
-            <span className={styles.routeCode}>{depLabel}</span>
-            {route.dep_lat != null && (
-              <span className={styles.routeCoord}>
-                {route.dep_lat.toFixed(2)}°, {route.dep_lon.toFixed(2)}°
-              </span>
-            )}
+          <div className={styles.routeRow}>
+            <div className={styles.routeAirport}>
+              <span className={styles.iata}>{depIata}</span>
+              <span className={styles.airportName}>{route.departure_name || 'Departure'}</span>
+            </div>
+            <div className={styles.routeMiddle}>
+              <div className={styles.routeLine}>
+                <span className={styles.routeDotLeft} />
+                <span className={styles.routeDash} />
+                <svg className={styles.routePlane} viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor" />
+                </svg>
+                <span className={styles.routeDash} />
+                <span className={styles.routeDotRight} />
+              </div>
+              {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
+            </div>
+            <div className={styles.routeAirport}>
+              <span className={styles.iata}>{arrIata}</span>
+              <span className={styles.airportName}>{route.arrival_name || 'Arrival'}</span>
+            </div>
           </div>
-          <div className={styles.routeCenter}>
-            <div className={styles.routeArc} />
-            {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
-            {etaMin != null && <span className={styles.routeEta}>ETA {fmtEta(etaMin)}</span>}
-          </div>
-          <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#ff6622' }} />
-            <span className={styles.routeCode}>{arrLabel}</span>
-            {route.arr_lat != null && (
-              <span className={styles.routeCoord}>
-                {route.arr_lat.toFixed(2)}°, {route.arr_lon.toFixed(2)}°
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Position card: when no route data but we have position ── */}
-      {!route && hasPosition && (
-        <div className={styles.routeCard}>
-          <div className={styles.routeCol}>
-            <span className={styles.routeDot} style={{ background: '#ff6622' }} />
-            <span className={styles.routeCode}>{nearestAirport(displayLat, displayLon)?.name ?? 'POS'}</span>
-            <span className={styles.routeCoord}>
-              {displayLat.toFixed(2)}°, {displayLon.toFixed(2)}°
-            </span>
-          </div>
-          {altKm != null && (
-            <div className={styles.routeCol}>
-              <span className={styles.routeCode}>ORBIT</span>
-              <span className={styles.routeCoord} style={{ color: 'rgba(255,255,255,0.5)' }}>
-                {Math.round(altKm)} km
-              </span>
+          {etaMin != null && (
+            <div className={styles.etaBadge}>
+              <span className={styles.etaLabel}>ETA</span>
+              <span className={styles.etaValue}>{fmtEta(etaMin)}</span>
             </div>
           )}
         </div>
       )}
 
-      {/* ── Track button (flights only) ── */}
-      {isFlight && (detail || liveData) && (
-        <div className={styles.trackRow}>
-          <button
-            className={`${styles.trackBtn} ${isTracking ? styles.trackBtnActive : ''}`}
-            onClick={() => {
-              if (isTracking) {
-                onTrack?.(null)
-              } else {
-                onTrack?.(icao24)
-                // Trail + fit handled by the autoFit effect below
-              }
-            }}
-          >
-            {isTracking ? 'Stop Tracking' : 'Track Flight'}
-          </button>
-          {isTracking && (
-            <button className={styles.fitBtn} onClick={() => onFitRoute?.(route)}>fit</button>
+      {/* ── Position fallback (no route) ── */}
+      {!route && hasPosition && (
+        <div className={styles.posCard}>
+          <div className={styles.posRow}>
+            <span className={styles.posLabel}>Position</span>
+            <span className={styles.posValue}>{displayLat.toFixed(4)}°, {displayLon.toFixed(4)}°</span>
+          </div>
+          {nearestAirport(displayLat, displayLon) && (
+            <div className={styles.posRow}>
+              <span className={styles.posLabel}>Near</span>
+              <span className={styles.posValue}>{nearestAirport(displayLat, displayLon).name}</span>
+            </div>
+          )}
+          {altKm != null && (
+            <div className={styles.posRow}>
+              <span className={styles.posLabel}>Orbit</span>
+              <span className={styles.posValue}>{Math.round(altKm)} km</span>
+            </div>
           )}
         </div>
       )}
 
-      {/* ── Telemetry (always show when we have position data) ── */}
+      {/* ── Live telemetry ── */}
       {hasPosition && (
         <div className={styles.telemetry}>
-          <div className={styles.telemGrid}>
+          <div className={styles.telemStrip}>
             {displayAlt != null && (
               <div className={styles.telemCell}>
                 <span className={styles.telemLabel}>ALT</span>
@@ -402,12 +395,33 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               </div>
             )}
           </div>
-          <div className={styles.telemMeta}>
-            {detail?.registration && <span>{detail.registration}</span>}
-            {liveData?.ctry && <span>{liveData.ctry}</span>}
-            <span>{displayGrnd ? 'ON GROUND' : cat === 'satellite' ? 'IN ORBIT' : cat === 'ship' ? 'AT SEA' : 'AIRBORNE'}</span>
-            {etaMin != null && <span>ETA {fmtEta(etaMin)}</span>}
+          <div className={styles.statusBar}>
+            <span className={`${styles.statusDot} ${displayGrnd ? styles.grounded : ''}`} />
+            <span className={styles.statusText}>{statusLabel}</span>
+            {liveData?.ctry && <span className={styles.statusMeta}>{liveData.ctry}</span>}
+            {etaMin != null && <span className={styles.statusEta}>ETA {fmtEta(etaMin)}</span>}
           </div>
+        </div>
+      )}
+
+      {/* ── Track / fit ── */}
+      {isFlight && (detail || liveData) && (
+        <div className={styles.trackRow}>
+          <button
+            className={`${styles.trackBtn} ${isTracking ? styles.trackBtnActive : ''}`}
+            onClick={() => {
+              if (isTracking) {
+                onTrack?.(null)
+              } else {
+                onTrack?.(icao24)
+              }
+            }}
+          >
+            {isTracking ? 'Stop Tracking' : 'Track Flight'}
+          </button>
+          {isTracking && (
+            <button className={styles.fitBtn} onClick={() => onFitRoute?.(route)}>Fit Route</button>
+          )}
         </div>
       )}
     </aside>
