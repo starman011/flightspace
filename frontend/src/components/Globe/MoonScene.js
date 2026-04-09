@@ -126,20 +126,67 @@ function ll2v(lat, lon, r) {
   )
 }
 
-function makeLabel(text, fontSize = 48, color = '#ffffff') {
+// High-DPI pill label — crisp text on a translucent dark capsule with a
+// colored border. Returns { texture, aspect } so sprites can size correctly.
+const LABEL_FONT = `600 32px -apple-system, "Inter", "SF Pro Display", system-ui, sans-serif`
+const LABEL_FONT_SMALL = `500 26px -apple-system, "Inter", "SF Pro Display", system-ui, sans-serif`
+
+function makeLabel(text, { small = false, color = '#ffffff', pill = true } = {}) {
+  const dpr = 2
+  const font = small ? LABEL_FONT_SMALL : LABEL_FONT
+  const padX = small ? 14 : 18
+  const padY = small ? 8  : 10
+
+  // Measure on a scratch ctx first
+  const scratch = document.createElement('canvas').getContext('2d')
+  scratch.font = font
+  const metrics = scratch.measureText(text)
+  const textW = Math.ceil(metrics.width)
+  const textH = small ? 26 : 32
+
+  const w = textW + padX * 2
+  const h = textH + padY * 2
+
   const canvas = document.createElement('canvas')
+  canvas.width = w * dpr
+  canvas.height = h * dpr
   const ctx = canvas.getContext('2d')
-  ctx.font = `bold ${fontSize}px monospace`
-  const m = ctx.measureText(text)
-  canvas.width = Math.ceil(m.width) + 16
-  canvas.height = fontSize + 16
-  ctx.font = `bold ${fontSize}px monospace`
-  ctx.fillStyle = color
+  ctx.scale(dpr, dpr)
+
+  if (pill) {
+    // Rounded pill background
+    const r = h / 2
+    ctx.beginPath()
+    ctx.moveTo(r, 0)
+    ctx.lineTo(w - r, 0)
+    ctx.arcTo(w, 0, w, r, r)
+    ctx.lineTo(w, h - r)
+    ctx.arcTo(w, h, w - r, h, r)
+    ctx.lineTo(r, h)
+    ctx.arcTo(0, h, 0, h - r, r)
+    ctx.lineTo(0, r)
+    ctx.arcTo(0, 0, r, 0, r)
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(8,12,20,0.72)'
+    ctx.fill()
+    ctx.lineWidth = 1.25
+    ctx.strokeStyle = color + 'cc'
+    ctx.stroke()
+  }
+
+  // Glow + text
+  ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+  ctx.shadowColor = color
+  ctx.shadowBlur = 6
+  ctx.fillStyle = color
+  ctx.fillText(text, w / 2, h / 2 + 1)
+
   const tex = new CanvasTexture(canvas)
-  return tex
+  tex.colorSpace = 'srgb'
+  tex.anisotropy = 8
+  return { texture: tex, aspect: w / h, width: w, height: h }
 }
 
 // ── Two-body Kepler (state vector → orbital elements → propagation) ────────
@@ -245,21 +292,26 @@ export function createMoonScene(scene) {
   // All things that should hemisphere-cull each frame: { obj, normal, baseOpacity }
   const cullables = []
 
+  // Fixed-height label helper: sprites are sized from the pill's aspect
+  // so short text is narrow and long text is wide — no more stretched words.
+  const LABEL_H_WU = 0.014  // screen height of every pill, in world units
+
   for (const site of LANDING_SITES) {
     const normal = ll2v(site.lat, site.lon, 1).normalize()
-    const pos = normal.clone().multiplyScalar(MOON_R * 1.002)
+    const pos = normal.clone().multiplyScalar(MOON_R * 1.0015)
 
-    // Marker dot
+    // Marker dot — small, tight pin on the surface
     const color = site.type === 'crewed' ? 0x00e5ff : site.type === 'impact' ? 0xff4444 : 0x22ff88
-    const dotGeo = new SphereGeometry(0.0035, 10, 10)
+    const colorHex = '#' + color.toString(16).padStart(6, '0')
+    const dotGeo = new SphereGeometry(0.0018, 12, 12)
     const dotMat = new MeshBasicMaterial({ color, transparent: true, opacity: 1 })
     const dot = new Mesh(dotGeo, dotMat)
     dot.position.copy(pos)
-    moonGroup.add(dot)
+    moonMesh.add(dot)  // child of moonMesh → rotates with lunar terrain
     cullables.push({ obj: dot, normal, baseOpacity: 1 })
 
-    // Glow ring
-    const ringGeo = new RingGeometry(0.005, 0.0075, 24)
+    // Glow ring — halves the old size
+    const ringGeo = new RingGeometry(0.0025, 0.004, 28)
     const ringMat = new MeshBasicMaterial({
       color,
       transparent: true,
@@ -271,15 +323,15 @@ export function createMoonScene(scene) {
     const ring = new Mesh(ringGeo, ringMat)
     ring.position.copy(pos)
     ring.lookAt(0, 0, 0)
-    moonGroup.add(ring)
+    moonMesh.add(ring)
     cullables.push({ obj: ring, normal, baseOpacity: 0.55 })
 
     // Label — only crewed missions get always-on labels; others appear on hover/zoom
     const showLabelAlways = site.type === 'crewed'
-    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.022)
-    const labelTex = makeLabel(site.name, 36, site.type === 'crewed' ? '#00e5ff' : '#aaffaa')
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.018)
+    const lbl = makeLabel(site.name, { small: true, color: colorHex })
     const spriteMat = new SpriteMaterial({
-      map: labelTex,
+      map: lbl.texture,
       transparent: true,
       depthTest: true,    // ← Moon mesh occludes labels behind it
       depthWrite: false,
@@ -287,35 +339,36 @@ export function createMoonScene(scene) {
     })
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
-    sprite.scale.set(0.075, 0.018, 1)
+    sprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
     sprite.userData = { siteId: site.id, alwaysOn: showLabelAlways }
     sprite.renderOrder = 5
-    moonGroup.add(sprite)
+    moonMesh.add(sprite)
     labelSprites.push(sprite)
     cullables.push({ obj: sprite, normal, baseOpacity: showLabelAlways ? 0.95 : 0 })
 
     landingMarkers[site.id] = { dot, ring, sprite, site, normal }
   }
 
-  // ── Crater labels (faint, hemisphere-culled) ──────────────────────────────
+  // ── Crater labels (faint, hemisphere-culled, no pill — just glowing text) ─
   for (const cr of CRATERS) {
     const normal = ll2v(cr.lat, cr.lon, 1).normalize()
-    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.012)
-    const labelTex = makeLabel(cr.name, 28, 'rgba(255,255,255,0.7)')
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.009)
+    const lbl = makeLabel(cr.name, { small: true, color: '#e8e8ee', pill: false })
     const spriteMat = new SpriteMaterial({
-      map: labelTex,
+      map: lbl.texture,
       transparent: true,
       depthTest: true,
       depthWrite: false,
-      opacity: 0.4,
+      opacity: 0.55,
     })
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
-    const scale = Math.min(cr.diam / 7000, 0.14)
-    sprite.scale.set(Math.max(scale, 0.05), Math.max(scale * 0.25, 0.012), 1)
+    // Slightly smaller than site labels to stay subordinate
+    const h = 0.011
+    sprite.scale.set(h * lbl.aspect, h, 1)
     sprite.renderOrder = 4
-    moonGroup.add(sprite)
-    cullables.push({ obj: sprite, normal, baseOpacity: 0.4 })
+    moonMesh.add(sprite)
+    cullables.push({ obj: sprite, normal, baseOpacity: 0.55 })
   }
 
   // ── Lunar orbiters (active satellites circling the Moon) ─────────────────
@@ -387,16 +440,16 @@ export function createMoonScene(scene) {
     moonGroup.add(haloMesh)
 
     // Label
-    const labelTex = makeLabel(o.name, 32, '#' + o.color.toString(16).padStart(6, '0'))
+    const lbl = makeLabel(o.name, { small: true, color: '#' + o.color.toString(16).padStart(6, '0') })
     const labelMat = new SpriteMaterial({
-      map: labelTex,
+      map: lbl.texture,
       transparent: true,
       depthTest: false,    // orbiters always in front of moon (they're above it)
       depthWrite: false,
       opacity: 0.9,
     })
     const labelSprite = new Sprite(labelMat)
-    labelSprite.scale.set(0.075, 0.018, 1)
+    labelSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
     labelSprite.userData = { orbiterId: o.id }
     labelSprite.renderOrder = 8
     moonGroup.add(labelSprite)
@@ -415,17 +468,17 @@ export function createMoonScene(scene) {
   // ── Lunar rovers (surface assets) ────────────────────────────────────────
   for (const r of LUNAR_ROVERS) {
     const normal = ll2v(r.lat, r.lon, 1).normalize()
-    const pos = normal.clone().multiplyScalar(MOON_R * 1.003)
+    const pos = normal.clone().multiplyScalar(MOON_R * 1.002)
 
-    const dotGeo = new SphereGeometry(0.005, 10, 10)
+    const dotGeo = new SphereGeometry(0.0022, 12, 12)
     const dotMat = new MeshBasicMaterial({ color: r.color })
     const dot = new Mesh(dotGeo, dotMat)
     dot.position.copy(pos)
-    moonGroup.add(dot)
+    moonMesh.add(dot)
     cullables.push({ obj: dot, normal, baseOpacity: 1 })
 
     // Pulsing ring marker (different from landing markers — square halo)
-    const ringGeo = new RingGeometry(0.007, 0.011, 4)
+    const ringGeo = new RingGeometry(0.0035, 0.0055, 4)
     const ringMat = new MeshBasicMaterial({
       color: r.color,
       transparent: true,
@@ -438,14 +491,14 @@ export function createMoonScene(scene) {
     ring.position.copy(pos)
     ring.lookAt(0, 0, 0)
     ring.rotateZ(Math.PI / 4)
-    moonGroup.add(ring)
+    moonMesh.add(ring)
     cullables.push({ obj: ring, normal, baseOpacity: 0.6 })
 
     // Label
-    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.025)
-    const labelTex = makeLabel(`${r.name} ▸`, 32, '#' + r.color.toString(16).padStart(6, '0'))
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.02)
+    const lbl = makeLabel(r.name, { small: true, color: '#' + r.color.toString(16).padStart(6, '0') })
     const labelMat = new SpriteMaterial({
-      map: labelTex,
+      map: lbl.texture,
       transparent: true,
       depthTest: true,
       depthWrite: false,
@@ -453,9 +506,9 @@ export function createMoonScene(scene) {
     })
     const labelSprite = new Sprite(labelMat)
     labelSprite.position.copy(labelPos)
-    labelSprite.scale.set(0.085, 0.02, 1)
+    labelSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
     labelSprite.renderOrder = 7
-    moonGroup.add(labelSprite)
+    moonMesh.add(labelSprite)
     cullables.push({ obj: labelSprite, normal, baseOpacity: 0.95 })
   }
 
@@ -487,10 +540,10 @@ export function createMoonScene(scene) {
       grp.userData.cullables.push({ obj: ring, normal, baseOpacity: 0.28 })
 
       // Label for region
-      const lPos = normal.clone().multiplyScalar(MOON_R * 1.025)
-      const lTex = makeLabel(reg.label, 24, new Color(MINERAL_COLORS[mineral]).getStyle())
+      const lPos = normal.clone().multiplyScalar(MOON_R * 1.02)
+      const lbl = makeLabel(reg.label, { small: true, color: new Color(MINERAL_COLORS[mineral]).getStyle() })
       const lMat = new SpriteMaterial({
-        map: lTex,
+        map: lbl.texture,
         transparent: true,
         depthTest: true,
         depthWrite: false,
@@ -498,12 +551,13 @@ export function createMoonScene(scene) {
       })
       const lSprite = new Sprite(lMat)
       lSprite.position.copy(lPos)
-      lSprite.scale.set(0.07, 0.014, 1)
+      const h = 0.012
+      lSprite.scale.set(h * lbl.aspect, h, 1)
       lSprite.renderOrder = 6
       grp.add(lSprite)
       grp.userData.cullables.push({ obj: lSprite, normal, baseOpacity: 0.85 })
     }
-    moonGroup.add(grp)
+    moonMesh.add(grp)
     mineralGroups[mineral] = grp
   }
 
@@ -578,8 +632,8 @@ export function createMoonScene(scene) {
   const _moonWorld = new Vector3()
 
   function update(camera) {
-    // Slow rotation for visual interest
-    moonMesh.rotation.y += 0.0001
+    // No auto-rotation — the moon stays put so landing sites remain locked
+    // to their actual lunar coordinates (user can orbit the camera instead).
 
     const t = Date.now() / 1000
 
