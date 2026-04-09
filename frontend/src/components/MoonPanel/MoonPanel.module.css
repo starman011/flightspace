@@ -62,12 +62,43 @@
   color: #00e5ff;
 }
 
+/* ── Return-to-Earth button ──────────────────────────────────────────────── */
+.homeBtn {
+  position: absolute;
+  top: 14px;
+  right: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 9px;
+  height: 26px;
+  background: linear-gradient(180deg, rgba(0, 160, 220, 0.14), rgba(0, 120, 200, 0.08));
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  border-radius: 999px;
+  color: rgba(200, 235, 255, 0.9);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.homeBtn:hover {
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.2), rgba(0, 150, 220, 0.12));
+  border-color: rgba(0, 229, 255, 0.55);
+  color: #eafaff;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.18);
+}
+.homeBtn svg { flex-shrink: 0; }
+
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
   gap: 14px;
   padding-right: 30px;
+  padding-top: 22px;  /* clear the absolute close + home buttons */
 }
 
 .moonGlyph {

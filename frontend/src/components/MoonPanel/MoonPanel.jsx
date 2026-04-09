@@ -49,7 +49,7 @@ function StatRow({ label, value }) {
 
 const FLAGS = { USA: '🇺🇸', USSR: '🇷🇺', China: '🇨🇳', India: '🇮🇳', Japan: '🇯🇵' }
 
-export default function MoonPanel({ site, onClose, onFlyTo, onFilterChange }) {
+export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilterChange }) {
   const [activeFilter, setActiveFilter] = useState(null)
 
   const handleFilter = (id) => {
@@ -62,7 +62,19 @@ export default function MoonPanel({ site, onClose, onFlyTo, onFilterChange }) {
   if (!site) {
     return (
       <aside className={styles.panel} aria-label="Moon details">
-        <button className={styles.close} onClick={onClose} aria-label="Close">✕</button>
+        <button className={styles.close} onClick={onClose} aria-label="Close and return to Earth">✕</button>
+        <button
+          className={styles.homeBtn}
+          onClick={onReturnHome}
+          aria-label="Return to Earth"
+          title="Return to Earth"
+        >
+          <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+            <path d="M10 2 L3 9 H5 V17 H9 V12 H11 V17 H15 V9 H17 Z"
+                  fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+          </svg>
+          <span>Earth</span>
+        </button>
 
         <header className={styles.header}>
           <MoonGlyph />
@@ -122,6 +134,18 @@ export default function MoonPanel({ site, onClose, onFlyTo, onFilterChange }) {
   return (
     <aside className={styles.panel} aria-label={`${site.name} details`}>
       <button className={styles.close} onClick={onClose} aria-label="Close">✕</button>
+      <button
+        className={styles.homeBtn}
+        onClick={onReturnHome}
+        aria-label="Return to Earth"
+        title="Return to Earth"
+      >
+        <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+          <path d="M10 2 L3 9 H5 V17 H9 V12 H11 V17 H15 V9 H17 Z"
+                fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        </svg>
+        <span>Earth</span>
+      </button>
 
       <header className={styles.header}>
         <span className={styles.flag}>{flag}</span>

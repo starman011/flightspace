@@ -194,7 +194,22 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleSkyObjectClick = useCallback((obj) => setSelectedSkyObject(obj), [])
   const handleSkyObjectClose = useCallback(() => setSelectedSkyObject(null), [])
   const handleMoonSiteClick = useCallback((site) => setSelectedMoonSite(site), [])
-  const handleMoonSiteClose = useCallback(() => setSelectedMoonSite(null), [])
+  // Smart close: if a site is open, go back to Moon overview; otherwise exit
+  // Moon scale entirely and return to Earth.
+  const handleMoonSiteClose = useCallback(() => {
+    setSelectedMoonSite((prev) => {
+      if (prev) return null
+      // No site was open — leaving the Moon scale
+      setActiveScale('earth')
+      globeRef.current?.setCameraScale?.('earth')
+      return null
+    })
+  }, [])
+  const handleMoonReturnHome = useCallback(() => {
+    setSelectedMoonSite(null)
+    setActiveScale('earth')
+    globeRef.current?.setCameraScale?.('earth')
+  }, [])
   const handleMoonFilterChange = useCallback((filter) => {
     globeRef.current?.setMoonFilter?.(filter)
   }, [])
@@ -405,6 +420,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <MoonPanel
           site={selectedMoonSite}
           onClose={handleMoonSiteClose}
+          onReturnHome={handleMoonReturnHome}
           onFlyTo={handleMoonFlyTo}
           onFilterChange={handleMoonFilterChange}
         />
