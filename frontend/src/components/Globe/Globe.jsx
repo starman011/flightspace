@@ -1226,6 +1226,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     shipMesh.count = 0; shipMesh.renderOrder = 2; shipMesh.frustumCulled = false
     scene.add(shipMesh)
 
+    // ── Earth-bound entity visibility gate ─────────────────────────────
+    // All live aircraft / satellite / ship instances + their trails belong
+    // to Earth scale. Hide them whenever camera is on Moon / Solar / Galaxy
+    // scale to prevent planes from appearing on the Moon's surface.
+    const _setEarthEntitiesVisible = (v) => {
+      planeMesh.visible    = v
+      heavyMesh.visible    = v
+      regionalMesh.visible = v
+      heliMesh.visible     = v
+      satMesh.visible      = v
+      shipMesh.visible     = v
+      // Trails (created later) — set via int.current
+      if (int.current?.trailMesh)     int.current.trailMesh.visible     = v
+      if (int.current?.trailGlowMesh) int.current.trailGlowMesh.visible = v
+      // Selection ring + API trail also belong to Earth
+      if (int.current?.ringMesh)      int.current.ringMesh.visible      = v
+    }
+
     // ── GPU color pick system ─────────────────────────────────────────
     // A separate pickScene holds 6 shadow InstancedMeshes that SHARE the
     // same instanceMatrix buffers as the display meshes (zero copy).
@@ -2043,6 +2061,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.earthMesh.visible = _earthVisible
           int.current.cloudsMesh.visible = _earthVisible
           int.current.placeDotsMesh.visible = _earthVisible
+          _setEarthEntitiesVisible(_earthVisible)
         }
       } else {
         const prevScale = int.current._lastAppliedScale || 'earth'
@@ -2057,6 +2076,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.earthMesh.visible = _showEarth
           int.current.cloudsMesh.visible = _showEarth
           int.current.placeDotsMesh.visible = _showEarth
+          _setEarthEntitiesVisible(_showEarth)
           if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
           else if (isSolar) { solarSystem.show(); moonScene.hide() }
           else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }
@@ -2280,9 +2300,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // Force full instance rebuild so syncInstances applies isolation
         int.current.needsInstanceRebuild = true
       }
-      // Hide real-time 1px LineSegments trail when tracking (API ribbon trail replaces it)
-      if (int.current.trailMesh) int.current.trailMesh.visible = !_isTracking
-      if (int.current.trailGlowMesh) int.current.trailGlowMesh.visible = !_isTracking
+      // Hide real-time 1px LineSegments trail when tracking (API ribbon trail replaces it).
+      // Also gate on Earth scale — trails belong to Earth-bound aircraft.
+      const _onEarth = (int.current.targetCameraScale || 'earth') === 'earth'
+      if (int.current.trailMesh) int.current.trailMesh.visible = _onEarth && !_isTracking
+      if (int.current.trailGlowMesh) int.current.trailGlowMesh.visible = _onEarth && !_isTracking
 
       // Pulsing selection ring
       const selPos = int.current.selPos

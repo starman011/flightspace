@@ -54,6 +54,24 @@ export const LANDING_SITES = [
   { id: 'im2',       name: 'Athena (IM-2)',   lat: -84.0,    lon: 10.0,     date: '2025-03-06', country: 'USA',   site: 'Mons Mouton',           type: 'robotic', desc: 'Near south pole; NASA PRIME-1 drill' },
 ]
 
+// ── Active lunar orbiters & rovers ──────────────────────────────────────────
+// Real assets currently operating around / on the Moon. Orbits are simplified
+// circular Keplerian (real RAAN drifts with lunar nodal regression but the
+// visual is correct). Period derived from a = (R + alt), µ_moon = 4902.8 km³/s².
+
+export const LUNAR_ORBITERS = [
+  { id: 'lro',         name: 'LRO',          agency: 'NASA',  altKm: 50,   inclDeg: 90,   raanDeg: 0,   color: 0x00e5ff, launched: '2009-06-18', desc: 'Lunar Reconnaissance Orbiter — mapping the Moon at sub-meter resolution since 2009.' },
+  { id: 'chandra2',    name: 'Chandrayaan-2', agency: 'ISRO',  altKm: 100,  inclDeg: 90,   raanDeg: 60,  color: 0xff8a3d, launched: '2019-07-22', desc: 'Indian polar orbiter — high-resolution imaging and mineral mapping.' },
+  { id: 'danuri',      name: 'Danuri (KPLO)', agency: 'KARI',  altKm: 100,  inclDeg: 90,   raanDeg: 120, color: 0xffd24a, launched: '2022-08-05', desc: 'Korean Pathfinder Lunar Orbiter — first Korean lunar mission, polar mapping.' },
+  { id: 'queqiao2',    name: 'Queqiao-2',     agency: 'CNSA',  altKm: 4200, inclDeg: 28.5, raanDeg: 200, color: 0xff5577, launched: '2024-03-20', desc: 'Chinese far-side relay satellite supporting Chang\'e missions.' },
+  { id: 'capstone',    name: 'CAPSTONE',      agency: 'NASA',  altKm: 1500, inclDeg: 60,   raanDeg: 280, color: 0x88e0ff, launched: '2022-06-28', desc: 'Cislunar Autonomous Positioning System Tech Op — NRHO precursor for Gateway.' },
+]
+
+export const LUNAR_ROVERS = [
+  { id: 'yutu2',       name: 'Yutu-2',        agency: 'CNSA',  lat: -45.46, lon: 177.60, color: 0xff8a3d, since: '2019-01-03', desc: 'Far-side rover from Chang\'e 4 — longest-operating lunar rover.' },
+  { id: 'pragyan',     name: 'Pragyan',       agency: 'ISRO',  lat: -69.37, lon: 32.35,  color: 0xffd24a, since: '2023-08-23', desc: 'Chandrayaan-3 rover — southernmost lunar rover deployed.' },
+]
+
 // ── Notable craters ─────────────────────────────────────────────────────────
 
 const CRATERS = [
@@ -238,6 +256,143 @@ export function createMoonScene(scene) {
     cullables.push({ obj: sprite, normal, baseOpacity: 0.4 })
   }
 
+  // ── Lunar orbiters (active satellites circling the Moon) ─────────────────
+  // Each orbiter gets: orbit ring, satellite dot, label sprite. update() walks
+  // the dot around its circle each frame using mean motion.
+  const MOON_R_KM = 1737.4
+  const MU_MOON   = 4902.8  // km³/s²
+  const orbiters  = []
+
+  for (const o of LUNAR_ORBITERS) {
+    const aKm  = MOON_R_KM + o.altKm
+    const aWU  = (aKm / MOON_R_KM) * MOON_R    // semi-major axis in WU
+    const period = 2 * Math.PI * Math.sqrt((aKm * aKm * aKm) / MU_MOON)  // seconds
+    const incl = (o.inclDeg * Math.PI) / 180
+    const raan = (o.raanDeg * Math.PI) / 180
+
+    // Build orbit plane basis vectors. Standard rotation: incl about x, then raan about y.
+    const cosI = Math.cos(incl), sinI = Math.sin(incl)
+    const cosR = Math.cos(raan), sinR = Math.sin(raan)
+    // u = cos(ν) direction in orbital plane → world
+    // v = sin(ν) direction in orbital plane → world
+    const u = new Vector3( cosR,           0,            sinR          )
+    const v = new Vector3(-sinR * cosI,    sinI,         cosR * cosI   )
+
+    // Orbit ring (line of points) — slightly translucent
+    const segs = 256
+    const ringPos = new Float32Array(segs * 3)
+    for (let i = 0; i < segs; i++) {
+      const ang = (i / segs) * Math.PI * 2
+      const px = (u.x * Math.cos(ang) + v.x * Math.sin(ang)) * aWU
+      const py = (u.y * Math.cos(ang) + v.y * Math.sin(ang)) * aWU
+      const pz = (u.z * Math.cos(ang) + v.z * Math.sin(ang)) * aWU
+      ringPos[i * 3] = px
+      ringPos[i * 3 + 1] = py
+      ringPos[i * 3 + 2] = pz
+    }
+    const ringGeo = new BufferGeometry()
+    ringGeo.setAttribute('position', new Float32BufferAttribute(ringPos, 3))
+    const ringMat = new PointsMaterial({
+      color: o.color,
+      size: 1.4,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+      blending: AdditiveBlending,
+    })
+    const ringPoints = new Points(ringGeo, ringMat)
+    moonGroup.add(ringPoints)
+
+    // Satellite dot
+    const satGeo = new SphereGeometry(0.0045, 12, 12)
+    const satMat = new MeshBasicMaterial({ color: o.color })
+    const satMesh = new Mesh(satGeo, satMat)
+    moonGroup.add(satMesh)
+
+    // Glow halo
+    const haloGeo = new SphereGeometry(0.008, 12, 12)
+    const haloMat = new MeshBasicMaterial({
+      color: o.color,
+      transparent: true,
+      opacity: 0.28,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    })
+    const haloMesh = new Mesh(haloGeo, haloMat)
+    moonGroup.add(haloMesh)
+
+    // Label
+    const labelTex = makeLabel(o.name, 32, '#' + o.color.toString(16).padStart(6, '0'))
+    const labelMat = new SpriteMaterial({
+      map: labelTex,
+      transparent: true,
+      depthTest: false,    // orbiters always in front of moon (they're above it)
+      depthWrite: false,
+      opacity: 0.9,
+    })
+    const labelSprite = new Sprite(labelMat)
+    labelSprite.scale.set(0.075, 0.018, 1)
+    labelSprite.userData = { orbiterId: o.id }
+    labelSprite.renderOrder = 8
+    moonGroup.add(labelSprite)
+
+    orbiters.push({
+      data: o, u, v, aWU, period,
+      sat: satMesh, halo: haloMesh, label: labelSprite,
+      // random initial mean anomaly so they don't all start at periapsis
+      m0: Math.random() * Math.PI * 2,
+      tStart: Date.now() / 1000,
+    })
+  }
+
+  // ── Lunar rovers (surface assets) ────────────────────────────────────────
+  for (const r of LUNAR_ROVERS) {
+    const normal = ll2v(r.lat, r.lon, 1).normalize()
+    const pos = normal.clone().multiplyScalar(MOON_R * 1.003)
+
+    const dotGeo = new SphereGeometry(0.005, 10, 10)
+    const dotMat = new MeshBasicMaterial({ color: r.color })
+    const dot = new Mesh(dotGeo, dotMat)
+    dot.position.copy(pos)
+    moonGroup.add(dot)
+    cullables.push({ obj: dot, normal, baseOpacity: 1 })
+
+    // Pulsing ring marker (different from landing markers — square halo)
+    const ringGeo = new RingGeometry(0.007, 0.011, 4)
+    const ringMat = new MeshBasicMaterial({
+      color: r.color,
+      transparent: true,
+      opacity: 0.6,
+      side: DoubleSide,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    })
+    const ring = new Mesh(ringGeo, ringMat)
+    ring.position.copy(pos)
+    ring.lookAt(0, 0, 0)
+    ring.rotateZ(Math.PI / 4)
+    moonGroup.add(ring)
+    cullables.push({ obj: ring, normal, baseOpacity: 0.6 })
+
+    // Label
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.025)
+    const labelTex = makeLabel(`${r.name} ▸`, 32, '#' + r.color.toString(16).padStart(6, '0'))
+    const labelMat = new SpriteMaterial({
+      map: labelTex,
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+      opacity: 0.95,
+    })
+    const labelSprite = new Sprite(labelMat)
+    labelSprite.position.copy(labelPos)
+    labelSprite.scale.set(0.085, 0.02, 1)
+    labelSprite.renderOrder = 7
+    moonGroup.add(labelSprite)
+    cullables.push({ obj: labelSprite, normal, baseOpacity: 0.95 })
+  }
+
   // ── Mineral overlay rings ─────────────────────────────────────────────────
   const mineralGroups = {}
   const MINERAL_COLORS = { iron: 0xff6622, titanium: 0xffcc00, water: 0x00ccff, thorium: 0xff44ff }
@@ -333,6 +488,25 @@ export function createMoonScene(scene) {
     for (const m of Object.values(landingMarkers)) {
       const scale = 1 + 0.3 * Math.sin(t * 2 + m.site.lat)
       m.ring.scale.set(scale, scale, 1)
+    }
+
+    // ── Walk lunar orbiters along their circles ─────────────────────────
+    // Speed up time × 60 so a 2h orbit takes ~2 minutes — visible without
+    // being too fast.
+    const TIME_SCALE = 60
+    for (const o of orbiters) {
+      const elapsed = (t - o.tStart) * TIME_SCALE
+      const meanAnom = o.m0 + (2 * Math.PI * elapsed) / o.period
+      const c = Math.cos(meanAnom), s = Math.sin(meanAnom)
+      const x = (o.u.x * c + o.v.x * s) * o.aWU
+      const y = (o.u.y * c + o.v.y * s) * o.aWU
+      const z = (o.u.z * c + o.v.z * s) * o.aWU
+      o.sat.position.set(x, y, z)
+      o.halo.position.set(x, y, z)
+      o.label.position.set(x * 1.04, y * 1.04 + 0.012, z * 1.04)
+      // Halo gentle pulse
+      const pulse = 1 + 0.2 * Math.sin(t * 2 + o.m0)
+      o.halo.scale.setScalar(pulse)
     }
 
     // ── Hemisphere culling ──────────────────────────────────────────────────
