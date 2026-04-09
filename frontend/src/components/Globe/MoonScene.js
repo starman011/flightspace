@@ -142,6 +142,68 @@ function makeLabel(text, fontSize = 48, color = '#ffffff') {
   return tex
 }
 
+// ── Two-body Kepler (state vector → orbital elements → propagation) ────────
+// Works in Moon-centered ICRF (km, km/s). µ_moon = 4902.8 km³/s².
+
+const MU_MOON_KM = 4902.8
+
+function stateToElements(rx, ry, rz, vx, vy, vz, epochSec) {
+  const mu = MU_MOON_KM
+  const r = Math.sqrt(rx * rx + ry * ry + rz * rz)
+  const v2 = vx * vx + vy * vy + vz * vz
+  // specific energy → semi-major axis
+  const energy = v2 / 2 - mu / r
+  const a = -mu / (2 * energy)
+  // angular momentum h = r × v
+  const hx = ry * vz - rz * vy
+  const hy = rz * vx - rx * vz
+  const hz = rx * vy - ry * vx
+  // eccentricity vector e = (v × h)/µ − r̂
+  const evx = (vy * hz - vz * hy) / mu - rx / r
+  const evy = (vz * hx - vx * hz) / mu - ry / r
+  const evz = (vx * hy - vy * hx) / mu - rz / r
+  const e = Math.sqrt(evx * evx + evy * evy + evz * evz)
+  // mean motion
+  const n = Math.sqrt(mu / (a * a * a))
+  // true anomaly
+  const rv = rx * vx + ry * vy + rz * vz
+  let cosNu = (evx * rx + evy * ry + evz * rz) / (e * r)
+  cosNu = Math.max(-1, Math.min(1, cosNu))
+  let nu = Math.acos(cosNu)
+  if (rv < 0) nu = -nu
+  // eccentric anomaly → mean anomaly at epoch
+  const E = 2 * Math.atan2(Math.sqrt(1 - e) * Math.sin(nu / 2), Math.sqrt(1 + e) * Math.cos(nu / 2))
+  const M0 = E - e * Math.sin(E)
+  // Perifocal basis: P along periapsis, Q perpendicular in orbit plane
+  const Px = evx / e, Py = evy / e, Pz = evz / e
+  // Q = (h × P) / |h|
+  const hMag = Math.sqrt(hx * hx + hy * hy + hz * hz)
+  const Qx = (hy * Pz - hz * Py) / hMag
+  const Qy = (hz * Px - hx * Pz) / hMag
+  const Qz = (hx * Py - hy * Px) / hMag
+  return { a, e, n, M0, epoch: epochSec, Px, Py, Pz, Qx, Qy, Qz }
+}
+
+// Propagate elements to time t (unix seconds); returns ICRF position in km.
+function propagateKepler(el, t) {
+  const M = el.M0 + el.n * (t - el.epoch)
+  // Newton solve: E − e sin E = M
+  let E = el.e < 0.8 ? M : Math.PI
+  for (let i = 0; i < 8; i++) {
+    const f = E - el.e * Math.sin(E) - M
+    const fp = 1 - el.e * Math.cos(E)
+    E -= f / fp
+    if (Math.abs(f) < 1e-10) break
+  }
+  const xp = el.a * (Math.cos(E) - el.e)
+  const yp = el.a * Math.sqrt(1 - el.e * el.e) * Math.sin(E)
+  return {
+    x: el.Px * xp + el.Qx * yp,
+    y: el.Py * xp + el.Qy * yp,
+    z: el.Pz * xp + el.Qz * yp,
+  }
+}
+
 // ── Scene builder ───────────────────────────────────────────────────────────
 
 export function createMoonScene(scene) {
@@ -303,6 +365,8 @@ export function createMoonScene(scene) {
     })
     const ringPoints = new Points(ringGeo, ringMat)
     moonGroup.add(ringPoints)
+    // Hold the raw buffer so setRealOrbiterData() can rewrite it from real elements.
+    const ringAttr = ringGeo.getAttribute('position')
 
     // Satellite dot
     const satGeo = new SphereGeometry(0.0045, 12, 12)
@@ -340,9 +404,11 @@ export function createMoonScene(scene) {
     orbiters.push({
       data: o, u, v, aWU, period,
       sat: satMesh, halo: haloMesh, label: labelSprite,
+      ringAttr, ringSegs: segs,
       // random initial mean anomaly so they don't all start at periapsis
       m0: Math.random() * Math.PI * 2,
       tStart: Date.now() / 1000,
+      realElements: null,  // set by setRealOrbiterData() once Horizons data arrives
     })
   }
 
@@ -466,6 +532,39 @@ export function createMoonScene(scene) {
   function show() { moonGroup.visible = true }
   function hide() { moonGroup.visible = false }
 
+  // Accepts { lro: {x,y,z,vx,vy,vz,update_at}, ... } in Moon-centered ICRF km / km·s.
+  // Computes orbital elements once per orbiter and rewrites the orbit ring geometry
+  // so the path drawn on screen matches the real ephemeris.
+  function setRealOrbiterData(map) {
+    if (!map) return
+    const KM_TO_WU = MOON_R / MOON_R_KM
+    for (const o of orbiters) {
+      const d = map[o.data.id]
+      if (!d) continue
+      const epoch = d.update_at || (Date.now() / 1000)
+      const el = stateToElements(d.x, d.y, d.z, d.vx, d.vy, d.vz, epoch)
+      o.realElements = el
+
+      // Rewrite orbit ring from the real ellipse so the path reflects the true orbit.
+      const arr = o.ringAttr.array
+      const segs = o.ringSegs
+      const sqrt1me2 = Math.sqrt(1 - el.e * el.e)
+      for (let i = 0; i < segs; i++) {
+        const E = (i / segs) * Math.PI * 2
+        const xp = el.a * (Math.cos(E) - el.e)
+        const yp = el.a * sqrt1me2 * Math.sin(E)
+        const ix = (el.Px * xp + el.Qx * yp)
+        const iy = (el.Py * xp + el.Qy * yp)
+        const iz = (el.Pz * xp + el.Qz * yp)
+        // ICRF → Three.js axis swap, then scale to world units
+        arr[i * 3]     =  ix * KM_TO_WU
+        arr[i * 3 + 1] =  iz * KM_TO_WU
+        arr[i * 3 + 2] = -iy * KM_TO_WU
+      }
+      o.ringAttr.needsUpdate = true
+    }
+  }
+
   function setFilter(filter) {
     // filter: null | 'iron' | 'titanium' | 'water' | 'thorium'
     activeFilter = filter
@@ -494,13 +593,25 @@ export function createMoonScene(scene) {
     // Speed up time × 60 so a 2h orbit takes ~2 minutes — visible without
     // being too fast.
     const TIME_SCALE = 60
+    const KM_TO_WU = MOON_R / MOON_R_KM
     for (const o of orbiters) {
-      const elapsed = (t - o.tStart) * TIME_SCALE
-      const meanAnom = o.m0 + (2 * Math.PI * elapsed) / o.period
-      const c = Math.cos(meanAnom), s = Math.sin(meanAnom)
-      const x = (o.u.x * c + o.v.x * s) * o.aWU
-      const y = (o.u.y * c + o.v.y * s) * o.aWU
-      const z = (o.u.z * c + o.v.z * s) * o.aWU
+      let x, y, z
+      if (o.realElements) {
+        // Real JPL Horizons data: Keplerian propagation at wall-clock time.
+        // ICRF → Three.js axis swap: (ix, iz, -iy) puts celestial north along +Y.
+        const p = propagateKepler(o.realElements, t)
+        x =  p.x * KM_TO_WU
+        y =  p.z * KM_TO_WU
+        z = -p.y * KM_TO_WU
+      } else {
+        // Synthetic circle fallback (Queqiao-2 — not in Horizons).
+        const elapsed = (t - o.tStart) * TIME_SCALE
+        const meanAnom = o.m0 + (2 * Math.PI * elapsed) / o.period
+        const c = Math.cos(meanAnom), s = Math.sin(meanAnom)
+        x = (o.u.x * c + o.v.x * s) * o.aWU
+        y = (o.u.y * c + o.v.y * s) * o.aWU
+        z = (o.u.z * c + o.v.z * s) * o.aWU
+      }
       o.sat.position.set(x, y, z)
       o.halo.position.set(x, y, z)
       o.label.position.set(x * 1.04, y * 1.04 + 0.012, z * 1.04)
@@ -591,6 +702,7 @@ export function createMoonScene(scene) {
     hide,
     update,
     setFilter,
+    setRealOrbiterData,
     getSiteAt,
     flyToSite,
     dispose,

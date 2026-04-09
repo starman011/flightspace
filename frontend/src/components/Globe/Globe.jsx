@@ -2498,6 +2498,28 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     int.current?.clearTiles?.()
   }, [mapStyle])
 
+  // ── Lunar orbiter live data ────────────────────────────────────────────────
+  // While on Moon scale, poll /api/v1/lunar/orbiters every 60s and feed the
+  // Keplerian propagator in MoonScene. Backend is populated from JPL Horizons.
+  useEffect(() => {
+    if (cameraScale !== 'moon') return
+    let cancelled = false
+    const load = async () => {
+      try {
+        const r = await fetch('/api/v1/lunar/orbiters')
+        if (!r.ok) return
+        const j = await r.json()
+        if (cancelled) return
+        if (j?.orbiters && int.current?.moonScene) {
+          int.current.moonScene.setRealOrbiterData(j.orbiters)
+        }
+      } catch (_) { /* silent — synthetic fallback keeps the scene alive */ }
+    }
+    load()
+    const id = setInterval(load, 60_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [cameraScale])
+
   // ── Selection-only fast path: update just 2 colors instead of full 12K sync ─
   useEffect(() => {
     if (!int.current.planeMesh || !int.current.idToInstance) return

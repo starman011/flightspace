@@ -100,6 +100,10 @@ func (a *App) Start() error {
 	launchPoller := controllers.NewLaunchPoller(a.redis, a.cfg.LL2BaseURL)
 	go launchPoller.Start(ctx)
 
+	// Start lunar orbiter poller (JPL Horizons — every 5 min)
+	lunarPoller := controllers.NewLunarPoller(a.redis)
+	go lunarPoller.Start(ctx)
+
 	// Start data retention cleanup
 	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
 
