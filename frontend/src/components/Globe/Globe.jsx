@@ -814,6 +814,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const mapStyleRef = useRef('satellite')
   const [cameraInfo, setCameraInfo] = useState({ altM: null, scaleLabel: '', scaleBarPx: 80 })
   const [cameraScale, setCameraScale] = useState('earth')   // 'earth' | 'solar'
+  const [moonTransit, setMoonTransit] = useState(false)  // warp overlay during Moon flight
   const [hoverTooltip, setHoverTooltip] = useState(null)  // { x, y, data }
   const setHoverTooltipRef = useRef(null)
   setHoverTooltipRef.current = setHoverTooltip
@@ -2067,6 +2068,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
 
         if (rawT >= 1) {
+          if (int.current.camTweenKind === 'moon') setMoonTransit(false)
           int.current.camTweenStart = null
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
@@ -2088,6 +2090,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           // Cinematic curved path for Moon transitions (either direction).
           const isMoonTween = isMoon || prevScale === 'moon'
           int.current.camTweenKind = isMoonTween ? 'moon' : 'linear'
+          if (isMoonTween) setMoonTransit(true)
           if (isMoonTween) {
             // Control point: midpoint between start & target, lifted "up" by
             // the half-length of the straight line → gives a nice arcing path.
@@ -2722,6 +2725,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         document.body
       )}
 
+      {moonTransit && createPortal(<WarpOverlay />, document.body)}
+
     </div>
   )
 })
@@ -2793,6 +2798,94 @@ function TooltipRow({ label, value }) {
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
       <span style={{ fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(100,160,255,0.65)', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '11px', color: 'rgba(200,220,255,0.9)', fontWeight: '500' }}>{value}</span>
+    </div>
+  )
+}
+
+// ── Warp overlay — rocket-launch → hyperspace → Moon arrival ─────────────
+
+const WARP_DURATION = 2400 // matches CAM_MOON_TWEEN_MS
+
+// Pre-generate 80 star streaks at random positions; each is a tiny dot
+// that elongates radially outward via CSS animation.
+const STARS = Array.from({ length: 80 }, (_, i) => {
+  const angle = Math.random() * Math.PI * 2
+  const dist  = 0.08 + Math.random() * 0.35  // start distance from center (fraction of screen)
+  const x = 50 + Math.cos(angle) * dist * 100  // % from left
+  const y = 50 + Math.sin(angle) * dist * 100  // % from top
+  const len = 2 + Math.random() * 4           // streak length px
+  const delay = Math.random() * 0.4           // s
+  const dur = 0.6 + Math.random() * 1.0       // s
+  const deg = (angle * 180 / Math.PI) + 90    // rotate to point outward
+  return { x, y, len, delay, dur, deg, key: i }
+})
+
+function WarpOverlay() {
+  const dur = WARP_DURATION + 'ms'
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 300, pointerEvents: 'none',
+      animation: `warpFade ${dur} ease-in-out forwards`,
+    }}>
+      {/* Bottom launch glow — orange/white flare at screen bottom */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
+        background: 'linear-gradient(to top, rgba(255,140,40,0.35), rgba(255,200,100,0.08) 40%, transparent)',
+        animation: `launchGlow ${dur} ease-out forwards`,
+      }} />
+
+      {/* Central light burst */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        width: '1px', height: '1px',
+        background: 'radial-gradient(circle, rgba(200,220,255,0.5) 0%, transparent 70%)',
+        transform: 'translate(-50%,-50%)',
+        animation: `burstScale ${dur} ease-in-out forwards`,
+      }} />
+
+      {/* Star streaks */}
+      {STARS.map(s => (
+        <div key={s.key} style={{
+          position: 'absolute',
+          left: s.x + '%', top: s.y + '%',
+          width: '1.5px', height: s.len + 'px',
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(200,220,255,0))',
+          borderRadius: '1px',
+          '--r': s.deg + 'deg',
+          opacity: 0,
+          animation: `streak ${s.dur}s ${s.delay}s ease-out forwards`,
+        }} />
+      ))}
+
+      {/* Inline keyframes */}
+      <style>{`
+        @keyframes warpFade {
+          0%   { background: rgba(0,0,0,0); }
+          20%  { background: rgba(0,0,0,0.85); }
+          50%  { background: rgba(0,2,8,0.92); }
+          80%  { background: rgba(0,0,0,0.6); }
+          100% { background: rgba(0,0,0,0); }
+        }
+        @keyframes launchGlow {
+          0%   { opacity: 0; transform: scaleY(0.3); }
+          15%  { opacity: 1; transform: scaleY(1); }
+          40%  { opacity: 0.6; transform: scaleY(1.5); }
+          60%  { opacity: 0; transform: scaleY(2); }
+          100% { opacity: 0; }
+        }
+        @keyframes burstScale {
+          0%   { width: 1px; height: 1px; opacity: 0; }
+          30%  { width: 300px; height: 300px; opacity: 0.4; }
+          60%  { width: 600px; height: 600px; opacity: 0.15; }
+          100% { width: 900px; height: 900px; opacity: 0; }
+        }
+        @keyframes streak {
+          0%   { opacity: 0; transform: rotate(var(--r, 0deg)) scaleY(1) translateY(0); }
+          15%  { opacity: 0.9; }
+          100% { opacity: 0; transform: rotate(var(--r, 0deg)) scaleY(8) translateY(-120px); }
+        }
+      `}</style>
     </div>
   )
 }
