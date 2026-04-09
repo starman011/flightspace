@@ -2073,7 +2073,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       // ── Moon scene per-frame update ─────────────────────────────────────
       if (moonScene.moonGroup.visible) {
-        moonScene.update()
+        moonScene.update(camera)
       }
 
       // ── Night sky per-frame update (planet positions refresh every 30s) ──

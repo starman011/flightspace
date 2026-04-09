@@ -158,26 +158,32 @@ export function createMoonScene(scene) {
   moonGroup.add(moonMesh)
 
   // ── Landing site markers ──────────────────────────────────────────────────
+  // Each marker tracks its surface normal so update() can hemisphere-cull
+  // (hide markers/labels on the back of the Moon to prevent bleed-through).
   const landingMarkers = {}
   const labelSprites = []
+  // All things that should hemisphere-cull each frame: { obj, normal, baseOpacity }
+  const cullables = []
 
   for (const site of LANDING_SITES) {
-    const pos = ll2v(site.lat, site.lon, MOON_R * 1.002)
+    const normal = ll2v(site.lat, site.lon, 1).normalize()
+    const pos = normal.clone().multiplyScalar(MOON_R * 1.002)
 
     // Marker dot
     const color = site.type === 'crewed' ? 0x00e5ff : site.type === 'impact' ? 0xff4444 : 0x22ff88
-    const dotGeo = new SphereGeometry(0.003, 8, 8)
-    const dotMat = new MeshBasicMaterial({ color })
+    const dotGeo = new SphereGeometry(0.0035, 10, 10)
+    const dotMat = new MeshBasicMaterial({ color, transparent: true, opacity: 1 })
     const dot = new Mesh(dotGeo, dotMat)
     dot.position.copy(pos)
     moonGroup.add(dot)
+    cullables.push({ obj: dot, normal, baseOpacity: 1 })
 
     // Glow ring
-    const ringGeo = new RingGeometry(0.004, 0.006, 16)
+    const ringGeo = new RingGeometry(0.005, 0.0075, 24)
     const ringMat = new MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.55,
       side: DoubleSide,
       blending: AdditiveBlending,
       depthWrite: false,
@@ -186,31 +192,50 @@ export function createMoonScene(scene) {
     ring.position.copy(pos)
     ring.lookAt(0, 0, 0)
     moonGroup.add(ring)
+    cullables.push({ obj: ring, normal, baseOpacity: 0.55 })
 
-    // Label
-    const labelPos = ll2v(site.lat, site.lon, MOON_R * 1.015)
-    const labelTex = makeLabel(site.name, 32, site.type === 'crewed' ? '#00e5ff' : '#aaffaa')
-    const spriteMat = new SpriteMaterial({ map: labelTex, transparent: true, depthTest: false })
+    // Label — only crewed missions get always-on labels; others appear on hover/zoom
+    const showLabelAlways = site.type === 'crewed'
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.022)
+    const labelTex = makeLabel(site.name, 36, site.type === 'crewed' ? '#00e5ff' : '#aaffaa')
+    const spriteMat = new SpriteMaterial({
+      map: labelTex,
+      transparent: true,
+      depthTest: true,    // ← Moon mesh occludes labels behind it
+      depthWrite: false,
+      opacity: showLabelAlways ? 0.95 : 0,
+    })
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
-    sprite.scale.set(0.06, 0.015, 1)
-    sprite.userData = { siteId: site.id }
+    sprite.scale.set(0.075, 0.018, 1)
+    sprite.userData = { siteId: site.id, alwaysOn: showLabelAlways }
+    sprite.renderOrder = 5
     moonGroup.add(sprite)
     labelSprites.push(sprite)
+    cullables.push({ obj: sprite, normal, baseOpacity: showLabelAlways ? 0.95 : 0 })
 
-    landingMarkers[site.id] = { dot, ring, sprite, site }
+    landingMarkers[site.id] = { dot, ring, sprite, site, normal }
   }
 
-  // ── Crater labels ─────────────────────────────────────────────────────────
+  // ── Crater labels (faint, hemisphere-culled) ──────────────────────────────
   for (const cr of CRATERS) {
-    const labelPos = ll2v(cr.lat, cr.lon, MOON_R * 1.008)
-    const labelTex = makeLabel(cr.name, 24, 'rgba(255,255,255,0.35)')
-    const spriteMat = new SpriteMaterial({ map: labelTex, transparent: true, depthTest: false, opacity: 0.5 })
+    const normal = ll2v(cr.lat, cr.lon, 1).normalize()
+    const labelPos = normal.clone().multiplyScalar(MOON_R * 1.012)
+    const labelTex = makeLabel(cr.name, 28, 'rgba(255,255,255,0.7)')
+    const spriteMat = new SpriteMaterial({
+      map: labelTex,
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+      opacity: 0.4,
+    })
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
-    const scale = Math.min(cr.diam / 8000, 0.12)
-    sprite.scale.set(Math.max(scale, 0.04), Math.max(scale * 0.25, 0.01), 1)
+    const scale = Math.min(cr.diam / 7000, 0.14)
+    sprite.scale.set(Math.max(scale, 0.05), Math.max(scale * 0.25, 0.012), 1)
+    sprite.renderOrder = 4
     moonGroup.add(sprite)
+    cullables.push({ obj: sprite, normal, baseOpacity: 0.4 })
   }
 
   // ── Mineral overlay rings ─────────────────────────────────────────────────
@@ -220,14 +245,16 @@ export function createMoonScene(scene) {
   for (const [mineral, regions] of Object.entries(MINERAL_REGIONS)) {
     const grp = new Object3D()
     grp.visible = false
+    grp.userData.cullables = []
     for (const reg of regions) {
-      const pos = ll2v(reg.lat, reg.lon, MOON_R * 1.001)
+      const normal = ll2v(reg.lat, reg.lon, 1).normalize()
+      const pos = normal.clone().multiplyScalar(MOON_R * 1.001)
       const rWU = (reg.r / 180) * Math.PI * MOON_R
-      const ringGeo = new RingGeometry(rWU * 0.8, rWU, 32)
+      const ringGeo = new RingGeometry(rWU * 0.8, rWU, 48)
       const ringMat = new MeshBasicMaterial({
         color: MINERAL_COLORS[mineral],
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.28,
         side: DoubleSide,
         blending: AdditiveBlending,
         depthWrite: false,
@@ -236,15 +263,24 @@ export function createMoonScene(scene) {
       ring.position.copy(pos)
       ring.lookAt(0, 0, 0)
       grp.add(ring)
+      grp.userData.cullables.push({ obj: ring, normal, baseOpacity: 0.28 })
 
       // Label for region
-      const lPos = ll2v(reg.lat, reg.lon, MOON_R * 1.02)
-      const lTex = makeLabel(reg.label, 20, new Color(MINERAL_COLORS[mineral]).getStyle())
-      const lMat = new SpriteMaterial({ map: lTex, transparent: true, depthTest: false })
+      const lPos = normal.clone().multiplyScalar(MOON_R * 1.025)
+      const lTex = makeLabel(reg.label, 24, new Color(MINERAL_COLORS[mineral]).getStyle())
+      const lMat = new SpriteMaterial({
+        map: lTex,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        opacity: 0.85,
+      })
       const lSprite = new Sprite(lMat)
       lSprite.position.copy(lPos)
-      lSprite.scale.set(0.06, 0.012, 1)
+      lSprite.scale.set(0.07, 0.014, 1)
+      lSprite.renderOrder = 6
       grp.add(lSprite)
+      grp.userData.cullables.push({ obj: lSprite, normal, baseOpacity: 0.85 })
     }
     moonGroup.add(grp)
     mineralGroups[mineral] = grp
@@ -283,24 +319,65 @@ export function createMoonScene(scene) {
     }
   }
 
-  function update() {
+  // Reusable scratch vectors for hemisphere culling
+  const _camLocal = new Vector3()
+  const _moonWorld = new Vector3()
+
+  function update(camera) {
     // Slow rotation for visual interest
     moonMesh.rotation.y += 0.0001
 
-    // Pulse landing site rings
     const t = Date.now() / 1000
+
+    // Pulse landing site rings
     for (const m of Object.values(landingMarkers)) {
       const scale = 1 + 0.3 * Math.sin(t * 2 + m.site.lat)
       m.ring.scale.set(scale, scale, 1)
     }
 
-    // Pulse mineral overlays
-    if (activeFilter && mineralGroups[activeFilter]) {
-      mineralGroups[activeFilter].children.forEach(child => {
-        if (child.material?.opacity != null) {
-          child.material.opacity = 0.15 + 0.1 * Math.sin(t * 1.5)
+    // ── Hemisphere culling ──────────────────────────────────────────────────
+    // Hide markers / labels on the back of the Moon so text/dots don't bleed
+    // through. Compute camera direction in moon-local space, then dot it with
+    // each marker's surface normal. >0 = visible hemisphere.
+    if (camera) {
+      moonGroup.getWorldPosition(_moonWorld)
+      _camLocal.copy(camera.position).sub(_moonWorld).normalize()
+      // Account for Moon's own rotation (only moonMesh rotates, not the markers,
+      // so this is just camLocal — markers are children of moonGroup, not moonMesh)
+
+      const cullList = (list) => {
+        for (const c of list) {
+          const dot = c.normal.dot(_camLocal)
+          // dot > 0.05  → visible (slight bias to hide near limb)
+          // dot < -0.05 → hidden
+          // smooth fade in between
+          if (c.obj.material) {
+            if (dot > 0.15) {
+              c.obj.visible = true
+              c.obj.material.opacity = c.baseOpacity
+            } else if (dot > -0.05) {
+              c.obj.visible = true
+              c.obj.material.opacity = c.baseOpacity * ((dot + 0.05) / 0.20)
+            } else {
+              c.obj.visible = false
+            }
+          }
         }
-      })
+      }
+      cullList(cullables)
+      if (activeFilter && mineralGroups[activeFilter]?.userData.cullables) {
+        cullList(mineralGroups[activeFilter].userData.cullables)
+      }
+    }
+
+    // Pulse mineral overlays (modulate baseOpacity, not raw)
+    if (activeFilter && mineralGroups[activeFilter]?.userData.cullables) {
+      const pulse = 0.85 + 0.15 * Math.sin(t * 1.5)
+      for (const c of mineralGroups[activeFilter].userData.cullables) {
+        if (c.obj.visible && c.obj.material) {
+          c.obj.material.opacity *= pulse
+        }
+      }
     }
   }
 
