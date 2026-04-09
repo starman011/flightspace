@@ -368,9 +368,7 @@ export function createMoonScene(scene) {
     })
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
-    // Slightly smaller than site labels to stay subordinate
-    const h = 0.011
-    sprite.scale.set(h * lbl.aspect, h, 1)
+    sprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
     sprite.renderOrder = 4
     moonMesh.add(sprite)
     cullables.push({ obj: sprite, normal, baseOpacity: 0.55 })
@@ -556,8 +554,7 @@ export function createMoonScene(scene) {
       })
       const lSprite = new Sprite(lMat)
       lSprite.position.copy(lPos)
-      const h = 0.012
-      lSprite.scale.set(h * lbl.aspect, h, 1)
+      lSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
       lSprite.renderOrder = 6
       grp.add(lSprite)
       grp.userData.cullables.push({ obj: lSprite, normal, baseOpacity: 0.85 })
