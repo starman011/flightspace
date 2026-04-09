@@ -112,3 +112,5 @@ export const CAM_MOON = {
 
 // ── Tween duration matches design.md motion spec ──────────────────────────
 export const CAM_TWEEN_MS = 1400
+// Moon transition is cinematic — longer + curved flight path
+export const CAM_MOON_TWEEN_MS = 2400

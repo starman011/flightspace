@@ -19,7 +19,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
-import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
+import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import { createMoonScene } from './MoonScene.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
@@ -2036,19 +2036,35 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const CAM_TARGET = isMoon ? CAM_MOON : isGalaxy ? CAM_GALAXY : isSolar ? CAM_SOLAR : CAM_EARTH
 
       if (int.current.camTweenStart != null) {
+        const isMoonTween = int.current.camTweenKind === 'moon'
+        const tweenDur = isMoonTween ? CAM_MOON_TWEEN_MS : CAM_TWEEN_MS
         const elapsed  = Date.now() - int.current.camTweenStart
-        const rawT     = Math.min(elapsed / CAM_TWEEN_MS, 1)
+        const rawT     = Math.min(elapsed / tweenDur, 1)
         const t = rawT < 0.5
           ? 4 * rawT * rawT * rawT
           : 1 - Math.pow(-2 * rawT + 2, 3) / 2
 
         const [tx, ty, tz] = CAM_TARGET.position
         const from = int.current.camTweenFrom
-        camera.position.set(
-          from.x + (tx - from.x) * t,
-          from.y + (ty - from.y) * t,
-          from.z + (tz - from.z) * t,
-        )
+        if (isMoonTween) {
+          // Cinematic arc: quadratic Bezier with a control point that lifts
+          // the camera "above" the straight line — feels like launching up
+          // and descending onto the Moon. Plus a subtle dip in the target's
+          // direction so the Moon appears to rush into frame at the end.
+          const ctrl = int.current.camTweenCtrl
+          const omt = 1 - t
+          camera.position.set(
+            omt * omt * from.x + 2 * omt * t * ctrl.x + t * t * tx,
+            omt * omt * from.y + 2 * omt * t * ctrl.y + t * t * ty,
+            omt * omt * from.z + 2 * omt * t * ctrl.z + t * t * tz,
+          )
+        } else {
+          camera.position.set(
+            from.x + (tx - from.x) * t,
+            from.y + (ty - from.y) * t,
+            from.z + (tz - from.z) * t,
+          )
+        }
 
         if (rawT >= 1) {
           int.current.camTweenStart = null
@@ -2069,6 +2085,23 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current._lastAppliedScale = targetScale
           int.current.camTweenStart = Date.now()
           int.current.camTweenFrom  = camera.position.clone()
+          // Cinematic curved path for Moon transitions (either direction).
+          const isMoonTween = isMoon || prevScale === 'moon'
+          int.current.camTweenKind = isMoonTween ? 'moon' : 'linear'
+          if (isMoonTween) {
+            // Control point: midpoint between start & target, lifted "up" by
+            // the half-length of the straight line → gives a nice arcing path.
+            const from = int.current.camTweenFrom
+            const [tx, ty, tz] = CAM_TARGET.position
+            const mx = (from.x + tx) / 2
+            const my = (from.y + ty) / 2
+            const mz = (from.z + tz) / 2
+            const dx = tx - from.x, dy = ty - from.y, dz = tz - from.z
+            const dlen = Math.sqrt(dx * dx + dy * dy + dz * dz)
+            // Lift direction: whichever of +Y / −Y pulls us further from origin
+            const lift = Math.max(dlen * 0.45, 0.6)
+            int.current.camTweenCtrl = { x: mx, y: my + lift, z: mz }
+          }
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
           // Show target scene, hide others
@@ -2077,6 +2110,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _showEarth
           int.current.placeDotsMesh.visible = _showEarth
           _setEarthEntitiesVisible(_showEarth)
+          // For Moon transitions, reveal the Moon immediately so it visibly
+          // rushes into frame during the arc (instead of popping in at the end).
           if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
           else if (isSolar) { solarSystem.show(); moonScene.hide() }
           else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }

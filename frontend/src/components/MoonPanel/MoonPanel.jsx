@@ -79,13 +79,20 @@ export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilt
         <header className={styles.header}>
           <MoonGlyph />
           <div className={styles.titles}>
-            <p className={styles.eyebrow}>Earth&apos;s Natural Satellite</p>
-            <h2 className={styles.name}>Luna</h2>
-            <p className={styles.subline}>Sol III · b</p>
+            <p className={styles.eyebrow}>Earth&apos;s Only Natural Satellite</p>
+            <h2 className={styles.name}>The Moon</h2>
+            <p className={styles.subline}>Luna · Sol III b</p>
           </div>
         </header>
 
         <div className={styles.divider} />
+
+        <p className={styles.desc}>
+          Born 4.5 billion years ago from a world-shattering collision, the Moon
+          is humanity&apos;s first foothold beyond Earth. Twelve people have walked
+          its surface. Its pull steadies our seasons, lifts our tides, and is
+          slowly drifting 3.8 cm further every year.
+        </p>
 
         <div className={styles.stats}>
           <StatRow label="Distance"        value="384 400 km" />
@@ -98,10 +105,13 @@ export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilt
           <StatRow label="Missions Landed" value="25 +  (6 crewed)" />
         </div>
 
-        <p className={styles.desc}>
-          Tap any landing site marker to inspect the mission. Toggle a mineral filter
-          below to visualise resource distribution from lunar prospector data.
-        </p>
+        <div className={styles.hintCard}>
+          <span className={styles.hintDot} />
+          <p className={styles.hintText}>
+            Tap a glowing marker to open a landing-site dossier, or pick a
+            resource below to reveal its lunar distribution.
+          </p>
+        </div>
 
         <div className={styles.filtersWrap}>
           <p className={styles.filtersTitle}>Resource Map</p>

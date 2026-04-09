@@ -192,11 +192,45 @@
 
 .desc {
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgba(220, 235, 255, 0.72);
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: rgba(225, 238, 255, 0.82);
   margin: 0;
-  letter-spacing: 0.005em;
+  letter-spacing: 0.002em;
+  font-weight: 400;
+}
+
+/* ── Hint card (replaces plain instructional paragraph) ──────────────────── */
+.hintCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.05), rgba(0, 160, 220, 0.025));
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(0, 150, 255, 0.05) inset;
+}
+.hintDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #00e5ff;
+  box-shadow: 0 0 10px #00e5ff, 0 0 20px rgba(0, 229, 255, 0.4);
+  animation: hintPulse 2.2s ease-in-out infinite;
+}
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+.hintText {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(200, 225, 245, 0.78);
 }
 
 .crewBlock {

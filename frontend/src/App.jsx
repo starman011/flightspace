@@ -197,14 +197,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   // Smart close: if a site is open, go back to Moon overview; otherwise exit
   // Moon scale entirely and return to Earth.
   const handleMoonSiteClose = useCallback(() => {
-    setSelectedMoonSite((prev) => {
-      if (prev) return null
-      // No site was open — leaving the Moon scale
+    if (selectedMoonSite) {
+      setSelectedMoonSite(null)
+    } else {
       setActiveScale('earth')
       globeRef.current?.setCameraScale?.('earth')
-      return null
-    })
-  }, [])
+    }
+  }, [selectedMoonSite])
   const handleMoonReturnHome = useCallback(() => {
     setSelectedMoonSite(null)
     setActiveScale('earth')
