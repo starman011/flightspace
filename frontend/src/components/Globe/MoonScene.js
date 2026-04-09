@@ -128,8 +128,12 @@ function ll2v(lat, lon, r) {
 
 // High-DPI pill label — crisp text on a translucent dark capsule with a
 // colored border. Returns { texture, aspect } so sprites can size correctly.
-const LABEL_FONT = `600 32px -apple-system, "Inter", "SF Pro Display", system-ui, sans-serif`
-const LABEL_FONT_SMALL = `500 26px -apple-system, "Inter", "SF Pro Display", system-ui, sans-serif`
+// Elegant serif for a NASA-document / classic space-mission aesthetic.
+const LABEL_FONT = `500 32px "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif`
+const LABEL_FONT_SMALL = `500 26px "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif`
+
+// Single warm ivory for every surface feature — evokes lunar dust lit by sun.
+const MOON_LABEL_COLOR = '#f5e8c4'
 
 function makeLabel(text, { small = false, color = '#ffffff', pill = true } = {}) {
   const dpr = 2
@@ -154,7 +158,7 @@ function makeLabel(text, { small = false, color = '#ffffff', pill = true } = {})
   ctx.scale(dpr, dpr)
 
   if (pill) {
-    // Rounded pill background
+    // Subtle dark pill, no colored border — let the serif typography carry it.
     const r = h / 2
     ctx.beginPath()
     ctx.moveTo(r, 0)
@@ -167,19 +171,19 @@ function makeLabel(text, { small = false, color = '#ffffff', pill = true } = {})
     ctx.lineTo(0, r)
     ctx.arcTo(0, 0, r, 0, r)
     ctx.closePath()
-    ctx.fillStyle = 'rgba(8,12,20,0.72)'
+    ctx.fillStyle = 'rgba(6,8,14,0.62)'
     ctx.fill()
-    ctx.lineWidth = 1.25
-    ctx.strokeStyle = color + 'cc'
+    ctx.lineWidth = 1
+    ctx.strokeStyle = 'rgba(245,232,196,0.22)'
     ctx.stroke()
   }
 
-  // Glow + text
+  // Soft ivory glow + text
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.shadowColor = color
-  ctx.shadowBlur = 6
+  ctx.shadowColor = 'rgba(255,240,200,0.9)'
+  ctx.shadowBlur = 8
   ctx.fillStyle = color
   ctx.fillText(text, w / 2, h / 2 + 1)
 
@@ -300,9 +304,10 @@ export function createMoonScene(scene) {
     const normal = ll2v(site.lat, site.lon, 1).normalize()
     const pos = normal.clone().multiplyScalar(MOON_R * 1.0015)
 
-    // Marker dot — small, tight pin on the surface
-    const color = site.type === 'crewed' ? 0x00e5ff : site.type === 'impact' ? 0xff4444 : 0x22ff88
-    const colorHex = '#' + color.toString(16).padStart(6, '0')
+    // Marker dot — small, tight pin on the surface. All sites share one warm
+    // ivory color; mission type is still conveyed via the badge in the panel.
+    const color = 0xf5e8c4
+    const colorHex = MOON_LABEL_COLOR
     const dotGeo = new SphereGeometry(0.0018, 12, 12)
     const dotMat = new MeshBasicMaterial({ color, transparent: true, opacity: 1 })
     const dot = new Mesh(dotGeo, dotMat)
@@ -329,7 +334,7 @@ export function createMoonScene(scene) {
     // Label — only crewed missions get always-on labels; others appear on hover/zoom
     const showLabelAlways = site.type === 'crewed'
     const labelPos = normal.clone().multiplyScalar(MOON_R * 1.018)
-    const lbl = makeLabel(site.name, { small: true, color: colorHex })
+    const lbl = makeLabel(site.name, { small: false, color: colorHex })
     const spriteMat = new SpriteMaterial({
       map: lbl.texture,
       transparent: true,
@@ -353,7 +358,7 @@ export function createMoonScene(scene) {
   for (const cr of CRATERS) {
     const normal = ll2v(cr.lat, cr.lon, 1).normalize()
     const labelPos = normal.clone().multiplyScalar(MOON_R * 1.009)
-    const lbl = makeLabel(cr.name, { small: true, color: '#e8e8ee', pill: false })
+    const lbl = makeLabel(cr.name, { small: true, color: MOON_LABEL_COLOR, pill: false })
     const spriteMat = new SpriteMaterial({
       map: lbl.texture,
       transparent: true,
