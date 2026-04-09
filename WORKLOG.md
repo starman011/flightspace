@@ -4,6 +4,17 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-04-09
+
+### Fixes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Moon button missing from mobile notch** | Added Moon to `CATEGORIES` in `OrbitalMapBar.jsx` (icon `nightlight`, type `moon`, scale `moon`) so it renders in the always-visible mobile chip strip alongside desktop filter rail. |
+| 2 | **Mobile DetailPanel hero redesign** | Plane image was skewing on mobile due to `align-items: stretch` on the flex row forcing `object-fit: cover` to distort. Redesigned as a 56×56 rounded avatar (14px radius, box-shadow) with `align-items: center`, transparent hero background, and text info flowing beside. Gradient overlay removed on mobile. |
+
+---
+
 ## Session: 2026-04-08
 
 ### Improvements
