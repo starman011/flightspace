@@ -6,6 +6,10 @@ export function useSession() {
   const [sessionToken, setSessionToken] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // sessionError surfaces network failures (ERR_NAME_NOT_RESOLVED, blocked CORS,
+  // offline, etc.) so the UI can show a visible "can't reach server" state
+  // instead of silently leaving the app in a disconnected limbo.
+  const [sessionError, setSessionError] = useState(null)
 
   const createAnonymousSession = useCallback(async () => {
     try {
@@ -16,27 +20,41 @@ export function useSession() {
       })
       if (!res.ok) throw new Error(`session create failed: ${res.status}`)
       const data = await res.json()
-      // Store token in memory only (not localStorage)
       setSessionToken(data.token)
+      setSessionError(null)
       return data.token
     } catch (err) {
       console.error('Failed to create anonymous session:', err)
+      // TypeError: Failed to fetch → network unreachable (DNS, CORS, offline).
+      // Give the UI a specific reason so we can hint at DNS/ad-blocker causes.
+      const isNetwork = err instanceof TypeError
+      setSessionError(isNetwork ? 'network' : 'server')
       return null
     }
   }, [])
 
   useEffect(() => {
     let mounted = true
+    let retryTimer = null
 
-    async function initSession() {
-      // Create an anonymous session; cookie is HttpOnly so we can't read it directly
+    async function initSession(attempt = 0) {
       const token = await createAnonymousSession()
-      if (mounted && token) setSessionToken(token)
-      if (mounted) setIsLoading(false)
+      if (!mounted) return
+      if (token) {
+        setIsLoading(false)
+        return
+      }
+      // Retry with capped backoff — network blips recover, true DNS blocks don't.
+      setIsLoading(false)
+      const delay = Math.min(2000 * Math.pow(2, attempt), 30000)
+      retryTimer = setTimeout(() => initSession(attempt + 1), delay)
     }
 
     initSession()
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+      if (retryTimer) clearTimeout(retryTimer)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback(async (email, password) => {
@@ -62,5 +80,5 @@ export function useSession() {
     await createAnonymousSession()
   }, [createAnonymousSession])
 
-  return { sessionToken, isAuthenticated, isLoading, login, logout }
+  return { sessionToken, isAuthenticated, isLoading, sessionError, login, logout }
 }

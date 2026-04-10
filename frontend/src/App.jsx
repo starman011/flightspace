@@ -107,7 +107,8 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
 }
 
 export default function App() {
-  const { sessionToken, isAuthenticated } = useSession()
+  const { sessionToken, isAuthenticated, sessionError } = useSession()
+  const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
 
@@ -265,6 +266,33 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           100% { transform: scale(1);   opacity: 0; }
         }
       `}</style>
+
+      {sessionError && !errorDismissed && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: 'rgba(180, 40, 40, 0.92)', backdropFilter: 'blur(12px)',
+          color: '#fff', fontFamily: 'var(--font-mono, monospace)', fontSize: 12,
+          padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        }}>
+          <span style={{ flex: 1, lineHeight: 1.4 }}>
+            {sessionError === 'network'
+              ? "Can't reach flightspace server. Your DNS, ad-blocker, or network may be blocking it. Try a different network, switch DNS to 1.1.1.1 or 8.8.8.8, or disable blockers for this site."
+              : "Server error creating session. Retrying automatically…"}
+          </span>
+          <button
+            onClick={() => setErrorDismissed(true)}
+            style={{
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff', padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: 11,
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {!focusedPad && (
         <StatusBar

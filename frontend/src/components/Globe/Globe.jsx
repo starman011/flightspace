@@ -1082,13 +1082,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         int.current.onViewportChange?.(GLOBAL_BOUNDS)
         return
       }
-      // Zoomed in: compute centre lat/lon using the same convention as v2ll
-      const latC = Math.asin(MathUtils.clamp(camPos.y / dist, -1, 1)) * (180 / Math.PI)
-      const lonC = Math.atan2(camPos.z, -camPos.x) * (180 / Math.PI) - 180
+      // Zoomed in: compute centre lat/lon using the same convention as v2ll,
+      // then normalize longitude to [-180, 180] so the backend bbox filter
+      // (which compares against real aircraft longitudes in that range) works
+      // for users viewing any region, not just the Americas.
+      const latC    = Math.asin(MathUtils.clamp(camPos.y / dist, -1, 1)) * (180 / Math.PI)
+      const lonRaw  = Math.atan2(camPos.z, -camPos.x) * (180 / Math.PI) - 180
+      const lonC    = ((lonRaw + 180) % 360 + 360) % 360 - 180
       // Half-span shrinks linearly as we zoom in
       const span = 15 + (dist - 1) * 55   // ~70° at dist=2.2, ~15° at dist=1.0
-      const ne = { lat: Math.min( 90, latC + span), lng: Math.min(180, lonC + span) }
-      const sw = { lat: Math.max(-90, latC - span), lng: Math.max(-180, lonC - span) }
+      // If the bbox crosses the antimeridian, fall back to global bounds —
+      // the backend filter doesn't handle wrap, and a wrong bbox means zero
+      // aircraft for the user instead of too many.
+      if (lonC + span > 180 || lonC - span < -180) {
+        int.current.onViewportChange?.(GLOBAL_BOUNDS)
+        return
+      }
+      const ne = { lat: Math.min( 90, latC + span), lng: lonC + span }
+      const sw = { lat: Math.max(-90, latC - span), lng: lonC - span }
       int.current.onViewportChange?.({ ne, sw })
     }
     controls.addEventListener('change', emitBounds)
@@ -2067,6 +2078,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           )
         }
 
+        // Deferred scene swap for moon tweens — flip visibility mid-tween when
+        // the warp overlay is fully opaque, so the user never sees the camera
+        // sitting inside the Earth sphere or at a weird distance from either.
+        if (isMoonTween && !int.current.camTweenSwapped && rawT >= 0.5) {
+          int.current.camTweenSwapped = true
+          const _showEarth = !isMoon && !isSolar && !isGalaxy
+          int.current.earthMesh.visible = _showEarth
+          int.current.cloudsMesh.visible = _showEarth
+          int.current.placeDotsMesh.visible = _showEarth
+          _setEarthEntitiesVisible(_showEarth)
+          if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
+          else { moonScene.hide(); solarSystem.hide(); galaxySystem.hide() }
+        }
+
         if (rawT >= 1) {
           if (int.current.camTweenKind === 'moon') setMoonTransit(false)
           int.current.camTweenStart = null
@@ -2107,19 +2132,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           }
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
-          // Show target scene, hide others
-          const _showEarth = !isMoon && !isSolar && !isGalaxy
-          int.current.earthMesh.visible = _showEarth
-          int.current.cloudsMesh.visible = _showEarth
-          int.current.placeDotsMesh.visible = _showEarth
-          _setEarthEntitiesVisible(_showEarth)
-          // For Moon transitions, reveal the Moon immediately so it visibly
-          // rushes into frame during the arc (instead of popping in at the end).
-          if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
-          else if (isSolar) { solarSystem.show(); moonScene.hide() }
-          else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }
-          else { solarSystem.hide(); moonScene.hide() }
-          if (!isGalaxy) galaxySystem.hide()
+          // For Moon tweens, defer the scene swap until mid-tween (when the
+          // warp overlay fully covers the screen) so the user never sees
+          // either scene at an unnatural camera distance. For other tweens,
+          // swap immediately as before.
+          if (isMoonTween) {
+            int.current.camTweenSwapped = false
+          } else {
+            const _showEarth = !isMoon && !isSolar && !isGalaxy
+            int.current.earthMesh.visible = _showEarth
+            int.current.cloudsMesh.visible = _showEarth
+            int.current.placeDotsMesh.visible = _showEarth
+            _setEarthEntitiesVisible(_showEarth)
+            if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
+            else if (isSolar) { solarSystem.show(); moonScene.hide() }
+            else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }
+            else { solarSystem.hide(); moonScene.hide() }
+            if (!isGalaxy) galaxySystem.hide()
+          }
         }
       }
 
