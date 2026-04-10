@@ -28,6 +28,7 @@ import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
+import BetaWelcome from './components/BetaWelcome/BetaWelcome'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
@@ -266,6 +267,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           100% { transform: scale(1);   opacity: 0; }
         }
       `}</style>
+
+      <BetaWelcome />
 
       {sessionError && !errorDismissed && (
         <div style={{
