@@ -391,7 +391,18 @@
 .filterBtnActive .filterLabel { color: inherit; }
 .filterBtnActive .filterFormula { opacity: 0.7; }
 
-/* ── Mobile bottom sheet ─────────────────────────────────────────────────── */
+/* ── Drag zone + mini strip (hidden on desktop) ─────────────────────────── */
+.dragZone { display: none; }
+.dragHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 10px auto 4px;
+}
+.miniStrip { display: none; }
+
+/* ── Mobile bottom sheet with peek / mini states ─────────────────────────── */
 @media (max-width: 767px) {
   .panel {
     top: auto;
@@ -403,15 +414,158 @@
     border-left: none;
     border-right: none;
     border-bottom: none;
-    max-height: 60dvh;
-    padding: 18px 18px 22px;
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 38dvh;
+    padding: 0 18px 22px;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  @keyframes slideUp {
+
+  @keyframes sheetUp {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
+
+  /* ── Mini collapsed dock ── */
+  .panelMini {
+    max-height: 80px;
+    overflow: hidden;
+    padding-bottom: 0;
+    /* Subtle nudge animation to hint "pull me up" */
+    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+               nudgeHint 2s 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2;
+  }
+
+  @keyframes nudgeHint {
+    0%, 100% { transform: translateY(0); }
+    40%      { transform: translateY(-8px); }
+  }
+
+  /* ── Drag zone visible on mobile ── */
+  .dragZone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  /* ── Mini strip visible on mobile ── */
+  .miniStrip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 4px 14px;
+    cursor: pointer;
+  }
+
+  .miniLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .miniMoon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .miniTitle {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .miniBadge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+
+  .miniHint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(0, 229, 255, 0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    animation: hintGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes hintGlow {
+    0%, 100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+  }
+
+  .miniChevron {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  /* ── Close + home buttons repositioned ── */
+  .close {
+    top: 6px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  .homeBtn {
+    top: 6px;
+    right: 38px;
+    height: 22px;
+    padding: 3px 8px 3px 6px;
+    font-size: 9px;
+  }
+
+  /* ── Header ── */
+  .header { padding-top: 2px; padding-right: 24px; }
   .name { font-size: 22px; }
-  .moonGlyph { width: 48px; height: 48px; }
-  .filters { grid-template-columns: 1fr 1fr; }
+  .moonGlyph { width: 44px; height: 44px; }
+  .flag { font-size: 28px; }
+  .eyebrow { font-size: 8px; }
+  .subline { font-size: 9px; }
+
+  /* ── Content spacing ── */
+  .desc { font-size: 12px; line-height: 1.5; }
+  .stats { margin-top: 0; }
+  .statRow { padding: 7px 12px; }
+  .statLabel { font-size: 9px; }
+  .statValue { font-size: 11px; }
+
+  .hintCard { padding: 10px 12px; gap: 8px; }
+  .hintText { font-size: 11px; }
+
+  .filtersWrap { gap: 6px; }
+  .filtersTitle { font-size: 8px; }
+  .filters { grid-template-columns: 1fr 1fr; gap: 5px; }
+  .filterBtn { padding: 7px 9px; gap: 6px; }
+  .filterLabel { font-size: 11px; }
+  .filterFormula { font-size: 8px; }
+
+  .flyBtn { padding: 10px 0; font-size: 10px; }
+
+  .crewBlock { padding: 8px 10px; }
+  .crewLabel { font-size: 8px; }
+  .crewValue { font-size: 11px; }
+
+  .badge { font-size: 8px; padding: 2px 6px; }
+  .siteName { font-size: 10px; }
+  .divider { margin: 4px 0; }
 }
