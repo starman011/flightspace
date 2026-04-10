@@ -140,27 +140,16 @@ func (ac *AircraftController) GetDetail(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Last N positions from PostgreSQL (no time window — works even when poller is rate-limited)
-	rows, err := ac.pool.Query(ctx,
-		`SELECT latitude, longitude, baro_altitude, time_position
-		 FROM aircraft_positions
-		 WHERE icao24 = $1
-		 ORDER BY time_position DESC
-		 LIMIT $2`,
-		icao24, trailLimit,
-	)
-	if err == nil {
-		defer rows.Close()
-		var pts []models.TrailPoint
-		for rows.Next() {
+	// Last N positions from Redis (bounded list, zero disk growth).
+	// LRange 0..N-1 returns newest → oldest; we reverse so it's oldest → newest.
+	trailKey := trailKeyPrefix + icao24
+	if raws, err := ac.rdb.LRange(ctx, trailKey, 0, int64(trailLimit-1)).Result(); err == nil && len(raws) > 0 {
+		pts := make([]models.TrailPoint, 0, len(raws))
+		for i := len(raws) - 1; i >= 0; i-- {
 			var tp models.TrailPoint
-			if err := rows.Scan(&tp.Latitude, &tp.Longitude, &tp.Altitude, &tp.Timestamp); err == nil {
+			if err := json.Unmarshal([]byte(raws[i]), &tp); err == nil {
 				pts = append(pts, tp)
 			}
-		}
-		// Reverse so trail is ordered oldest → newest (ASC by time)
-		for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
-			pts[i], pts[j] = pts[j], pts[i]
 		}
 		resp.Trail = pts
 	}

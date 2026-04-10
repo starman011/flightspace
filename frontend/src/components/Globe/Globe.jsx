@@ -2301,8 +2301,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         else if (altM < 1e6) altLabel = `${(altM / 1000).toFixed(altM < 10000 ? 1 : 0)} km`
         else altLabel = `${Math.round(altM / 1000).toLocaleString()} km`
         setCameraInfo({ altLabel, scaleLabel, scaleBarPx })
-        // Notify parent when zoom crosses tile threshold (~500km)
-        const isClose = altM < 500_000
+        // Notify parent when zoom crosses UI-collapse threshold (~2000km)
+        const isClose = altM < 2_000_000
         if (isClose !== int.current._wasZoomedIn) {
           int.current._wasZoomedIn = isClose
           int.current.onZoomChange?.(isClose)

@@ -26,6 +26,12 @@ const (
 	// point/lat/lon/radius — radius 21600nm covers the whole world
 	adsbLolURL    = "https://api.adsb.lol/v2/point/0/0/21600"
 	aircraftLiveKey = "aircraft:live"
+
+	// Trail storage in Redis — bounded per-aircraft list, zero disk growth.
+	// Key format: aircraft:trail:<icao24>. Values are JSON-encoded TrailPoint.
+	trailKeyPrefix = "aircraft:trail:"
+	trailMaxPoints = 200            // LTRIM keeps newest N points
+	trailTTL       = 4 * time.Hour  // auto-expire stale trails
 )
 
 // adsbLolResponse is the response envelope from api.adsb.lol
@@ -106,6 +112,10 @@ func (p *Poller) poll(ctx context.Context, backoff *time.Duration) {
 
 	if err := p.storeInRedis(ctx, aircraft); err != nil {
 		log.Printf(`{"level":"error","service":"poller","msg":"redis store failed","error":%q}`, err)
+	}
+
+	if err := p.storeTrails(ctx, aircraft); err != nil {
+		log.Printf(`{"level":"error","service":"poller","msg":"redis trail store failed","error":%q}`, err)
 	}
 
 	if err := p.storePositions(ctx, aircraft); err != nil {
@@ -250,7 +260,8 @@ func (p *Poller) storeInRedis(ctx context.Context, aircraft []models.LiveAircraf
 }
 
 // storePositions upserts each aircraft into aircraft_latest — one row per ICAO24.
-// This bounds the table to ~10k rows regardless of poll frequency, preventing disk exhaustion.
+// Bounded to ~10k rows regardless of poll frequency. Trail history lives in Redis (storeTrails)
+// to avoid unbounded Postgres disk growth.
 func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircraft) error {
 	if len(aircraft) == 0 {
 		return nil
@@ -278,11 +289,6 @@ func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircr
 		  time_position = EXCLUDED.time_position,
 		  updated_at    = NOW()`
 
-	const appendSQL = `
-		INSERT INTO aircraft_positions
-		  (icao24, callsign, longitude, latitude, baro_altitude, velocity, heading, vertical_rate, on_ground, time_position)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10))`
-
 	for _, a := range aircraft {
 		_, err := tx.Exec(ctx, upsertSQL,
 			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
@@ -290,16 +296,39 @@ func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircr
 		if err != nil {
 			return fmt.Errorf("upsert aircraft_latest: %w", err)
 		}
-		// Append to aircraft_positions for trail history
-		_, err = tx.Exec(ctx, appendSQL,
-			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
-		)
-		if err != nil {
-			return fmt.Errorf("append aircraft_positions: %w", err)
-		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+// storeTrails appends the latest position of each aircraft to a bounded Redis list.
+// LPUSH pushes the newest point to head; LTRIM caps the list at trailMaxPoints.
+// EXPIRE refreshes the TTL so inactive trails disappear automatically.
+// Zero Postgres writes — trail storage is fully in memory, memory is bounded by active aircraft.
+func (p *Poller) storeTrails(ctx context.Context, aircraft []models.LiveAircraft) error {
+	if len(aircraft) == 0 {
+		return nil
+	}
+
+	pipe := p.rdb.Pipeline()
+	for _, a := range aircraft {
+		tp := models.TrailPoint{
+			Latitude:  a.Lat,
+			Longitude: a.Lon,
+			Altitude:  a.Alt,
+			Timestamp: time.Unix(a.TS, 0),
+		}
+		b, err := json.Marshal(tp)
+		if err != nil {
+			continue
+		}
+		key := trailKeyPrefix + a.ID
+		pipe.LPush(ctx, key, b)
+		pipe.LTrim(ctx, key, 0, trailMaxPoints-1)
+		pipe.Expire(ctx, key, trailTTL)
+	}
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 // removeStale removes aircraft from Redis that haven't been updated within staleThreshold seconds.
@@ -325,6 +354,14 @@ func (p *Poller) removeStale(ctx context.Context) error {
 	if len(stale) > 0 {
 		if err := p.rdb.HDel(ctx, aircraftLiveKey, stale...).Err(); err != nil {
 			return err
+		}
+		// Also delete stale trail lists (defence-in-depth; they also auto-expire via TTL)
+		trailKeys := make([]string, len(stale))
+		for i, id := range stale {
+			trailKeys[i] = trailKeyPrefix + id
+		}
+		if err := p.rdb.Del(ctx, trailKeys...).Err(); err != nil {
+			log.Printf(`{"level":"warn","service":"poller","msg":"trail cleanup failed","error":%q}`, err)
 		}
 		log.Printf(`{"level":"info","service":"poller","msg":"removed stale aircraft","count":%d}`, len(stale))
 	}

@@ -1479,12 +1479,82 @@
   background: rgba(0, 229, 255, 0.06);
 }
 
-/* ── Hero hidden (zoomed in) ──────────────────────────────────────────── */
+/* ── Hero hidden (zoomed in or user-collapsed) ────────────────────────── */
 
 .heroHidden {
   opacity: 0 !important;
   pointer-events: none !important;
-  transition: opacity 0.35s ease;
+  transform: translateY(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.hero {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* ── Hero collapse button (top-right of hero) ────────────────────────── */
+.heroCollapseBtn {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-6);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 6px;
+  color: rgba(0, 229, 255, 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.15s ease;
+}
+.heroCollapseBtn:hover {
+  background: rgba(0, 229, 255, 0.12);
+  border-color: rgba(0, 229, 255, 0.35);
+  color: rgba(0, 229, 255, 0.9);
+}
+
+/* ── Hero dock strip (shown when collapsed) ──────────────────────────── */
+.heroDock {
+  position: absolute;
+  left: var(--space-8);
+  bottom: 96px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.88), rgba(6, 10, 18, 0.92));
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 10px;
+  color: rgba(200, 220, 240, 0.85);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 24px rgba(0, 229, 255, 0.06);
+  animation: heroDockIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease;
+  z-index: 3;
+}
+.heroDock:hover {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 32px rgba(0, 229, 255, 0.14);
+  transform: translateY(-1px);
+}
+.heroDockLabel {
+  color: rgba(0, 229, 255, 0.85);
+}
+
+@keyframes heroDockIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Desktop stream width states ─────────────────────────────────────────── */
@@ -1521,6 +1591,7 @@
 
   /* Hero hidden — globe is the hero on mobile */
   .hero     { display: none; }
+  .heroDock { display: none; }
   .watermark { display: none; }
 
   /* Desktop-only elements — hidden on mobile */

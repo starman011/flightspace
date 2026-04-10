@@ -112,7 +112,7 @@ export default function BetaWelcome() {
 
         <div className={styles.footer}>
           <p className={styles.footerText}>
-            This is an early beta. Things may break. We&apos;re building in public.
+            Early beta — things may break, but hey, even rockets explode before they land. 🚀
           </p>
           <button className={styles.enterBtn} onClick={() => setVisible(false)}>
             Enter Flightspace

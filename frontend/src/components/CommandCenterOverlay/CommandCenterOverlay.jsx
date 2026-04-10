@@ -1091,19 +1091,22 @@ export default function CommandCenterOverlay({
   const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
+  const [heroCollapsed, setHeroCollapsed] = useState(false) // user-controlled
 
   // Globe interaction → dock sheet to peek (graceful, not full-hide)
   useEffect(() => {
     if (forceCollapsed) setSheetState('peek')
   }, [forceCollapsed])
 
-  // Auto-collapse stream + hide hero when zoomed in close to Earth
+  // Auto-dock stream + collapse hero when zoomed in close to Earth
   useEffect(() => {
     if (zoomedIn) {
       setDesktopOpen('collapsed')
       setSheetState('peek')
+      setHeroCollapsed(true)
     } else {
       setDesktopOpen('open')
+      setHeroCollapsed(false)
     }
   }, [zoomedIn])
   const grabRef       = useRef(null)
@@ -1179,8 +1182,32 @@ export default function CommandCenterOverlay({
         <div className={styles.radialGlow} />
       </div>
 
-      {/* Left hero section — hidden when zoomed in */}
-      <div className={`${styles.hero} ${zoomedIn ? styles.heroHidden : ''}`}>
+      {/* Left hero section — collapsible, fully hidden when zoomed in */}
+      {heroCollapsed && !zoomedIn && (
+        <button
+          className={styles.heroDock}
+          onClick={() => setHeroCollapsed(false)}
+          title="Show Observer panel"
+          aria-label="Expand Observer panel"
+        >
+          <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
+          <span className={styles.heroDockLabel}>Observer</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(0,229,255,0.55)' }}>
+            expand_less
+          </span>
+        </button>
+      )}
+
+      <div className={`${styles.hero} ${heroCollapsed || zoomedIn ? styles.heroHidden : ''}`}>
+        <button
+          className={styles.heroCollapseBtn}
+          onClick={() => setHeroCollapsed(true)}
+          title="Collapse Observer panel"
+          aria-label="Collapse Observer panel"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>expand_more</span>
+        </button>
+
         <div className={styles.activeTag}>
           <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
           <span className={styles.activeLabel}>
