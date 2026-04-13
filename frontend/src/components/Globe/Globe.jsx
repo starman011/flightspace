@@ -118,16 +118,73 @@ function v2ll(v) {
   ]
 }
 
-// Great-circle interpolation for API flight paths
+// Haversine distance in km between two lat/lon points
+function haversineKm(a, b) {
+  const R = 6371
+  const toRad = (x) => x * Math.PI / 180
+  const dLat = toRad(b.latitude  - a.latitude)
+  const dLon = toRad(b.longitude - a.longitude)
+  const la1  = toRad(a.latitude)
+  const la2  = toRad(b.latitude)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
+
+// Sanitize a lat/lon path for rendering:
+//  • sort by timestamp (if present) — trail points can arrive out of order
+//  • drop near-duplicates (< MIN_KM apart) — prevents Catmull-Rom oscillation
+//  • drop GPS jumps (> MAX_KM between consecutive points) — noise spikes
+// Endpoints are always preserved so dep/arr airports stay anchored.
+function sanitizePath(pts) {
+  if (!pts || pts.length < 2) return pts || []
+  const MIN_KM = 0.5     // drop duplicates
+  const MAX_KM = 800     // drop single-point GPS jumps (airliner moves ~15km/min)
+  const sorted = [...pts]
+  if (sorted[0].timestamp != null) {
+    sorted.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+  }
+  const out = [sorted[0]]
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = out[out.length - 1]
+    const cur  = sorted[i]
+    const d    = haversineKm(prev, cur)
+    if (d < MIN_KM && i !== sorted.length - 1) continue // skip duplicate (but keep last)
+    if (d > MAX_KM && i !== sorted.length - 1) continue // skip noise jump (but keep last)
+    out.push(cur)
+  }
+  return out
+}
+
+// Great-circle interpolation using spherical linear interpolation (slerp).
+// True slerp gives uniform angular spacing — nlerp would bunch points near
+// endpoints for long segments. Also handles antimeridian correctly because
+// it works in 3D vector space, not 2D lon/lat.
 function greatCirclePoints(pts, r = EARTH_R + 0.035, steps = 40) {
   if (!pts?.length) return []
+  const clean = sanitizePath(pts)
+  if (clean.length < 2) return []
   const verts = []
-  for (let i = 0; i < pts.length - 1; i++) {
-    const v0 = ll2v(pts[i].latitude, pts[i].longitude, 1).normalize()
-    const v1 = ll2v(pts[i + 1].latitude, pts[i + 1].longitude, 1).normalize()
+  for (let i = 0; i < clean.length - 1; i++) {
+    const v0 = ll2v(clean[i].latitude,     clean[i].longitude,     1).normalize()
+    const v1 = ll2v(clean[i + 1].latitude, clean[i + 1].longitude, 1).normalize()
+    const dot   = Math.max(-1, Math.min(1, v0.dot(v1)))
+    const omega = Math.acos(dot)
+    const sinO  = Math.sin(omega)
+    // Near-identical endpoints: fall back to a single point (already deduped above)
+    if (sinO < 1e-6) {
+      verts.push(v0.clone().multiplyScalar(r))
+      continue
+    }
     for (let s = 0; s <= steps; s++) {
-      const t = s / steps
-      verts.push(new Vector3().copy(v0).lerp(v1, t).normalize().multiplyScalar(r))
+      const t  = s / steps
+      const a  = Math.sin((1 - t) * omega) / sinO
+      const b  = Math.sin(t * omega) / sinO
+      const v  = new Vector3(
+        v0.x * a + v1.x * b,
+        v0.y * a + v1.y * b,
+        v0.z * a + v1.z * b,
+      )
+      verts.push(v.multiplyScalar(r))
     }
   }
   return verts
@@ -1493,12 +1550,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             if (mapDestroyed) { geo.dispose(); mat.dispose(); processQueue(); return }
             tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
             mat.map     = tex
-            mat.opacity = item.isParent ? 0.88 : 1.0
+            mat.opacity = 0   // fade in gradually (see updateTiles loop)
             mat.needsUpdate = true
             // Fresh tiles always draw on top of demoted stale tiles
             mesh.renderOrder = item.isParent ? 0 : 1
             scene.add(mesh)
-            tileCache.set(key, { mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z, isParent: item.isParent, isStale: false })
+            tileCache.set(key, {
+              mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z,
+              isParent: item.isParent, isStale: false,
+              targetOpacity: item.isParent ? 0.88 : 1.0,
+            })
             processQueue()
           },
           undefined,
@@ -1541,6 +1602,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
       inTileMode = true
 
+      // ── Per-frame opacity ramp: fade newly-loaded tiles in smoothly ─────
+      // Runs every call (not throttled) so fade feels continuous.
+      for (const [, t] of tileCache) {
+        if (!t || t.targetOpacity == null) continue
+        if (t.mat.opacity < t.targetOpacity) {
+          t.mat.opacity = Math.min(t.targetOpacity, t.mat.opacity + 0.08)
+          t.mat.needsUpdate = true
+        }
+      }
+
       // ── Throttle: recalculate at most every 150 ms ─────────────────────────
       const now = Date.now()
       if (now - lastTileUpdate < 150) return
@@ -1576,7 +1647,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         }
       }
 
-      const radius = z >= 13 ? 2 : z >= 10 ? 3 : z >= 7 ? 4 : 5
+      // ── Dynamic tile coverage radius from camera FOV + aspect ─────────────
+      // Fixed rings used to starve the viewport edges, showing blue base Earth
+      // on wide monitors at high zoom. Compute the actual screen-projected tile
+      // count instead so the ring matches what's visible, plus a 1-tile buffer.
+      const altKm    = Math.max((dist - 1.0) * 6371, 0.05)
+      const vFovRad  = (camera.fov || 60) * Math.PI / 180
+      const hFovRad  = 2 * Math.atan(Math.tan(vFovRad / 2) * (camera.aspect || 1))
+      // Approx ground-arc length (km) covered at current altitude (small-angle)
+      const arcKmY   = 2 * altKm * Math.tan(vFovRad / 2)
+      const arcKmX   = 2 * altKm * Math.tan(hFovRad / 2)
+      // Tile size at zoom z, equator reference (km per tile at lon)
+      const latRad   = clat * Math.PI / 180
+      const kmPerLon = 111.32 * Math.cos(latRad)
+      const tileKmX  = (360 / N) * kmPerLon
+      const tileKmY  = (360 / N) * 111.32
+      // Half-extent in tiles, +1 buffer ring so edges never show blue
+      const rx = Math.max(2, Math.min(8, Math.ceil(arcKmX / tileKmX / 2) + 1))
+      const ry = Math.max(2, Math.min(8, Math.ceil(arcKmY / tileKmY / 2) + 1))
+      const radius = Math.max(rx, ry)
 
       // Grandparent tier: z-3 at low zoom (wide coverage), z-1 at high zoom (quality)
       // At z≥10 z-3 tiles cover huge areas and look extremely blurry — use z-1 instead.
@@ -1622,14 +1711,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // Detail tiles: centre tile first, then rings outward (quadtree-style priority)
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
+      // Use asymmetric rx/ry from FOV so wide aspect ratios don't starve horizontally.
+      for (let dy = -ry; dy <= ry; dy++) {
+        for (let dx = -rx; dx <= rx; dx++) {
           const tx = ((cx + dx) % N + N) % N
           const ty = Math.max(0, Math.min(N - 1, cy + dy))
           const _dk = tileKey(tx, ty, z)
           if (!tileCache.has(_dk) && !failedTiles.has(_dk)) {
             newItems.push({ tx, ty, z, isParent: false,
-                            priority: radius * 2 - (Math.abs(dx) + Math.abs(dy)) })
+                            priority: (rx + ry) - (Math.abs(dx) + Math.abs(dy)) })
           }
         }
       }
@@ -2316,10 +2406,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — three regimes:
+      // Aircraft scaling — screen-space constant at low altitude, world-space at high altitude.
       //   Above 50 km: dist-based formula (large visible icons from orbit)
-      //   Below 5 km:  real-world proportional (plane ≈ 40m on the map)
-      //   5–50 km:     smooth blend
+      //   Below 50 km: constant ~22px screen size (clickable but not dominant)
+      // The old formula clamped the floor at 5e-6 WU (~32m), so street-level zoom
+      // made planes look like city blocks. Using true screen-space scaling below the
+      // tile threshold ensures a plane is always a sensible dot, never larger than a building.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
@@ -2328,12 +2420,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const wuPerPxOld  = (2 * dist * tanHalf) / screenW
       const ptOld       = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
 
-      // Low-altitude: perspective-correct, shrinks proportionally to camera distance
+      // Low-altitude: true screen-space sizing.
+      // WU per pixel at camera → aircraft layer distance, multiplied by target pixel size.
       const _acR        = EARTH_R * 1.0005
       const camToAc     = Math.max(dist - _acR, 0.00005)
       const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
-      // At 1km: ~40m real plane ≈ 0.0000063 WU. Scale from ~2px at 1km to ~6px at 5km.
-      const ptNew       = MathUtils.clamp(2 + 2 * Math.log10(1 + camToAc * 200), 1.5, 6)
+      const TARGET_PX   = 22                 // fixed screen-space size (clickable but not huge)
+      const MIN_PX      = 14                 // absolute minimum for visibility
+      const ptNew       = MathUtils.clamp(TARGET_PX, MIN_PX, 30)
 
       let newScale
       if (altKm >= 50) {
@@ -2344,7 +2438,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = (altKm - 5) / 45             // 0 at 5 km, 1 at 50 km
         newScale = MathUtils.lerp(ptNew * wuPerPxNew, ptOld * wuPerPxOld, t)
       }
-      newScale = MathUtils.clamp(newScale, 0.000005, 0.02)
+      // Floor dropped from 5e-6 (~32m) to 1e-9 so aircraft can truly shrink at street zoom.
+      newScale = MathUtils.clamp(newScale, 1e-9, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
