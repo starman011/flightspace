@@ -2438,44 +2438,54 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — three regimes, with a real-world floor for airport zoom:
-      //   Above 50 km:  orbit formula (large dot visible from space)
-      //   5-50 km:      constant 22px screen-space (clickable)
-      //   Below ~3 km:  real-world proportional (~40m) so you can watch a
-      //                 landing approach on the runway
-      // The crossover is implicit: `max(screen_22px, realWorld_40m)`. At high
-      // altitude 22px corresponds to more meters than 40m → screen-space wins.
-      // At airport zoom 22px < 40m → real-world floor kicks in smoothly.
+      // Aircraft scaling — three regimes tuned so planes never look bigger
+      // than the city they fly over:
+      //   Above 80 km:  orbit formula (dot visible from space)
+      //   Below 80 km:  pure real-world 40m sizing, with a minimum pixel
+      //                 floor so far-away planes stay visible/clickable
+      // Real-world floor means: zoom in on JFK → plane occupies its real
+      // 40m footprint → you can actually watch a landing on the runway.
+      // Pixel floor means: at country-scale zoom, the 40m plane would be
+      // sub-pixel, so we scale it up to MIN_PX to keep it visible.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
-      // High-altitude formula (unchanged look from orbit)
-      const wuPerPxOld  = (2 * dist * tanHalf) / screenW
-      const ptOld       = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
-
-      // Low-altitude: screen-space constant sizing.
+      // Camera distance to the aircraft layer (not to Earth center).
+      // This is the correct distance for converting pixels ↔ world units.
       const _acR        = EARTH_R * 1.0005
       const camToAc     = Math.max(dist - _acR, 0.00005)
       const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
-      const TARGET_PX   = 22
-      const screenScale = TARGET_PX * wuPerPxNew
 
-      // Real-world floor: a 737 is ~40m long/wide. 1 WU = Earth radius = 6 371 km.
-      const REAL_WORLD_M  = 40
-      const realWorldWU   = REAL_WORLD_M / 6_371_000
+      // Real-world size of a typical airliner (737/A320 ≈ 40m).
+      const REAL_WORLD_M = 40
+      const realWorldWU  = REAL_WORLD_M / 6_371_000
+
+      // Minimum screen footprint so far-away planes stay pickable.
+      // 10px feels like a "dot" but still clickable with the 7×7 picker.
+      const MIN_PX       = 10
+      const minPxWU      = MIN_PX * wuPerPxNew
+
+      // High-altitude orbit formula — unchanged look from space.
+      const wuPerPxOld   = (2 * dist * tanHalf) / screenW
+      const ptOld        = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
 
       let newScale
-      if (altKm >= 50) {
+      if (altKm >= 80) {
+        // Deep space / orbit view — keep dot-like visibility
         newScale = ptOld * wuPerPxOld
-      } else if (altKm <= 5) {
-        // Screen-space 22px, but never smaller than a real 40m aircraft →
-        // max gives us a smooth crossover at ~3km altitude.
-        newScale = Math.max(screenScale, realWorldWU)
+      } else if (altKm <= 20) {
+        // City / airport zoom — pure real-world with pixel floor
+        // At 1 km altitude: 40m ≈ 40 px (huge, realistic for runway)
+        // At 10 km altitude: 40m ≈ 8px → floor kicks in at 10px
+        newScale = Math.max(realWorldWU, minPxWU)
       } else {
-        const t = (altKm - 5) / 45
-        newScale = MathUtils.lerp(Math.max(screenScale, realWorldWU), ptOld * wuPerPxOld, t)
+        // 20-80 km transition — blend real-world into orbit dot
+        const t = (altKm - 20) / 60
+        newScale = MathUtils.lerp(Math.max(realWorldWU, minPxWU), ptOld * wuPerPxOld, t)
       }
+      // Absolute floor: never smaller than real-world size (airport zoom).
+      // Absolute ceiling: 0.02 WU (~125 km) at extreme distance.
       newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.

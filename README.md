@@ -568,6 +568,94 @@ npx claude-mem install                   # install
 
 ---
 
+## Database & auth security
+
+Defense-in-depth invariants applied at both the application layer and the
+database layer. This section exists so contributors don't accidentally undo
+them — every item here blocks a real attack.
+
+### Email normalization — strict ASCII only
+
+**Threat**: Unicode homoglyph attacks. `raj@gmáil.com` (Latin `á`, U+00E1) and
+`raj@gmail.com` (plain `a`, U+0061) look identical to humans. Cyrillic `а`
+(U+0430) is a different codepoint again. A naive `ToLower()` or NFKC normalize
+folds them together and lets an attacker sign up as a visually-identical
+impostor, then use password reset to steal the real account.
+
+**Mitigation** (`backend/src/utils/email.go`):
+1. Reject any byte > `0x7F` — rules out all non-ASCII, no enumeration needed.
+2. ASCII-lowercase (safe only because step 1 removed all Unicode).
+3. Regex-validate the `local@domain.tld` shape.
+4. Every write path (`auth.Register`, `auth.Login`, `waitlist.Subscribe`)
+   funnels through the same `utils.NormalizeEmail()` — no direct `ToLower`
+   allowed.
+
+### DB CHECK constraint — app bypass protection
+
+**Threat**: Some future PR adds a new email-insert path and forgets to call
+`NormalizeEmail`. The app-layer defense is now bypassed.
+
+**Mitigation** (`backend/migrations/000011_email_ascii_constraint.up.sql`):
+
+```sql
+ALTER TABLE users
+    ADD CONSTRAINT users_email_ascii_lowercase
+    CHECK (
+        email ~ '^[\x20-\x7E]+$'   -- ASCII printable only
+        AND email = lower(email)    -- canonical form
+        AND email LIKE '%_@_%.__%'  -- shape sanity
+    );
+```
+
+Same constraint on `waitlist_emails`. The Postgres regex engine rejects the
+insert before the row ever lands. If the app-layer validator is ever skipped,
+the DB still holds the line.
+
+### Other DB-level mitigations in place
+
+| Table                | Mitigation                                                  | Why                                                                                    |
+|----------------------|-------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `users`              | `email UNIQUE` + ASCII CHECK                                | One row per canonical email; impossible to register homoglyph variants.                |
+| `users`              | `password_hash` bcrypt only, never plaintext                | App layer uses `bcrypt.GenerateFromPassword` with salt+cost 10.                        |
+| `users`              | `preferences JSONB NOT NULL DEFAULT '{}'`                   | No nulls to branch on in app code.                                                     |
+| `anonymous_sessions` | `expires_at` TTL + Redis cache                              | 30-day anonymous session expiry; no unbounded session table growth.                    |
+| `user_sessions`      | `session_token` indexed + `expires_at` CHECK                | JWT revocation via cookie clear; TTL prevents stale session harvesting.                |
+| `aircraft_positions` | **Dropped**. Trails now in bounded Redis list               | Old schema appended forever with no retention → filled Railway disk. Redis `LPUSH`+`LTRIM` is O(1), 4h TTL, zero disk growth. |
+| `waitlist_emails`    | `UNIQUE(email)` + `ON CONFLICT DO NOTHING` + ASCII CHECK    | Idempotent subscribe, no duplicate confirmation emails.                                |
+| All tables           | `pgx` parameterized queries — **zero string interpolation** | SQL injection impossible by construction: `$1, $2, ...` placeholders, never `fmt.Sprintf`. |
+| All write paths      | `context.WithTimeout` on every query                        | No runaway queries; hung connections can't exhaust the pool.                           |
+
+### Auth flow invariants
+
+- **Password hashing**: bcrypt with `DefaultCost`. Never MD5, SHA1, or plain SHA256.
+- **JWT signing**: HS256 with a 256-bit secret from `JWT_SECRET`. Not committed,
+  not logged, never returned in API responses.
+- **Cookie flags**: `HttpOnly`, `Secure` (in TLS), `SameSite=Strict`. XSS cannot
+  read the cookie, CSRF cannot auto-send it from cross-site contexts.
+- **Login timing**: Failed lookups and failed bcrypt compares both return the
+  same generic "invalid credentials" error — no account enumeration via timing
+  or error-message differences.
+- **WebSocket origin check**: strict `map[string]bool` lookup against
+  `ALLOWED_ORIGINS`, no wildcards. Raw Railway subdomain isn't in the list —
+  only the custom domain behind Cloudflare is trusted.
+
+### What we don't do, and why
+
+- **No accent-insensitive email matching.** Explicitly rejected — see homoglyph
+  threat above.
+- **No "forgot password" email link yet.** Deferred until we have a
+  transactional email provider. Password reset is the #1 account-takeover
+  vector, so it doesn't ship until we can do it right (signed tokens, 15-min
+  expiry, single-use, rate limited).
+- **No CITEXT extension.** Postgres `CITEXT` folds case using the collation,
+  which can pull in Unicode case-folding if the collation is `und-x-icu`. Plain
+  `VARCHAR` + `CHECK` is both faster and byte-exact.
+- **No in-process rate limiting on login yet.** Cloudflare WAF + Railway egress
+  throttling is the current stop-gap. In-process token-bucket limiter is on the
+  alpha backlog.
+
+---
+
 ## License
 
 MIT

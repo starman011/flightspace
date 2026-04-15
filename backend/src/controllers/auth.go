@@ -3,8 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,8 +12,6 @@ import (
 	"github.com/skydot/backend/src/utils"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var emailRe = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 // AuthController handles registration and login.
 type AuthController struct {
@@ -40,11 +36,14 @@ func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		utils.Error(w, http.StatusBadRequest, "email and password are required")
 		return
 	}
-	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-	if !emailRe.MatchString(req.Email) {
+	// Strict ASCII normalization — rejects homoglyph/accent attacks
+	// (e.g. raj@gmáil.com). See utils/email.go for full rationale.
+	normalizedEmail, err := utils.NormalizeEmail(req.Email)
+	if err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
+	req.Email = normalizedEmail
 	if len(req.Password) < 8 {
 		utils.Error(w, http.StatusBadRequest, "password must be at least 8 characters")
 		return
@@ -104,11 +103,15 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if req.Email != nil && req.Password != nil {
-		// Email/password login
-		email := strings.ToLower(strings.TrimSpace(*req.Email))
+		// Email/password login — identical normalization to Register
+		email, err := utils.NormalizeEmail(*req.Email)
+		if err != nil {
+			utils.Error(w, http.StatusUnauthorized, "invalid credentials")
+			return
+		}
 		var userID, hashStr string
 		var displayName *string
-		err := ac.pool.QueryRow(ctx,
+		err = ac.pool.QueryRow(ctx,
 			`SELECT id, password_hash, display_name FROM users WHERE email=$1 AND auth_provider='email'`,
 			email,
 		).Scan(&userID, &hashStr, &displayName)

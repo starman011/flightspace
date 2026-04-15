@@ -7,15 +7,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/skydot/backend/src/utils"
 )
-
-var emailRE = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 type WaitlistController struct{ pool *pgxpool.Pool }
 
@@ -35,8 +31,8 @@ func (c *WaitlistController) Subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := strings.ToLower(strings.TrimSpace(body.Email))
-	if !emailRE.MatchString(email) {
+	email, err := utils.NormalizeEmail(body.Email)
+	if err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid email")
 		return
 	}
