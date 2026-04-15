@@ -687,25 +687,18 @@ function allocForCat(state, cat) {
                        : 'plane']
 }
 
-function buildMatrix(a, cat, planeScale, camDist) {
-  let r = AC_R
+function buildMatrix(a, cat, planeScale) {
+  // Planes and ships sit on a single thin layer just above the tile
+  // surface. Real altitude (10+ km) looks correct in isolation but
+  // creates parallax that makes a plane over an airport appear to be
+  // in a different place when you rotate the Earth in 3D. Anchoring
+  // them to the surface makes (lat, lon) the visual ground truth.
+  // Satellites are the only category that keeps real altitude.
+  let r
   if (cat === 'satellite') {
     r = EARTH_R + (a.alt_km ?? 400) / 6371
-  } else if (cat === 'ship') {
-    r = EARTH_R + 0.0001   // ~640 m, just above tile surface
   } else {
-    // Aircraft: place at REAL altitude so the sprite isn't floating 12km
-    // above a runway landing. a.alt is baro altitude in feet from ADS-B.
-    // Clamp to [0, 15km] so bad/missing readings don't send planes to space.
-    const altKm = a.alt != null ? Math.max(0, Math.min(a.alt * 0.0003048, 15)) : 10.5
-    r = EARTH_R + altKm / 6371
-  }
-
-  // When camera is below the aircraft layer, pin aircraft to a thin layer
-  // just above the tile surface so they remain visible at airport zoom.
-  // Satellites are exempt — they orbit above the camera at street-level zoom.
-  if (cat !== 'satellite' && camDist !== undefined && r >= camDist) {
-    r = EARTH_R + 0.00005   // ~320 m, just above tiles (1.00004), below camera min
+    r = EARTH_R + 0.00008   // ~510 m, above tiles (1.00004) and ships stay flush
   }
 
   const pos = ll2v(a.lat, a.lon, r)
@@ -824,7 +817,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
       || Math.abs(headDeg - inst.hdg) > 1.5        // degrees
 
     if (moved) {
-      const pos = buildMatrix(a, cat, planeScale, state.camDist)
+      const pos = buildMatrix(a, cat, planeScale)
       mesh.setMatrixAt(inst.index, _rotMat)
       inst.pos = pos; inst.lat = a.lat; inst.lon = a.lon; inst.hdg = headDeg
       meshDirty.add(mesh)
