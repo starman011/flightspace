@@ -2438,54 +2438,50 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — three regimes tuned so planes never look bigger
-      // than the city they fly over:
-      //   Above 80 km:  orbit formula (dot visible from space)
-      //   Below 80 km:  pure real-world 40m sizing, with a minimum pixel
-      //                 floor so far-away planes stay visible/clickable
-      // Real-world floor means: zoom in on JFK → plane occupies its real
-      // 40m footprint → you can actually watch a landing on the runway.
-      // Pixel floor means: at country-scale zoom, the 40m plane would be
-      // sub-pixel, so we scale it up to MIN_PX to keep it visible.
+      // Aircraft scaling — single continuous formula across ALL altitudes.
+      // The previous approach had three regimes with a linear lerp between
+      // "screen-space 22px" and "orbit formula", and the endpoints differed
+      // by ~80× in world units — that ratio over 60km of zoom produced the
+      // visible "rapid scaling" bug.
+      //
+      // New approach, no regimes, no lerp:
+      //   1. Screen-space target pixels grow smoothly 10 → 22 as the camera
+      //      pulls back, so distant planes stay visible/clickable and near
+      //      planes don't dominate.
+      //   2. wuPerPixel is always computed from `camToAc` (distance to the
+      //      aircraft layer) — this is the correct projection math at every
+      //      altitude, unlike the old formula which used raw `dist`.
+      //   3. Floor at `realWorldWU` (40m, a 737 footprint) so when you zoom
+      //      into an airport, the screen-space pixel target becomes smaller
+      //      than 40m and the plane naturally stops shrinking — you see it
+      //      at its real size on the runway.
+      //
+      // Because the formula is monotonic in `camToAc`, there are no jumps
+      // and no blend seams. Scale grows smoothly as you pan out.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
-      // Camera distance to the aircraft layer (not to Earth center).
-      // This is the correct distance for converting pixels ↔ world units.
-      const _acR        = EARTH_R * 1.0005
-      const camToAc     = Math.max(dist - _acR, 0.00005)
-      const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
+      // Camera → aircraft layer distance in world units.
+      const _acR      = EARTH_R * 1.0005
+      const camToAc   = Math.max(dist - _acR, 0.00005)
+      const wuPerPx   = (2 * camToAc * tanHalf) / screenW
 
-      // Real-world size of a typical airliner (737/A320 ≈ 40m).
-      const REAL_WORLD_M = 40
-      const realWorldWU  = REAL_WORLD_M / 6_371_000
+      // 737/A320 physical footprint — the hard floor at airport zoom.
+      const realWorldWU = 40 / 6_371_000
 
-      // Minimum screen footprint so far-away planes stay pickable.
-      // 10px feels like a "dot" but still clickable with the 7×7 picker.
-      const MIN_PX       = 10
-      const minPxWU      = MIN_PX * wuPerPxNew
+      // Smooth screen-space target that grows with camera distance.
+      // 10 px at ground, 22 px far out. Uses a gentle log so the first
+      // few km already climb to ~14 px (visible even at mid zoom) and it
+      // tapers toward 22 at high altitude without ever jumping.
+      const targetPx  = MathUtils.clamp(10 + 5 * Math.log10(1 + altKm), 10, 22)
+      const screenScale = targetPx * wuPerPx
 
-      // High-altitude orbit formula — unchanged look from space.
-      const wuPerPxOld   = (2 * dist * tanHalf) / screenW
-      const ptOld        = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
-
-      let newScale
-      if (altKm >= 80) {
-        // Deep space / orbit view — keep dot-like visibility
-        newScale = ptOld * wuPerPxOld
-      } else if (altKm <= 20) {
-        // City / airport zoom — pure real-world with pixel floor
-        // At 1 km altitude: 40m ≈ 40 px (huge, realistic for runway)
-        // At 10 km altitude: 40m ≈ 8px → floor kicks in at 10px
-        newScale = Math.max(realWorldWU, minPxWU)
-      } else {
-        // 20-80 km transition — blend real-world into orbit dot
-        const t = (altKm - 20) / 60
-        newScale = MathUtils.lerp(Math.max(realWorldWU, minPxWU), ptOld * wuPerPxOld, t)
-      }
-      // Absolute floor: never smaller than real-world size (airport zoom).
-      // Absolute ceiling: 0.02 WU (~125 km) at extreme distance.
+      // Final scale: whichever is larger at the current zoom.
+      //   - At airport zoom: realWorldWU wins → plane is 40m wide.
+      //   - At mid zoom:     screenScale wins → ~12 px dot.
+      //   - At orbit zoom:   screenScale wins → ~22 px dot.
+      let newScale = Math.max(screenScale, realWorldWU)
       newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
