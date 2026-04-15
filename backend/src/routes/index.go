@@ -59,6 +59,9 @@ func Setup(
 	mux.Handle("GET /api/v1/user/watchlist", authReq(http.HandlerFunc(user.GetWatchlist)))
 	mux.Handle("POST /api/v1/user/watchlist", authReq(http.HandlerFunc(user.AddWatchlist)))
 	mux.Handle("DELETE /api/v1/user/watchlist/{id}", authReq(http.HandlerFunc(user.DeleteWatchlist)))
+	mux.Handle("GET /api/v1/user/pinned-launches", authReq(http.HandlerFunc(user.GetPinnedLaunches)))
+	mux.Handle("POST /api/v1/user/pinned-launches", authReq(http.HandlerFunc(user.AddPinnedLaunch)))
+	mux.Handle("DELETE /api/v1/user/pinned-launches/{id}", authReq(http.HandlerFunc(user.DeletePinnedLaunch)))
 
 	// Space data
 	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))

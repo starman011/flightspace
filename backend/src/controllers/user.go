@@ -137,6 +137,112 @@ func (uc *UserController) AddWatchlist(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusCreated, item)
 }
 
+// GetPinnedLaunches handles GET /api/v1/user/pinned-launches.
+func (uc *UserController) GetPinnedLaunches(w http.ResponseWriter, r *http.Request) {
+	session := middlewares.GetSession(r)
+	if session == nil || session.UserID == nil {
+		utils.Error(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	ctx := r.Context()
+	rows, err := uc.pool.Query(ctx,
+		`SELECT id, user_id, launch_id, name, net_time, created_at
+		   FROM pinned_launches
+		  WHERE user_id=$1
+		  ORDER BY net_time NULLS LAST, created_at DESC`,
+		*session.UserID,
+	)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to fetch pinned launches")
+		return
+	}
+	defer rows.Close()
+
+	items := []models.PinnedLaunch{}
+	for rows.Next() {
+		var p models.PinnedLaunch
+		if err := rows.Scan(&p.ID, &p.UserID, &p.LaunchID, &p.Name, &p.NetTime, &p.CreatedAt); err == nil {
+			items = append(items, p)
+		}
+	}
+
+	utils.JSON(w, http.StatusOK, map[string]interface{}{"items": items, "count": len(items)})
+}
+
+// AddPinnedLaunch handles POST /api/v1/user/pinned-launches.
+// Idempotent — pinning the same launch twice returns the existing row.
+func (uc *UserController) AddPinnedLaunch(w http.ResponseWriter, r *http.Request) {
+	session := middlewares.GetSession(r)
+	if session == nil || session.UserID == nil {
+		utils.Error(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	var req models.PinnedLaunchAddRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.LaunchID == "" {
+		utils.Error(w, http.StatusBadRequest, "launch_id required")
+		return
+	}
+	if len(req.LaunchID) > 64 {
+		utils.Error(w, http.StatusBadRequest, "launch_id too long")
+		return
+	}
+
+	ctx := r.Context()
+	id := uuid.New().String()
+	var item models.PinnedLaunch
+	err := uc.pool.QueryRow(ctx,
+		`INSERT INTO pinned_launches (id, user_id, launch_id, name, net_time)
+		 VALUES ($1, $2, $3, $4, $5)
+		 ON CONFLICT (user_id, launch_id) DO UPDATE
+		   SET name = EXCLUDED.name, net_time = EXCLUDED.net_time
+		 RETURNING id, user_id, launch_id, name, net_time, created_at`,
+		id, *session.UserID, req.LaunchID, req.Name, req.NetTime,
+	).Scan(&item.ID, &item.UserID, &item.LaunchID, &item.Name, &item.NetTime, &item.CreatedAt)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to pin launch")
+		return
+	}
+
+	utils.JSON(w, http.StatusCreated, item)
+}
+
+// DeletePinnedLaunch handles DELETE /api/v1/user/pinned-launches/{id}.
+func (uc *UserController) DeletePinnedLaunch(w http.ResponseWriter, r *http.Request) {
+	session := middlewares.GetSession(r)
+	if session == nil || session.UserID == nil {
+		utils.Error(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		utils.Error(w, http.StatusBadRequest, "missing pinned launch id")
+		return
+	}
+
+	ctx := r.Context()
+	result, err := uc.pool.Exec(ctx,
+		`DELETE FROM pinned_launches WHERE id=$1 AND user_id=$2`,
+		itemID, *session.UserID,
+	)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to unpin launch")
+		return
+	}
+	if result.RowsAffected() == 0 {
+		utils.Error(w, http.StatusNotFound, "pinned launch not found")
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
 // DeleteWatchlist handles DELETE /api/v1/user/watchlist/{id}.
 func (uc *UserController) DeleteWatchlist(w http.ResponseWriter, r *http.Request) {
 	session := middlewares.GetSession(r)

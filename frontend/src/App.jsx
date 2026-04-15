@@ -34,6 +34,7 @@ import AuthModal from './components/Auth/AuthModal'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
+import { usePins } from './hooks/usePins'
 
 // ── Pad Focus Badge ───────────────────────────────────────────────────────────
 function PadFocusBadge({ launch, onExit }) {
@@ -135,7 +136,20 @@ export default function App() {
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
-  const [pinnedLaunch, setPinnedLaunch]     = useState(null)
+  const pins = usePins(isAuthenticated, sessionToken)
+  // The CommandCenterOverlay shows ONE pinned launch. We display the most
+  // recently pinned one (last in the list).
+  const lastPin = pins.pinnedLaunches[pins.pinnedLaunches.length - 1] || null
+  const pinnedLaunch = lastPin ? (lastPin._full || {
+    id: lastPin.launch_id,
+    mission_name: lastPin.name,
+    name: lastPin.name,
+    net: lastPin.net_time,
+  }) : null
+  const handlePinLaunch = useCallback((launch) => {
+    if (launch) pins.pinLaunch(launch)
+    else if (pinnedLaunch) pins.unpinLaunch(pinnedLaunch.id)
+  }, [pins, pinnedLaunch])
   const [returnMission, setReturnMission]   = useState(null)
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [arActive, setArActive] = useState(false)
@@ -379,7 +393,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         connectionStatus={connectionStatus}
         issData={aircraftWithShips.get('ISS') ?? null}
         pinnedLaunch={pinnedLaunch}
-        onUnpinLaunch={() => setPinnedLaunch(null)}
+        onUnpinLaunch={() => pinnedLaunch && pins.unpinLaunch(pinnedLaunch.id)}
         forceCollapsed={streamCollapsed}
         onISSLink={{
           flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
@@ -422,7 +436,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onClose={() => { setLaunchPanelOpen(false); setReturnMission(null) }}
         onLocatePad={handleLocatePad}
         pinnedLaunchId={pinnedLaunch?.id ?? null}
-        onPinLaunch={setPinnedLaunch}
+        onPinLaunch={handlePinLaunch}
         openToMission={returnMission}
       />
 
@@ -441,6 +455,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           isTracking={trackingId === selectedIcao24}
           onTrack={setTrackingId}
           onFitRoute={(routeData) => globeRef.current?.fitRoute?.(routeData)}
+          isSaved={pins.isFlightTracked(selectedIcao24)}
+          onToggleSave={(f) => {
+            if (pins.isFlightTracked(f.icao24)) pins.untrackFlight(f.icao24)
+            else pins.trackFlight(f)
+          }}
         />
       )}
 

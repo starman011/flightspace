@@ -68,3 +68,20 @@ type WatchlistAddRequest struct {
 	ICAO24   *string `json:"icao24,omitempty"`
 	Label    *string `json:"label,omitempty"`
 }
+
+// PinnedLaunch maps to the pinned_launches table.
+type PinnedLaunch struct {
+	ID        string     `db:"id"         json:"id"`
+	UserID    string     `db:"user_id"    json:"user_id"`
+	LaunchID  string     `db:"launch_id"  json:"launch_id"`
+	Name      *string    `db:"name"       json:"name,omitempty"`
+	NetTime   *time.Time `db:"net_time"   json:"net_time,omitempty"`
+	CreatedAt time.Time  `db:"created_at" json:"created_at"`
+}
+
+// PinnedLaunchAddRequest is the body for POST /api/v1/user/pinned-launches.
+type PinnedLaunchAddRequest struct {
+	LaunchID string     `json:"launch_id"`
+	Name     *string    `json:"name,omitempty"`
+	NetTime  *time.Time `json:"net_time,omitempty"`
+}
