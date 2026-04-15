@@ -29,6 +29,8 @@ import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
+import ProfileButton from './components/Auth/ProfileButton'
+import AuthModal from './components/Auth/AuthModal'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
@@ -108,7 +110,8 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
 }
 
 export default function App() {
-  const { sessionToken, isAuthenticated, sessionError } = useSession()
+  const { sessionToken, isAuthenticated, user, sessionError, login, register, logout } = useSession()
+  const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
@@ -269,6 +272,24 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       `}</style>
 
       <BetaWelcome />
+
+      {/* Profile button — fixed top-right, above all panels */}
+      <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 8000 }}>
+        <ProfileButton
+          isAuthenticated={isAuthenticated}
+          user={user}
+          onSignIn={() => setAuthModalOpen(true)}
+          onSignOut={logout}
+        />
+      </div>
+
+      {authModalOpen && (
+        <AuthModal
+          onClose={() => setAuthModalOpen(false)}
+          onLogin={login}
+          onRegister={register}
+        />
+      )}
 
       {sessionError && !errorDismissed && (
         <div style={{

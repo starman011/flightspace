@@ -1,0 +1,127 @@
+.wrap {
+  position: relative;
+}
+
+.btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.btnAuth {
+  background: rgba(0, 180, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.25);
+  color: rgba(0, 229, 255, 0.85);
+}
+.btnAuth:hover {
+  background: rgba(0, 180, 255, 0.16);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+.icon svg { width: 18px; height: 18px; }
+
+.initials {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.onlineDot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00e5a0;
+  border: 1.5px solid rgba(6, 10, 18, 0.9);
+}
+
+/* ── Dropdown menu ───────────────────────────────────────────────────────── */
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: rgba(10, 14, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: menuIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 9000;
+}
+
+@keyframes menuIn {
+  from { transform: translateY(-6px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.menuHeader {
+  padding: 12px 14px 10px;
+}
+
+.menuName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 2px;
+}
+
+.menuEmail {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 0;
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
