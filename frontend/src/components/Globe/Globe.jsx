@@ -278,8 +278,10 @@ function getTileUrl(tx, ty, z, style) {
   if (style === 'satellite') {
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`
   }
-  const s = 'abcd'[(Math.abs(tx) + Math.abs(ty)) % 4]
-  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${tx}/${ty}@2x.png`
+  // OSM standard tiles — classic "open street map" look. Rotating subdomains
+  // (a/b/c) to parallelize browser connection limits.
+  const s = 'abc'[(Math.abs(tx) + Math.abs(ty)) % 3]
+  return `https://${s}.tile.openstreetmap.org/${z}/${tx}/${ty}.png`
 }
 
 // White plane silhouette on canvas — nose at top (+Y = heading after rotation)
@@ -315,100 +317,130 @@ function planeSize(typeCode) {
   return 'plane'
 }
 
-function buildPlaneTex() {
-  const sz  = 64
+// ── Shared plane rendering helpers ──────────────────────────────────────────
+// All airplane icons share the same look-and-feel: high-res canvas, dark
+// outline stroke (so planes read on both water and bright city tiles), subtle
+// gradient fill (darker fuselage → lighter wingtips for depth), anisotropic
+// mip-map filtering at ~16x for sharp edges at any zoom level.
+function _mkAcCanvas() {
+  const sz  = 128
   const c   = document.createElement('canvas')
   c.width   = c.height = sz
-  const ctx = c.getContext('2d')
-  // canvas y=0 is top → maps to texture v=1 → PlaneGeometry local +Y (heading direction)
-  const cx = sz / 2, cy = sz / 2, s = sz * 0.40
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.moveTo(cx,          cy - s * 1.10)  // nose tip (top of canvas)
-  ctx.lineTo(cx + s*0.14, cy - s * 0.30)  // right fuselage
-  ctx.lineTo(cx + s*0.14, cy + s * 0.05)  // right wing root
-  ctx.lineTo(cx + s*0.95, cy + s * 0.45)  // right wing tip
-  ctx.lineTo(cx + s*0.95, cy + s * 0.60)  // right wing trailing
-  ctx.lineTo(cx + s*0.14, cy + s * 0.38)  // right wing root trailing
-  ctx.lineTo(cx + s*0.14, cy + s * 0.62)  // right tail root
-  ctx.lineTo(cx + s*0.44, cy + s * 1.05)  // right tail tip
-  ctx.lineTo(cx + s*0.11, cy + s * 0.90)  // right tail inner
-  ctx.lineTo(cx,          cy + s * 0.95)  // tail center
-  ctx.lineTo(cx - s*0.11, cy + s * 0.90)  // left tail inner
-  ctx.lineTo(cx - s*0.44, cy + s * 1.05)  // left tail tip
-  ctx.lineTo(cx - s*0.14, cy + s * 0.62)  // left tail root
-  ctx.lineTo(cx - s*0.14, cy + s * 0.38)  // left wing root trailing
-  ctx.lineTo(cx - s*0.95, cy + s * 0.60)  // left wing trailing
-  ctx.lineTo(cx - s*0.95, cy + s * 0.45)  // left wing tip
-  ctx.lineTo(cx - s*0.14, cy + s * 0.05)  // left wing root
-  ctx.lineTo(cx - s*0.14, cy - s * 0.30)  // left fuselage
-  ctx.closePath()
+  return { c, ctx: c.getContext('2d'), sz }
+}
+function _finishPlaneTex(c, ctx, fillPath, strokePath) {
+  // Fill gradient: center/fuselage is near-white, wing tips fade slightly
+  // so wings read separately from the body.
+  const cx = c.width / 2, cy = c.height / 2
+  const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, c.width * 0.55)
+  grad.addColorStop(0,    'rgba(255,255,255,1.00)')
+  grad.addColorStop(0.55, 'rgba(245,250,255,0.98)')
+  grad.addColorStop(1,    'rgba(210,225,245,0.92)')
+  ctx.fillStyle = grad
+  fillPath()
   ctx.fill()
-  return new CanvasTexture(c)
+  // Dark outline — ensures visibility on bright city tiles
+  ctx.strokeStyle = 'rgba(10,16,26,0.85)'
+  ctx.lineWidth   = c.width * 0.022
+  ctx.lineJoin    = 'round'
+  ctx.lineCap     = 'round'
+  strokePath()
+  ctx.stroke()
+  const tex = new CanvasTexture(c)
+  tex.anisotropy = 16
+  tex.minFilter  = LinearMipmapLinearFilter
+  tex.magFilter  = LinearFilter
+  tex.needsUpdate = true
+  return tex
 }
 
-// Heavy widebody — same silhouette as default plane but with a wider wingspan ratio.
-function buildHeavyPlaneTex() {
-  const sz  = 64
-  const c   = document.createElement('canvas')
-  c.width   = c.height = sz
-  const ctx = c.getContext('2d')
+function buildPlaneTex() {
+  const { c, ctx, sz } = _mkAcCanvas()
+  // canvas y=0 is top → maps to texture v=1 → PlaneGeometry local +Y (heading direction)
   const cx = sz / 2, cy = sz / 2, s = sz * 0.40
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.moveTo(cx,          cy - s * 1.10)  // nose tip
-  ctx.lineTo(cx + s*0.14, cy - s * 0.30)  // right fuselage
-  ctx.lineTo(cx + s*0.14, cy + s * 0.00)  // right wing root
-  ctx.lineTo(cx + s*1.15, cy + s * 0.38)  // right wing tip (wider: 1.15 vs 0.95)
-  ctx.lineTo(cx + s*1.15, cy + s * 0.54)  // right wing trailing
-  ctx.lineTo(cx + s*0.14, cy + s * 0.32)  // right wing root trailing
-  ctx.lineTo(cx + s*0.14, cy + s * 0.60)  // right tail root
-  ctx.lineTo(cx + s*0.50, cy + s * 1.05)  // right tail tip (wider tail too)
-  ctx.lineTo(cx + s*0.13, cy + s * 0.90)
-  ctx.lineTo(cx,          cy + s * 0.95)
-  ctx.lineTo(cx - s*0.13, cy + s * 0.90)
-  ctx.lineTo(cx - s*0.50, cy + s * 1.05)
-  ctx.lineTo(cx - s*0.14, cy + s * 0.60)
-  ctx.lineTo(cx - s*0.14, cy + s * 0.32)
-  ctx.lineTo(cx - s*1.15, cy + s * 0.54)
-  ctx.lineTo(cx - s*1.15, cy + s * 0.38)
-  ctx.lineTo(cx - s*0.14, cy + s * 0.00)
-  ctx.lineTo(cx - s*0.14, cy - s * 0.30)
-  ctx.closePath()
-  ctx.fill()
-  return new CanvasTexture(c)
+  const draw = () => {
+    ctx.beginPath()
+    ctx.moveTo(cx,          cy - s * 1.12)  // nose tip
+    ctx.quadraticCurveTo(cx + s*0.10, cy - s * 0.80, cx + s*0.14, cy - s * 0.30) // right fuselage curve
+    ctx.lineTo(cx + s*0.14, cy + s * 0.05)  // right wing root
+    ctx.lineTo(cx + s*0.95, cy + s * 0.50)  // right wing tip
+    ctx.lineTo(cx + s*0.95, cy + s * 0.60)  // right wing trailing
+    ctx.lineTo(cx + s*0.14, cy + s * 0.38)  // right wing root trailing
+    ctx.lineTo(cx + s*0.14, cy + s * 0.62)  // right tail root
+    ctx.lineTo(cx + s*0.44, cy + s * 1.05)  // right tail tip
+    ctx.lineTo(cx + s*0.11, cy + s * 0.90)  // right tail inner
+    ctx.lineTo(cx,          cy + s * 0.95)  // tail center
+    ctx.lineTo(cx - s*0.11, cy + s * 0.90)  // left tail inner
+    ctx.lineTo(cx - s*0.44, cy + s * 1.05)  // left tail tip
+    ctx.lineTo(cx - s*0.14, cy + s * 0.62)  // left tail root
+    ctx.lineTo(cx - s*0.14, cy + s * 0.38)  // left wing root trailing
+    ctx.lineTo(cx - s*0.95, cy + s * 0.60)  // left wing trailing
+    ctx.lineTo(cx - s*0.95, cy + s * 0.50)  // left wing tip
+    ctx.lineTo(cx - s*0.14, cy + s * 0.05)  // left wing root
+    ctx.quadraticCurveTo(cx - s*0.10, cy - s * 0.80, cx, cy - s * 1.12) // left fuselage curve
+    ctx.closePath()
+  }
+  return _finishPlaneTex(c, ctx, draw, draw)
+}
+
+// Heavy widebody — longer fuselage, wider swept wings, bigger tail.
+function buildHeavyPlaneTex() {
+  const { c, ctx, sz } = _mkAcCanvas()
+  const cx = sz / 2, cy = sz / 2, s = sz * 0.40
+  const draw = () => {
+    ctx.beginPath()
+    ctx.moveTo(cx,          cy - s * 1.15)  // nose tip
+    ctx.quadraticCurveTo(cx + s*0.12, cy - s * 0.85, cx + s*0.16, cy - s * 0.30)
+    ctx.lineTo(cx + s*0.16, cy - s * 0.05)  // right wing root
+    ctx.lineTo(cx + s*1.22, cy + s * 0.52)  // right wing tip (wider + swept)
+    ctx.lineTo(cx + s*1.22, cy + s * 0.68)  // right wing trailing
+    ctx.lineTo(cx + s*0.16, cy + s * 0.32)  // right wing root trailing
+    ctx.lineTo(cx + s*0.16, cy + s * 0.62)  // right tail root
+    ctx.lineTo(cx + s*0.52, cy + s * 1.08)  // right tail tip
+    ctx.lineTo(cx + s*0.13, cy + s * 0.92)
+    ctx.lineTo(cx,          cy + s * 0.97)
+    ctx.lineTo(cx - s*0.13, cy + s * 0.92)
+    ctx.lineTo(cx - s*0.52, cy + s * 1.08)
+    ctx.lineTo(cx - s*0.16, cy + s * 0.62)
+    ctx.lineTo(cx - s*0.16, cy + s * 0.32)
+    ctx.lineTo(cx - s*1.22, cy + s * 0.68)
+    ctx.lineTo(cx - s*1.22, cy + s * 0.52)
+    ctx.lineTo(cx - s*0.16, cy - s * 0.05)
+    ctx.lineTo(cx - s*0.16, cy - s * 0.30)
+    ctx.quadraticCurveTo(cx - s*0.12, cy - s * 0.85, cx, cy - s * 1.15)
+    ctx.closePath()
+  }
+  return _finishPlaneTex(c, ctx, draw, draw)
 }
 
 // Regional jet — compact body, shorter/narrower wings.
 function buildRegionalPlaneTex() {
-  const sz  = 64
-  const c   = document.createElement('canvas')
-  c.width   = c.height = sz
-  const ctx = c.getContext('2d')
+  const { c, ctx, sz } = _mkAcCanvas()
   const cx = sz / 2, cy = sz / 2, s = sz * 0.40
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.moveTo(cx,          cy - s * 1.00)  // nose tip (shorter fuselage)
-  ctx.lineTo(cx + s*0.12, cy - s * 0.25)
-  ctx.lineTo(cx + s*0.12, cy + s * 0.08)
-  ctx.lineTo(cx + s*0.72, cy + s * 0.42)  // wing tip (narrower: 0.72 vs 0.95)
-  ctx.lineTo(cx + s*0.72, cy + s * 0.56)
-  ctx.lineTo(cx + s*0.12, cy + s * 0.36)
-  ctx.lineTo(cx + s*0.12, cy + s * 0.58)
-  ctx.lineTo(cx + s*0.36, cy + s * 0.95)  // tail (smaller)
-  ctx.lineTo(cx + s*0.09, cy + s * 0.82)
-  ctx.lineTo(cx,          cy + s * 0.88)
-  ctx.lineTo(cx - s*0.09, cy + s * 0.82)
-  ctx.lineTo(cx - s*0.36, cy + s * 0.95)
-  ctx.lineTo(cx - s*0.12, cy + s * 0.58)
-  ctx.lineTo(cx - s*0.12, cy + s * 0.36)
-  ctx.lineTo(cx - s*0.72, cy + s * 0.56)
-  ctx.lineTo(cx - s*0.72, cy + s * 0.42)
-  ctx.lineTo(cx - s*0.12, cy + s * 0.08)
-  ctx.lineTo(cx - s*0.12, cy - s * 0.25)
-  ctx.closePath()
-  ctx.fill()
-  return new CanvasTexture(c)
+  const draw = () => {
+    ctx.beginPath()
+    ctx.moveTo(cx,          cy - s * 1.02)  // nose tip (shorter)
+    ctx.quadraticCurveTo(cx + s*0.09, cy - s * 0.70, cx + s*0.12, cy - s * 0.25)
+    ctx.lineTo(cx + s*0.12, cy + s * 0.08)
+    ctx.lineTo(cx + s*0.74, cy + s * 0.46)  // wing tip (narrower)
+    ctx.lineTo(cx + s*0.74, cy + s * 0.58)
+    ctx.lineTo(cx + s*0.12, cy + s * 0.36)
+    ctx.lineTo(cx + s*0.12, cy + s * 0.58)
+    ctx.lineTo(cx + s*0.36, cy + s * 0.96)  // tail (smaller)
+    ctx.lineTo(cx + s*0.09, cy + s * 0.82)
+    ctx.lineTo(cx,          cy + s * 0.88)
+    ctx.lineTo(cx - s*0.09, cy + s * 0.82)
+    ctx.lineTo(cx - s*0.36, cy + s * 0.96)
+    ctx.lineTo(cx - s*0.12, cy + s * 0.58)
+    ctx.lineTo(cx - s*0.12, cy + s * 0.36)
+    ctx.lineTo(cx - s*0.74, cy + s * 0.58)
+    ctx.lineTo(cx - s*0.74, cy + s * 0.46)
+    ctx.lineTo(cx - s*0.12, cy + s * 0.08)
+    ctx.lineTo(cx - s*0.12, cy - s * 0.25)
+    ctx.quadraticCurveTo(cx - s*0.09, cy - s * 0.70, cx, cy - s * 1.02)
+    ctx.closePath()
+  }
+  return _finishPlaneTex(c, ctx, draw, draw)
 }
 
 // Helicopter top-down silhouette — large rotor circle + compact body + tail boom.
@@ -2406,12 +2438,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — screen-space constant at low altitude, world-space at high altitude.
-      //   Above 50 km: dist-based formula (large visible icons from orbit)
-      //   Below 50 km: constant ~22px screen size (clickable but not dominant)
-      // The old formula clamped the floor at 5e-6 WU (~32m), so street-level zoom
-      // made planes look like city blocks. Using true screen-space scaling below the
-      // tile threshold ensures a plane is always a sensible dot, never larger than a building.
+      // Aircraft scaling — three regimes, with a real-world floor for airport zoom:
+      //   Above 50 km:  orbit formula (large dot visible from space)
+      //   5-50 km:      constant 22px screen-space (clickable)
+      //   Below ~3 km:  real-world proportional (~40m) so you can watch a
+      //                 landing approach on the runway
+      // The crossover is implicit: `max(screen_22px, realWorld_40m)`. At high
+      // altitude 22px corresponds to more meters than 40m → screen-space wins.
+      // At airport zoom 22px < 40m → real-world floor kicks in smoothly.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
@@ -2420,26 +2454,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const wuPerPxOld  = (2 * dist * tanHalf) / screenW
       const ptOld       = MathUtils.clamp(13 * Math.pow(altUnit, 0.42), 0.8, 14)
 
-      // Low-altitude: true screen-space sizing.
-      // WU per pixel at camera → aircraft layer distance, multiplied by target pixel size.
+      // Low-altitude: screen-space constant sizing.
       const _acR        = EARTH_R * 1.0005
       const camToAc     = Math.max(dist - _acR, 0.00005)
       const wuPerPxNew  = (2 * camToAc * tanHalf) / screenW
-      const TARGET_PX   = 22                 // fixed screen-space size (clickable but not huge)
-      const MIN_PX      = 14                 // absolute minimum for visibility
-      const ptNew       = MathUtils.clamp(TARGET_PX, MIN_PX, 30)
+      const TARGET_PX   = 22
+      const screenScale = TARGET_PX * wuPerPxNew
+
+      // Real-world floor: a 737 is ~40m long/wide. 1 WU = Earth radius = 6 371 km.
+      const REAL_WORLD_M  = 40
+      const realWorldWU   = REAL_WORLD_M / 6_371_000
 
       let newScale
       if (altKm >= 50) {
         newScale = ptOld * wuPerPxOld
       } else if (altKm <= 5) {
-        newScale = ptNew * wuPerPxNew
+        // Screen-space 22px, but never smaller than a real 40m aircraft →
+        // max gives us a smooth crossover at ~3km altitude.
+        newScale = Math.max(screenScale, realWorldWU)
       } else {
-        const t = (altKm - 5) / 45             // 0 at 5 km, 1 at 50 km
-        newScale = MathUtils.lerp(ptNew * wuPerPxNew, ptOld * wuPerPxOld, t)
+        const t = (altKm - 5) / 45
+        newScale = MathUtils.lerp(Math.max(screenScale, realWorldWU), ptOld * wuPerPxOld, t)
       }
-      // Floor dropped from 5e-6 (~32m) to 1e-9 so aircraft can truly shrink at street zoom.
-      newScale = MathUtils.clamp(newScale, 1e-9, 0.02)
+      newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
