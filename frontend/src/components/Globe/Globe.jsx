@@ -689,16 +689,23 @@ function allocForCat(state, cat) {
 
 function buildMatrix(a, cat, planeScale, camDist) {
   let r = AC_R
-  if (cat === 'satellite') r = EARTH_R + (a.alt_km ?? 400) / 6371
-  else if (cat === 'ship') r = EARTH_R * 1.002   // same layer as aircraft, above tiles
-  // (plane/heli/heavy/regional all default to AC_R = 1.002)
+  if (cat === 'satellite') {
+    r = EARTH_R + (a.alt_km ?? 400) / 6371
+  } else if (cat === 'ship') {
+    r = EARTH_R + 0.0001   // ~640 m, just above tile surface
+  } else {
+    // Aircraft: place at REAL altitude so the sprite isn't floating 12km
+    // above a runway landing. a.alt is baro altitude in feet from ADS-B.
+    // Clamp to [0, 15km] so bad/missing readings don't send planes to space.
+    const altKm = a.alt != null ? Math.max(0, Math.min(a.alt * 0.0003048, 15)) : 10.5
+    r = EARTH_R + altKm / 6371
+  }
 
-  // When camera is below the aircraft layer, pin aircraft to the tile surface
-  // at a FIXED radius. Using a camDist-relative value causes frame-by-frame
-  // oscillation (the "ghosting" at ~4000m altitude).
+  // When camera is below the aircraft layer, pin aircraft to a thin layer
+  // just above the tile surface so they remain visible at airport zoom.
   // Satellites are exempt — they orbit above the camera at street-level zoom.
   if (cat !== 'satellite' && camDist !== undefined && r >= camDist) {
-    r = EARTH_R * 1.0005  // just above tiles (1.0004), below camera min (1.00002 WU = 127m)
+    r = EARTH_R + 0.00005   // ~320 m, just above tiles (1.00004), below camera min
   }
 
   const pos = ll2v(a.lat, a.lon, r)
@@ -2439,50 +2446,37 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // Aircraft scaling — single continuous formula across ALL altitudes.
-      // The previous approach had three regimes with a linear lerp between
-      // "screen-space 22px" and "orbit formula", and the endpoints differed
-      // by ~80× in world units — that ratio over 60km of zoom produced the
-      // visible "rapid scaling" bug.
-      //
-      // New approach, no regimes, no lerp:
-      //   1. Screen-space target pixels grow smoothly 10 → 22 as the camera
-      //      pulls back, so distant planes stay visible/clickable and near
-      //      planes don't dominate.
-      //   2. wuPerPixel is always computed from `camToAc` (distance to the
-      //      aircraft layer) — this is the correct projection math at every
-      //      altitude, unlike the old formula which used raw `dist`.
-      //   3. Floor at `realWorldWU` (40m, a 737 footprint) so when you zoom
-      //      into an airport, the screen-space pixel target becomes smaller
-      //      than 40m and the plane naturally stops shrinking — you see it
-      //      at its real size on the runway.
-      //
-      // Because the formula is monotonic in `camToAc`, there are no jumps
-      // and no blend seams. Scale grows smoothly as you pan out.
+      // Two ideas:
+      //   1. Screen-space target: planes always render at ~`targetPx` pixels
+      //      on screen, computed from camToAc (distance to aircraft layer).
+      //   2. Real-world floor: at airport zoom screenScale drops below the
+      //      physical 40m footprint, so we floor at realWorldWU and the
+      //      plane naturally stops shrinking at runway size.
+      // Because both are monotonic in camToAc there are no regime jumps.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
       // Camera → aircraft layer distance in world units.
-      const _acR      = EARTH_R * 1.0005
+      const _acR      = AC_R
       const camToAc   = Math.max(dist - _acR, 0.00005)
       const wuPerPx   = (2 * camToAc * tanHalf) / screenW
 
-      // 737/A320 physical footprint — the hard floor at airport zoom.
+      // 737/A320 physical footprint — hard floor at airport zoom.
       const realWorldWU = 40 / 6_371_000
 
-      // Smooth screen-space target that grows with camera distance.
-      // 10 px at ground, 22 px far out. Uses a gentle log so the first
-      // few km already climb to ~14 px (visible even at mid zoom) and it
-      // tapers toward 22 at high altitude without ever jumping.
-      const targetPx  = MathUtils.clamp(10 + 5 * Math.log10(1 + altKm), 10, 22)
+      // Target pixel size ramps 14 → 20 as camera pulls back. The gentler
+      // range (was 10 → 22) keeps planes looking "attached" to the ground
+      // instead of ballooning into detached blobs around 25–60 km zoom.
+      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + altKm), 14, 20)
       const screenScale = targetPx * wuPerPx
 
-      // Final scale: whichever is larger at the current zoom.
+      // Final scale: whichever is larger at current zoom.
       //   - At airport zoom: realWorldWU wins → plane is 40m wide.
-      //   - At mid zoom:     screenScale wins → ~12 px dot.
-      //   - At orbit zoom:   screenScale wins → ~22 px dot.
+      //   - At mid zoom:     screenScale wins → ~14-16 px dot.
+      //   - At orbit zoom:   screenScale wins → ~20 px dot.
       let newScale = Math.max(screenScale, realWorldWU)
-      newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
+      newScale = MathUtils.clamp(newScale, realWorldWU, 0.015)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
