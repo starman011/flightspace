@@ -35,9 +35,9 @@ const PICK_GPU_DIST  = 1.05
 // Order must match the encoding in syncInstances and the GPU decode.
 const PICK_CAT_ORDER = ['plane','heavy','regional','helicopter','satellite','ship']
 const ATM_SCALE    = 1.18
-const AC_R         = 1.002   // just above tile layer (1.0015) — aircraft appear on the map surface
-const TRAIL_R      = 1.003   // trail core — just above aircraft layer
-const TRAIL_GLOW_R = 1.004   // glow layer — above core
+const AC_R         = 1.00008  // ~510m above surface — planes sit here
+const TRAIL_R      = 1.00009  // trail core — just above aircraft layer
+const TRAIL_GLOW_R = 1.00010  // glow layer — above core
 
 const MAX_AC          = 12000
 const MAX_TRAIL_PTS   = 180   // long sci-fi trails (~6× original)
@@ -701,7 +701,7 @@ function buildMatrix(a, cat, planeScale) {
   if (cat === 'satellite') {
     r = EARTH_R + (a.alt_km ?? 400) / 6371
   } else {
-    r = EARTH_R + 0.00008   // ~510 m, above tiles (1.00004) and ships stay flush
+    r = AC_R   // planes and ships sit on this layer
   }
 
   const pos = ll2v(a.lat, a.lon, r)
@@ -946,7 +946,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (fullPath.length < 2) return
 
     const objects = []
-    const TRAIL_R = AC_R  // same height as aircraft layer
+    const TRAIL_R_API = AC_R  // match the plane placement layer exactly
 
     // ── Split path into "traveled" (dep → last trail point) and "remaining" (→ arr) ──
     // Traveled = dep airport + DB trail points, Remaining = last trail point → arr airport
@@ -974,7 +974,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const markerRadius = Math.max(ps * 0.5, 0.002)      // bigger dots when close
 
     const makeTube = (path, color, opacity, radiusMul, order) => {
-      const gc = greatCirclePoints(path, TRAIL_R)
+      const gc = greatCirclePoints(path, TRAIL_R_API)
       if (gc.length < 2) return
       const c = new CatmullRomCurve3(gc, false, 'centripetal')
       const geo = new TubeGeometry(c, Math.min(gc.length, 300), tubeRadius * radiusMul, 6, false)
@@ -999,7 +999,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // ── Airport markers: dots at route API coords, scaled with zoom ──
     const addMarker = (lat, lon, color) => {
-      const pos = ll2v(lat, lon, TRAIL_R + 0.001)
+      const pos = ll2v(lat, lon, TRAIL_R_API + 0.0001)
       const sg = new SphereGeometry(markerRadius, 12, 8)
       const sm = new MeshBasicMaterial({
         color, depthTest: false, depthWrite: false,
@@ -2318,14 +2318,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        // Rotate: near-zero at surface, ramps to 0.35 at orbit.
-        // The quadratic (t*t) makes the first 50km feel much stiffer than linear.
-        controls.rotateSpeed   = 0.002 + t * t * 0.35
+        // Rotate: slow at surface, fast at orbit. Uses a smooth power curve
+        // (t^1.5) so the mid-range (50-200km) feels natural instead of jerky.
+        controls.rotateSpeed   = 0.008 + Math.pow(t, 1.5) * 0.35
         controls.zoomSpeed     = 0.02  + t * 0.68
-        // Damping: near 1.0 at surface (almost no coast), 0.35 at orbit (smooth glide).
-        const ALT_250KM = 1.03924  // (6371+250)/6371
-        const dampBase  = dist < ALT_250KM ? 0.96 : 0.82
-        controls.dampingFactor = dampBase - t * 0.45
+        // Damping: 0.88 at surface (firm but not stuck), 0.40 at orbit (smooth glide).
+        controls.dampingFactor = 0.88 - t * 0.48
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
