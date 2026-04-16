@@ -2455,30 +2455,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — single formula, frozen above 30 km.
-      // Below 30 km: smooth screen-space target (14-18 px) with 40m real-world floor.
-      // Above 30 km: scale locks to whatever it was at 30 km so planes stay
-      // visible and clickable at orbital zoom without shrinking to invisible dots.
+      // Aircraft scaling — continuous screen-space formula.
+      // Uses REAL camera distance for projection (wuPerPx) so the world-unit
+      // scale grows correctly with orbit zoom. targetPx controls how many
+      // pixels the plane occupies on screen — ramps 14→18 over 0–30 km then
+      // stays at 18 above 30 km so planes never shrink further.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
-      // Cap the altitude used for scale computation at 30 km — beyond this
-      // the plane keeps the same screen size it had at 30 km.
-      const scaleAltKm = Math.min(altKm, 30)
-      const scaleDist  = EARTH_R + scaleAltKm / 6371
-      const camToAc    = Math.max(scaleDist - AC_R, 0.00005)
-      const wuPerPx    = (2 * camToAc * tanHalf) / screenW
+      // Real camera-to-aircraft projection — must use actual dist, not capped.
+      const camToAc   = Math.max(dist - AC_R, 0.00005)
+      const wuPerPx   = (2 * camToAc * tanHalf) / screenW
 
       // 737/A320 physical footprint — hard floor at airport zoom.
       const realWorldWU = 40 / 6_371_000
 
-      // Target pixel size ramps 14 → 18 over 0-30 km.
-      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + scaleAltKm), 14, 18)
+      // Target screen pixels: 14 at ground, 18 at 30km+. Planes keep the
+      // same ~18px screen footprint at any altitude above 30 km.
+      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + Math.min(altKm, 30)), 14, 18)
       const screenScale = targetPx * wuPerPx
 
       let newScale = Math.max(screenScale, realWorldWU)
-      newScale = MathUtils.clamp(newScale, realWorldWU, 0.015)
+      newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
