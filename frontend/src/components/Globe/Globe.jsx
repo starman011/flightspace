@@ -2310,20 +2310,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
-      // log curve: ramps up quickly leaving the surface, levels off when far out
-      // so zoomed-out feels fast, zoomed-in feels precise, no jarring threshold.
+      // At low altitude (street/airport zoom), the globe must feel stiff and
+      // precise — a tiny drag should move slowly, not fling across continents.
       if (targetScale === 'earth') {
         const dist = camera.position.length()
         const MIN_D = 1.00002, MAX_D = 8.0
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        controls.rotateSpeed   = 0.005 + t * 0.34   // slower: 0.005 at surface → 0.345 at max
-        controls.zoomSpeed     = 0.02  + t * 0.68   // zoom unchanged
-        // Stiffer damping across the board — higher base, tighter at surface
+        // Rotate: near-zero at surface, ramps to 0.35 at orbit.
+        // The quadratic (t*t) makes the first 50km feel much stiffer than linear.
+        controls.rotateSpeed   = 0.002 + t * t * 0.35
+        controls.zoomSpeed     = 0.02  + t * 0.68
+        // Damping: near 1.0 at surface (almost no coast), 0.35 at orbit (smooth glide).
         const ALT_250KM = 1.03924  // (6371+250)/6371
-        const dampBase  = dist < ALT_250KM ? 0.92 : 0.78
-        controls.dampingFactor = dampBase - t * 0.40
+        const dampBase  = dist < ALT_250KM ? 0.96 : 0.82
+        controls.dampingFactor = dampBase - t * 0.45
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -2471,13 +2473,21 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // 737/A320 physical footprint — hard floor at airport zoom.
       const realWorldWU = 40 / 6_371_000
 
-      // Target screen pixels: 14 at ground, 18 at 30km+. Planes keep the
-      // same ~18px screen footprint at any altitude above 30 km.
-      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + Math.min(altKm, 30)), 14, 18)
+      // Target screen pixels: 14 at ground → 18 at 30km → keeps growing
+      // gently above 30km so planes stay clearly visible at orbit zoom.
+      // Below 30km: moderate ramp so planes don't balloon at mid-zoom.
+      // Above 30km: continues growing (18→28) so dots don't vanish at orbit.
+      let targetPx
+      if (altKm <= 30) {
+        targetPx = 14 + 3 * Math.log10(1 + altKm)         // 14 → ~18
+      } else {
+        targetPx = 18 + 5 * Math.log10(altKm / 30)        // 18 → ~28 at 6000km
+      }
+      targetPx = MathUtils.clamp(targetPx, 14, 28)
       const screenScale = targetPx * wuPerPx
 
       let newScale = Math.max(screenScale, realWorldWU)
-      newScale = MathUtils.clamp(newScale, realWorldWU, 0.02)
+      newScale = MathUtils.clamp(newScale, realWorldWU, 0.03)
 
       // If scale changed meaningfully, rebuild per-instance matrices so icons resize with zoom.
       // Hysteresis: require 5% relative change to avoid jitter at intermediate altitudes (~4000m).
