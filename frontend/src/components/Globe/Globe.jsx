@@ -2438,36 +2438,28 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         lastSunUpdate = now
       }
 
-      // Aircraft scaling — single continuous formula across ALL altitudes.
-      // Two ideas:
-      //   1. Screen-space target: planes always render at ~`targetPx` pixels
-      //      on screen, computed from camToAc (distance to aircraft layer).
-      //   2. Real-world floor: at airport zoom screenScale drops below the
-      //      physical 40m footprint, so we floor at realWorldWU and the
-      //      plane naturally stops shrinking at runway size.
-      // Because both are monotonic in camToAc there are no regime jumps.
+      // Aircraft scaling — single formula, frozen above 30 km.
+      // Below 30 km: smooth screen-space target (14-18 px) with 40m real-world floor.
+      // Above 30 km: scale locks to whatever it was at 30 km so planes stay
+      // visible and clickable at orbital zoom without shrinking to invisible dots.
       const screenW    = el.clientWidth || 1920
       const tanHalf    = Math.tan((40 / 2) * (Math.PI / 180))
       const altKm      = altUnit * 6371
 
-      // Camera → aircraft layer distance in world units.
-      const _acR      = AC_R
-      const camToAc   = Math.max(dist - _acR, 0.00005)
-      const wuPerPx   = (2 * camToAc * tanHalf) / screenW
+      // Cap the altitude used for scale computation at 30 km — beyond this
+      // the plane keeps the same screen size it had at 30 km.
+      const scaleAltKm = Math.min(altKm, 30)
+      const scaleDist  = EARTH_R + scaleAltKm / 6371
+      const camToAc    = Math.max(scaleDist - AC_R, 0.00005)
+      const wuPerPx    = (2 * camToAc * tanHalf) / screenW
 
       // 737/A320 physical footprint — hard floor at airport zoom.
       const realWorldWU = 40 / 6_371_000
 
-      // Target pixel size ramps 14 → 20 as camera pulls back. The gentler
-      // range (was 10 → 22) keeps planes looking "attached" to the ground
-      // instead of ballooning into detached blobs around 25–60 km zoom.
-      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + altKm), 14, 20)
+      // Target pixel size ramps 14 → 18 over 0-30 km.
+      const targetPx  = MathUtils.clamp(14 + 3 * Math.log10(1 + scaleAltKm), 14, 18)
       const screenScale = targetPx * wuPerPx
 
-      // Final scale: whichever is larger at current zoom.
-      //   - At airport zoom: realWorldWU wins → plane is 40m wide.
-      //   - At mid zoom:     screenScale wins → ~14-16 px dot.
-      //   - At orbit zoom:   screenScale wins → ~20 px dot.
       let newScale = Math.max(screenScale, realWorldWU)
       newScale = MathUtils.clamp(newScale, realWorldWU, 0.015)
 
@@ -2496,8 +2488,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Hide real-time 1px LineSegments trail when tracking (API ribbon trail replaces it).
       // Also gate on Earth scale — trails belong to Earth-bound aircraft.
       const _onEarth = (int.current.targetCameraScale || 'earth') === 'earth'
-      if (int.current.trailMesh) int.current.trailMesh.visible = _onEarth && !_isTracking
-      if (int.current.trailGlowMesh) int.current.trailGlowMesh.visible = _onEarth && !_isTracking
+      if (int.current.trailMesh) {
+        int.current.trailMesh.visible = _onEarth && !_isTracking
+        // Scale trail opacity with zoom — more visible when closer.
+        // At 30 km+ trails are at base opacity; below 30 km they get brighter.
+        const trailOpacity = altKm < 30
+          ? MathUtils.clamp(0.5 + 0.5 * (1 - altKm / 30), 0.5, 1.0)
+          : 0.5
+        int.current.trailMesh.material.opacity = trailOpacity
+      }
+      if (int.current.trailGlowMesh) {
+        int.current.trailGlowMesh.visible = _onEarth && !_isTracking
+        const glowOpacity = altKm < 30
+          ? MathUtils.clamp(0.15 + 0.25 * (1 - altKm / 30), 0.15, 0.40)
+          : 0.15
+        int.current.trailGlowMesh.material.opacity = glowOpacity
+      }
 
       // Pulsing selection ring
       const selPos = int.current.selPos
