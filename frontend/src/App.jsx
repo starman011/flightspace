@@ -287,8 +287,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       <BetaWelcome />
 
-      {/* Profile button — fixed top-right, above all panels */}
-      <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 8000 }}>
+      {/* Profile button — fixed, just right of the notch/dynamic island */}
+      <div style={{
+        position: 'fixed',
+        top: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+        right: 'calc(env(safe-area-inset-right, 0px) + 14px)',
+        zIndex: 8000,
+      }}>
         <ProfileButton
           isAuthenticated={isAuthenticated}
           user={user}
