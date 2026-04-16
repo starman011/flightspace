@@ -287,11 +287,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       <BetaWelcome />
 
-      {/* Profile button — fixed, just right of the notch/dynamic island */}
+      {/* Profile button — fixed just right of the notch/dynamic island.
+           On notched phones the island is centered ~126px wide, so we place
+           the button at 50% + 75px (half island + gap). On desktop/non-notch
+           devices safe-area-inset-top is 0 so it sits at top: 10px, and the
+           left calc resolves to ~50%+75px which still looks fine top-right-ish. */}
       <div style={{
         position: 'fixed',
-        top: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-        right: 'calc(env(safe-area-inset-right, 0px) + 14px)',
+        top: 'calc(env(safe-area-inset-top, 0px) + 4px)',
+        left: 'calc(50% + 75px)',
         zIndex: 8000,
       }}>
         <ProfileButton
