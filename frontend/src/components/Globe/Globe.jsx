@@ -273,15 +273,18 @@ function distToTileZoom(dist) {
 }
 
 // Tile URL: CartoDB Voyager @2x (street) or ESRI World Imagery (satellite).
-// Both are free with no API key required.
+// Both are free, no API key, and serve proper CORS headers for WebGL textures.
+// OSM standard tiles often 403 when loaded as WebGL textures (missing CORS
+// headers on tile.openstreetmap.org). CartoDB Voyager uses OSM data with an
+// Apple Maps-style look and reliable CORS support.
 function getTileUrl(tx, ty, z, style) {
   if (style === 'satellite') {
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`
   }
-  // OSM standard tiles — classic "open street map" look. Rotating subdomains
-  // (a/b/c) to parallelize browser connection limits.
-  const s = 'abc'[(Math.abs(tx) + Math.abs(ty)) % 3]
-  return `https://${s}.tile.openstreetmap.org/${z}/${tx}/${ty}.png`
+  // CartoDB Voyager — OSM-based street map with clean labels and CORS headers.
+  // Rotating subdomains (a/b/c/d) to parallelize browser connection limits.
+  const s = 'abcd'[(Math.abs(tx) + Math.abs(ty)) % 4]
+  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${tx}/${ty}@2x.png`
 }
 
 // White plane silhouette on canvas — nose at top (+Y = heading after rotation)
@@ -908,9 +911,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const setHoverTooltipRef = useRef(null)
   setHoverTooltipRef.current = setHoverTooltip
 
+  // Store last trail args so we can redraw on zoom change
+  const lastTrailArgs = useRef(null)
+
   // ── API trail: draw departure→current path from detail panel ──────────────
   // routeData: { dep_lat, dep_lon, arr_lat, arr_lon, ... } from route API
   const drawTrail = useCallback((points, routeData) => {
+    lastTrailArgs.current = (points?.length || routeData) ? { points, routeData } : null
     const { scene } = int.current
     if (!scene) return
 
@@ -959,11 +966,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       remainingPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
     }
 
-    const makeTube = (path, color, opacity, radius, order) => {
+    // Scale trail tube radius and marker size with current zoom.
+    // planeScale is proportional to how zoomed in we are — use it as
+    // the baseline so the trail feels "attached" to the plane icon.
+    const ps = int.current.planeScale || 0.005
+    const tubeRadius   = Math.max(ps * 0.08, 0.0003)   // thicker when close
+    const markerRadius = Math.max(ps * 0.5, 0.002)      // bigger dots when close
+
+    const makeTube = (path, color, opacity, radiusMul, order) => {
       const gc = greatCirclePoints(path, TRAIL_R)
       if (gc.length < 2) return
       const c = new CatmullRomCurve3(gc, false, 'centripetal')
-      const geo = new TubeGeometry(c, Math.min(gc.length, 300), radius, 6, false)
+      const geo = new TubeGeometry(c, Math.min(gc.length, 300), tubeRadius * radiusMul, 6, false)
       const mat = new MeshBasicMaterial({
         color, depthTest: false, depthWrite: false,
         transparent: true, opacity, side: DoubleSide,
@@ -976,17 +990,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // Traveled portion — solid bright green (already flown)
     if (traveledPath.length >= 2) {
-      makeTube(traveledPath, 0x00e676, 0.85, 0.0008, 20)
+      makeTube(traveledPath, 0x00e676, 0.85, 1.0, 20)
     }
     // Remaining portion — dim orange (yet to fly)
     if (remainingPath.length >= 2) {
-      makeTube(remainingPath, 0xff9800, 0.3, 0.0006, 19)
+      makeTube(remainingPath, 0xff9800, 0.3, 0.75, 19)
     }
 
-    // ── Airport markers: small dots at route API coords ──
+    // ── Airport markers: dots at route API coords, scaled with zoom ──
     const addMarker = (lat, lon, color) => {
       const pos = ll2v(lat, lon, TRAIL_R + 0.001)
-      const sg = new SphereGeometry(0.005, 12, 8)
+      const sg = new SphereGeometry(markerRadius, 12, 8)
       const sm = new MeshBasicMaterial({
         color, depthTest: false, depthWrite: false,
         transparent: true, opacity: 0.9,
@@ -1014,6 +1028,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       last:  { latitude: arrLat, longitude: arrLon },
     }
   }, [])
+
+  // Store drawTrail on int.current so the animation loop can redraw on zoom
+  useEffect(() => { int.current._drawTrail = drawTrail }, [drawTrail])
 
   useImperativeHandle(ref, () => ({
     drawTrail,
@@ -2470,6 +2487,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (scaleRatio > 0.05) {
         int.current.planeScale = newScale
         int.current.needsInstanceRebuild = true
+        // Redraw the clicked-flight trail (green/orange tube) at the new scale
+        if (lastTrailArgs.current && int.current._drawTrail) {
+          const { points, routeData } = lastTrailArgs.current
+          queueMicrotask(() => int.current._drawTrail?.(points, routeData))
+        }
       }
 
       // Rebuild instance matrices when planeScale changes (separate from data updates)
