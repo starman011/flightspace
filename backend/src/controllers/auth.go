@@ -27,6 +27,7 @@ func NewAuthController(pool *pgxpool.Pool, rdb *redis.Client, jwtSecret string) 
 
 // Register handles POST /api/v1/auth/register.
 func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	var req models.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid request body")
@@ -36,8 +37,6 @@ func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		utils.Error(w, http.StatusBadRequest, "email and password are required")
 		return
 	}
-	// Strict ASCII normalization — rejects homoglyph/accent attacks
-	// (e.g. raj@gmáil.com). See utils/email.go for full rationale.
 	normalizedEmail, err := utils.NormalizeEmail(req.Email)
 	if err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid email format")
@@ -46,6 +45,12 @@ func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	req.Email = normalizedEmail
 	if len(req.Password) < 8 {
 		utils.Error(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+	// bcrypt silently truncates at 72 bytes — reject longer passwords so
+	// users don't think extra entropy is protecting them.
+	if len(req.Password) > 72 {
+		utils.Error(w, http.StatusBadRequest, "password must be at most 72 characters")
 		return
 	}
 
@@ -94,6 +99,7 @@ func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 // Login handles POST /api/v1/auth/login.
 func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid request body")
@@ -145,11 +151,14 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 // Logout handles POST /api/v1/auth/logout — clears the session cookie.
 func (ac *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   "",
-		Path:    "/",
-		Expires: time.Unix(0, 0),
-		MaxAge:  -1,
+		Name:     "session_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+		SameSite: http.SameSiteStrictMode,
 	})
 	utils.JSON(w, http.StatusOK, map[string]string{"status": "logged out"})
 }
@@ -161,7 +170,7 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request, token string, expires
 		Path:     "/",
 		Expires:  expiresAt,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
-		SameSite: http.SameSiteStrictMode, // STRICT is safer than Lax for auth cookies
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+		SameSite: http.SameSiteStrictMode,
 	})
 }

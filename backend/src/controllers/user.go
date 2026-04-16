@@ -50,6 +50,7 @@ func (uc *UserController) UpdatePreferences(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 8192)
 	var prefs models.UserPreferences
 	if err := json.NewDecoder(r.Body).Decode(&prefs); err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid request body")
@@ -110,6 +111,7 @@ func (uc *UserController) AddWatchlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	var req models.WatchlistAddRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid request body")
@@ -179,6 +181,7 @@ func (uc *UserController) AddPinnedLaunch(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	var req models.PinnedLaunchAddRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.Error(w, http.StatusBadRequest, "invalid request body")

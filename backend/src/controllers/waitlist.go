@@ -22,6 +22,7 @@ func NewWaitlistController(pool *pgxpool.Pool) *WaitlistController {
 // Subscribe saves an email to the waitlist and sends a confirmation via Resend.
 // Idempotent — duplicate emails are silently accepted (no second email sent).
 func (c *WaitlistController) Subscribe(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	var body struct {
 		Email  string `json:"email"`
 		Source string `json:"source"`

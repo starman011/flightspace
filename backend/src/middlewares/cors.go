@@ -26,18 +26,21 @@ func allowedOrigins() map[string]bool {
 }
 
 // CORS returns a middleware that sets CORS headers.
-// Origin is echoed back so credentials work; security is enforced via JWT.
+// Only origins in the allow-list (env + localhost) are echoed back with
+// credentials. Unknown origins get no ACAO header, so the browser blocks
+// the response.
 func CORS(next http.Handler) http.Handler {
+	allowed := allowedOrigins()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin == "" {
-			origin = "*"
-		}
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token")
 		w.Header().Set("Vary", "Origin")
+
+		if origin != "" && allowed[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token")
+		}
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
