@@ -630,11 +630,15 @@ the DB still holds the line.
 - **Password hashing**: bcrypt with `DefaultCost`. Never MD5, SHA1, or plain SHA256.
 - **JWT signing**: HS256 with a 256-bit secret from `JWT_SECRET`. Not committed,
   not logged, never returned in API responses.
-- **Cookie flags**: `HttpOnly`, `Secure` (in TLS), `SameSite=Strict`. XSS cannot
-  read the cookie, CSRF cannot auto-send it from cross-site contexts.
+- **Cookie flags**: `HttpOnly`, `Secure` (TLS or `X-Forwarded-Proto: https`
+  behind proxy), `SameSite=Strict` — on both set *and* clear (logout). XSS
+  cannot read the cookie, CSRF cannot auto-send it from cross-site contexts.
 - **Login timing**: Failed lookups and failed bcrypt compares both return the
   same generic "invalid credentials" error — no account enumeration via timing
   or error-message differences.
+- **Password length cap**: Rejects passwords >72 chars. bcrypt silently
+  truncates at 72 bytes — without a cap, users think extra entropy protects
+  them when it doesn't.
 - **WebSocket origin check**: strict `map[string]bool` lookup against
   `ALLOWED_ORIGINS`, no wildcards. Raw Railway subdomain isn't in the list —
   only the custom domain behind Cloudflare is trusted.
@@ -653,6 +657,24 @@ the DB still holds the line.
 - **No in-process rate limiting on login yet.** Cloudflare WAF + Railway egress
   throttling is the current stop-gap. In-process token-bucket limiter is on the
   alpha backlog.
+
+### Transport & request hardening
+
+- **CORS**: Only origins in the `ALLOWED_ORIGINS` allow-list (+ localhost dev
+  variants) are echoed back with `Access-Control-Allow-Credentials`. Unknown
+  origins get no `Access-Control-Allow-Origin` header — the browser blocks the
+  response. Previously this was wide-open (any origin echoed), fixed in
+  `858a840`.
+- **Request body limits**: Every POST/PUT handler wraps `r.Body` in
+  `http.MaxBytesReader` (4–8 KB) to prevent OOM from oversized payloads.
+- **Security headers**: `X-Frame-Options: DENY`, `X-Content-Type-Options:
+  nosniff`, `Content-Security-Policy: default-src 'none'`, `HSTS` (2-year
+  preload), `Cross-Origin-Opener-Policy: same-origin`,
+  `Referrer-Policy: no-referrer`. Applied globally via `SecurityHeaders`
+  middleware.
+- **Rate limiting**: Redis-based 100 req/min per IP, fail-closed (503 if
+  Redis is unavailable). WebSocket messages rate-limited to 20/10s per client.
+  Health/metrics endpoints exempt.
 
 ---
 
