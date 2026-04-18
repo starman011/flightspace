@@ -6,6 +6,8 @@ export default function StatusBar({
   connectionStatus, activeScale, onScaleChange, onSearchOpen,
   liveEnabled, onLiveToggle, trackedCount = 0,
   isAuthenticated, user, onSignIn, onSignOut,
+  trackedFlights = [], pinnedLaunches = [],
+  onSelectFlight, onUntrackFlight, onUnpinLaunch,
 }) {
   const [expanded, setExpanded] = useState(false)
   const notchRef = useRef(null)
@@ -74,6 +76,11 @@ export default function StatusBar({
             user={user}
             onSignIn={onSignIn}
             onSignOut={onSignOut}
+            trackedFlights={trackedFlights}
+            pinnedLaunches={pinnedLaunches}
+            onSelectFlight={onSelectFlight}
+            onUntrackFlight={onUntrackFlight}
+            onUnpinLaunch={onUnpinLaunch}
           />
         </span>
       </button>

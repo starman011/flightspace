@@ -338,6 +338,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           user={user}
           onSignIn={() => setAuthModalOpen(true)}
           onSignOut={logout}
+          trackedFlights={pins.trackedFlights}
+          pinnedLaunches={pins.pinnedLaunches}
+          onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24) }}
+          onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
+          onUnpinLaunch={(id) => pins.unpinLaunch(id)}
         />
       )}
 

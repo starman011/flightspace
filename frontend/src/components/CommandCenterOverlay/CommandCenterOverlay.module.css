@@ -1559,12 +1559,15 @@
 
 /* ── Desktop stream width states ─────────────────────────────────────────── */
 
-.streamDesktopCollapsed {
-  transform: translateX(calc(100% - 40px));
-}
+/* Only apply desktop stream transforms on non-mobile viewports */
+@media (min-width: 768px) {
+  .streamDesktopCollapsed {
+    transform: translateX(calc(100% - 40px));
+  }
 
-.streamDesktopWide {
-  width: 520px;
+  .streamDesktopWide {
+    width: 520px;
+  }
 }
 
 /* ── Desktop filter section visible in wide mode ─────────────────────────── */
@@ -1613,6 +1616,7 @@
     border-top: 1px solid rgba(59, 73, 76, 0.22);
     border-bottom: none;
     padding: 4px var(--space-4) var(--space-4);
+    padding-left: var(--space-4); /* reset desktop 40px collapse-tab offset */
     box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.5);
     transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
