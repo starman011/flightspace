@@ -2322,20 +2322,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        // Rotate/zoom — touch devices get much slower values at low altitude
-        // to prevent fling-across-continent on single finger drag.
+        // Rotate/zoom — touch devices are slower only at low altitude (t<0.3),
+        // converge to desktop speed at orbit so zoomed-out feel stays fast.
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-        const rotateFast = 0.008 + Math.pow(t, 1.5) * 0.35
-        const rotateSlow = 0.003 + Math.pow(t, 2) * 0.30
-        controls.rotateSpeed   = isTouch ? rotateSlow : rotateFast
-
-        const zoomFast = 0.02 + t * 0.68
-        const zoomSlow = 0.005 + Math.pow(t, 1.5) * 0.45
-        controls.zoomSpeed     = isTouch ? zoomSlow : zoomFast
-
-        // Damping: higher at surface = firmer stop. Touch gets extra damping.
-        const dampBase = 0.88 - t * 0.48
-        controls.dampingFactor = isTouch ? Math.min(dampBase + 0.06, 0.94) : dampBase
+        const touchDamp = isTouch ? MathUtils.clamp(1 - (1 - t) * 0.6, 0.4, 1) : 1
+        controls.rotateSpeed   = (0.008 + Math.pow(t, 1.5) * 0.35) * touchDamp
+        controls.zoomSpeed     = (0.02  + t * 0.68) * touchDamp
+        controls.dampingFactor = 0.88 - t * 0.48
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -2494,6 +2487,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         targetPx = 18 + 5 * Math.log10(altKm / 30)        // 18 → ~28 at 6000km
       }
       targetPx = MathUtils.clamp(targetPx, 14, 22)
+      // Desktop: 2x bigger planes. Mobile: half size.
+      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      targetPx *= isMobile ? 0.5 : 2
       const screenScale = targetPx * wuPerPx
 
       let newScale = Math.max(screenScale, realWorldWU)
