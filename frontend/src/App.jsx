@@ -17,6 +17,7 @@ import DetailPanel from './components/DetailPanel/DetailPanel'
 import SearchBar from './components/SearchBar/SearchBar'
 import FilterRail from './components/FilterRail/FilterRail'
 import LaunchPanel from './components/LaunchPanel/LaunchPanel'
+import ProfilePanel from './components/ProfilePanel/ProfilePanel'
 import HUD from './components/HUD/HUD'
 import StatusBar from './components/StatusBar/StatusBar'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
@@ -124,6 +125,7 @@ export default function App() {
   const [searchOpen, setSearchOpen]         = useState(false)
   const [trackingId, setTrackingId]         = useState(null)
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
+  const [profilePanelOpen, setProfilePanelOpen] = useState(false)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
   const [activeScale, setActiveScale]       = useState(init.activeScale)
 
@@ -340,9 +342,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onSignOut={logout}
           trackedFlights={pins.trackedFlights}
           pinnedLaunches={pins.pinnedLaunches}
-          onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24) }}
+          onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
           onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
           onUnpinLaunch={(id) => pins.unpinLaunch(id)}
+          onProfileOpen={() => setProfilePanelOpen(true)}
         />
       )}
 
@@ -440,6 +443,18 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         pinnedLaunchId={pinnedLaunch?.id ?? null}
         onPinLaunch={handlePinLaunch}
         openToMission={returnMission}
+      />
+
+      <ProfilePanel
+        open={profilePanelOpen}
+        onClose={() => setProfilePanelOpen(false)}
+        user={user}
+        trackedFlights={pins.trackedFlights}
+        pinnedLaunches={pins.pinnedLaunches}
+        onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
+        onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
+        onUnpinLaunch={(id) => pins.unpinLaunch(id)}
+        liveAircraft={aircraftWithShips}
       />
 
       {focusedPad && (

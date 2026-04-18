@@ -8,6 +8,7 @@ export default function StatusBar({
   isAuthenticated, user, onSignIn, onSignOut,
   trackedFlights = [], pinnedLaunches = [],
   onSelectFlight, onUntrackFlight, onUnpinLaunch,
+  onProfileOpen,
 }) {
   const [expanded, setExpanded] = useState(false)
   const notchRef = useRef(null)
@@ -81,6 +82,7 @@ export default function StatusBar({
             onSelectFlight={onSelectFlight}
             onUntrackFlight={onUntrackFlight}
             onUnpinLaunch={onUnpinLaunch}
+            onProfileOpen={onProfileOpen}
           />
         </span>
       </button>

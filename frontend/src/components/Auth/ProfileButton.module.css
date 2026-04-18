@@ -126,6 +126,21 @@
   color: #fff;
 }
 
+.menuBadge {
+  margin-left: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: rgba(0, 229, 255, 0.1);
+  color: rgba(0, 229, 255, 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
 /* Badge on profile button showing saved count */
 .savedBadge {
   position: absolute;

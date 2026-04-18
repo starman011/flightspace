@@ -1,0 +1,204 @@
+import { useState } from 'react'
+import styles from './ProfilePanel.module.css'
+
+export default function ProfilePanel({
+  open, onClose, user,
+  trackedFlights = [], pinnedLaunches = [],
+  onSelectFlight, onUntrackFlight, onUnpinLaunch,
+  liveAircraft,
+}) {
+  const [tab, setTab] = useState('flights')
+
+  if (!open) return null
+
+  // Enrich tracked flights with live data when available
+  const enriched = trackedFlights.map(f => {
+    const live = liveAircraft?.get(f.icao24)
+    return { ...f, live: live || null }
+  })
+
+  const inAir  = enriched.filter(f => f.live)
+  const offline = enriched.filter(f => !f.live)
+
+  return (
+    <div className={`${styles.panel} ${open ? styles.open : ''}`}>
+      {/* Header */}
+      <div className={styles.header}>
+        <div>
+          <h2 className={styles.title}>{user?.display_name || 'Traveller'}</h2>
+          <p className={styles.subtitle}>{user?.email || ''}</p>
+        </div>
+        <button className={styles.closeBtn} onClick={onClose}>[ESC]</button>
+      </div>
+
+      {/* Tabs */}
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${tab === 'flights' ? styles.tabActive : ''}`}
+          onClick={() => setTab('flights')}
+        >
+          Flights
+          {trackedFlights.length > 0 && (
+            <span className={styles.tabBadge}>{trackedFlights.length}</span>
+          )}
+        </button>
+        <button
+          className={`${styles.tab} ${tab === 'launches' ? styles.tabActive : ''}`}
+          onClick={() => setTab('launches')}
+        >
+          Launches
+          {pinnedLaunches.length > 0 && (
+            <span className={styles.tabBadge}>{pinnedLaunches.length}</span>
+          )}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className={styles.content}>
+        {tab === 'flights' && (
+          <>
+            {/* In-air flights */}
+            {inAir.length > 0 && (
+              <div className={styles.section}>
+                <p className={styles.sectionLabel}>
+                  <span className={styles.liveDot} />
+                  IN AIR — {inAir.length}
+                </p>
+                {inAir.map(f => (
+                  <FlightCard
+                    key={f.icao24}
+                    flight={f}
+                    onSelect={() => onSelectFlight?.(f.icao24)}
+                    onRemove={() => onUntrackFlight?.(f.icao24)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Offline flights */}
+            {offline.length > 0 && (
+              <div className={styles.section}>
+                <p className={styles.sectionLabel}>LAST TRACKED — {offline.length}</p>
+                {offline.map(f => (
+                  <FlightCard
+                    key={f.icao24}
+                    flight={f}
+                    onSelect={() => onSelectFlight?.(f.icao24)}
+                    onRemove={() => onUntrackFlight?.(f.icao24)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {trackedFlights.length === 0 && (
+              <Empty icon="flight" text="No tracked flights yet. Select a flight on the globe and save it." />
+            )}
+          </>
+        )}
+
+        {tab === 'launches' && (
+          <>
+            {pinnedLaunches.length > 0 ? (
+              <div className={styles.section}>
+                <p className={styles.sectionLabel}>PINNED — {pinnedLaunches.length}</p>
+                {pinnedLaunches.map(l => (
+                  <LaunchCard
+                    key={l.launch_id || l.id}
+                    launch={l}
+                    onRemove={() => onUnpinLaunch?.(l.launch_id || l.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Empty icon="rocket_launch" text="No pinned launches. Pin a launch from the Launches panel." />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FlightCard({ flight, onSelect, onRemove }) {
+  const { live } = flight
+  const isLive = !!live
+
+  return (
+    <div className={styles.card} onClick={onSelect}>
+      <div className={styles.cardLeft}>
+        <div className={styles.cardIcon}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>
+          </svg>
+        </div>
+        <div className={styles.cardInfo}>
+          <p className={styles.cardTitle}>
+            {flight.callsign || flight.icao24}
+            {isLive && <span className={styles.liveTag}>LIVE</span>}
+          </p>
+          {isLive ? (
+            <div className={styles.cardTelemetry}>
+              <span>{Math.round(live.alt_baro ?? live.alt_geom ?? 0).toLocaleString()} ft</span>
+              <span className={styles.telSep} />
+              <span>{Math.round(live.gs ?? 0)} kts</span>
+              <span className={styles.telSep} />
+              <span>{Math.round(live.track ?? 0)}°</span>
+            </div>
+          ) : (
+            <p className={styles.cardSub}>
+              {flight.icao24}
+              {flight.savedAt && <> · saved {new Date(flight.savedAt).toLocaleDateString()}</>}
+            </p>
+          )}
+        </div>
+      </div>
+      <button className={styles.cardRemove} onClick={e => { e.stopPropagation(); onRemove() }} title="Remove">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+function LaunchCard({ launch, onRemove }) {
+  const net = launch.net ? new Date(launch.net) : null
+  const isPast = net && net < Date.now()
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardLeft}>
+        <div className={`${styles.cardIcon} ${styles.cardIconLaunch}`}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+            <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+          </svg>
+        </div>
+        <div className={styles.cardInfo}>
+          <p className={styles.cardTitle}>{launch.name || launch.rocket || 'Unknown'}</p>
+          <p className={styles.cardSub}>
+            {launch.provider && <>{launch.provider} · </>}
+            {net ? (isPast ? 'Launched ' : '') + net.toLocaleDateString() : 'TBD'}
+            {launch.status_abbr && <> · {launch.status_abbr}</>}
+          </p>
+        </div>
+      </div>
+      <button className={styles.cardRemove} onClick={e => { e.stopPropagation(); onRemove() }} title="Unpin">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+function Empty({ icon, text }) {
+  return (
+    <div className={styles.empty}>
+      <span className="material-symbols-outlined" style={{ fontSize: 32, color: 'rgba(0,229,255,0.15)' }}>{icon}</span>
+      <p>{text}</p>
+    </div>
+  )
+}
