@@ -285,13 +285,21 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         }
         /* Desktop: top-right corner */
         .profile-btn-wrap { top: 10px; right: 14px; }
-        /* Mobile with notch: snug right of Dynamic Island */
+        /* Mobile: inside the notch bar, right of the Dynamic Island pill.
+           Vertically centered within safe-area-inset-top (~59px on iPhone 14+).
+           Shrink button to 28px so it fits inside the notch height. */
         @supports (top: env(safe-area-inset-top)) {
           @media (max-width: 768px) {
             .profile-btn-wrap {
-              top: env(safe-area-inset-top, 6px);
+              top: calc(env(safe-area-inset-top, 48px) / 2 - 14px);
               right: auto;
               left: calc(50% + 78px);
+            }
+            .profile-btn-wrap button {
+              width: 28px !important;
+              height: 28px !important;
+              min-width: 28px;
+              min-height: 28px;
             }
           }
         }
