@@ -2060,16 +2060,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       const camDist = int.current.camDist || camera.position.length()
 
-      // ── GPU color pick: zoomed in close to Earth surface ─────────────
+      // ── GPU color pick first, fallback to screen-space pick ──────────
+      // GPU pick is pixel-perfect but can miss small planes at mid-zoom.
+      // If it returns null, fall through to screenPick which uses a generous
+      // tap radius and works at any altitude.
       if (camDist < PICK_GPU_DIST && int.current.targetCameraScale === 'earth') {
         const acId = gpuPick(e.clientX, e.clientY)
-        if (acId) int.current.onAircraftClick?.(acId)
-        return
+        if (acId) { int.current.onAircraftClick?.(acId); return }
       }
 
-      // ── Screen-space spatial pick: far zoom ────────────────────────────
-      const acId = screenPick(e.clientX, e.clientY, isTouch)
-      if (acId) int.current.onAircraftClick?.(acId)
+      // ── Screen-space spatial pick: works at all altitudes ──────────────
+      if (int.current.targetCameraScale === 'earth' || int.current.targetCameraScale == null) {
+        const acId = screenPick(e.clientX, e.clientY, isTouch)
+        if (acId) int.current.onAircraftClick?.(acId)
+      }
     }
     el.addEventListener('pointerdown', onPointerDown)
     el.addEventListener('pointerup',   onPointerUp)
