@@ -152,6 +152,24 @@
 .handle:hover .chevron { color: rgba(0, 229, 255, 0.75); }
 .chevronUp { transform: rotate(180deg); }
 
+/* Profile button embedded inside the notch handle */
+.profileSlot {
+  flex-shrink: 0;
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+}
+.profileSlot button {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0 !important;
+}
+.profileSlot > div {
+  position: relative;
+}
+
 /* ── Expanded panel (overflow: hidden on wrapper = smooth reveal) ─────────── */
 
 .panelWrap {

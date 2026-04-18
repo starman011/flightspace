@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './StatusBar.module.css'
+import ProfileButton from '../Auth/ProfileButton'
 
 export default function StatusBar({
   connectionStatus, activeScale, onScaleChange, onSearchOpen,
   liveEnabled, onLiveToggle, trackedCount = 0,
+  isAuthenticated, user, onSignIn, onSignOut,
 }) {
   const [expanded, setExpanded] = useState(false)
   const notchRef = useRef(null)
@@ -64,6 +66,16 @@ export default function StatusBar({
           <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5"
             strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
+
+        {/* Profile circle — embedded inside notch, right of chevron */}
+        <span className={styles.profileSlot} onClick={e => e.stopPropagation()}>
+          <ProfileButton
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onSignIn={onSignIn}
+            onSignOut={onSignOut}
+          />
+        </span>
       </button>
 
       {/* ── Expanded panel — slides down ───────────────────────────── */}

@@ -2322,12 +2322,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        // Rotate: slow at surface, fast at orbit. Uses a smooth power curve
-        // (t^1.5) so the mid-range (50-200km) feels natural instead of jerky.
-        controls.rotateSpeed   = 0.008 + Math.pow(t, 1.5) * 0.35
-        controls.zoomSpeed     = 0.02  + t * 0.68
-        // Damping: 0.88 at surface (firm but not stuck), 0.40 at orbit (smooth glide).
-        controls.dampingFactor = 0.88 - t * 0.48
+        // Rotate/zoom — touch devices get much slower values at low altitude
+        // to prevent fling-across-continent on single finger drag.
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+        const rotateFast = 0.008 + Math.pow(t, 1.5) * 0.35
+        const rotateSlow = 0.003 + Math.pow(t, 2) * 0.30
+        controls.rotateSpeed   = isTouch ? rotateSlow : rotateFast
+
+        const zoomFast = 0.02 + t * 0.68
+        const zoomSlow = 0.005 + Math.pow(t, 1.5) * 0.45
+        controls.zoomSpeed     = isTouch ? zoomSlow : zoomFast
+
+        // Damping: higher at surface = firmer stop. Touch gets extra damping.
+        const dampBase = 0.88 - t * 0.48
+        controls.dampingFactor = isTouch ? Math.min(dampBase + 0.06, 0.94) : dampBase
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -2485,7 +2493,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       } else {
         targetPx = 18 + 5 * Math.log10(altKm / 30)        // 18 → ~28 at 6000km
       }
-      targetPx = MathUtils.clamp(targetPx, 14, 28)
+      targetPx = MathUtils.clamp(targetPx, 14, 22)
       const screenScale = targetPx * wuPerPx
 
       let newScale = Math.max(screenScale, realWorldWU)

@@ -283,39 +283,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           70%  { transform: scale(3.5); opacity: 0; }
           100% { transform: scale(1);   opacity: 0; }
         }
-        /* Desktop: top-right corner */
-        .profile-btn-wrap { top: 10px; right: 14px; }
-        /* Mobile: inside the notch bar, right of the Dynamic Island pill.
-           Vertically centered within safe-area-inset-top (~59px on iPhone 14+).
-           Shrink button to 28px so it fits inside the notch height. */
-        @supports (top: env(safe-area-inset-top)) {
-          @media (max-width: 768px) {
-            .profile-btn-wrap {
-              top: calc(env(safe-area-inset-top, 48px) / 2 - 14px);
-              right: auto;
-              left: calc(50% + 78px);
-            }
-            .profile-btn-wrap button {
-              width: 28px !important;
-              height: 28px !important;
-              min-width: 28px;
-              min-height: 28px;
-            }
-          }
-        }
+        /* Profile button now embedded inside StatusBar notch */
       `}</style>
 
       <BetaWelcome />
 
-      {/* Profile button — snug right of the notch on mobile, top-right on desktop */}
-      <div className="profile-btn-wrap" style={{ position: 'fixed', zIndex: 8000 }}>
-        <ProfileButton
-          isAuthenticated={isAuthenticated}
-          user={user}
-          onSignIn={() => setAuthModalOpen(true)}
-          onSignOut={logout}
-        />
-      </div>
+      {/* ProfileButton now lives inside <StatusBar /> */}
 
       {authModalOpen && (
         <AuthModal
@@ -361,6 +334,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           liveEnabled={liveEnabled}
           onLiveToggle={() => setLiveEnabled(v => !v)}
           trackedCount={aircraftWithShips.size}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          onSignIn={() => setAuthModalOpen(true)}
+          onSignOut={logout}
         />
       )}
 
