@@ -20,7 +20,7 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
         .then(r => r.json())
         .then(d => setArrivals(d.arrivals || []))
         .catch(() => {})
-    }, 15000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [iata])
 

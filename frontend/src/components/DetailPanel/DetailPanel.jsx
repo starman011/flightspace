@@ -148,7 +148,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`)
         .then(p => { if (!cancelled) setPhoto(p) })
 
-      const iv = setInterval(refreshLive, 15000)
+      const iv = setInterval(refreshLive, 5000)
       return () => { cancelled = true; clearInterval(iv) }
     }
   }, [icao24]) // eslint-disable-line react-hooks/exhaustive-deps
