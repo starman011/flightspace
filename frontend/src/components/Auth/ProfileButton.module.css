@@ -63,9 +63,6 @@
 
 /* ── Dropdown menu ───────────────────────────────────────────────────────── */
 .menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   min-width: 180px;
   background: rgba(10, 14, 22, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -160,75 +157,3 @@
   border: 1.5px solid rgba(6, 10, 18, 0.9);
 }
 
-/* Saved flights / pinned launches sections */
-.savedSection {
-  padding: 8px 0 4px;
-}
-
-.savedLabel {
-  margin: 0;
-  padding: 0 14px 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: rgba(0, 229, 255, 0.45);
-}
-
-.savedRow {
-  display: flex;
-  align-items: center;
-  padding: 0 6px 0 14px;
-}
-
-.savedItem {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-  cursor: pointer;
-  text-align: left;
-  transition: color 0.1s;
-  min-width: 0;
-}
-.savedItem:hover { color: #fff; }
-
-.savedText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.removeBtn {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: color 0.1s, background 0.1s;
-}
-.removeBtn:hover {
-  color: rgba(255, 80, 80, 0.9);
-  background: rgba(255, 60, 60, 0.08);
-}
-
-.emptyState {
-  padding: 12px 14px;
-  text-align: center;
-}
-.emptyState p {
-  margin: 0;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
-}
