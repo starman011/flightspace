@@ -51,7 +51,7 @@ export default function StatusBar({
             transform="rotate(-30 8 8)"/>
         </svg>
 
-        <span className={styles.wordmark}>FLIGHTSPACE</span>
+        <span className={styles.wordmark}>FLIGHTSPACE <span className={styles.alphaBadge}>ALPHA</span></span>
 
         <div className={styles.handleMeta}>
           <span className={`${styles.statusDot}

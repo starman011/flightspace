@@ -31,6 +31,7 @@ import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
 import AuthModal from './components/Auth/AuthModal'
+import AmbientAudio from './components/AmbientAudio/AmbientAudio'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
@@ -480,6 +481,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onTrack={setTrackingId}
           onFitRoute={(routeData) => globeRef.current?.fitRoute?.(routeData)}
           isSaved={pins.isFlightTracked(selectedIcao24)}
+          onSignIn={() => setAuthModalOpen(true)}
           onToggleSave={(f) => {
             if (pins.isFlightTracked(f.icao24)) pins.untrackFlight(f.icao24)
             else pins.trackFlight(f)
@@ -541,6 +543,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         </button>
       )}
 
+      <AmbientAudio />
       <WaitlistPopup />
       <TourGuide />
     </ErrorBoundary>

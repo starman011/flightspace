@@ -71,7 +71,7 @@ function formatAge(timestamp) {
 
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
-export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isTracking, onTrack, onFitRoute, isSaved, onToggleSave }) {
+export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn }) {
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -450,17 +450,27 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 <button className={styles.fitBtn} onClick={() => onFitRoute?.(route)}>Fit Route</button>
               )}
               {onToggleSave && (
-                <button
-                  className={styles.fitBtn}
-                  title={isSaved ? 'Remove from saved flights' : 'Save flight to your account'}
-                  onClick={() => onToggleSave({
-                    icao24,
-                    callsign: liveData?.callsign || detail?.callsign || null,
-                    label: liveData?.name || detail?.model || null,
-                  })}
-                >
-                  {isSaved ? '★ Saved' : '☆ Save'}
-                </button>
+                isAuthenticated ? (
+                  <button
+                    className={styles.fitBtn}
+                    title={isSaved ? 'Remove from saved flights' : 'Save flight to your account'}
+                    onClick={() => onToggleSave({
+                      icao24,
+                      callsign: liveData?.callsign || detail?.callsign || null,
+                      label: liveData?.name || detail?.model || null,
+                    })}
+                  >
+                    {isSaved ? '★ Saved' : '☆ Save'}
+                  </button>
+                ) : (
+                  <button
+                    className={styles.fitBtn}
+                    title="Sign in to save flights"
+                    onClick={() => onSignIn?.()}
+                  >
+                    ☆ Save
+                  </button>
+                )
               )}
             </div>
           )}

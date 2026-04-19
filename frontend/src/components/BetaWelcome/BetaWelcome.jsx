@@ -12,7 +12,18 @@ const FEATURES = [
       'Click any flight for route, ETA, altitude, speed & aircraft photos',
       'Filter by planes, helicopters, satellites, ships',
       'Search by callsign, flight number, or ICAO code',
-      'Live trail ribbons tracing flight paths',
+      'Dynamic trail tubes tracing flight paths — scaled to aircraft size',
+      '5-second refresh rate for near-real-time updates',
+    ],
+  },
+  {
+    title: 'Profile & Persistence',
+    icon: '👤',
+    items: [
+      'Save flights and pin launches to your profile',
+      'Tracked flights show live telemetry in your dashboard',
+      'Return-to-profile navigation after viewing a saved flight',
+      'URL-routed profile page at /profile',
     ],
   },
   {
@@ -28,6 +39,16 @@ const FEATURES = [
     ],
   },
   {
+    title: 'Global Airports',
+    icon: '🛫',
+    items: [
+      '930 international airports with tier-based zoom visibility',
+      'IATA labels and clickable airport markers',
+      'Airport panels with inbound traffic & ETA',
+      'Dark map tiles for better contrast at street level',
+    ],
+  },
+  {
     title: 'The Moon',
     icon: '🌙',
     items: [
@@ -38,31 +59,23 @@ const FEATURES = [
     ],
   },
   {
-    title: 'Solar System',
+    title: 'Solar System & Deep Space',
     icon: '🪐',
     items: [
       'All 8 planets with orbital mechanics visualization',
       'Planet details — mass, gravity, atmosphere, moons',
-      'Fly-to any planet with cinematic camera transitions',
-    ],
-  },
-  {
-    title: 'Deep Space',
-    icon: '🌌',
-    items: [
       'Stars & constellations with mythology descriptions',
       'Near-Earth asteroids (NEOs) with hazard levels',
       'AR Free Look mode — point your phone at the sky',
-      'Cosmic address — Earth to Laniakea Supercluster',
     ],
   },
   {
-    title: 'Launches & Airports',
+    title: 'Launches',
     icon: '🚀',
     items: [
       'Upcoming rocket launches with live countdowns',
       'Pad locations with fly-to navigation',
-      'Airport panels with inbound traffic & ETA',
+      'Pin launches and track them from your profile',
     ],
   },
 ]
@@ -87,7 +100,7 @@ export default function BetaWelcome() {
         <button className={styles.close} onClick={() => setVisible(false)} aria-label="Close">×</button>
 
         <div className={styles.header}>
-          <span className={styles.betaBadge}>BETA</span>
+          <span className={styles.betaBadge}>ALPHA</span>
           <h2 className={styles.title}>Welcome to Flightspace</h2>
           <p className={styles.subtitle}>
             A real-time window into everything above us — from flights overhead to the edge of the observable universe.
@@ -112,7 +125,7 @@ export default function BetaWelcome() {
 
         <div className={styles.footer}>
           <p className={styles.footerText}>
-            Early beta — things may break, but hey, even rockets explode before they land. 🚀
+            Alpha build — things may break, but hey, even rockets explode before they land. 🚀
           </p>
           <button className={styles.enterBtn} onClick={() => setVisible(false)}>
             Enter Flightspace
