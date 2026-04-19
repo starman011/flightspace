@@ -2385,7 +2385,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // ── Place markers + airport/port labels ────────────────────────────
       // City dots: faint markers visible from regional zoom (tiles handle city names)
       // Airport/port DOM labels: visible at close zoom for IATA codes + click targets
-      if (isSolar || isGalaxy) {
+      if (isSolar || isGalaxy || isMoon) {
         labelContainer.style.display = 'none'
         placeDots.visible = false
       } else {
@@ -2399,10 +2399,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const halfW = el.clientWidth * 0.5, halfH = el.clientHeight * 0.5
           // dist thresholds: tier1 < 1.32 (~2000km), tier2 < 1.08 (~500km), tier3 < 1.025 (~160km)
           const tierCutoff = dist < 1.025 ? 3 : dist < 1.08 ? 2 : 1
+          // Camera direction for back-face culling (hide airports on far side of globe)
+          const camDir = camera.position.clone().normalize()
           for (let i = 0; i < airportLabelEls.length; i++) {
             const al = airportLabelEls[i]
             if (al.tier > tierCutoff) { al.div.style.display = 'none'; continue }
-            _projV.copy(ll2v(al.lat, al.lon, PLACE_R)).project(camera)
+            const pos = ll2v(al.lat, al.lon, PLACE_R)
+            // Dot product: positive = facing camera, negative = behind globe
+            if (pos.clone().normalize().dot(camDir) < 0.1) { al.div.style.display = 'none'; continue }
+            _projV.copy(pos).project(camera)
             if (_projV.z > 1) { al.div.style.display = 'none'; continue }
             al.div.style.display = ''
             al.div.style.transform = `translate3d(${(_projV.x * halfW + halfW)|0}px,${(-_projV.y * halfH + halfH - 6)|0}px,0) translate(-50%,-100%)`

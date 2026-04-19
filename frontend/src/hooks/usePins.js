@@ -122,7 +122,7 @@ export function usePins(isAuthenticated, sessionToken) {
   const unpinLaunch = useCallback((launchId) => {
     const target = pinnedLaunches.find(p => p.launch_id === launchId || p.id === launchId)
     setPinnedLaunches(prev => prev.filter(p => p.launch_id !== launchId && p.id !== launchId))
-    if (isAuthenticated && sessionToken && target?.id && target.id !== launchId) {
+    if (isAuthenticated && sessionToken && target?.id) {
       fetch(`${API}/api/v1/user/pinned-launches/${target.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${sessionToken}` },
@@ -162,7 +162,7 @@ export function usePins(isAuthenticated, sessionToken) {
   const untrackFlight = useCallback((icao24) => {
     const target = trackedFlights.find(f => f.icao24 === icao24)
     setTrackedFlights(prev => prev.filter(f => f.icao24 !== icao24))
-    if (isAuthenticated && sessionToken && target?.id && target.id !== icao24) {
+    if (isAuthenticated && sessionToken && target?.id) {
       fetch(`${API}/api/v1/user/watchlist/${target.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${sessionToken}` },
