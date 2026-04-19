@@ -23,6 +23,7 @@ import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEE
 import { createMoonScene } from './MoonScene.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
+import { AIRPORTS } from './airportData.js'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -272,19 +273,14 @@ function distToTileZoom(dist) {
   return Math.max(2, Math.min(19, Math.round(23.47 - Math.log2(altM) * 0.781)))
 }
 
-// Tile URL: CartoDB Voyager @2x (street) or ESRI World Imagery (satellite).
-// Both are free, no API key, and serve proper CORS headers for WebGL textures.
-// OSM standard tiles often 403 when loaded as WebGL textures (missing CORS
-// headers on tile.openstreetmap.org). CartoDB Voyager uses OSM data with an
-// Apple Maps-style look and reliable CORS support.
+/// Tile URL: CartoDB Dark Matter @2x (street) or ESRI World Imagery (satellite).
+// Dark Matter gives a dark, stylish map that matches the space theme.
 function getTileUrl(tx, ty, z, style) {
   if (style === 'satellite') {
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`
   }
-  // CartoDB Voyager — OSM-based street map with clean labels and CORS headers.
-  // Rotating subdomains (a/b/c/d) to parallelize browser connection limits.
   const s = 'abcd'[(Math.abs(tx) + Math.abs(ty)) % 4]
-  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${tx}/${ty}@2x.png`
+  return `https://${s}.basemaps.cartocdn.com/dark_all/${z}/${tx}/${ty}@2x.png`
 }
 
 // White plane silhouette on canvas — nose at top (+Y = heading after rotation)
@@ -1481,16 +1477,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     graticuleMesh.renderOrder = 1
     scene.add(graticuleMesh)
 
-    // ── Place dots — faint grey markers for all locations ──────────────
-    // City names come from CartoDB Voyager tiles (Apple Maps-style progressive LOD).
-    // DOM labels are only for airports (IATA codes, clickable) and ports.
+    // ── Place dots — cities from placeData ─────────────────────────────
     const PLACE_R = EARTH_R * 1.001
-    const placePosArr = new Float32Array(PLACES.length * 3)
-    const placeSizeArr = new Float32Array(PLACES.length)
-    for (let i = 0; i < PLACES.length; i++) {
-      const v = ll2v(PLACES[i].lat, PLACES[i].lon, PLACE_R)
+    const cities = PLACES.filter(p => p.type === 'city')
+    const placePosArr = new Float32Array(cities.length * 3)
+    const placeSizeArr = new Float32Array(cities.length)
+    for (let i = 0; i < cities.length; i++) {
+      const v = ll2v(cities[i].lat, cities[i].lon, PLACE_R)
       placePosArr[i * 3] = v.x; placePosArr[i * 3 + 1] = v.y; placePosArr[i * 3 + 2] = v.z
-      placeSizeArr[i] = PLACES[i].type === 'city' ? (PLACES[i].tier === 1 ? 3.5 : 2.5) : 2.0
+      placeSizeArr[i] = cities[i].tier === 1 ? 3.5 : 2.5
     }
     const placeGeo = new BufferGeometry()
     placeGeo.setAttribute('position', new BufferAttribute(placePosArr, 3))
@@ -1501,24 +1496,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     placeDots.renderOrder = 3
     scene.add(placeDots)
 
-    // DOM labels only for airports + ports (cities get names from tile imagery)
+    // ── Airport markers — 930 airports, tier-based visibility ────────
+    // tier 1 (top 50): visible from ~2000km, tier 2 (~150): from ~500km, tier 3 (~740): from ~150km
     const labelContainer = document.createElement('div')
     labelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden'
     el.appendChild(labelContainer)
     const _projV = new Vector3()
-    const labelledPlaces = PLACES.filter(p => p.type === 'airport' || p.type === 'port')
-    const placeLabelEls = labelledPlaces.map(p => {
+    const airportLabelEls = AIRPORTS.map(a => {
       const div = document.createElement('div')
-      const isAirport = p.type === 'airport'
-      div.textContent = p.name
-      div.style.cssText = `position:absolute;color:rgba(160,180,200,${isAirport ? '0.65' : '0.4'});font:600 ${isAirport ? 9 : 8}px/1 -apple-system,system-ui,sans-serif;white-space:nowrap;transform:translate(-50%,-100%);padding:${isAirport ? '4px 8px' : '2px 4px'};display:none;letter-spacing:0.08em;${isAirport ? 'pointer-events:auto;cursor:pointer;border-radius:3px;' : ''}`
-      if (isAirport) {
-        div.addEventListener('click', () => { int.current.onAirportClick?.(p.name) })
-        div.addEventListener('mouseenter', () => { div.style.color = 'rgba(100,180,255,0.9)'; div.style.background = 'rgba(40,80,140,0.15)' })
-        div.addEventListener('mouseleave', () => { div.style.color = 'rgba(160,180,200,0.65)'; div.style.background = 'none' })
-      }
+      div.innerHTML = `<span style="font-size:7px;vertical-align:middle;margin-right:2px">✈</span>${a.iata}`
+      div.style.cssText = `position:absolute;color:rgba(0,229,255,0.55);font:700 8px/1 var(--font-mono,monospace);white-space:nowrap;transform:translate(-50%,-100%);padding:2px 5px;display:none;letter-spacing:0.1em;pointer-events:auto;cursor:pointer;border-radius:3px;text-shadow:0 0 4px rgba(0,0,0,0.8)`
+      div.title = `${a.name} — ${a.city}`
+      div.addEventListener('click', () => { int.current.onAirportClick?.(a.iata) })
+      div.addEventListener('mouseenter', () => { div.style.color = '#00e5ff'; div.style.background = 'rgba(0,229,255,0.08)' })
+      div.addEventListener('mouseleave', () => { div.style.color = 'rgba(0,229,255,0.55)'; div.style.background = 'none' })
       labelContainer.appendChild(div)
-      return { div, lat: p.lat, lon: p.lon, tier: p.tier, type: p.type, name: p.name }
+      return { div, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
     })
 
     let mapDestroyed = false
@@ -2398,16 +2391,21 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       } else {
         placeDots.visible = dist < 2.5
         placeDots.material.opacity = MathUtils.clamp(0.18 * (2.5 - dist) / 0.5, 0, 0.18)
-        const showLabels = dist < 1.25
-        labelContainer.style.display = showLabels ? '' : 'none'
-        if (showLabels) {
+
+        // Airport labels — tier-based: t1 from 2000km, t2 from 500km, t3 from 150km
+        const showAirports = dist < 1.35
+        labelContainer.style.display = showAirports ? '' : 'none'
+        if (showAirports) {
           const halfW = el.clientWidth * 0.5, halfH = el.clientHeight * 0.5
-          for (let i = 0; i < placeLabelEls.length; i++) {
-            const pl = placeLabelEls[i]
-            _projV.copy(ll2v(pl.lat, pl.lon, PLACE_R)).project(camera)
-            if (_projV.z > 1) { pl.div.style.display = 'none'; continue }
-            pl.div.style.display = ''
-            pl.div.style.transform = `translate3d(${(_projV.x * halfW + halfW)|0}px,${(-_projV.y * halfH + halfH - 6)|0}px,0) translate(-50%,-100%)`
+          // dist thresholds: tier1 < 1.32 (~2000km), tier2 < 1.08 (~500km), tier3 < 1.025 (~160km)
+          const tierCutoff = dist < 1.025 ? 3 : dist < 1.08 ? 2 : 1
+          for (let i = 0; i < airportLabelEls.length; i++) {
+            const al = airportLabelEls[i]
+            if (al.tier > tierCutoff) { al.div.style.display = 'none'; continue }
+            _projV.copy(ll2v(al.lat, al.lon, PLACE_R)).project(camera)
+            if (_projV.z > 1) { al.div.style.display = 'none'; continue }
+            al.div.style.display = ''
+            al.div.style.transform = `translate3d(${(_projV.x * halfW + halfW)|0}px,${(-_projV.y * halfH + halfH - 6)|0}px,0) translate(-50%,-100%)`
           }
         }
       }

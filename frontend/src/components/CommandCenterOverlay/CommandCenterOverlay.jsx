@@ -967,14 +967,6 @@ function SmartStack({ apod, kp, kpHistory, showers, news, loadMoreNews, hasMoreN
   )
 }
 
-function useUtcTime() {
-  const [time, setTime] = useState(() => new Date().toISOString().slice(11, 19))
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date().toISOString().slice(11, 19)), 1000)
-    return () => clearInterval(id)
-  }, [])
-  return time
-}
 
 /** Derive a human-readable region from lat/lon */
 function geoRegion(lat, lon) {
@@ -1078,7 +1070,6 @@ export default function CommandCenterOverlay({
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
 }) {
   const isLive  = connectionStatus === 'connected'
-  const utcTime = useUtcTime()
   const { news, loadMore: loadMoreNews, hasMore: hasMoreNews, fetching: fetchingNews } = useSpaceNews()
   const solarKp  = useSolarKp()
   const kpHistory = useSolarKpHistory()
@@ -1091,7 +1082,12 @@ export default function CommandCenterOverlay({
   const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
-  const [heroCollapsed, setHeroCollapsed] = useState(false) // user-controlled
+  const [heroCollapsed, setHeroCollapsed] = useState(() => {
+    // Show hero once per session, then hide permanently
+    if (sessionStorage.getItem('fs.hero.seen')) return true
+    setTimeout(() => { sessionStorage.setItem('fs.hero.seen', '1'); setHeroCollapsed(true) }, 4000)
+    return false
+  })
 
   // Globe interaction → dock sheet to peek (graceful, not full-hide)
   useEffect(() => {
@@ -1364,11 +1360,6 @@ export default function CommandCenterOverlay({
         </div>
       )}
 
-      {/* Encryption watermark — hidden when zoomed in */}
-      <div className={`${styles.watermark} ${zoomedIn ? styles.heroHidden : ''}`}>
-        <span>Encryption_Level: AES-256</span>
-        <span>Local_Time: {utcTime} UTC</span>
-      </div>
     </div>
   )
 }

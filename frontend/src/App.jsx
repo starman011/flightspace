@@ -90,18 +90,20 @@ function PadFocusBadge({ launch, onExit }) {
 // ── URL ↔ State helpers ────────────────────────────────────────────────────
 function parseInitialState(pathname) {
   if (pathname.startsWith('/flight/')) {
-    return { selectedIcao24: pathname.replace('/flight/', ''), activeScale: 'earth', launchPanelOpen: false, activeFilter: null }
+    return { selectedIcao24: pathname.replace('/flight/', ''), activeScale: 'earth', launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
   }
-  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',   launchPanelOpen: false, activeFilter: null }
-  if (pathname === '/deep-space')   return { selectedIcao24: null, activeScale: 'galaxy',  launchPanelOpen: false, activeFilter: null }
-  if (pathname === '/moon')         return { selectedIcao24: null, activeScale: 'moon',   launchPanelOpen: false, activeFilter: null }
-  if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null }
-  if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids' }
-  return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null }
+  if (pathname === '/profile')      return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: true }
+  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
+  if (pathname === '/deep-space')   return { selectedIcao24: null, activeScale: 'galaxy', launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
+  if (pathname === '/moon')         return { selectedIcao24: null, activeScale: 'moon',   launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
+  if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null, profilePanelOpen: false }
+  if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids', profilePanelOpen: false }
+  return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
 }
 
-function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter) {
+function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen) {
   if (selectedIcao24)             return `/flight/${selectedIcao24}`
+  if (profilePanelOpen)           return '/profile'
   if (activeFilter === 'asteroids') return '/asteroids'
   if (launchPanelOpen)            return '/launches'
   if (activeScale === 'solar')    return '/solar-system'
@@ -124,7 +126,7 @@ export default function App() {
   const [searchOpen, setSearchOpen]         = useState(false)
   const [trackingId, setTrackingId]         = useState(null)
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
-  const [profilePanelOpen, setProfilePanelOpen] = useState(false)
+  const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
   const [activeScale, setActiveScale]       = useState(init.activeScale)
 
@@ -165,10 +167,10 @@ export default function App() {
 
   // Sync state → URL (replaceState only — no React Router re-renders)
   useEffect(() => {
-    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter)
+    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen)
     if (window.location.pathname === path) return
     window.history.replaceState(null, '', path)
-  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter])
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen])
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
@@ -182,10 +184,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     setSelectedIcao24(icao24)
   }, [])
 
+  const openedFromProfileRef = useRef(false)
   const handlePanelClose = useCallback(() => {
     setSelectedIcao24(null)
     setTrackingId(null)
     globeRef.current?.drawTrail?.([])
+    if (openedFromProfileRef.current) {
+      openedFromProfileRef.current = false
+      setProfilePanelOpen(true)
+    }
   }, [])
 
   const handleSearchSelect = useCallback((result) => {
@@ -450,7 +457,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         user={user}
         trackedFlights={pins.trackedFlights}
         pinnedLaunches={pins.pinnedLaunches}
-        onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
+        onSelectFlight={(icao24) => { openedFromProfileRef.current = true; setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
         onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
         onUnpinLaunch={(id) => pins.unpinLaunch(id)}
         liveAircraft={aircraftWithShips}
