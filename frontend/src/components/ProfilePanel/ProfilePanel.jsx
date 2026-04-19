@@ -11,8 +11,17 @@ export default function ProfilePanel({
 
   if (!open) return null
 
+  // Separate satellites (ISS etc.) from regular flights
+  const SAT_IDS = new Set(['ISS'])
+  const flights = trackedFlights.filter(f => !SAT_IDS.has(f.icao24))
+  const satellites = trackedFlights.filter(f => SAT_IDS.has(f.icao24))
+
   // Enrich tracked flights with live data when available
-  const enriched = trackedFlights.map(f => {
+  const enriched = flights.map(f => {
+    const live = liveAircraft?.get(f.icao24)
+    return { ...f, live: live || null }
+  })
+  const enrichedSats = satellites.map(f => {
     const live = liveAircraft?.get(f.icao24)
     return { ...f, live: live || null }
   })
@@ -42,8 +51,17 @@ export default function ProfilePanel({
           onClick={() => setTab('flights')}
         >
           Flights
-          {trackedFlights.length > 0 && (
-            <span className={styles.tabBadge}>{trackedFlights.length}</span>
+          {flights.length > 0 && (
+            <span className={styles.tabBadge}>{flights.length}</span>
+          )}
+        </button>
+        <button
+          className={`${styles.tab} ${tab === 'satellites' ? styles.tabActive : ''}`}
+          onClick={() => setTab('satellites')}
+        >
+          Satellites
+          {satellites.length > 0 && (
+            <span className={styles.tabBadge}>{satellites.length}</span>
           )}
         </button>
         <button
@@ -94,8 +112,60 @@ export default function ProfilePanel({
               </div>
             )}
 
-            {trackedFlights.length === 0 && (
+            {flights.length === 0 && (
               <Empty icon="flight" text="No tracked flights yet. Select a flight on the globe and save it." />
+            )}
+          </>
+        )}
+
+        {tab === 'satellites' && (
+          <>
+            {enrichedSats.length > 0 ? (
+              <div className={styles.section}>
+                <p className={styles.sectionLabel}>
+                  {enrichedSats.some(s => s.live) && <span className={styles.liveDot} />}
+                  TRACKED — {enrichedSats.length}
+                </p>
+                {enrichedSats.map(s => (
+                  <div key={s.icao24} className={styles.card} onClick={() => onSelectFlight?.(s.icao24)}>
+                    <div className={styles.cardLeft}>
+                      <div className={`${styles.cardIcon} ${styles.cardIconSat}`}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                          <path d="M13 7L9 3L5 7l4 4"/>
+                          <path d="M17 11l4 4-4 4-4-4"/>
+                          <path d="M8 12l4 4"/>
+                          <path d="M16 8l-4-4"/>
+                          <circle cx="5" cy="19" r="2"/>
+                          <path d="M9 15c1.1 1.1 1.1 2.9 0 4"/>
+                          <path d="M12 12c2.2 2.2 2.2 5.8 0 8"/>
+                        </svg>
+                      </div>
+                      <div className={styles.cardInfo}>
+                        <p className={styles.cardTitle}>
+                          {s.callsign || s.icao24}
+                          {s.live && <span className={styles.liveTag}>LIVE</span>}
+                        </p>
+                        {s.live ? (
+                          <div className={styles.cardTelemetry}>
+                            <span>{Math.round(s.live.alt_baro ?? s.live.alt_geom ?? 0).toLocaleString()} ft</span>
+                            <span className={styles.telSep} />
+                            <span>{Math.round(s.live.gs ?? 0)} kts</span>
+                          </div>
+                        ) : (
+                          <p className={styles.cardSub}>{s.icao24}</p>
+                        )}
+                      </div>
+                    </div>
+                    <button className={styles.cardRemove} onClick={e => { e.stopPropagation(); onUntrackFlight?.(s.icao24) }} title="Remove">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty icon="satellite_alt" text="No tracked satellites. Select the ISS or a satellite on the globe and save it." />
             )}
           </>
         )}

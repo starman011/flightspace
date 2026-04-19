@@ -12,7 +12,7 @@ export default function AmbientAudio() {
   useEffect(() => {
     const audio = new Audio('/ambient-space.mp3')
     audio.loop = true
-    audio.volume = 0.15
+    audio.volume = 0.12
     audioRef.current = audio
 
     // Fade in after first user interaction (autoplay policy)

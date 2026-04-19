@@ -209,6 +209,12 @@
   color: rgba(255, 160, 80, 0.7);
 }
 
+.cardIconSat {
+  background: rgba(160, 120, 255, 0.06);
+  border-color: rgba(160, 120, 255, 0.15);
+  color: rgba(180, 150, 255, 0.7);
+}
+
 .cardInfo {
   min-width: 0;
   flex: 1;
