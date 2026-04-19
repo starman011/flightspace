@@ -966,11 +966,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       remainingPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
     }
 
-    // Scale trail tube radius and marker size with current zoom.
-    // Clamp so trail doesn't become absurdly fat at airport zoom.
+    // Trail tube = 1/4 of plane size, always proportional.
     const ps = int.current.planeScale || 0.005
-    const tubeRadius   = MathUtils.clamp(ps * 0.04, 0.0002, 0.0008)
-    const markerRadius = MathUtils.clamp(ps * 0.3, 0.001, 0.004)
+    const tubeRadius   = ps * 0.25
+    const markerRadius = ps * 0.5
 
     const makeTube = (path, color, opacity, radiusMul, order) => {
       const gc = greatCirclePoints(path, TRAIL_R_API)

@@ -42,7 +42,7 @@
     0 0 50px rgba(0, 229, 255, 0.03);
 
   width: 290px;
-  overflow: hidden;
+  overflow: visible;
 
   /* Use grid-template-rows for smooth height reveal */
   display: grid;

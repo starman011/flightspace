@@ -57,11 +57,32 @@ export function usePins(isAuthenticated, sessionToken) {
     Promise.all([...replayLaunches, ...replayFlights]).then(() => {
       fetch(`${API}/api/v1/user/pinned-launches`, opts)
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.items) setPinnedLaunches(d.items) })
+        .then(d => {
+          if (!d?.items) return
+          // Deduplicate by launch_id — server is canonical after sync
+          const seen = new Set()
+          const unique = d.items.filter(l => {
+            const key = l.launch_id || l.id
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
+          setPinnedLaunches(unique)
+        })
         .catch(() => {})
       fetch(`${API}/api/v1/user/watchlist`, opts)
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.items) setTrackedFlights(d.items) })
+        .then(d => {
+          if (!d?.items) return
+          // Deduplicate by icao24
+          const seen = new Set()
+          const unique = d.items.filter(f => {
+            if (seen.has(f.icao24)) return false
+            seen.add(f.icao24)
+            return true
+          })
+          setTrackedFlights(unique)
+        })
         .catch(() => {})
     })
   }, [isAuthenticated, sessionToken]) // eslint-disable-line react-hooks/exhaustive-deps
