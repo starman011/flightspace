@@ -5,7 +5,7 @@ export default function ProfilePanel({
   open, onClose, user,
   trackedFlights = [], pinnedLaunches = [],
   onSelectFlight, onUntrackFlight, onUnpinLaunch,
-  liveAircraft,
+  liveAircraft, onSignOut,
 }) {
   const [tab, setTab] = useState('flights')
 
@@ -114,6 +114,18 @@ export default function ProfilePanel({
             )}
           </>
         )}
+      </div>
+
+      {/* Sign out */}
+      <div className={styles.footer}>
+        <button className={styles.signOutBtn} onClick={() => { onClose(); onSignOut?.() }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Sign out
+        </button>
       </div>
     </div>
   )

@@ -30,7 +30,6 @@ import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
-import ProfileButton from './components/Auth/ProfileButton'
 import AuthModal from './components/Auth/AuthModal'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
@@ -455,6 +454,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
         onUnpinLaunch={(id) => pins.unpinLaunch(id)}
         liveAircraft={aircraftWithShips}
+        onSignOut={logout}
       />
 
       {focusedPad && (
