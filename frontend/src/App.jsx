@@ -27,6 +27,7 @@ import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import AirportPanel from './components/AirportPanel/AirportPanel'
 import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
+import DeepSpaceGuide from './components/DeepSpaceGuide/DeepSpaceGuide'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -532,11 +533,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {selectedGalaxy && activeScale === 'galaxy' && (
+      {activeScale === 'galaxy' && selectedGalaxy && (
         <GalaxyPanel
           galaxy={selectedGalaxy}
           onClose={handleGalaxyClose}
         />
+      )}
+
+      {activeScale === 'galaxy' && !selectedGalaxy && !selectedSkyObject && (
+        <DeepSpaceGuide onClose={() => handleCameraScale('solar')} />
       )}
 
       {activeScale === 'moon' && (

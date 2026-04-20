@@ -153,6 +153,49 @@
   margin: 0;
 }
 
+/* ── Telescope image ───────────────────────────────────────────────────── */
+
+.imageWrap {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(140, 100, 255, 0.12);
+  position: relative;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.imageLabel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 8px;
+  background: rgba(6, 8, 18, 0.8);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(195, 210, 255, 0.35);
+  letter-spacing: 0.06em;
+}
+
+/* ── Explainer blocks ─────────────────────────────────────────────────────── */
+
+.explainer {
+  font-size: 11px;
+  line-height: 1.65;
+  color: rgba(195, 210, 255, 0.50);
+  margin-bottom: 8px;
+}
+.explainer strong {
+  color: rgba(195, 220, 255, 0.8);
+  font-weight: 600;
+}
+
 .loading {
   text-align: center;
   color: rgba(195, 210, 255, 0.3);

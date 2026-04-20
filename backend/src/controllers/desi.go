@@ -29,21 +29,28 @@ type DESIGalaxy struct {
 }
 
 type DESIDetail struct {
-	TargetID  string   `json:"targetid"`
-	RA        float64  `json:"ra"`
-	Dec       float64  `json:"dec"`
-	Z         float64  `json:"z"`
-	ZErr      float64  `json:"zerr"`
-	SpecType  string   `json:"spectype"`
-	SubType   string   `json:"subtype"`
-	Survey    string   `json:"survey"`
-	Program   string   `json:"program"`
-	FluxG     *float64 `json:"flux_g"`
-	FluxR     *float64 `json:"flux_r"`
-	FluxZ     *float64 `json:"flux_z"`
-	FluxW1    *float64 `json:"flux_w1"`
-	MorphType string   `json:"morphtype"`
-	LogMStar  *float64 `json:"logmstar"`
+	TargetID   string   `json:"targetid"`
+	RA         float64  `json:"ra"`
+	Dec        float64  `json:"dec"`
+	Z          float64  `json:"z"`
+	ZErr       float64  `json:"zerr"`
+	SpecType   string   `json:"spectype"`
+	SubType    string   `json:"subtype"`
+	Survey     string   `json:"survey"`
+	Program    string   `json:"program"`
+	DeltaChi2  *float64 `json:"deltachi2"`
+	FluxG      *float64 `json:"flux_g"`
+	FluxR      *float64 `json:"flux_r"`
+	FluxZ      *float64 `json:"flux_z"`
+	FluxW1     *float64 `json:"flux_w1"`
+	FluxW2     *float64 `json:"flux_w2"`
+	MorphType  string   `json:"morphtype"`
+	ShapeR     *float64 `json:"shape_r"`
+	EBV        *float64 `json:"ebv"`
+	LogMStar   *float64 `json:"logmstar"`
+	HalphaFlux *float64 `json:"halpha_flux"`
+	HbetaFlux  *float64 `json:"hbeta_flux"`
+	OIIIFlux   *float64 `json:"oiii_flux"`
 }
 
 // ── Cache ──────────────────────────────────────────────────────────────────
@@ -63,8 +70,8 @@ var tapClient = &http.Client{Timeout: 120 * time.Second}
 // Bulk query: 100K random galaxies + quasars with reliable redshifts
 const desiBulkQuery = `SELECT TOP 100000 targetid, mean_fiber_ra, mean_fiber_dec, z, spectype FROM desi_dr1.zpix WHERE zwarn = 0 AND spectype IN ('GALAXY', 'QSO') AND z > 0.001 AND random_id < 1.0`
 
-// Detail query: single object with photometry + stellar mass
-const desiDetailQuery = `SELECT z.targetid, z.mean_fiber_ra, z.mean_fiber_dec, z.z, z.zerr, z.spectype, z.subtype, z.survey, z.program, p.flux_g, p.flux_r, p.flux_z, p.flux_w1, p.morphtype, a.logmstar FROM desi_dr1.zpix AS z LEFT JOIN desi_dr1.photometry AS p ON z.targetid = p.targetid LEFT JOIN desi_dr1.agngal AS a ON z.targetid = a.targetid WHERE z.targetid = %s`
+// Detail query: single object with photometry, morphology, emission lines, stellar mass
+const desiDetailQuery = `SELECT z.targetid, z.mean_fiber_ra, z.mean_fiber_dec, z.z, z.zerr, z.spectype, z.subtype, z.survey, z.program, z.deltachi2, p.flux_g, p.flux_r, p.flux_z, p.flux_w1, p.flux_w2, p.morphtype, p.shape_r, p.ebv, a.logmstar, a.halpha_flux, a.hbeta_flux, a.oiii_5007_flux FROM desi_dr1.zpix AS z LEFT JOIN desi_dr1.photometry AS p ON z.targetid = p.targetid LEFT JOIN desi_dr1.agngal AS a ON z.targetid = a.targetid WHERE z.targetid = %s`
 
 // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -268,20 +275,27 @@ func parseDetailCSV(data string) *DESIDetail {
 	}
 
 	return &DESIDetail{
-		TargetID:  getStr("targetid"),
-		RA:        getFloat("mean_fiber_ra"),
-		Dec:       getFloat("mean_fiber_dec"),
-		Z:         getFloat("z"),
-		ZErr:      getFloat("zerr"),
-		SpecType:  getStr("spectype"),
-		SubType:   getStr("subtype"),
-		Survey:    getStr("survey"),
-		Program:   getStr("program"),
-		FluxG:     getFloatPtr("flux_g"),
-		FluxR:     getFloatPtr("flux_r"),
-		FluxZ:     getFloatPtr("flux_z"),
-		FluxW1:    getFloatPtr("flux_w1"),
-		MorphType: getStr("morphtype"),
-		LogMStar:  getFloatPtr("logmstar"),
+		TargetID:   getStr("targetid"),
+		RA:         getFloat("mean_fiber_ra"),
+		Dec:        getFloat("mean_fiber_dec"),
+		Z:          getFloat("z"),
+		ZErr:       getFloat("zerr"),
+		SpecType:   getStr("spectype"),
+		SubType:    getStr("subtype"),
+		Survey:     getStr("survey"),
+		Program:    getStr("program"),
+		DeltaChi2:  getFloatPtr("deltachi2"),
+		FluxG:      getFloatPtr("flux_g"),
+		FluxR:      getFloatPtr("flux_r"),
+		FluxZ:      getFloatPtr("flux_z"),
+		FluxW1:     getFloatPtr("flux_w1"),
+		FluxW2:     getFloatPtr("flux_w2"),
+		MorphType:  getStr("morphtype"),
+		ShapeR:     getFloatPtr("shape_r"),
+		EBV:        getFloatPtr("ebv"),
+		LogMStar:   getFloatPtr("logmstar"),
+		HalphaFlux: getFloatPtr("halpha_flux"),
+		HbetaFlux:  getFloatPtr("hbeta_flux"),
+		OIIIFlux:   getFloatPtr("oiii_5007_flux"),
 	}
 }
