@@ -273,6 +273,91 @@ export function createDESILayer() {
     }
   }
 
+  // ── Selection + hover highlight ──────────────────────────────────────────
+  // A bright, enlarged sprite marks the selected/hovered galaxy.
+  let selectedIdx = -1
+  let hoveredIdx  = -1
+
+  // Restore a point to its original color + size
+  function restorePoint(idx) {
+    if (idx < 0 || !pointCloud) return
+    const g = galaxyData[idx]
+    const col = zToColor(g.z, g.s)
+    const colAttr = pointCloud.geometry.getAttribute('color')
+    colAttr.setXYZ(idx, col.r, col.g, col.b)
+    colAttr.needsUpdate = true
+    const sizeAttr = pointCloud.geometry.getAttribute('aSize')
+    sizeAttr.setX(idx, g.s === 'QSO' ? 5.0 : 3.0)
+    sizeAttr.needsUpdate = true
+  }
+
+  // Highlight a point (larger + brighter)
+  function highlightPoint(idx, isSelected) {
+    if (idx < 0 || !pointCloud) return
+    const colAttr = pointCloud.geometry.getAttribute('color')
+    const sizeAttr = pointCloud.geometry.getAttribute('aSize')
+    if (isSelected) {
+      colAttr.setXYZ(idx, 1.0, 1.0, 1.0)   // white
+      sizeAttr.setX(idx, 14.0)
+    } else {
+      colAttr.setXYZ(idx, 0.8, 0.95, 1.0)   // soft cyan-white
+      sizeAttr.setX(idx, 9.0)
+    }
+    colAttr.needsUpdate = true
+    sizeAttr.needsUpdate = true
+  }
+
+  function setSelected(targetid) {
+    if (selectedIdx >= 0) restorePoint(selectedIdx)
+    selectedIdx = -1
+    if (!targetid || !galaxyData) return
+    selectedIdx = galaxyData.findIndex(g => g.t === targetid)
+    if (selectedIdx >= 0) highlightPoint(selectedIdx, true)
+  }
+
+  function setHovered(idx) {
+    if (idx === hoveredIdx) return
+    // Restore previous hover (unless it's the selected one)
+    if (hoveredIdx >= 0 && hoveredIdx !== selectedIdx) restorePoint(hoveredIdx)
+    hoveredIdx = idx
+    // Highlight new hover (unless it's the selected one)
+    if (hoveredIdx >= 0 && hoveredIdx !== selectedIdx) highlightPoint(hoveredIdx, false)
+  }
+
+  function clearHover() {
+    if (hoveredIdx >= 0 && hoveredIdx !== selectedIdx) restorePoint(hoveredIdx)
+    hoveredIdx = -1
+  }
+
+  // Like pick() but returns index + data for hover (avoids object allocation per frame)
+  function hoverPick(clientX, clientY, camera, domElement) {
+    if (!galaxyData || !pointCloud) return null
+
+    const rect = domElement.getBoundingClientRect()
+    const w = rect.width, h = rect.height
+    const cx = clientX - rect.left
+    const cy = clientY - rect.top
+    const tapR2 = 18 * 18  // hover radius slightly tighter than click
+
+    const posAttr = pointCloud.geometry.getAttribute('position')
+    let best = null, bestDist = tapR2
+
+    for (let i = 0; i < galaxyData.length; i++) {
+      _v.set(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i))
+      _v.project(camera)
+      if (_v.z > 1) continue
+      const sx = (_v.x *  0.5 + 0.5) * w
+      const sy = (-_v.y * 0.5 + 0.5) * h
+      const dx = sx - cx, dy = sy - cy
+      const d2 = dx * dx + dy * dy
+      if (d2 < bestDist) { bestDist = d2; best = i }
+    }
+
+    if (best === null) return null
+    const g = galaxyData[best]
+    return { idx: best, t: g.t, r: g.r, d: g.d, z: g.z, s: g.s }
+  }
+
   // ── Cleanup ──────────────────────────────────────────────────────────────
   function dispose() {
     if (pointCloud) {
@@ -282,5 +367,8 @@ export function createDESILayer() {
     glowTex.dispose()
   }
 
-  return { group, load, show, hide, pick, dispose }
+  return {
+    group, load, show, hide, pick, hoverPick,
+    setSelected, setHovered, clearHover, dispose,
+  }
 }

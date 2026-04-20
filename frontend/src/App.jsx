@@ -226,7 +226,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
   const handleSkyObjectClick = useCallback((obj) => {
-    if (obj?.type === 'desi_galaxy') {
+    if (!obj) {
+      setSelectedGalaxy(null)
+      setSelectedSkyObject(null)
+      return
+    }
+    if (obj.type === 'desi_galaxy') {
       setSelectedGalaxy(obj)
       setSelectedSkyObject(null)
     } else {

@@ -1867,6 +1867,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
 
     const onMouseMove = e => {
+      // ── DESI galaxy hover (galaxy scale) ─────────────────────────
+      if (int.current.targetCameraScale === 'galaxy') {
+        const hit = desiLayer.hoverPick(e.clientX, e.clientY, camera, el)
+        if (hit) {
+          desiLayer.setHovered(hit.idx)
+          renderer.domElement.classList.add(styles.hovered)
+          const isQSO = hit.s === 'QSO'
+          int.current.setHoverTooltip?.({
+            x: e.clientX, y: e.clientY,
+            desi: { type: isQSO ? 'Quasar' : 'Galaxy', z: hit.z, ra: hit.r, dec: hit.d },
+          })
+        } else {
+          desiLayer.clearHover()
+          renderer.domElement.classList.remove(styles.hovered)
+          int.current.setHoverTooltip?.(null)
+        }
+        return
+      }
+
       const newId = screenPick(e.clientX, e.clientY, false)
       const prevId = int.current.hoveredId
 
@@ -1980,9 +1999,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (int.current.targetCameraScale === 'galaxy') {
         const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
         if (desiHit) {
+          desiLayer.setSelected(desiHit.targetid)
           int.current.onSkyObjectClick?.(desiHit)
           return
         }
+        // Clicked empty space — deselect
+        desiLayer.setSelected(null)
+        int.current.onSkyObjectClick?.(null)
         return
       }
 
@@ -2877,7 +2900,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       )}
 
       {hoverTooltip && createPortal(
-        <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} />,
+        hoverTooltip.desi
+          ? <DESITooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.desi} />
+          : <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} />,
         document.body
       )}
 
@@ -2944,6 +2969,57 @@ function AircraftTooltip({ x, y, data }) {
         <TooltipRow label="ALT" value={altitude} />
         {speed   && <TooltipRow label="SPD" value={speed} />}
         {heading && <TooltipRow label="HDG" value={heading} />}
+      </div>
+    </div>
+  )
+}
+
+// ── DESI galaxy hover tooltip ──────────────────────────────────────────────
+
+function DESITooltip({ x, y, data }) {
+  if (!data) return null
+  const C = 299792.458, H0 = 67.4, OM = 0.315, OL = 0.685
+  // Quick comoving distance (Mpc)
+  const n = 50, dz = data.z / n
+  let sum = 0
+  for (let i = 0; i < n; i++) {
+    const zi = (i + 0.5) * dz
+    sum += dz / Math.sqrt(OM * (1 + zi) ** 3 + OL)
+  }
+  const distMpc = (C / H0) * sum
+  const distBLY = (distMpc * 3.2616 / 1000).toFixed(2) // billion light-years
+
+  const left = x + 14, top = y - 10
+  const isQSO = data.type === 'Quasar'
+  const borderColor = isQSO ? 'rgba(255, 180, 60, 0.55)' : 'rgba(140, 120, 255, 0.55)'
+  const dotColor = isQSO ? '#ffb43c' : '#8c78ff'
+  const nameColor = isQSO ? 'rgba(255,200,100,0.95)' : 'rgba(180,170,255,0.95)'
+
+  return (
+    <div style={{
+      position: 'fixed', left, top, pointerEvents: 'none', zIndex: 9999,
+      background: 'rgba(8, 10, 22, 0.94)', border: `1px solid ${borderColor}`,
+      borderRadius: '4px', padding: '7px 11px 8px', minWidth: '140px',
+      backdropFilter: 'blur(6px)',
+      boxShadow: `0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px ${borderColor.replace('0.55', '0.12')}`,
+      fontFamily: "'Space Mono', 'Courier New', monospace",
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '5px' }}>
+        <span style={{
+          display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%',
+          background: dotColor, flexShrink: 0,
+          boxShadow: `0 0 6px ${dotColor}`,
+        }} />
+        <span style={{
+          fontSize: '12px', fontWeight: '700', letterSpacing: '0.06em',
+          color: nameColor, textTransform: 'uppercase',
+        }}>DESI {data.type}</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <TooltipRow label="z" value={data.z.toFixed(4)} />
+        <TooltipRow label="DIST" value={`${distBLY} Bly`} />
+        <TooltipRow label="RA" value={`${data.ra.toFixed(2)}°`} />
+        <TooltipRow label="DEC" value={`${data.dec.toFixed(2)}°`} />
       </div>
     </div>
   )
