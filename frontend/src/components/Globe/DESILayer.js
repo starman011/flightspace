@@ -117,36 +117,61 @@ export function createDESILayer() {
   const glowTex = makeGlowTexture()
 
   // ── Fetch + build ────────────────────────────────────────────────────────
-  // Primary: static pre-baked JSON (works without backend).
-  // Fallback: backend API proxy (for fresh data).
+  // 1. Static JSON for instant first paint (no backend needed).
+  // 2. Background refresh from backend API (live DESI TAP, 24h cache).
+  //    If backend returns fresh data, rebuild the point cloud in place.
+
+  function normalizeRaw(raw) {
+    return raw.map(g => ({
+      t: g.t,
+      r: g.r,
+      d: g.d,
+      z: g.z,
+      s: g.s === 'G' ? 'GALAXY' : g.s === 'Q' ? 'QSO' : g.s,
+    }))
+  }
+
   async function load() {
     if (loaded || loading) return
     loading = true
     try {
-      // Static file — always available, no CORS issues
-      let res = await fetch('/desi-galaxies.json')
-      if (!res.ok) {
-        // Fallback to backend proxy
-        res = await fetch(`${API}/api/v1/desi/galaxies`)
-      }
-      if (!res.ok) throw new Error(`status ${res.status}`)
-      const raw = await res.json()
-      // Normalize: static file uses 'G'/'Q', backend uses 'GALAXY'/'QSO'
-      galaxyData = raw.map(g => ({
-        t: g.t,
-        r: g.r,
-        d: g.d,
-        z: g.z,
-        s: g.s === 'G' ? 'GALAXY' : g.s === 'Q' ? 'QSO' : g.s,
-      }))
-      if (galaxyData.length > 0) {
-        buildPointCloud()
-        loaded = true
+      // Fast path: static pre-baked data
+      const res = await fetch('/desi-galaxies.json')
+      if (res.ok) {
+        galaxyData = normalizeRaw(await res.json())
+        if (galaxyData.length > 0) {
+          buildPointCloud()
+          loaded = true
+        }
       }
     } catch (e) {
-      console.warn('DESI load failed:', e.message)
+      console.warn('DESI static load failed:', e.message)
     } finally {
       loading = false
+    }
+
+    // Background: try live data from backend (DESI TAP via proxy)
+    refreshFromAPI()
+  }
+
+  async function refreshFromAPI() {
+    try {
+      const res = await fetch(`${API}/api/v1/desi/galaxies`)
+      if (!res.ok) return
+      const fresh = normalizeRaw(await res.json())
+      if (fresh.length === 0) return
+      // Replace data + rebuild point cloud
+      galaxyData = fresh
+      if (pointCloud) {
+        group.remove(pointCloud)
+        pointCloud.geometry.dispose()
+        pointCloud.material.dispose()
+        pointCloud = null
+      }
+      buildPointCloud()
+      loaded = true
+    } catch {
+      // Backend unavailable — static data still works
     }
   }
 

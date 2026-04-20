@@ -1976,63 +1976,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (dx > dragLimit || dy > dragLimit) return
       const isTouch = e.pointerType === 'touch'
 
-      // ── Galaxy scale: pick stars, planets, constellations ───────────
-      if (int.current.targetCameraScale === 'galaxy' && galaxySystem.skyGroup.visible) {
-        toNDC(e.clientX, e.clientY)
-        // Check planet markers first (largest targets)
-        for (const pm of galaxySystem.planetMarkers) {
-          if (!pm.dot.visible) continue
-          const hits = ray.intersectObject(pm.dot, false)
-          if (hits.length) {
-            int.current.onSkyObjectClick?.({ type: 'planet', name: pm.key })
-            return
-          }
-        }
-        // Check stars via screen-space proximity (same as aircraft pick)
-        const rect = el.getBoundingClientRect()
-        const w = rect.width, h = rect.height
-        const cx = e.clientX - rect.left, cy = e.clientY - rect.top
-        const tapR = isTouch ? 28 : 16
-        const starNames = galaxySystem.starData
-        const _v = new Vector3()
-        let bestId = null, bestDist = Infinity
-        for (const hr of Object.keys(starNames)) {
-          const s = starNames[hr]
-          const [raH, decDeg] = [s.ra, s.dec]
-          const raRad = raH * (Math.PI / 12), decRad = decDeg * (Math.PI / 180)
-          const R = 480 * 0.95 // STAR_R — matches NightSkyScene sky sphere
-          _v.set(
-            R * Math.cos(decRad) * Math.cos(raRad),
-            R * Math.sin(decRad),
-            -R * Math.cos(decRad) * Math.sin(raRad),
-          ).project(camera)
-          const sx = (_v.x * 0.5 + 0.5) * w
-          const sy = (-_v.y * 0.5 + 0.5) * h
-          const dx = sx - cx, dy = sy - cy
-          const d2 = dx * dx + dy * dy
-          if (d2 < tapR * tapR && d2 < bestDist) { bestDist = d2; bestId = hr }
-        }
-        if (bestId) {
-          const s = starNames[bestId]
-          int.current.onSkyObjectClick?.({ type: 'star', name: s.name, hr: +bestId, vmag: s.vmag, bv: s.bv, ra: s.ra, dec: s.dec })
-          return
-        }
-        // Check constellation label proximity
-        const constData = galaxySystem.constellationData
-        let bestConst = null, bestCDist = Infinity
-        for (const cm of constData) {
-          _v.set(cm.cx, cm.cy, cm.cz).project(camera)
-          const sx = (_v.x * 0.5 + 0.5) * w
-          const sy = (-_v.y * 0.5 + 0.5) * h
-          const dx = sx - cx, dy = sy - cy
-          const d2 = dx * dx + dy * dy
-          if (d2 < 40 * 40 && d2 < bestCDist) { bestCDist = d2; bestConst = cm }
-        }
-        if (bestConst) {
-          int.current.onSkyObjectClick?.({ type: 'constellation', id: bestConst.id, name: bestConst.name })
-          return
-        }
-        // Check DESI galaxies via screen-space proximity
+      // ── Galaxy scale: pick DESI galaxies ────────────────────────────
+      if (int.current.targetCameraScale === 'galaxy') {
         const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
         if (desiHit) {
           int.current.onSkyObjectClick?.(desiHit)
@@ -2243,7 +2188,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
           if (isSolar) solarSystem.show(); else solarSystem.hide()
-          if (isGalaxy) { galaxySystem.show(); desiLayer.show() } else { galaxySystem.hide(); desiLayer.hide() }
+          if (isGalaxy) { desiLayer.show() } else { desiLayer.hide() }
           if (isMoon) moonScene.show(); else moonScene.hide()
           const _earthVisible = !isMoon && !isSolar && !isGalaxy
           int.current.earthMesh.visible = _earthVisible
@@ -2291,9 +2236,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             _setEarthEntitiesVisible(_showEarth)
             if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide(); desiLayer.hide() }
             else if (isSolar) { solarSystem.show(); moonScene.hide() }
-            else if (isGalaxy) { galaxySystem.show(); desiLayer.show(); solarSystem.hide(); moonScene.hide() }
+            else if (isGalaxy) { desiLayer.show(); solarSystem.hide(); moonScene.hide() }
             else { solarSystem.hide(); moonScene.hide() }
-            if (!isGalaxy) { galaxySystem.hide(); desiLayer.hide() }
+            if (!isGalaxy) { desiLayer.hide() }
           }
         }
       }
