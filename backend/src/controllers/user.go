@@ -121,6 +121,19 @@ func (uc *UserController) AddWatchlist(w http.ResponseWriter, r *http.Request) {
 		utils.Error(w, http.StatusBadRequest, "callsign or icao24 required")
 		return
 	}
+	// Input length validation — prevent oversized payloads stored in DB
+	if req.Callsign != nil && len(*req.Callsign) > 20 {
+		utils.Error(w, http.StatusBadRequest, "callsign too long (max 20)")
+		return
+	}
+	if req.ICAO24 != nil && len(*req.ICAO24) > 10 {
+		utils.Error(w, http.StatusBadRequest, "icao24 too long (max 10)")
+		return
+	}
+	if req.Label != nil && len(*req.Label) > 100 {
+		utils.Error(w, http.StatusBadRequest, "label too long (max 100)")
+		return
+	}
 
 	ctx := r.Context()
 	id := uuid.New().String()
@@ -195,6 +208,10 @@ func (uc *UserController) AddPinnedLaunch(w http.ResponseWriter, r *http.Request
 		utils.Error(w, http.StatusBadRequest, "launch_id too long")
 		return
 	}
+	if req.Name != nil && len(*req.Name) > 200 {
+		utils.Error(w, http.StatusBadRequest, "launch name too long (max 200)")
+		return
+	}
 
 	ctx := r.Context()
 	id := uuid.New().String()
@@ -228,6 +245,10 @@ func (uc *UserController) DeletePinnedLaunch(w http.ResponseWriter, r *http.Requ
 		utils.Error(w, http.StatusBadRequest, "missing pinned launch id")
 		return
 	}
+	if len(itemID) > 64 {
+		utils.Error(w, http.StatusBadRequest, "invalid id format")
+		return
+	}
 
 	ctx := r.Context()
 	result, err := uc.pool.Exec(ctx,
@@ -257,6 +278,10 @@ func (uc *UserController) DeleteWatchlist(w http.ResponseWriter, r *http.Request
 	itemID := r.PathValue("id")
 	if itemID == "" {
 		utils.Error(w, http.StatusBadRequest, "missing watchlist item id")
+		return
+	}
+	if len(itemID) > 64 {
+		utils.Error(w, http.StatusBadRequest, "invalid id format")
 		return
 	}
 

@@ -51,17 +51,17 @@ func Setup(
 	// Auth
 	mux.Handle("POST /api/v1/auth/register", rateLimit(http.HandlerFunc(auth.Register)))
 	mux.Handle("POST /api/v1/auth/login", rateLimit(http.HandlerFunc(auth.Login)))
-	mux.Handle("POST /api/v1/auth/logout", http.HandlerFunc(auth.Logout))
+	mux.Handle("POST /api/v1/auth/logout", rateLimit(http.HandlerFunc(auth.Logout)))
 
-	// User (authenticated)
-	mux.Handle("GET /api/v1/user/preferences", authReq(http.HandlerFunc(user.GetPreferences)))
-	mux.Handle("PUT /api/v1/user/preferences", authReq(http.HandlerFunc(user.UpdatePreferences)))
-	mux.Handle("GET /api/v1/user/watchlist", authReq(http.HandlerFunc(user.GetWatchlist)))
-	mux.Handle("POST /api/v1/user/watchlist", authReq(http.HandlerFunc(user.AddWatchlist)))
-	mux.Handle("DELETE /api/v1/user/watchlist/{id}", authReq(http.HandlerFunc(user.DeleteWatchlist)))
-	mux.Handle("GET /api/v1/user/pinned-launches", authReq(http.HandlerFunc(user.GetPinnedLaunches)))
-	mux.Handle("POST /api/v1/user/pinned-launches", authReq(http.HandlerFunc(user.AddPinnedLaunch)))
-	mux.Handle("DELETE /api/v1/user/pinned-launches/{id}", authReq(http.HandlerFunc(user.DeletePinnedLaunch)))
+	// User (authenticated + rate limited)
+	mux.Handle("GET /api/v1/user/preferences", rateLimit(authReq(http.HandlerFunc(user.GetPreferences))))
+	mux.Handle("PUT /api/v1/user/preferences", rateLimit(authReq(http.HandlerFunc(user.UpdatePreferences))))
+	mux.Handle("GET /api/v1/user/watchlist", rateLimit(authReq(http.HandlerFunc(user.GetWatchlist))))
+	mux.Handle("POST /api/v1/user/watchlist", rateLimit(authReq(http.HandlerFunc(user.AddWatchlist))))
+	mux.Handle("DELETE /api/v1/user/watchlist/{id}", rateLimit(authReq(http.HandlerFunc(user.DeleteWatchlist))))
+	mux.Handle("GET /api/v1/user/pinned-launches", rateLimit(authReq(http.HandlerFunc(user.GetPinnedLaunches))))
+	mux.Handle("POST /api/v1/user/pinned-launches", rateLimit(authReq(http.HandlerFunc(user.AddPinnedLaunch))))
+	mux.Handle("DELETE /api/v1/user/pinned-launches/{id}", rateLimit(authReq(http.HandlerFunc(user.DeletePinnedLaunch))))
 
 	// Space data
 	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))

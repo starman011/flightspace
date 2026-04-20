@@ -53,6 +53,13 @@ func (ac *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		utils.Error(w, http.StatusBadRequest, "password must be at most 72 characters")
 		return
 	}
+	// Validate display name — prevent XSS/oversized payloads
+	if req.DisplayName != nil {
+		if len(*req.DisplayName) > 50 {
+			utils.Error(w, http.StatusBadRequest, "display name must be at most 50 characters")
+			return
+		}
+	}
 
 	ctx := r.Context()
 
