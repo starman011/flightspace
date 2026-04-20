@@ -1,0 +1,228 @@
+.panel {
+  position: fixed;
+  top: 64px;
+  right: 0;
+  width: 340px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  background: rgba(6, 8, 18, 0.94);
+  backdrop-filter: blur(24px);
+  border-left: 1px solid rgba(140, 100, 255, 0.15);
+  border-bottom: 1px solid rgba(140, 100, 255, 0.08);
+  border-bottom-left-radius: 16px;
+  padding: 20px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.symbol {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.titles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.typeBadge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.galaxy {
+  color: rgba(120, 160, 255, 0.9);
+  background: rgba(120, 160, 255, 0.1);
+  border: 1px solid rgba(120, 160, 255, 0.25);
+}
+
+.qso {
+  color: rgba(255, 180, 60, 0.9);
+  background: rgba(255, 180, 60, 0.1);
+  border: 1px solid rgba(255, 180, 60, 0.25);
+}
+
+.close {
+  background: none;
+  border: none;
+  color: rgba(195, 245, 255, 0.4);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.close:hover { color: rgba(195, 245, 255, 0.9); }
+
+/* ── Stats table ──────────────────────────────────────────────────────────── */
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(140, 100, 255, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+.statRow:nth-child(odd) {
+  background: rgba(140, 100, 255, 0.04);
+}
+
+.statLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(195, 200, 255, 0.45);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(195, 220, 255, 0.85);
+  text-align: right;
+}
+
+.statHighlight {
+  color: rgba(160, 140, 255, 0.95);
+  font-weight: 600;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+
+.sectionTitle {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(140, 100, 255, 0.5);
+  margin: 4px 0 0;
+}
+
+.description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(195, 210, 255, 0.6);
+  margin: 0;
+}
+
+.loading {
+  text-align: center;
+  color: rgba(195, 210, 255, 0.3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 8px;
+}
+
+/* ── Redshift bar ─────────────────────────────────────────────────────────── */
+
+.zBar {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg,
+    hsl(187, 80%, 58%) 0%,
+    hsl(223, 75%, 55%) 25%,
+    hsl(260, 70%, 50%) 50%,
+    hsl(290, 65%, 45%) 75%,
+    hsl(320, 60%, 42%) 100%
+  );
+  position: relative;
+}
+
+.zMarker {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 12px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  transform: translateX(-50%);
+}
+
+/* ── Morphology icon ──────────────────────────────────────────────────────── */
+
+.morphIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.morphDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .panel {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    right: 0;
+    max-height: 55vh;
+    border-left: none;
+    border-top: 1px solid rgba(140, 100, 255, 0.15);
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    animation-name: slideUp;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}

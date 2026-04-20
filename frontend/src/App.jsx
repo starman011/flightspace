@@ -26,6 +26,7 @@ import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
 import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import AirportPanel from './components/AirportPanel/AirportPanel'
 import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
+import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -138,6 +139,7 @@ export default function App() {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
+  const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const pins = usePins(isAuthenticated, sessionToken)
@@ -208,10 +210,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleCameraScale = useCallback((scale) => {
     setActiveScale(scale)
     globeRef.current?.setCameraScale?.(scale)
-    // Disable AR when leaving galaxy scale
-    if (scale !== 'galaxy' && arActive) {
-      globeRef.current?.disableAR?.()
-      setArActive(false)
+    // Clear galaxy-scale selections when leaving
+    if (scale !== 'galaxy') {
+      setSelectedSkyObject(null)
+      setSelectedGalaxy(null)
+      if (arActive) {
+        globeRef.current?.disableAR?.()
+        setArActive(false)
+      }
     }
   }, [arActive])
 
@@ -219,8 +225,17 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
   const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
-  const handleSkyObjectClick = useCallback((obj) => setSelectedSkyObject(obj), [])
+  const handleSkyObjectClick = useCallback((obj) => {
+    if (obj?.type === 'desi_galaxy') {
+      setSelectedGalaxy(obj)
+      setSelectedSkyObject(null)
+    } else {
+      setSelectedSkyObject(obj)
+      setSelectedGalaxy(null)
+    }
+  }, [])
   const handleSkyObjectClose = useCallback(() => setSelectedSkyObject(null), [])
+  const handleGalaxyClose = useCallback(() => setSelectedGalaxy(null), [])
   const handleMoonSiteClick = useCallback((site) => setSelectedMoonSite(site), [])
   // Smart close: if a site is open, go back to Moon overview; otherwise exit
   // Moon scale entirely and return to Earth.
@@ -509,6 +524,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <SkyObjectPanel
           skyObject={selectedSkyObject}
           onClose={handleSkyObjectClose}
+        />
+      )}
+
+      {selectedGalaxy && activeScale === 'galaxy' && (
+        <GalaxyPanel
+          galaxy={selectedGalaxy}
+          onClose={handleGalaxyClose}
         />
       )}
 

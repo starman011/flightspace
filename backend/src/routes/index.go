@@ -31,6 +31,7 @@ func Setup(
 	waitlist := controllers.NewWaitlistController(pool)
 	airport  := controllers.NewAirportController(rdb)
 	lunar    := controllers.NewLunarController(rdb)
+	desi     := controllers.NewDESIController()
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -74,6 +75,10 @@ func Setup(
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
+
+	// DESI deep space catalog
+	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))
+	mux.Handle("GET /api/v1/desi/galaxy/{targetid}", rateLimit(http.HandlerFunc(desi.GetGalaxyDetail)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)

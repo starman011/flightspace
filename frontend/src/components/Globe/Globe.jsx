@@ -18,6 +18,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
+import { createDESILayer } from './DESILayer.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import { createMoonScene } from './MoonScene.js'
@@ -1389,6 +1390,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Hidden by default; shown when cameraScale transitions to 'galaxy'.
     const galaxySystem = createNightSkyScene(scene)
 
+    // DESI galaxy layer — 100K real galaxies/quasars, shown in galaxy mode.
+    const desiLayer = createDESILayer()
+    scene.add(desiLayer.group)
+
     // Hidden by default; shown when cameraScale transitions to 'moon'.
     const moonScene = createMoonScene(scene)
 
@@ -2027,6 +2032,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.onSkyObjectClick?.({ type: 'constellation', id: bestConst.id, name: bestConst.name })
           return
         }
+        // Check DESI galaxies via screen-space proximity
+        const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
+        if (desiHit) {
+          int.current.onSkyObjectClick?.(desiHit)
+          return
+        }
         return
       }
 
@@ -2222,7 +2233,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _showEarth
           int.current.placeDotsMesh.visible = _showEarth
           _setEarthEntitiesVisible(_showEarth)
-          if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
+          if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide(); desiLayer.hide() }
           else { moonScene.hide(); solarSystem.hide(); galaxySystem.hide() }
         }
 
@@ -2232,7 +2243,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
           if (isSolar) solarSystem.show(); else solarSystem.hide()
-          if (isGalaxy) galaxySystem.show(); else galaxySystem.hide()
+          if (isGalaxy) { galaxySystem.show(); desiLayer.show() } else { galaxySystem.hide(); desiLayer.hide() }
           if (isMoon) moonScene.show(); else moonScene.hide()
           const _earthVisible = !isMoon && !isSolar && !isGalaxy
           int.current.earthMesh.visible = _earthVisible
@@ -2278,11 +2289,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             int.current.cloudsMesh.visible = _showEarth
             int.current.placeDotsMesh.visible = _showEarth
             _setEarthEntitiesVisible(_showEarth)
-            if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide() }
+            if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide(); desiLayer.hide() }
             else if (isSolar) { solarSystem.show(); moonScene.hide() }
-            else if (isGalaxy) { galaxySystem.show(); solarSystem.hide(); moonScene.hide() }
+            else if (isGalaxy) { galaxySystem.show(); desiLayer.show(); solarSystem.hide(); moonScene.hide() }
             else { solarSystem.hide(); moonScene.hide() }
-            if (!isGalaxy) galaxySystem.hide()
+            if (!isGalaxy) { galaxySystem.hide(); desiLayer.hide() }
           }
         }
       }
@@ -2671,6 +2682,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       pickTarget.dispose()
       solarSystem.dispose()
       galaxySystem.dispose()
+      desiLayer.dispose()
       moonScene.dispose()
       if (arController.isActive()) arController.disable()
       controls.dispose()
