@@ -117,14 +117,29 @@ export function createDESILayer() {
   const glowTex = makeGlowTexture()
 
   // ── Fetch + build ────────────────────────────────────────────────────────
+  // Primary: static pre-baked JSON (works without backend).
+  // Fallback: backend API proxy (for fresh data).
   async function load() {
     if (loaded || loading) return
     loading = true
     try {
-      const res = await fetch(`${API}/api/v1/desi/galaxies`)
+      // Static file — always available, no CORS issues
+      let res = await fetch('/desi-galaxies.json')
+      if (!res.ok) {
+        // Fallback to backend proxy
+        res = await fetch(`${API}/api/v1/desi/galaxies`)
+      }
       if (!res.ok) throw new Error(`status ${res.status}`)
-      galaxyData = await res.json()
-      if (galaxyData && galaxyData.length > 0) {
+      const raw = await res.json()
+      // Normalize: static file uses 'G'/'Q', backend uses 'GALAXY'/'QSO'
+      galaxyData = raw.map(g => ({
+        t: g.t,
+        r: g.r,
+        d: g.d,
+        z: g.z,
+        s: g.s === 'G' ? 'GALAXY' : g.s === 'Q' ? 'QSO' : g.s,
+      }))
+      if (galaxyData.length > 0) {
         buildPointCloud()
         loaded = true
       }
