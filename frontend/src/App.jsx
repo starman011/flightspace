@@ -177,6 +177,14 @@ export default function App() {
     window.history.replaceState(null, '', path)
   }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen])
 
+// Sync initial scale to Globe on mount (e.g., direct /deep-space URL)
+  useEffect(() => {
+    if (init.activeScale !== 'earth') {
+      globeRef.current?.setCameraScale?.(init.activeScale)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
   // In pad-focus mode pass an empty map so the globe is clean

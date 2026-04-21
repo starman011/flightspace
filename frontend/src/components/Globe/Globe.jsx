@@ -2219,12 +2219,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _earthVisible
           int.current.placeDotsMesh.visible = _earthVisible
           _setEarthEntitiesVisible(_earthVisible)
+          int.current._scaleReadyFired = targetScale
           int.current.onScaleReady?.(targetScale)
         }
       } else {
         const prevScale = int.current._lastAppliedScale || 'earth'
         if (prevScale !== targetScale) {
           int.current._lastAppliedScale = targetScale
+          int.current._scaleReadyFired = null
           int.current.camTweenStart = Date.now()
           int.current.camTweenFrom  = camera.position.clone()
           // Cinematic curved path for Moon transitions (either direction).
@@ -2265,6 +2267,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             else { solarSystem.hide(); moonScene.hide() }
             if (!isGalaxy) { desiLayer.hide() }
           }
+        } else if (!int.current._scaleReadyFired || int.current._scaleReadyFired !== targetScale) {
+          // Steady state — no tween needed, fire onScaleReady once
+          int.current._scaleReadyFired = targetScale
+          int.current.onScaleReady?.(targetScale)
         }
       }
 
