@@ -250,11 +250,23 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 
 	if !isNumeric && len(results) < limit {
 		escaped := strings.ReplaceAll(q, "'", "''")
+		// Title-case the query so SIMBAD case-sensitive ident matches work
+		// e.g. "andromeda" → "Andromeda", "ngc" → "Ngc", "m 31" → "M 31"
+		words := strings.Fields(escaped)
+		for i, w := range words {
+			if len(w) > 0 {
+				words[i] = strings.ToUpper(w[:1]) + w[1:]
+			}
+		}
+		titleQ := strings.Join(words, " ")
+		// Also try all-uppercase for catalog prefixes (NGC, UGC, etc.)
+		upperQ := strings.ToUpper(escaped)
 		// Search both main_id AND aliases (ident table) for common names
 		// like "Andromeda", "NGC", "Messier", etc.
+		// Note: rvz_redshift removed — causes ADQL parse error on SIMBAD TAP
 		simbadQuery := fmt.Sprintf(
-			`SELECT DISTINCT TOP %d b.main_id, b.ra, b.dec, b.otype, b.rvz_redshift FROM ident AS i JOIN basic AS b ON i.oidref = b.oid WHERE i.id LIKE '%%%s%%' AND b.otype IN ('G','QSO','AGN','GiG','GiP','IG','GrG','BiC','ClG') ORDER BY b.rvz_redshift DESC`,
-			limit, escaped,
+			`SELECT DISTINCT TOP %d b.main_id, b.ra, b.dec, b.otype FROM ident AS i JOIN basic AS b ON i.oidref = b.oid WHERE (i.id LIKE '%%%s%%' OR i.id LIKE '%%%s%%') AND b.otype IN ('G','QSO','AGN','GiG','GiP','IG','GrG','BiC','ClG')`,
+			limit, titleQ, upperQ,
 		)
 		params := url.Values{}
 		params.Set("REQUEST", "doQuery")
@@ -288,12 +300,8 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 					if e1 != nil || e2 != nil {
 						continue
 					}
-					zVal := 0.0
-					if len(rec) >= 5 {
-						zVal, _ = strconv.ParseFloat(strings.TrimSpace(rec[4]), 64)
-					}
 					results = append(results, SearchResult{
-						RA: ra, Dec: dec, Z: zVal,
+						RA: ra, Dec: dec, Z: 0,
 						SpecType: strings.TrimSpace(rec[3]),
 						Name:     name, Source: "simbad",
 					})

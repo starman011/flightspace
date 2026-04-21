@@ -131,11 +131,7 @@ export default function App() {
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
-  const [activeScale, _setActiveScale]       = useState(init.activeScale)
-  const setActiveScale = useCallback((v) => {
-    console.trace('[SCALE_STATE]', v)
-    _setActiveScale(v)
-  }, [])
+  const [activeScale, setActiveScale]       = useState(init.activeScale)
 
   const { asteroids } = useAsteroids(activeScale === 'solar')
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
@@ -144,11 +140,7 @@ export default function App() {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
-  const [selectedGalaxy, _setSelectedGalaxy] = useState(null)
-  const setSelectedGalaxy = useCallback((v) => {
-    console.trace('[GALAXY_STATE]', v ? 'SET' : 'CLEAR', v?.targetid ?? '')
-    _setSelectedGalaxy(v)
-  }, [])
+  const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
