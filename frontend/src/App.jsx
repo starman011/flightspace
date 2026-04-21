@@ -131,7 +131,11 @@ export default function App() {
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
   const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
-  const [activeScale, setActiveScale]       = useState(init.activeScale)
+  const [activeScale, _setActiveScale]       = useState(init.activeScale)
+  const setActiveScale = useCallback((v) => {
+    console.trace('[SCALE_STATE]', v)
+    _setActiveScale(v)
+  }, [])
 
   const { asteroids } = useAsteroids(activeScale === 'solar')
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
