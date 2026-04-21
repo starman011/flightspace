@@ -140,7 +140,11 @@ export default function App() {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
-  const [selectedGalaxy, setSelectedGalaxy] = useState(null)
+  const [selectedGalaxy, _setSelectedGalaxy] = useState(null)
+  const setSelectedGalaxy = useCallback((v) => {
+    console.trace('[GALAXY_STATE]', v ? 'SET' : 'CLEAR', v?.targetid ?? '')
+    _setSelectedGalaxy(v)
+  }, [])
   const [guideHidden, setGuideHidden]       = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
