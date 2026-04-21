@@ -220,8 +220,6 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 	}
 
 	var results []SearchResult
-	qUpper := strings.ToUpper(q)
-
 	// 1. Search cached DESI catalog by target ID prefix
 	desiCacheMu.RLock()
 	cached := desiCache
@@ -251,9 +249,12 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 	}
 
 	if !isNumeric && len(results) < limit {
+		escaped := strings.ReplaceAll(q, "'", "''")
+		// Search both main_id AND aliases (ident table) for common names
+		// like "Andromeda", "NGC", "Messier", etc.
 		simbadQuery := fmt.Sprintf(
-			`SELECT TOP %d main_id, ra, dec, otype, rvz_redshift FROM basic WHERE main_id LIKE '%%%s%%' AND (otype = 'G' OR otype = 'QSO' OR otype = 'AGN' OR otype = 'GiG' OR otype = 'GiP' OR otype = 'IG' OR otype LIKE 'G%%')`,
-			limit, strings.ReplaceAll(qUpper, "'", "''"),
+			`SELECT DISTINCT TOP %d b.main_id, b.ra, b.dec, b.otype, b.rvz_redshift FROM ident AS i JOIN basic AS b ON i.oidref = b.oid WHERE i.id LIKE '%%%s%%' AND b.otype IN ('G','QSO','AGN','GiG','GiP','IG','GrG','BiC','ClG') ORDER BY b.rvz_redshift DESC`,
+			limit, escaped,
 		)
 		params := url.Values{}
 		params.Set("REQUEST", "doQuery")
@@ -268,6 +269,7 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 				body, _ := io.ReadAll(resp.Body)
 				rdr := csv.NewReader(strings.NewReader(string(body)))
 				rdr.Read() // skip header
+				seen := make(map[string]bool)
 				for {
 					rec, err := rdr.Read()
 					if err != nil {
@@ -277,8 +279,15 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 						continue
 					}
 					name := strings.TrimSpace(rec[0])
-					ra, _ := strconv.ParseFloat(strings.TrimSpace(rec[1]), 64)
-					dec, _ := strconv.ParseFloat(strings.TrimSpace(rec[2]), 64)
+					if seen[name] {
+						continue
+					}
+					seen[name] = true
+					ra, e1 := strconv.ParseFloat(strings.TrimSpace(rec[1]), 64)
+					dec, e2 := strconv.ParseFloat(strings.TrimSpace(rec[2]), 64)
+					if e1 != nil || e2 != nil {
+						continue
+					}
 					zVal := 0.0
 					if len(rec) >= 5 {
 						zVal, _ = strconv.ParseFloat(strings.TrimSpace(rec[4]), 64)

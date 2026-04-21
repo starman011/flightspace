@@ -256,13 +256,18 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
   const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
+  const galaxySetAtRef = useRef(0)
   const handleSkyObjectClick = useCallback((obj) => {
     if (!obj) {
+      // Ignore null within 300ms of a galaxy selection (prevents flash from
+      // rapid pointer-event double-fire or OrbitControls re-dispatch)
+      if (Date.now() - galaxySetAtRef.current < 300) return
       setSelectedGalaxy(null)
       setSelectedSkyObject(null)
       return
     }
     if (obj.type === 'desi_galaxy') {
+      galaxySetAtRef.current = Date.now()
       setSelectedGalaxy(obj)
       setSelectedSkyObject(null)
     } else {

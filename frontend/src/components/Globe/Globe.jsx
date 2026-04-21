@@ -2001,6 +2001,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
         if (desiHit) {
           desiLayer.setSelected(desiHit.targetid)
+          e.stopPropagation()
           int.current.onSkyObjectClick?.(desiHit)
           return
         }

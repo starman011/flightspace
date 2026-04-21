@@ -128,7 +128,7 @@ export default function GalaxyPanel({ galaxy, onClose }) {
   const oiii = detail?.oiii_flux
 
   return (
-    <div className={styles.panel}>
+    <div className={styles.panel} onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={styles.header}>
         <span className={styles.symbol}>{isQSO ? '◈' : '⊛'}</span>
