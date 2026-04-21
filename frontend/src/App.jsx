@@ -141,6 +141,7 @@ export default function App() {
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
+  const [guideHidden, setGuideHidden]       = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
@@ -225,6 +226,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     if (scale !== 'galaxy') {
       setSelectedSkyObject(null)
       setSelectedGalaxy(null)
+      setGuideHidden(false)
       if (arActive) {
         globeRef.current?.disableAR?.()
         setArActive(false)
@@ -553,8 +555,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && (
-        <DeepSpaceGuide onClose={() => handleCameraScale('solar')} />
+      {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && !guideHidden && (
+        <DeepSpaceGuide onClose={() => setGuideHidden(true)} />
       )}
 
       {activeScale === 'moon' && (
