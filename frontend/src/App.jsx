@@ -211,7 +211,6 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   const handleSearchSelect = useCallback((result) => {
     if (result._type === 'galaxy') {
-      // Galaxy search result — open GalaxyPanel
       setSelectedGalaxy({
         type: 'desi_galaxy',
         targetid: result.targetid || '',
@@ -220,15 +219,16 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         z: result.z,
         spectype: result.spectype === 'QSO' ? 'QSO' : 'GALAXY',
       })
-      // If not already in galaxy mode, switch
+      // Switch to galaxy mode if needed
       if (activeScale !== 'galaxy') {
-        handleCameraScale('galaxy')
+        setActiveScale('galaxy')
+        globeRef.current?.setCameraScale?.('galaxy')
       }
     } else {
       setSelectedIcao24(result.icao24)
     }
     setSearchOpen(false)
-  }, [activeScale, handleCameraScale])
+  }, [activeScale])
 
   const handleTrailData = useCallback((trailPoints, routeData) => {
     globeRef.current?.drawTrail?.(trailPoints, routeData)
