@@ -83,18 +83,25 @@ function fmtBigNum(n) {
 
 export default function GalaxyPanel({ galaxy, onClose }) {
   const [detail, setDetail] = useState(null)
+  const [enrich, setEnrich] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!galaxy?.targetid) return
     setDetail(null)
+    setEnrich(null)
     setLoading(true)
     fetch(`${API}/api/v1/desi/galaxy/${galaxy.targetid}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setDetail(d))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [galaxy?.targetid])
+    // Enrichment: cross-match NED/SIMBAD for known names
+    fetch(`${API}/api/v1/desi/enrich?ra=${galaxy.ra}&dec=${galaxy.dec}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.known_name) setEnrich(d) })
+      .catch(() => {})
+  }, [galaxy?.targetid, galaxy?.ra, galaxy?.dec])
 
   if (!galaxy) return null
 
@@ -127,11 +134,12 @@ export default function GalaxyPanel({ galaxy, onClose }) {
         <span className={styles.symbol}>{isQSO ? '◈' : '⊛'}</span>
         <div className={styles.titles}>
           <h3 className={styles.name}>
-            DESI {isQSO ? 'Quasar' : 'Galaxy'}
+            {enrich?.known_name || `DESI ${isQSO ? 'Quasar' : 'Galaxy'}`}
           </h3>
           <span className={`${styles.typeBadge} ${isQSO ? styles.qso : styles.galaxy}`}>
             {isQSO ? 'QSO — Active Galactic Nucleus' : 'Galaxy'}
             {detail?.subtype ? ` · ${detail.subtype}` : ''}
+            {enrich?.source ? ` · ${enrich.source}` : ''}
           </span>
         </div>
         <button className={styles.close} onClick={onClose}>✕</button>
@@ -395,8 +403,44 @@ export default function GalaxyPanel({ galaxy, onClose }) {
         )}
       </div>
 
+      {/* ── Cross-identifications ────────────────────────────────────── */}
+      {enrich && (
+        <div>
+          <div className={styles.sectionTitle}>Cross-Identifications</div>
+          <div className={styles.stats}>
+            <div className={styles.statRow}>
+              <span className={styles.statLabel}>Catalog Name</span>
+              <span className={styles.statValue}>{enrich.known_name}</span>
+            </div>
+            {enrich.object_type && (
+              <div className={styles.statRow}>
+                <span className={styles.statLabel}>NED Type</span>
+                <span className={styles.statValue}>{enrich.object_type}</span>
+              </div>
+            )}
+            {enrich.ned_redshift && (
+              <div className={styles.statRow}>
+                <span className={styles.statLabel}>Catalog z</span>
+                <span className={styles.statValue}>{enrich.ned_redshift}</span>
+              </div>
+            )}
+            {enrich.other_names?.length > 0 && (
+              <div className={styles.statRow}>
+                <span className={styles.statLabel}>Also Known As</span>
+                <span className={styles.statValue}>{enrich.other_names.join(', ')}</span>
+              </div>
+            )}
+            <div className={styles.statRow}>
+              <span className={styles.statLabel}>Source</span>
+              <span className={styles.statValue}>{enrich.source}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <p className={styles.description} style={{ fontSize: 10, opacity: 0.4 }}>
-        Data: DESI DR1 — NOIRLab Astro Data Lab
+        Data: DESI DR1 — NOIRLab Astro Data Lab · Images: Legacy Survey DR10
+        {enrich?.source ? ` · Cross-IDs: ${enrich.source}` : ''}
       </p>
     </div>
   )

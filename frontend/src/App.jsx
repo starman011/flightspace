@@ -539,14 +539,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {selectedSkyObject && scaleReady === 'galaxy' && (
+      {selectedSkyObject && activeScale === 'galaxy' && (
         <SkyObjectPanel
           skyObject={selectedSkyObject}
           onClose={handleSkyObjectClose}
         />
       )}
 
-      {scaleReady === 'galaxy' && selectedGalaxy && (
+      {activeScale === 'galaxy' && selectedGalaxy && (
         <GalaxyPanel
           galaxy={selectedGalaxy}
           onClose={handleGalaxyClose}

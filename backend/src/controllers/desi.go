@@ -195,6 +195,134 @@ func queryTAP(adql string) (string, error) {
 	return string(b), nil
 }
 
+// GetGalaxyEnrichment queries NED + SIMBAD for known names / cross-IDs near the target.
+func (dc *DESIController) GetGalaxyEnrichment(w http.ResponseWriter, r *http.Request) {
+	raStr := r.URL.Query().Get("ra")
+	decStr := r.URL.Query().Get("dec")
+	if raStr == "" || decStr == "" {
+		http.Error(w, `{"error":"ra and dec required"}`, http.StatusBadRequest)
+		return
+	}
+	ra, err1 := strconv.ParseFloat(raStr, 64)
+	dec, err2 := strconv.ParseFloat(decStr, 64)
+	if err1 != nil || err2 != nil {
+		http.Error(w, `{"error":"invalid coordinates"}`, http.StatusBadRequest)
+		return
+	}
+
+	type EnrichResult struct {
+		KnownName   string `json:"known_name,omitempty"`
+		ObjectType  string `json:"object_type,omitempty"`
+		NEDRedshift string `json:"ned_redshift,omitempty"`
+		Source      string `json:"source,omitempty"`
+		OtherNames  []string `json:"other_names,omitempty"`
+	}
+
+	// NED TAP cone search — 18 arcsec radius (~0.005 deg)
+	nedQuery := fmt.Sprintf(
+		`SELECT TOP 5 prefname, ra, dec, pretype, z FROM NEDTAP.objdir WHERE 1=CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',%.6f,%.6f,0.005))`,
+		ra, dec,
+	)
+	nedParams := url.Values{}
+	nedParams.Set("REQUEST", "doQuery")
+	nedParams.Set("LANG", "ADQL")
+	nedParams.Set("FORMAT", "csv")
+	nedParams.Set("QUERY", nedQuery)
+
+	result := EnrichResult{}
+	var otherNames []string
+
+	nedResp, err := tapClient.Get("https://ned.ipac.caltech.edu/tap/sync?" + nedParams.Encode())
+	if err == nil {
+		defer nedResp.Body.Close()
+		if nedResp.StatusCode == http.StatusOK {
+			body, _ := io.ReadAll(nedResp.Body)
+			rdr := csv.NewReader(strings.NewReader(string(body)))
+			hdr, _ := rdr.Read()
+			_ = hdr
+			for {
+				rec, err := rdr.Read()
+				if err != nil {
+					break
+				}
+				if len(rec) < 5 {
+					continue
+				}
+				name := strings.TrimSpace(rec[0])
+				objType := strings.TrimSpace(rec[3])
+				zVal := strings.TrimSpace(rec[4])
+
+				// Skip stars, pick galaxies/QSOs first
+				if objType == "G" || objType == "QSO" || objType == "GGroup" || objType == "GPair" {
+					if result.KnownName == "" {
+						result.KnownName = name
+						result.ObjectType = objType
+						result.NEDRedshift = zVal
+						result.Source = "NED"
+					} else {
+						otherNames = append(otherNames, name)
+					}
+				} else if result.KnownName == "" {
+					// Store non-galaxy match as fallback
+					otherNames = append(otherNames, name+" ("+objType+")")
+				}
+			}
+		}
+	}
+
+	// SIMBAD TAP fallback if NED found nothing
+	if result.KnownName == "" {
+		simbadQuery := fmt.Sprintf(
+			`SELECT TOP 3 main_id, ra, dec, otype, rvz_redshift FROM basic WHERE 1=CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',%.6f,%.6f,0.005))`,
+			ra, dec,
+		)
+		simbadParams := url.Values{}
+		simbadParams.Set("REQUEST", "doQuery")
+		simbadParams.Set("LANG", "ADQL")
+		simbadParams.Set("FORMAT", "csv")
+		simbadParams.Set("QUERY", simbadQuery)
+
+		sResp, err := tapClient.Get("https://simbad.cds.unistra.fr/simbad/sim-tap/sync?" + simbadParams.Encode())
+		if err == nil {
+			defer sResp.Body.Close()
+			if sResp.StatusCode == http.StatusOK {
+				body, _ := io.ReadAll(sResp.Body)
+				rdr := csv.NewReader(strings.NewReader(string(body)))
+				rdr.Read() // skip header
+				for {
+					rec, err := rdr.Read()
+					if err != nil {
+						break
+					}
+					if len(rec) < 4 {
+						continue
+					}
+					name := strings.TrimSpace(rec[0])
+					objType := strings.TrimSpace(rec[3])
+					if result.KnownName == "" {
+						result.KnownName = name
+						result.ObjectType = objType
+						result.Source = "SIMBAD"
+						if len(rec) >= 5 {
+							result.NEDRedshift = strings.TrimSpace(rec[4])
+						}
+					} else {
+						otherNames = append(otherNames, name)
+					}
+				}
+			}
+		}
+	}
+
+	if len(otherNames) > 0 {
+		result.OtherNames = otherNames
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	json.NewEncoder(w).Encode(result)
+}
+
 // ── CSV parsers ────────────────────────────────────────────────────────────
 
 func parseBulkCSV(data string) []DESIGalaxy {

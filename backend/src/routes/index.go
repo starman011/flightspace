@@ -79,6 +79,7 @@ func Setup(
 	// DESI deep space catalog
 	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))
 	mux.Handle("GET /api/v1/desi/galaxy/{targetid}", rateLimit(http.HandlerFunc(desi.GetGalaxyDetail)))
+	mux.Handle("GET /api/v1/desi/enrich", rateLimit(http.HandlerFunc(desi.GetGalaxyEnrichment)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)
