@@ -1995,12 +1995,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const dragLimit = e.pointerType === 'touch' ? 20 : 14
       if (dx > dragLimit || dy > dragLimit) return
       const isTouch = e.pointerType === 'touch'
-      console.log('[DESI] pointerUp scale:', int.current.targetCameraScale, 'drag:', dx, dy)
 
       // ── Galaxy scale: pick DESI galaxies ────────────────────────────
       if (int.current.targetCameraScale === 'galaxy') {
         const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
-        console.log('[DESI] click pick result:', desiHit, 'callback:', !!int.current.onSkyObjectClick)
         if (desiHit) {
           desiLayer.setSelected(desiHit.targetid)
           int.current.onSkyObjectClick?.(desiHit)
@@ -2612,8 +2610,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       hoveredId: null,
       hoverPos: null,
       setHoverTooltip: (...args) => setHoverTooltipRef.current?.(...args),
-      onAircraftClick: null,
-      onViewportChange: null,
+      onAircraftClick: int.current.onAircraftClick || null,
+      onViewportChange: int.current.onViewportChange || null,
+      onSkyObjectClick: int.current.onSkyObjectClick || null,
+      onMoonSiteClick: int.current.onMoonSiteClick || null,
+      onPlanetClick: int.current.onPlanetClick || null,
+      onAirportClick: int.current.onAirportClick || null,
+      onScaleReady: int.current.onScaleReady || null,
       selPos: null,
       planeScale: 0.01,
       needsInstanceRebuild: false,
