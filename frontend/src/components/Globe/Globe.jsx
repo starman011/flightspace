@@ -894,7 +894,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel, onScaleReady }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -1124,6 +1124,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   useEffect(() => { int.current.onAirportClick = onAirportClick }, [onAirportClick])
   useEffect(() => { int.current.onSkyObjectClick = onSkyObjectClick }, [onSkyObjectClick])
   useEffect(() => { int.current.onMoonSiteClick = onMoonSiteClick }, [onMoonSiteClick])
+  useEffect(() => { int.current.onScaleReady = onScaleReady }, [onScaleReady])
 
   // Push NEO asteroid data into the solar scene whenever it arrives
   useEffect(() => {
@@ -2218,6 +2219,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _earthVisible
           int.current.placeDotsMesh.visible = _earthVisible
           _setEarthEntitiesVisible(_earthVisible)
+          int.current.onScaleReady?.(targetScale)
         }
       } else {
         const prevScale = int.current._lastAppliedScale || 'earth'

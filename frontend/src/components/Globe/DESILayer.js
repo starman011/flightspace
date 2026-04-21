@@ -12,6 +12,8 @@
 import {
   Object3D, Points, BufferGeometry, Float32BufferAttribute,
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
+  LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
+  Sprite, SpriteMaterial,
 } from 'three'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -141,6 +143,7 @@ export function createDESILayer() {
         galaxyData = normalizeRaw(await res.json())
         if (galaxyData.length > 0) {
           buildPointCloud()
+          buildScaleReferences()
           loaded = true
         }
       }
@@ -216,6 +219,77 @@ export function createDESILayer() {
 
     pointCloud = new Points(geom, mat)
     group.add(pointCloud)
+  }
+
+  // ── Earth marker + distance shells ─────────────────────────────────────
+  let earthMarker = null
+  const shellMeshes = []
+
+  function buildScaleReferences() {
+    // Earth marker: glowing sphere at origin
+    const earthGeo = new SphereGeometry(0.8, 16, 16)
+    const earthMat = new MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.7 })
+    earthMarker = new Mesh(earthGeo, earthMat)
+    group.add(earthMarker)
+
+    // Earth label sprite
+    const labelTex = makeTextSprite('YOU ARE HERE', '#66bbff')
+    const labelSprite = new Sprite(new SpriteMaterial({ map: labelTex, transparent: true, depthWrite: false }))
+    labelSprite.scale.set(12, 3, 1)
+    labelSprite.position.set(0, 3, 0)
+    group.add(labelSprite)
+
+    // Distance shells: faint wireframe rings at 1, 5, 10 Bly
+    const shells = [
+      { z: 0.076, label: '1 Billion Light-Years', color: 0x44ccff },
+      { z: 0.42,  label: '5 Billion Light-Years', color: 0x7788ff },
+      { z: 1.0,   label: '10 Billion Light-Years', color: 0xaa66ff },
+    ]
+
+    for (const shell of shells) {
+      const r = zToRadius(shell.z)
+
+      // 3 great-circle rings (XY, XZ, YZ planes) for a sphere-like wireframe
+      for (const plane of ['xy', 'xz', 'yz']) {
+        const pts = []
+        const segs = 128
+        for (let i = 0; i <= segs; i++) {
+          const a = (i / segs) * Math.PI * 2
+          const c = Math.cos(a) * r, s = Math.sin(a) * r
+          if (plane === 'xy') pts.push(c, s, 0)
+          else if (plane === 'xz') pts.push(c, 0, s)
+          else pts.push(0, c, s)
+        }
+        const geo = new BufferGeometry()
+        geo.setAttribute('position', new Float32BufferAttribute(pts, 3))
+        const mat = new LineBasicMaterial({ color: shell.color, transparent: true, opacity: 0.08, depthWrite: false })
+        const line = new LineLoop(geo, mat)
+        group.add(line)
+        shellMeshes.push(line)
+      }
+
+      // Label sprite at top of shell
+      const sTex = makeTextSprite(shell.label, `#${shell.color.toString(16).padStart(6, '0')}`)
+      const sSprite = new Sprite(new SpriteMaterial({ map: sTex, transparent: true, depthWrite: false }))
+      const sr = zToRadius(shell.z)
+      sSprite.scale.set(24, 6, 1)
+      sSprite.position.set(0, sr + 4, 0)
+      group.add(sSprite)
+      shellMeshes.push(sSprite)
+    }
+  }
+
+  function makeTextSprite(text, color) {
+    const canvas = document.createElement('canvas')
+    canvas.width = 512; canvas.height = 128
+    const ctx = canvas.getContext('2d')
+    ctx.font = '600 32px monospace'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = color
+    ctx.globalAlpha = 0.6
+    ctx.fillText(text, 256, 64)
+    return new CanvasTexture(canvas)
   }
 
   // ── Visibility ───────────────────────────────────────────────────────────
@@ -364,6 +438,11 @@ export function createDESILayer() {
       pointCloud.geometry.dispose()
       pointCloud.material.dispose()
     }
+    if (earthMarker) { earthMarker.geometry.dispose(); earthMarker.material.dispose() }
+    shellMeshes.forEach(m => {
+      if (m.geometry) m.geometry.dispose()
+      if (m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose() }
+    })
     glowTex.dispose()
   }
 

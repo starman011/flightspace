@@ -141,6 +141,7 @@ export default function App() {
   const [selectedAirport, setSelectedAirport] = useState(null)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
+  const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
   const pins = usePins(isAuthenticated, sessionToken)
@@ -210,6 +211,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   const handleCameraScale = useCallback((scale) => {
     setActiveScale(scale)
+    setScaleReady(null)  // panels wait until tween completes
     globeRef.current?.setCameraScale?.(scale)
     // Clear galaxy-scale selections when leaving
     if (scale !== 'galaxy') {
@@ -221,6 +223,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       }
     }
   }, [arActive])
+
+  const handleScaleReady = useCallback((scale) => setScaleReady(scale), [])
 
   const handlePlanetClick = useCallback((name) => setSelectedPlanet(name), [])
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
@@ -418,6 +422,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onMoonSiteClick={handleMoonSiteClick}
         neoData={asteroids}
         onZoomChange={setZoomedIn}
+        onScaleReady={handleScaleReady}
         mobilePanel={!!selectedIcao24}
       />
 
@@ -526,21 +531,21 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {selectedSkyObject && activeScale === 'galaxy' && (
+      {selectedSkyObject && scaleReady === 'galaxy' && (
         <SkyObjectPanel
           skyObject={selectedSkyObject}
           onClose={handleSkyObjectClose}
         />
       )}
 
-      {activeScale === 'galaxy' && selectedGalaxy && (
+      {scaleReady === 'galaxy' && selectedGalaxy && (
         <GalaxyPanel
           galaxy={selectedGalaxy}
           onClose={handleGalaxyClose}
         />
       )}
 
-      {activeScale === 'galaxy' && !selectedGalaxy && !selectedSkyObject && (
+      {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && (
         <DeepSpaceGuide onClose={() => handleCameraScale('solar')} />
       )}
 

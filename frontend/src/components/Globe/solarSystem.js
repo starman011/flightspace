@@ -95,7 +95,7 @@ export const SOLAR_FAR = AU_TO_WU * 480   // ~11.3M WU, 480 AU
 export const CAM_GALAXY = {
   position: [0, 0, 0.01],
   minDist:  0.01,
-  maxDist:  2,
+  maxDist:  400,
 }
 
 export const CAM_EARTH = {
