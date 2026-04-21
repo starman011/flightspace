@@ -195,6 +195,112 @@ func queryTAP(adql string) (string, error) {
 	return string(b), nil
 }
 
+// SearchGalaxies searches the cached DESI catalog by target ID prefix,
+// and optionally queries SIMBAD/NED for named objects.
+func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" || len(q) < 2 {
+		json.NewEncoder(w).Encode(map[string]any{"results": []any{}})
+		return
+	}
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
+	if n, err := strconv.Atoi(limitStr); err == nil && n > 0 && n <= 50 {
+		limit = n
+	}
+
+	type SearchResult struct {
+		TargetID string  `json:"targetid"`
+		RA       float64 `json:"ra"`
+		Dec      float64 `json:"dec"`
+		Z        float64 `json:"z"`
+		SpecType string  `json:"spectype"`
+		Name     string  `json:"name,omitempty"`
+		Source   string  `json:"source"` // "desi" or "simbad"
+	}
+
+	var results []SearchResult
+	qUpper := strings.ToUpper(q)
+
+	// 1. Search cached DESI catalog by target ID prefix
+	desiCacheMu.RLock()
+	cached := desiCache
+	desiCacheMu.RUnlock()
+
+	if cached != nil {
+		for _, g := range cached {
+			if strings.HasPrefix(g.TargetID, q) {
+				results = append(results, SearchResult{
+					TargetID: g.TargetID, RA: g.RA, Dec: g.Dec,
+					Z: g.Z, SpecType: g.SpecType, Source: "desi",
+				})
+				if len(results) >= limit {
+					break
+				}
+			}
+		}
+	}
+
+	// 2. If query looks like a name (not numeric), search SIMBAD
+	isNumeric := true
+	for _, c := range q {
+		if c < '0' || c > '9' {
+			isNumeric = false
+			break
+		}
+	}
+
+	if !isNumeric && len(results) < limit {
+		simbadQuery := fmt.Sprintf(
+			`SELECT TOP %d main_id, ra, dec, otype, rvz_redshift FROM basic WHERE main_id LIKE '%%%s%%' AND (otype = 'G' OR otype = 'QSO' OR otype = 'AGN' OR otype = 'GiG' OR otype = 'GiP' OR otype = 'IG' OR otype LIKE 'G%%')`,
+			limit, strings.ReplaceAll(qUpper, "'", "''"),
+		)
+		params := url.Values{}
+		params.Set("REQUEST", "doQuery")
+		params.Set("LANG", "ADQL")
+		params.Set("FORMAT", "csv")
+		params.Set("QUERY", simbadQuery)
+
+		resp, err := tapClient.Get("https://simbad.cds.unistra.fr/simbad/sim-tap/sync?" + params.Encode())
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				body, _ := io.ReadAll(resp.Body)
+				rdr := csv.NewReader(strings.NewReader(string(body)))
+				rdr.Read() // skip header
+				for {
+					rec, err := rdr.Read()
+					if err != nil {
+						break
+					}
+					if len(rec) < 4 {
+						continue
+					}
+					name := strings.TrimSpace(rec[0])
+					ra, _ := strconv.ParseFloat(strings.TrimSpace(rec[1]), 64)
+					dec, _ := strconv.ParseFloat(strings.TrimSpace(rec[2]), 64)
+					zVal := 0.0
+					if len(rec) >= 5 {
+						zVal, _ = strconv.ParseFloat(strings.TrimSpace(rec[4]), 64)
+					}
+					results = append(results, SearchResult{
+						RA: ra, Dec: dec, Z: zVal,
+						SpecType: strings.TrimSpace(rec[3]),
+						Name:     name, Source: "simbad",
+					})
+					if len(results) >= limit {
+						break
+					}
+				}
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	json.NewEncoder(w).Encode(map[string]any{"results": results})
+}
+
 // GetGalaxyEnrichment queries NED + SIMBAD for known names / cross-IDs near the target.
 func (dc *DESIController) GetGalaxyEnrichment(w http.ResponseWriter, r *http.Request) {
 	raStr := r.URL.Query().Get("ra")

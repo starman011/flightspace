@@ -210,9 +210,25 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   }, [])
 
   const handleSearchSelect = useCallback((result) => {
-    setSelectedIcao24(result.icao24)
+    if (result._type === 'galaxy') {
+      // Galaxy search result — open GalaxyPanel
+      setSelectedGalaxy({
+        type: 'desi_galaxy',
+        targetid: result.targetid || '',
+        ra: result.ra,
+        dec: result.dec,
+        z: result.z,
+        spectype: result.spectype === 'QSO' ? 'QSO' : 'GALAXY',
+      })
+      // If not already in galaxy mode, switch
+      if (activeScale !== 'galaxy') {
+        handleCameraScale('galaxy')
+      }
+    } else {
+      setSelectedIcao24(result.icao24)
+    }
     setSearchOpen(false)
-  }, [])
+  }, [activeScale, handleCameraScale])
 
   const handleTrailData = useCallback((trailPoints, routeData) => {
     globeRef.current?.drawTrail?.(trailPoints, routeData)
@@ -475,7 +491,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onOpen={() => setSearchOpen(true)}
           onClose={() => setSearchOpen(false)}
           onSelect={handleSearchSelect}
-          sessionToken={sessionToken}
+          activeScale={activeScale}
         />
       )}
 

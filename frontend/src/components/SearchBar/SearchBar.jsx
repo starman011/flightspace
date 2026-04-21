@@ -3,12 +3,14 @@ import styles from './SearchBar.module.css'
 
 const API = import.meta.env.VITE_API_URL || ''
 
-export default function SearchBar({ open, onOpen, onClose, onSelect }) {
+export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
+
+  const isDeepSpace = activeScale === 'galaxy'
 
   // Open on `/` or Ctrl+K
   useEffect(() => {
@@ -48,12 +50,22 @@ export default function SearchBar({ open, onOpen, onClose, onSelect }) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`${API}/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=10`, {
-          credentials: 'include',
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setResults(data.results ?? [])
+        if (isDeepSpace) {
+          // Galaxy search — DESI catalog + SIMBAD
+          const res = await fetch(`${API}/api/v1/desi/search?q=${encodeURIComponent(q)}&limit=10`)
+          if (res.ok) {
+            const data = await res.json()
+            setResults((data.results ?? []).map(r => ({ ...r, _type: 'galaxy' })))
+          }
+        } else {
+          // Flight search
+          const res = await fetch(`${API}/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=10`, {
+            credentials: 'include',
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setResults((data.results ?? []).map(r => ({ ...r, _type: 'flight' })))
+          }
         }
       } catch {
         // Silently ignore search errors
@@ -61,7 +73,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect }) {
         setLoading(false)
       }
     }, 300)
-  }, [])
+  }, [isDeepSpace])
 
   const handleChange = (e) => {
     const val = e.target.value
@@ -87,7 +99,10 @@ export default function SearchBar({ open, onOpen, onClose, onSelect }) {
             className={styles.input}
             value={query}
             onChange={handleChange}
-            placeholder="search callsign, flight, icao..."
+            placeholder={isDeepSpace
+              ? 'search galaxy name, NGC, Messier, target ID...'
+              : 'search callsign, flight, icao...'
+            }
             spellCheck={false}
             autoComplete="off"
           />
@@ -96,22 +111,37 @@ export default function SearchBar({ open, onOpen, onClose, onSelect }) {
 
         {results.length > 0 && (
           <ul className={styles.results}>
-            {results.map((r) => (
-              <li key={r.icao24} className={styles.result} onClick={() => handleSelect(r)}>
-                <span className={styles.callsign}>{r.callsign ?? r.icao24}</span>
-                {r.type_description && (
-                  <span className={styles.type}>{r.type_description}</span>
-                )}
-                {r.altitude != null && (
-                  <span className={styles.alt}>{Math.round(r.altitude).toLocaleString()} ft</span>
-                )}
-              </li>
+            {results.map((r, i) => (
+              r._type === 'galaxy' ? (
+                <li key={r.targetid || r.name || i} className={styles.result} onClick={() => handleSelect(r)}>
+                  <span className={styles.callsign}>{r.name || `DESI ${r.targetid}`}</span>
+                  <span className={styles.type}>
+                    {r.spectype === 'QSO' ? 'Quasar' : 'Galaxy'}
+                    {r.source === 'simbad' ? ' · SIMBAD' : ''}
+                  </span>
+                  {r.z > 0 && (
+                    <span className={styles.alt}>z={r.z.toFixed(3)}</span>
+                  )}
+                </li>
+              ) : (
+                <li key={r.icao24} className={styles.result} onClick={() => handleSelect(r)}>
+                  <span className={styles.callsign}>{r.callsign ?? r.icao24}</span>
+                  {r.type_description && (
+                    <span className={styles.type}>{r.type_description}</span>
+                  )}
+                  {r.altitude != null && (
+                    <span className={styles.alt}>{Math.round(r.altitude).toLocaleString()} ft</span>
+                  )}
+                </li>
+              )
             ))}
           </ul>
         )}
 
         {query && !loading && results.length === 0 && (
-          <p className={styles.empty}>no flights found</p>
+          <p className={styles.empty}>
+            {isDeepSpace ? 'no galaxies found' : 'no flights found'}
+          </p>
         )}
       </div>
     </>

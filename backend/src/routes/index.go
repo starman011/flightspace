@@ -80,6 +80,7 @@ func Setup(
 	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))
 	mux.Handle("GET /api/v1/desi/galaxy/{targetid}", rateLimit(http.HandlerFunc(desi.GetGalaxyDetail)))
 	mux.Handle("GET /api/v1/desi/enrich", rateLimit(http.HandlerFunc(desi.GetGalaxyEnrichment)))
+	mux.Handle("GET /api/v1/desi/search", rateLimit(http.HandlerFunc(desi.SearchGalaxies)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)
