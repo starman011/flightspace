@@ -224,6 +224,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         setActiveScale('galaxy')
         globeRef.current?.setCameraScale?.('galaxy')
       }
+      // Fly camera to galaxy position
+      setTimeout(() => {
+        globeRef.current?.flyToGalaxy?.(result.ra, result.dec, result.z)
+      }, activeScale !== 'galaxy' ? 800 : 50)
     } else {
       setSelectedIcao24(result.icao24)
     }

@@ -18,7 +18,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
-import { createDESILayer } from './DESILayer.js'
+import { createDESILayer, raDecToXYZ, zToRadius } from './DESILayer.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import { createMoonScene } from './MoonScene.js'
@@ -1117,6 +1117,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = int.current.camera.position.clone()
     },
+    flyToGalaxy: (ra, dec, z) => {
+      if (!int.current?.camera) return
+      const camera = int.current.camera
+      const radius = zToRadius(z || 0.01)
+      const [gx, gy, gz] = raDecToXYZ(ra, dec, radius)
+      const galaxyPos = new Vector3(gx, gy, gz)
+      // Position camera slightly inside the galaxy's radius, looking outward
+      // so the galaxy is centered in view. Camera at 92% of radius along
+      // the same direction means galaxy is just ahead.
+      const dir = galaxyPos.clone().normalize()
+      const approachDist = Math.max(radius * 0.92, radius - 5)
+      const target = dir.multiplyScalar(approachDist)
+      int.current.flyToTarget = target
+      int.current.flyToStart  = Date.now()
+      int.current.flyToFrom   = camera.position.clone()
+    },
   }), [drawTrail, setCameraScale])
 
   // Sync click callbacks into int.current so native event closures can read them
@@ -1393,6 +1409,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // DESI galaxy layer — 100K real galaxies/quasars, shown in galaxy mode.
     const desiLayer = createDESILayer()
+    int.current.desiLayer = desiLayer
     scene.add(desiLayer.group)
 
     // Hidden by default; shown when cameraScale transitions to 'moon'.
@@ -2001,7 +2018,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const desiHit = desiLayer.pick(e.clientX, e.clientY, camera, el)
         if (desiHit) {
           desiLayer.setSelected(desiHit.targetid)
-          e.stopPropagation()
           int.current.onSkyObjectClick?.(desiHit)
           return
         }
@@ -2213,7 +2229,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           controls.minDistance = CAM_TARGET.minDist
           controls.maxDistance = CAM_TARGET.maxDist
           if (isSolar) solarSystem.show(); else solarSystem.hide()
-          if (isGalaxy) { desiLayer.show() } else { desiLayer.hide() }
+          if (isGalaxy) { desiLayer.show(); galaxySystem.showSkyOnly() } else { desiLayer.hide(); galaxySystem.hide() }
           if (isMoon) moonScene.show(); else moonScene.hide()
           const _earthVisible = !isMoon && !isSolar && !isGalaxy
           int.current.earthMesh.visible = _earthVisible
@@ -2264,7 +2280,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             _setEarthEntitiesVisible(_showEarth)
             if (isMoon) { moonScene.show(); solarSystem.hide(); galaxySystem.hide(); desiLayer.hide() }
             else if (isSolar) { solarSystem.show(); moonScene.hide() }
-            else if (isGalaxy) { desiLayer.show(); solarSystem.hide(); moonScene.hide() }
+            else if (isGalaxy) { desiLayer.show(); galaxySystem.showSkyOnly(); solarSystem.hide(); moonScene.hide() }
             else { solarSystem.hide(); moonScene.hide() }
             if (!isGalaxy) { desiLayer.hide() }
           }

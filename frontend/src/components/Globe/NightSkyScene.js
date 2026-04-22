@@ -17,6 +17,7 @@ import {
   LineSegments, LineBasicMaterial,
   Mesh, SphereGeometry, PlaneGeometry, MeshBasicMaterial,
   BackSide, FrontSide, CanvasTexture, Color, Sprite, SpriteMaterial,
+  TextureLoader,
 } from 'three'
 import * as Astronomy from 'astronomy-engine'
 import { BSC5_STARS } from './starData.js'
@@ -288,12 +289,23 @@ export function createNightSkyScene(scene) {
   let _startTime = Date.now()
 
   // ── Milky Way sky dome ─────────────────────────────────────────────────────
-  const skyMesh = new Mesh(
-    new SphereGeometry(SKY_R, 64, 32),
-    new MeshBasicMaterial({ map: buildMilkyWayTexture(), side: BackSide }),
-  )
+  // Start with procedural texture, then upgrade to real Mellinger survey image
+  const skyMat = new MeshBasicMaterial({ map: buildMilkyWayTexture(), side: BackSide })
+  const skyMesh = new Mesh(new SphereGeometry(SKY_R, 64, 32), skyMat)
+  skyMesh.rotation.y = Math.PI / 2   // align RA=0 with +X axis
   skyMesh.renderOrder = 0
   skyGroup.add(skyMesh)
+
+  // Lazy-load real all-sky photograph (Mellinger color survey via CDS)
+  // ~1MB equirectangular JPEG, replaces procedural texture when ready
+  const SKY_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
+    + '?hips=CDS/P/Mellinger/color&width=4096&height=2048'
+    + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
+  new TextureLoader().load(SKY_URL, (tex) => {
+    tex.colorSpace = 'srgb'
+    skyMat.map = tex
+    skyMat.needsUpdate = true
+  })
 
   // ── Earth horizon hemisphere (below camera) ────────────────────────────────
   // A half-sphere representing the ground, with atmosphere glow at the rim
@@ -499,6 +511,19 @@ export function createNightSkyScene(scene) {
     try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
   }
 
+  function showSkyOnly() {
+    // Show only the sky dome (background image) + stars — no horizon,
+    // constellations, or planets. Used in galaxy/DESI mode.
+    skyGroup.visible = true
+    skyMesh.visible = true
+    starPoints.visible = true
+    horizonMesh.visible = false
+    constLines.visible = false
+    skyGroup.children.forEach(c => {
+      if (c instanceof Sprite) c.visible = false  // hide planet/label sprites
+    })
+  }
+
   function hide() { skyGroup.visible = false }
 
   function update() {
@@ -529,7 +554,7 @@ export function createNightSkyScene(scene) {
     starData: STAR_NAMES,
     constellationData: constMeta,
     planetMarkers,
-    show, hide, update, dispose,
+    show, showSkyOnly, hide, update, dispose,
   }
 }
 

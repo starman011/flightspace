@@ -29,7 +29,7 @@ const Z_CEIL   = 3.5            // cap redshift mapping
 // ── Cosmological helpers ─────────────────────────────────────────────────────
 
 // Redshift → log-scaled radius (spreads nearby galaxies, compresses distant)
-function zToRadius(z) {
+export function zToRadius(z) {
   const t = Math.log1p(z * 6) / Math.log1p(Z_CEIL * 6)
   return DESI_MIN + (DESI_MAX - DESI_MIN) * t
 }
@@ -56,7 +56,7 @@ function zToColor(z, spectype) {
 
 // RA/Dec (degrees) → Three.js XYZ at given radius
 // NightSkyScene convention: -Z for RA direction (matches star placement)
-function raDecToXYZ(raDeg, decDeg, radius) {
+export function raDecToXYZ(raDeg, decDeg, radius) {
   const ra  = raDeg  * Math.PI / 180
   const dec = decDeg * Math.PI / 180
   return [
