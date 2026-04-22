@@ -29,6 +29,7 @@ import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
 import DeepSpaceGuide from './components/DeepSpaceGuide/DeepSpaceGuide'
 import GalaxyConeView from './components/GalaxyConeView/GalaxyConeView'
+import DistanceSlicer from './components/DistanceSlicer/DistanceSlicer'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -588,6 +589,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           expanded={coneExpanded}
           onToggle={() => setConeExpanded(v => !v)}
         />
+      )}
+
+      {activeScale === 'galaxy' && (
+        <DistanceSlicer onChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)} />
       )}
 
       {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && !guideHidden && (

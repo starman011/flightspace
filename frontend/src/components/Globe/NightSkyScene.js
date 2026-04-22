@@ -290,10 +290,10 @@ export function createNightSkyScene(scene) {
 
   // ── Milky Way sky dome ─────────────────────────────────────────────────────
   // Start with procedural texture, then upgrade to real Mellinger survey image
-  const skyMat = new MeshBasicMaterial({ map: buildMilkyWayTexture(), side: BackSide })
+  const skyMat = new MeshBasicMaterial({ map: buildMilkyWayTexture(), side: BackSide, depthWrite: false })
   const skyMesh = new Mesh(new SphereGeometry(SKY_R, 64, 32), skyMat)
   skyMesh.rotation.y = Math.PI / 2   // align RA=0 with +X axis
-  skyMesh.renderOrder = 0
+  skyMesh.renderOrder = -1
   skyGroup.add(skyMesh)
 
   // Lazy-load real all-sky photograph (Mellinger color survey via CDS)

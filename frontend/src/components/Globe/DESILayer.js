@@ -13,6 +13,7 @@ import {
   Object3D, Points, BufferGeometry, Float32BufferAttribute,
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
+  Sprite, SpriteMaterial,
 } from 'three'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -198,7 +199,7 @@ export function createDESILayer() {
       colors[i * 3 + 2] = col.b
 
       // Quasars slightly larger (they're brighter + rarer)
-      sizes[i] = g.s === 'QSO' ? 5.0 : 3.0
+      sizes[i] = g.s === 'QSO' ? 8.0 : 5.5
     }
 
     const geom = new BufferGeometry()
@@ -237,9 +238,9 @@ export function createDESILayer() {
 
     // Distance shells: faint wireframe rings at 1, 5, 10 Bly
     const shells = [
-      { z: 0.076, color: 0x44ccff },
-      { z: 0.42,  color: 0x7788ff },
-      { z: 1.0,   color: 0xaa66ff },
+      { z: 0.076, label: '1 BILLION LIGHT-YEARS', color: 0x44ccff },
+      { z: 0.42,  label: '5 BILLION LIGHT-YEARS', color: 0x7788ff },
+      { z: 1.0,   label: '10 BILLION LIGHT-YEARS', color: 0xaa66ff },
     ]
 
     for (const shell of shells) {
@@ -264,7 +265,30 @@ export function createDESILayer() {
         shellMeshes.push(line)
       }
 
+      // Large label visible from afar
+      const lbl = makeShellLabel(shell.label, `#${shell.color.toString(16).padStart(6, '0')}`)
+      lbl.position.set(r * 0.7, r * 0.35, 0)
+      lbl.renderOrder = 12
+      group.add(lbl)
+      shellMeshes.push(lbl)
     }
+  }
+
+  function makeShellLabel(text, color) {
+    const cv = document.createElement('canvas')
+    cv.width = 1024; cv.height = 128
+    const ctx = cv.getContext('2d')
+    ctx.font = '700 56px monospace'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = color
+    ctx.globalAlpha = 0.45
+    ctx.fillText(text, 512, 64)
+    const tex = new CanvasTexture(cv)
+    const mat = new SpriteMaterial({ map: tex, transparent: true, depthWrite: false })
+    const sp = new Sprite(mat)
+    sp.scale.set(80, 10, 1)   // very large — readable from far away
+    return sp
   }
 
   // ── Visibility ───────────────────────────────────────────────────────────
@@ -421,8 +445,21 @@ export function createDESILayer() {
     glowTex.dispose()
   }
 
+  // ── Distance filter: show only galaxies in redshift range ──────────────
+  function setDistanceRange(minZ, maxZ) {
+    if (!pointCloud || !galaxyData) return
+    const sizes = pointCloud.geometry.attributes.aSize
+    for (let i = 0; i < galaxyData.length; i++) {
+      const gz = galaxyData[i].z
+      sizes.array[i] = (gz >= minZ && gz <= maxZ)
+        ? (galaxyData[i].s === 'QSO' ? 8.0 : 5.5)
+        : 0
+    }
+    sizes.needsUpdate = true
+  }
+
   return {
     group, load, show, hide, pick, hoverPick,
-    setSelected, setHovered, clearHover, dispose,
+    setSelected, setHovered, clearHover, setDistanceRange, dispose,
   }
 }

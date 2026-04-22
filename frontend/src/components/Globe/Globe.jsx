@@ -1133,6 +1133,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
     },
+    setDistanceRange: (minZ, maxZ) => {
+      int.current.desiLayer?.setDistanceRange?.(minZ, maxZ)
+    },
   }), [drawTrail, setCameraScale])
 
   // Sync click callbacks into int.current so native event closures can read them
