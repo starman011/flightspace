@@ -218,6 +218,7 @@ export function createDESILayer() {
     })
 
     pointCloud = new Points(geom, mat)
+    pointCloud.renderOrder = 10   // render in front of sky dome (renderOrder 0)
     group.add(pointCloud)
   }
 
@@ -230,6 +231,7 @@ export function createDESILayer() {
     const earthGeo = new SphereGeometry(0.8, 16, 16)
     const earthMat = new MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.7 })
     earthMarker = new Mesh(earthGeo, earthMat)
+    earthMarker.renderOrder = 11
     group.add(earthMarker)
 
     // Earth label sprite

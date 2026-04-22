@@ -28,6 +28,7 @@ import AirportPanel from './components/AirportPanel/AirportPanel'
 import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
 import DeepSpaceGuide from './components/DeepSpaceGuide/DeepSpaceGuide'
+import GalaxyConeView from './components/GalaxyConeView/GalaxyConeView'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -142,6 +143,7 @@ export default function App() {
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
+  const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
@@ -247,6 +249,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       setSelectedSkyObject(null)
       setSelectedGalaxy(null)
       setGuideHidden(false)
+      setConeExpanded(false)
       if (arActive) {
         globeRef.current?.disableAR?.()
         setArActive(false)
@@ -577,6 +580,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <GalaxyPanel
           galaxy={selectedGalaxy}
           onClose={handleGalaxyClose}
+        />
+      )}
+
+      {activeScale === 'galaxy' && (
+        <GalaxyConeView
+          expanded={coneExpanded}
+          onToggle={() => setConeExpanded(v => !v)}
         />
       )}
 

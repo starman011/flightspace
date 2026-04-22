@@ -1,0 +1,120 @@
+.wrapper {
+  position: fixed;
+  z-index: 110;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(140, 100, 255, 0.2);
+  background: rgba(4, 6, 14, 0.92);
+  cursor: pointer;
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* Mini mode: bottom-right thumbnail */
+.mini {
+  bottom: 24px;
+  right: 16px;
+  width: 180px;
+  height: 180px;
+}
+
+/* Expanded mode: takes over the viewport */
+.expanded {
+  bottom: 0;
+  right: 0;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  z-index: 200;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(195, 210, 255, 0.55);
+  background: rgba(4, 6, 14, 0.75);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.legend {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+.legendNear { color: rgba(100, 200, 255, 0.6); }
+.legendFar  { color: rgba(180, 100, 255, 0.6); }
+
+.gradientBar {
+  position: absolute;
+  bottom: 18px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    hsl(187, 80%, 58%) 0%,
+    hsl(223, 75%, 55%) 33%,
+    hsl(260, 70%, 50%) 66%,
+    hsl(290, 65%, 45%) 100%
+  );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(4, 6, 14, 0.7);
+  border: 1px solid rgba(140, 100, 255, 0.25);
+  color: rgba(195, 210, 255, 0.6);
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.expanded .closeBtn {
+  display: flex;
+}
+
+.closeBtn:hover {
+  color: rgba(195, 210, 255, 0.9);
+  border-color: rgba(140, 100, 255, 0.5);
+}
+
+@media (max-width: 600px) {
+  .mini {
+    bottom: 80px;
+    right: 8px;
+    width: 140px;
+    height: 140px;
+  }
+}
