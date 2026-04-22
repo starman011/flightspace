@@ -13,7 +13,6 @@ import {
   Object3D, Points, BufferGeometry, Float32BufferAttribute,
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
-  Sprite, SpriteMaterial,
 } from 'three'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -235,17 +234,12 @@ export function createDESILayer() {
     group.add(earthMarker)
 
     // Earth label sprite
-    const labelTex = makeTextSprite('YOU ARE HERE', '#66bbff')
-    const labelSprite = new Sprite(new SpriteMaterial({ map: labelTex, transparent: true, depthWrite: false }))
-    labelSprite.scale.set(12, 3, 1)
-    labelSprite.position.set(0, 3, 0)
-    group.add(labelSprite)
 
     // Distance shells: faint wireframe rings at 1, 5, 10 Bly
     const shells = [
-      { z: 0.076, label: '1 Billion Light-Years', color: 0x44ccff },
-      { z: 0.42,  label: '5 Billion Light-Years', color: 0x7788ff },
-      { z: 1.0,   label: '10 Billion Light-Years', color: 0xaa66ff },
+      { z: 0.076, color: 0x44ccff },
+      { z: 0.42,  color: 0x7788ff },
+      { z: 1.0,   color: 0xaa66ff },
     ]
 
     for (const shell of shells) {
@@ -270,28 +264,7 @@ export function createDESILayer() {
         shellMeshes.push(line)
       }
 
-      // Label sprite at top of shell
-      const sTex = makeTextSprite(shell.label, `#${shell.color.toString(16).padStart(6, '0')}`)
-      const sSprite = new Sprite(new SpriteMaterial({ map: sTex, transparent: true, depthWrite: false }))
-      const sr = zToRadius(shell.z)
-      sSprite.scale.set(24, 6, 1)
-      sSprite.position.set(0, sr + 4, 0)
-      group.add(sSprite)
-      shellMeshes.push(sSprite)
     }
-  }
-
-  function makeTextSprite(text, color) {
-    const canvas = document.createElement('canvas')
-    canvas.width = 512; canvas.height = 128
-    const ctx = canvas.getContext('2d')
-    ctx.font = '600 32px monospace'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = color
-    ctx.globalAlpha = 0.6
-    ctx.fillText(text, 256, 64)
-    return new CanvasTexture(canvas)
   }
 
   // ── Visibility ───────────────────────────────────────────────────────────
