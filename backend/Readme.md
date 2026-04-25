@@ -1,6 +1,6 @@
-# SkyDot Backend
+# ObjectTracer Backend
 
-Go 1.22 backend for SkyDot real-time flight radar.
+Go 1.22 backend for ObjectTracer real-time flight radar.
 
 ## Setup
 

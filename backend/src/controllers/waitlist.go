@@ -75,9 +75,9 @@ func sendWaitlistEmail(to string) {
 	}
 
 	payload := map[string]any{
-		"from":    "Flightspace <hello@space.starmanodyssey.com>",
+		"from":    "ObjectTracer <hello@objecttracer.com>",
 		"to":      []string{to},
-		"subject": "You're on the Flightspace waitlist",
+		"subject": "You're on the ObjectTracer waitlist",
 		"html": `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -95,7 +95,7 @@ func sendWaitlistEmail(to string) {
           SIGNAL RECEIVED
         </p>
         <h1 style="margin:0 0 20px;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1.2;">
-          You're on the<br>Flightspace waitlist.
+          You're on the<br>ObjectTracer waitlist.
         </h1>
 
         <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:rgba(195,245,255,0.6);">
@@ -114,12 +114,12 @@ func sendWaitlistEmail(to string) {
           </p>
         </div>
 
-        <a href="https://space.starmanodyssey.com" style="display:inline-block;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:8px;padding:10px 22px;font-size:12px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:#00e5ff;text-decoration:none;">
-          Open Flightspace
+        <a href="https://objecttracer.com" style="display:inline-block;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:8px;padding:10px 22px;font-size:12px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:#00e5ff;text-decoration:none;">
+          Open ObjectTracer
         </a>
 
         <p style="margin:28px 0 0;font-size:11px;color:rgba(195,245,255,0.2);line-height:1.6;">
-          You're receiving this because you signed up at space.starmanodyssey.com.<br>
+          You're receiving this because you signed up at objecttracer.com.<br>
           No spam — only launch announcements.
         </p>
       </td>

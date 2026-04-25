@@ -161,7 +161,7 @@ func (p *LaunchPoller) fetchLaunches(ctx context.Context, url string, isPast boo
 	defer cancel()
 
 	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
-	req.Header.Set("User-Agent", "SkyDot/1.0 (space observatory; contact@skydot.app)")
+	req.Header.Set("User-Agent", "ObjectTracer/1.0 (space observatory; contact@objecttracer.com)")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf(`{"level":"warn","service":"launch_poller","msg":"fetch failed","url":%q,"error":%q}`, url, err)

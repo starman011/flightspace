@@ -118,7 +118,7 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter,
 }
 
 export default function App() {
-  const { sessionToken, isAuthenticated, user, sessionError, login, register, logout } = useSession()
+  const { sessionToken, isAuthenticated, user, sessionError, login, register, logout, googleLogin, appleLogin } = useSession()
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
@@ -368,6 +368,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onClose={() => setAuthModalOpen(false)}
           onLogin={login}
           onRegister={register}
+          onGoogleLogin={googleLogin}
+          onAppleLogin={appleLogin}
         />
       )}
 
@@ -382,7 +384,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         }}>
           <span style={{ flex: 1, lineHeight: 1.4 }}>
             {sessionError === 'network'
-              ? "Can't reach flightspace server. Your DNS, ad-blocker, or network may be blocking it. Try a different network, switch DNS to 1.1.1.1 or 8.8.8.8, or disable blockers for this site."
+              ? "Can't reach ObjectTracer server. Your DNS, ad-blocker, or network may be blocking it. Try a different network, switch DNS to 1.1.1.1 or 8.8.8.8, or disable blockers for this site."
               : "Server error creating session. Retrying automatically…"}
           </span>
           <button

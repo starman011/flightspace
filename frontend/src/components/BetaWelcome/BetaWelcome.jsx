@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styles from './BetaWelcome.module.css'
 
-const STORAGE_KEY = 'flightspace_sessions'
+const STORAGE_KEY = 'objecttracer_sessions'
 
 const FEATURES = [
   {
@@ -101,7 +101,7 @@ export default function BetaWelcome() {
 
         <div className={styles.header}>
           <span className={styles.betaBadge}>ALPHA</span>
-          <h2 className={styles.title}>Welcome to Flightspace</h2>
+          <h2 className={styles.title}>Welcome to ObjectTracer</h2>
           <p className={styles.subtitle}>
             A real-time window into everything above us — from flights overhead to the edge of the observable universe.
           </p>
@@ -128,7 +128,7 @@ export default function BetaWelcome() {
             Alpha build — things may break, but hey, even rockets explode before they land. 🚀
           </p>
           <button className={styles.enterBtn} onClick={() => setVisible(false)}>
-            Enter Flightspace
+            Enter ObjectTracer
           </button>
         </div>
       </div>

@@ -25,6 +25,10 @@ type Config struct {
 	// and redirects :80 → HTTPS. Leave empty when running behind a TLS-terminating
 	// proxy (Railway, Cloudflare, etc.) — the proxy already handles certificates.
 	TLSDomain string
+
+	// OAuth
+	GoogleClientID string
+	AppleClientID  string
 }
 
 // LoadConfig reads configuration from environment variables with sensible defaults.
@@ -86,6 +90,8 @@ func LoadConfig() (*Config, error) {
 		MaxWSConns:     100,
 		RetentionHours: 6,
 		TLSDomain:      os.Getenv("TLS_DOMAIN"),
+		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
+		AppleClientID:  os.Getenv("APPLE_CLIENT_ID"),
 	}, nil
 }
 

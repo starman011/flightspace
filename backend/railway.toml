@@ -10,4 +10,4 @@ restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
 [[services]]
-name = "skydot-backend"
+name = "objecttracer-backend"

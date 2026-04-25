@@ -1,4 +1,4 @@
-# WebSocket & External API Contracts — SkyDot
+# WebSocket & External API Contracts — ObjectTracer
 
 ---
 
@@ -7,7 +7,7 @@
 ### Connection
 
 ```
-URL: wss://api.skydot.app/ws?token=<session_token>
+URL: wss://api.objecttracer.com/ws?token=<session_token>
 ```
 
 ### Message Format

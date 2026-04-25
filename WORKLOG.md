@@ -1,4 +1,4 @@
-# Flightspace — Work Log
+# ObjectTracer — Work Log
 
 Tracks all significant changes made during development sessions.
 

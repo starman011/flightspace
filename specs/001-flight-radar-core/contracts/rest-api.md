@@ -1,9 +1,9 @@
-# REST API Contracts — SkyDot
+# REST API Contracts — ObjectTracer
 
 ### Base URL
 
 ```
-Production: https://api.skydot.app/api/v1
+Production: https://api.objecttracer.com/api/v1
 Development: http://localhost:8080/api/v1
 ```
 

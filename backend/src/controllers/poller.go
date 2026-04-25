@@ -137,7 +137,7 @@ func (p *Poller) fetchAdsbLol(ctx context.Context) ([]models.LiveAircraft, error
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "SkyDot/1.0 flight-tracker")
+	req.Header.Set("User-Agent", "ObjectTracer/1.0 flight-tracker")
 
 	resp, err := p.client.Do(req)
 	if err != nil {

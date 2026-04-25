@@ -109,7 +109,7 @@ func (a *App) Start() error {
 
 	// Build handler chain: logging → CORS → routes
 	mux := http.NewServeMux()
-	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, a.cfg.JWTSecret, a.cfg.NASAAPIKey)
+	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, a.cfg.JWTSecret, a.cfg.NASAAPIKey, a.cfg.GoogleClientID, a.cfg.AppleClientID)
 
 	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
 
@@ -120,7 +120,7 @@ func (a *App) Start() error {
 	if a.cfg.TLSDomain != "" {
 		// Direct TLS mode: autocert obtains and auto-renews a Let's Encrypt certificate.
 		// Use this when the server is directly internet-facing (no TLS-terminating proxy).
-		// Set TLS_DOMAIN=skydot.app (or your domain) to activate.
+		// Set TLS_DOMAIN=objecttracer.com (or your domain) to activate.
 		mgr := &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(a.cfg.TLSDomain),

@@ -1,6 +1,6 @@
-# SkyDot Frontend
+# ObjectTracer Frontend
 
-React 18 + Vite frontend for SkyDot real-time flight radar.
+React 18 + Vite frontend for ObjectTracer real-time flight radar.
 
 ## Setup
 

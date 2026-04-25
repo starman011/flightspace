@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://skydot.app/sitemap.xml
+Sitemap: https://objecttracer.com/sitemap.xml

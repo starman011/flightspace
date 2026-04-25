@@ -101,7 +101,7 @@ func (sp *SatellitePoller) seedISS(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	req.Header.Set("User-Agent", "SkyDot/1.0 satellite-tracker")
+	req.Header.Set("User-Agent", "ObjectTracer/1.0 satellite-tracker")
 	resp, err := sp.client.Do(req)
 	if err != nil {
 		log.Printf(`{"level":"warn","service":"sat_poller","msg":"ISS seed failed","error":%q}`, err)
@@ -179,7 +179,7 @@ func (sp *SatellitePoller) fetchTLEGroup(ctx context.Context, search string, lim
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "SkyDot/1.0 satellite-tracker")
+	req.Header.Set("User-Agent", "ObjectTracer/1.0 satellite-tracker")
 
 	resp, err := sp.client.Do(req)
 	if err != nil {

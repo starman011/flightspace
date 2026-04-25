@@ -94,6 +94,42 @@ export function useSession() {
     return data
   }, [])
 
+  const googleLogin = useCallback(async (idToken) => {
+    const res = await fetch(`${API}/api/v1/auth/google`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Google sign-in failed')
+    }
+    const data = await res.json()
+    setSessionToken(data.token)
+    setIsAuthenticated(true)
+    setUser({ display_name: data.display_name ?? null })
+    return data
+  }, [])
+
+  const appleLogin = useCallback(async (idToken, fullName) => {
+    const res = await fetch(`${API}/api/v1/auth/apple`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken, full_name: fullName || undefined }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Apple sign-in failed')
+    }
+    const data = await res.json()
+    setSessionToken(data.token)
+    setIsAuthenticated(true)
+    setUser({ display_name: data.display_name ?? null })
+    return data
+  }, [])
+
   const logout = useCallback(async () => {
     await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
     setIsAuthenticated(false)
@@ -101,5 +137,5 @@ export function useSession() {
     await createAnonymousSession()
   }, [createAnonymousSession])
 
-  return { sessionToken, isAuthenticated, user, isLoading, sessionError, login, register, logout }
+  return { sessionToken, isAuthenticated, user, isLoading, sessionError, login, register, logout, googleLogin, appleLogin }
 }

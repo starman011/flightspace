@@ -1,4 +1,4 @@
-# SkyDot — Design Document & Platform Vision
+# ObjectTracer — Design Document & Platform Vision
 
 > **Living document.** Every feature, screen, and interaction is governed by this file.
 > Last updated: 2026-03-21

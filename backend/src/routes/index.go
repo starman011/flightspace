@@ -18,6 +18,8 @@ func Setup(
 	launchPoller *controllers.LaunchPoller,
 	jwtSecret string,
 	nasaAPIKey string,
+	googleClientID string,
+	appleClientID string,
 ) {
 	health  := controllers.NewHealthController(pool, rdb)
 	session := controllers.NewSessionController(pool, rdb, jwtSecret)
@@ -32,6 +34,7 @@ func Setup(
 	airport  := controllers.NewAirportController(rdb)
 	lunar    := controllers.NewLunarController(rdb)
 	desi     := controllers.NewDESIController()
+	oauth    := controllers.NewOAuthController(pool, rdb, jwtSecret, googleClientID, appleClientID)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -53,6 +56,8 @@ func Setup(
 	mux.Handle("POST /api/v1/auth/register", rateLimit(http.HandlerFunc(auth.Register)))
 	mux.Handle("POST /api/v1/auth/login", rateLimit(http.HandlerFunc(auth.Login)))
 	mux.Handle("POST /api/v1/auth/logout", rateLimit(http.HandlerFunc(auth.Logout)))
+	mux.Handle("POST /api/v1/auth/google", rateLimit(http.HandlerFunc(oauth.GoogleLogin)))
+	mux.Handle("POST /api/v1/auth/apple", rateLimit(http.HandlerFunc(oauth.AppleLogin)))
 
 	// User (authenticated + rate limited)
 	mux.Handle("GET /api/v1/user/preferences", rateLimit(authReq(http.HandlerFunc(user.GetPreferences))))

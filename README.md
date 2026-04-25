@@ -1,4 +1,4 @@
-# SkyDot
+# ObjectTracer
 
 A real-time planetary observatory. One viewport that scales from individual aircraft to the entire solar system — tracking every commercial flight, satellite, ship, rocket launch, and near-Earth asteroid in motion right now.
 
@@ -75,11 +75,11 @@ A real-time planetary observatory. One viewport that scales from individual airc
 
 ### Pattern: Modular monolith
 
-SkyDot is a **modular monolith**, not a microservices system. A single Go binary contains all server-side logic — the WebSocket hub, every data-source poller, the REST API, authentication, and cleanup — wired together in `app.go` and started as a single process on Railway.
+ObjectTracer is a **modular monolith**, not a microservices system. A single Go binary contains all server-side logic — the WebSocket hub, every data-source poller, the REST API, authentication, and cleanup — wired together in `app.go` and started as a single process on Railway.
 
 This was a deliberate choice, not an oversight:
 
-| | Microservices | SkyDot monolith |
+| | Microservices | ObjectTracer monolith |
 |---|---|---|
 | Operational overhead | High — N deployments, N logs, service mesh | One binary, one Railway service, one log stream |
 | Data locality | Cross-service calls for shared state | All pollers write to the same Redis instance in-process |
