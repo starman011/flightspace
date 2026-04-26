@@ -34,6 +34,7 @@ func Setup(
 	airport  := controllers.NewAirportController(rdb)
 	lunar    := controllers.NewLunarController(rdb)
 	desi     := controllers.NewDESIController()
+	desi.StartBackgroundFetch() // pre-fetch 1M galaxies on boot, refresh every 24h
 	oauth    := controllers.NewOAuthController(pool, rdb, jwtSecret, googleClientID, appleClientID)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
@@ -83,6 +84,7 @@ func Setup(
 
 	// DESI deep space catalog
 	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))
+	mux.Handle("GET /api/v1/desi/galaxies.bin", rateLimit(http.HandlerFunc(desi.GetGalaxiesBinary)))
 	mux.Handle("GET /api/v1/desi/galaxy/{targetid}", rateLimit(http.HandlerFunc(desi.GetGalaxyDetail)))
 	mux.Handle("GET /api/v1/desi/enrich", rateLimit(http.HandlerFunc(desi.GetGalaxyEnrichment)))
 	mux.Handle("GET /api/v1/desi/search", rateLimit(http.HandlerFunc(desi.SearchGalaxies)))

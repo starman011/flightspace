@@ -5,11 +5,13 @@ package controllers
 // data and caches results in-memory (24h TTL — DESI DR1 is static).
 
 import (
+	"encoding/binary"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -57,6 +59,7 @@ type DESIDetail struct {
 
 var (
 	desiCache     []DESIGalaxy
+	desiBinCache  []byte // pre-built binary payload
 	desiCacheMu   sync.RWMutex
 	desiCacheTime time.Time
 	desiFetchMu   sync.Mutex
@@ -65,10 +68,10 @@ var (
 const desiCacheTTL = 24 * time.Hour
 const desiTAPURL = "https://datalab.noirlab.edu/tap/sync"
 
-var tapClient = &http.Client{Timeout: 120 * time.Second}
+var tapClient = &http.Client{Timeout: 300 * time.Second}
 
-// Bulk query: 100K random galaxies + quasars with reliable redshifts
-const desiBulkQuery = `SELECT TOP 100000 targetid, mean_fiber_ra, mean_fiber_dec, z, spectype FROM desi_dr1.zpix WHERE zwarn = 0 AND spectype IN ('GALAXY', 'QSO') AND z > 0.001 AND random_id < 1.0`
+// Bulk query: 1M galaxies + quasars with reliable redshifts
+const desiBulkQuery = `SELECT TOP 1000000 targetid, mean_fiber_ra, mean_fiber_dec, z, spectype FROM desi_dr1.zpix WHERE zwarn = 0 AND spectype IN ('GALAXY', 'QSO') AND z > 0.001 AND random_id < 1.0`
 
 // Detail query: single object with photometry, morphology, emission lines, stellar mass
 const desiDetailQuery = `SELECT z.targetid, z.mean_fiber_ra, z.mean_fiber_dec, z.z, z.zerr, z.spectype, z.subtype, z.survey, z.program, z.deltachi2, p.flux_g, p.flux_r, p.flux_z, p.flux_w1, p.flux_w2, p.morphtype, p.shape_r, p.ebv, a.logmstar, a.halpha_flux, a.hbeta_flux, a.oiii_5007_flux FROM desi_dr1.zpix AS z LEFT JOIN desi_dr1.photometry AS p ON z.targetid = p.targetid LEFT JOIN desi_dr1.agngal AS a ON z.targetid = a.targetid WHERE z.targetid = %s`
@@ -79,61 +82,106 @@ type DESIController struct{}
 
 func NewDESIController() *DESIController { return &DESIController{} }
 
-// GetGalaxies serves cached bulk galaxy data.
-func (dc *DESIController) GetGalaxies(w http.ResponseWriter, r *http.Request) {
-	// Try cache first
-	desiCacheMu.RLock()
-	cached := desiCache
-	cacheAge := time.Since(desiCacheTime)
-	desiCacheMu.RUnlock()
+// StartBackgroundFetch launches a goroutine that pre-fetches DESI data on
+// startup and refreshes every 24h. No user request ever waits for TAP.
+func (dc *DESIController) StartBackgroundFetch() {
+	go func() {
+		dc.fetchAndCache()
+		ticker := time.NewTicker(desiCacheTTL)
+		defer ticker.Stop()
+		for range ticker.C {
+			dc.fetchAndCache()
+		}
+	}()
+}
 
-	if cached != nil && cacheAge < desiCacheTTL {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-		json.NewEncoder(w).Encode(cached)
-		return
-	}
-
-	// Prevent thundering herd — only one goroutine fetches
+func (dc *DESIController) fetchAndCache() {
 	desiFetchMu.Lock()
 	defer desiFetchMu.Unlock()
 
-	// Double-check after acquiring lock
+	// Skip if cache is still fresh
 	desiCacheMu.RLock()
-	cached = desiCache
-	cacheAge = time.Since(desiCacheTime)
+	age := time.Since(desiCacheTime)
 	desiCacheMu.RUnlock()
-	if cached != nil && cacheAge < desiCacheTTL {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-		json.NewEncoder(w).Encode(cached)
+	if age < desiCacheTTL && age > 0 {
 		return
 	}
 
-	galaxies, err := queryTAP(desiBulkQuery)
+	log.Println("DESI: fetching bulk catalog from TAP…")
+	raw, err := queryTAP(desiBulkQuery)
 	if err != nil {
-		log.Printf("DESI bulk fetch failed: %v", err)
-		http.Error(w, `{"error":"DESI data temporarily unavailable"}`, http.StatusBadGateway)
+		log.Printf("DESI background fetch failed: %v", err)
 		return
 	}
-
-	// Parse bulk CSV
-	parsed := parseBulkCSV(galaxies)
+	parsed := parseBulkCSV(raw)
 	if len(parsed) == 0 {
-		http.Error(w, `{"error":"no DESI data returned"}`, http.StatusBadGateway)
+		log.Println("DESI: TAP returned 0 rows")
 		return
 	}
 
-	// Update cache
+	bin := galaxiesToBinary(parsed)
+
 	desiCacheMu.Lock()
 	desiCache = parsed
+	desiBinCache = bin
 	desiCacheTime = time.Now()
 	desiCacheMu.Unlock()
 
-	log.Printf("DESI: cached %d galaxies/QSOs", len(parsed))
+	log.Printf("DESI: cached %d galaxies/QSOs (%d bytes binary)", len(parsed), len(bin))
+}
+
+// GetGalaxies serves cached bulk galaxy data as JSON.
+func (dc *DESIController) GetGalaxies(w http.ResponseWriter, r *http.Request) {
+	desiCacheMu.RLock()
+	cached := desiCache
+	desiCacheMu.RUnlock()
+
+	if cached == nil {
+		http.Error(w, `{"error":"DESI data loading, try again shortly"}`, http.StatusServiceUnavailable)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	json.NewEncoder(w).Encode(parsed)
+	json.NewEncoder(w).Encode(cached)
+}
+
+// GetGalaxiesBinary serves pre-built binary blob — 21 bytes/point.
+// Format: [uint32 LE count] then per point [uint64 LE targetid, float32 LE ra, float32 LE dec, float32 LE z, uint8 spectype(0=GALAXY,1=QSO)]
+func (dc *DESIController) GetGalaxiesBinary(w http.ResponseWriter, r *http.Request) {
+	desiCacheMu.RLock()
+	bin := desiBinCache
+	desiCacheMu.RUnlock()
+
+	if bin == nil {
+		http.Error(w, `{"error":"DESI data loading, try again shortly"}`, http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(bin)
+}
+
+// galaxiesToBinary packs galaxies into a compact binary format.
+// 4-byte header (uint32 count) + 21 bytes per point.
+func galaxiesToBinary(galaxies []DESIGalaxy) []byte {
+	n := len(galaxies)
+	buf := make([]byte, 4+n*21)
+	binary.LittleEndian.PutUint32(buf[0:4], uint32(n))
+
+	for i, g := range galaxies {
+		off := 4 + i*21
+		tid, _ := strconv.ParseUint(g.TargetID, 10, 64)
+		binary.LittleEndian.PutUint64(buf[off:off+8], tid)
+		binary.LittleEndian.PutUint32(buf[off+8:off+12], math.Float32bits(float32(g.RA)))
+		binary.LittleEndian.PutUint32(buf[off+12:off+16], math.Float32bits(float32(g.Dec)))
+		binary.LittleEndian.PutUint32(buf[off+16:off+20], math.Float32bits(float32(g.Z)))
+		if g.SpecType == "QSO" {
+			buf[off+20] = 1
+		}
+	}
+	return buf
 }
 
 // GetGalaxyDetail serves detailed data for a single DESI object.

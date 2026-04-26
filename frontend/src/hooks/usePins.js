@@ -38,18 +38,21 @@ export function usePins(isAuthenticated, sessionToken) {
     syncedRef.current = true
 
     const opts = {
+      credentials: 'include',
       headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
     }
 
     const replayLaunches = pinnedLaunches.map(l =>
       fetch(`${API}/api/v1/user/pinned-launches`, {
-        ...opts, method: 'POST',
+        method: 'POST', credentials: 'include',
+        headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ launch_id: l.launch_id, name: l.name, net_time: l.net_time }),
       }).catch(() => {})
     )
     const replayFlights = trackedFlights.map(f =>
       fetch(`${API}/api/v1/user/watchlist`, {
-        ...opts, method: 'POST',
+        method: 'POST', credentials: 'include',
+        headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ icao24: f.icao24, callsign: f.callsign, label: f.label }),
       }).catch(() => {})
     )
@@ -103,7 +106,7 @@ export function usePins(isAuthenticated, sessionToken) {
     )
     if (isAuthenticated && sessionToken) {
       fetch(`${API}/api/v1/user/pinned-launches`, {
-        method: 'POST',
+        method: 'POST', credentials: 'include',
         headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ launch_id: item.launch_id, name: item.name, net_time: item.net_time }),
       })
@@ -124,7 +127,7 @@ export function usePins(isAuthenticated, sessionToken) {
     setPinnedLaunches(prev => prev.filter(p => p.launch_id !== launchId && p.id !== launchId))
     if (isAuthenticated && sessionToken && target?.id) {
       fetch(`${API}/api/v1/user/pinned-launches/${target.id}`, {
-        method: 'DELETE',
+        method: 'DELETE', credentials: 'include',
         headers: { 'Authorization': `Bearer ${sessionToken}` },
       }).catch(() => {})
     }
@@ -143,7 +146,7 @@ export function usePins(isAuthenticated, sessionToken) {
     )
     if (isAuthenticated && sessionToken) {
       fetch(`${API}/api/v1/user/watchlist`, {
-        method: 'POST',
+        method: 'POST', credentials: 'include',
         headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ icao24: item.icao24, callsign: item.callsign, label: item.label }),
       })
@@ -164,7 +167,7 @@ export function usePins(isAuthenticated, sessionToken) {
     setTrackedFlights(prev => prev.filter(f => f.icao24 !== icao24))
     if (isAuthenticated && sessionToken && target?.id) {
       fetch(`${API}/api/v1/user/watchlist/${target.id}`, {
-        method: 'DELETE',
+        method: 'DELETE', credentials: 'include',
         headers: { 'Authorization': `Bearer ${sessionToken}` },
       }).catch(() => {})
     }

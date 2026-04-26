@@ -1,5 +1,5 @@
 /**
- * DESI Galaxy Layer — renders 100K real galaxies/quasars from DESI DR1
+ * DESI Galaxy Layer — renders up to 1M real galaxies/quasars from DESI DR1
  * as color-coded glowing points in 3D space.
  *
  * Color encodes redshift (cosmic distance):
@@ -7,6 +7,7 @@
  *   Quasars get a distinct amber/gold tone.
  *
  * Position: RA/Dec → angular direction, redshift → radial distance (log scale).
+ * Data flow: static JSON (100K) for instant first paint → binary endpoint (1M) background upgrade.
  */
 
 import {
@@ -157,25 +158,57 @@ export function createDESILayer() {
     refreshFromAPI()
   }
 
+  // Parse compact binary: [uint32 count][per point: uint64 targetid, float32 ra, float32 dec, float32 z, uint8 spectype]
+  function parseBinary(buffer) {
+    const view = new DataView(buffer)
+    const count = view.getUint32(0, true)
+    const data = new Array(count)
+    for (let i = 0; i < count; i++) {
+      const off = 4 + i * 21
+      data[i] = {
+        t: view.getBigUint64(off, true).toString(),
+        r: view.getFloat32(off + 8, true),
+        d: view.getFloat32(off + 12, true),
+        z: view.getFloat32(off + 16, true),
+        s: view.getUint8(off + 20) === 1 ? 'QSO' : 'GALAXY',
+      }
+    }
+    return data
+  }
+
   async function refreshFromAPI() {
     try {
+      // Try binary endpoint first — 5x smaller, instant parse
+      const binRes = await fetch(`${API}/api/v1/desi/galaxies.bin`)
+      if (binRes.ok) {
+        const buf = await binRes.arrayBuffer()
+        const fresh = parseBinary(buf)
+        if (fresh.length > 0) {
+          replacePointCloud(fresh)
+          return
+        }
+      }
+      // Fallback: JSON endpoint
       const res = await fetch(`${API}/api/v1/desi/galaxies`)
       if (!res.ok) return
       const fresh = normalizeRaw(await res.json())
-      if (fresh.length === 0) return
-      // Replace data + rebuild point cloud
-      galaxyData = fresh
-      if (pointCloud) {
-        group.remove(pointCloud)
-        pointCloud.geometry.dispose()
-        pointCloud.material.dispose()
-        pointCloud = null
-      }
-      buildPointCloud()
-      loaded = true
+      if (fresh.length > 0) replacePointCloud(fresh)
     } catch {
       // Backend unavailable — static data still works
     }
+  }
+
+  function replacePointCloud(fresh) {
+    galaxyData = fresh
+    if (pointCloud) {
+      group.remove(pointCloud)
+      pointCloud.geometry.dispose()
+      pointCloud.material.dispose()
+      pointCloud = null
+    }
+    buildPointCloud()
+    loaded = true
+    console.log(`DESI: loaded ${fresh.length.toLocaleString()} objects`)
   }
 
   function buildPointCloud() {
@@ -300,7 +333,7 @@ export function createDESILayer() {
 
   // ── Screen-space pick ────────────────────────────────────────────────────
   // Projects every DESI point to screen coords, finds closest to tap.
-  // 100K iterations is <2ms on modern hardware.
+  // 1M iterations is ~15-20ms — only runs on click, not per frame.
   const _v = new Vector3()
 
   function pick(clientX, clientY, camera, domElement) {
