@@ -14,7 +14,6 @@ import {
   Object3D, Points, BufferGeometry, Float32BufferAttribute,
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
-  Sprite, SpriteMaterial,
 } from 'three'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -298,31 +297,9 @@ export function createDESILayer() {
         shellMeshes.push(line)
       }
 
-      // Large label visible from afar
-      const lbl = makeShellLabel(shell.label, `#${shell.color.toString(16).padStart(6, '0')}`)
-      lbl.position.set(r * 0.7, r * 0.35, 0)
-      lbl.renderOrder = 12
-      group.add(lbl)
-      shellMeshes.push(lbl)
     }
   }
 
-  function makeShellLabel(text, color) {
-    const cv = document.createElement('canvas')
-    cv.width = 1024; cv.height = 128
-    const ctx = cv.getContext('2d')
-    ctx.font = '700 56px monospace'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = color
-    ctx.globalAlpha = 0.45
-    ctx.fillText(text, 512, 64)
-    const tex = new CanvasTexture(cv)
-    const mat = new SpriteMaterial({ map: tex, transparent: true, depthWrite: false })
-    const sp = new Sprite(mat)
-    sp.scale.set(80, 10, 1)   // very large — readable from far away
-    return sp
-  }
 
   // ── Visibility ───────────────────────────────────────────────────────────
   function show() {
