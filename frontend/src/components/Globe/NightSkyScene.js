@@ -296,16 +296,25 @@ export function createNightSkyScene(scene) {
   skyMesh.renderOrder = -1
   skyGroup.add(skyMesh)
 
-  // Lazy-load real all-sky photograph (Mellinger color survey via CDS)
-  // ~1MB equirectangular JPEG, replaces procedural texture when ready
-  const SKY_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
+  // Lazy-load real all-sky photograph with fallback chain:
+  // 1. CDS hips2fits (4096x2048 equirectangular) — best quality but service can be down
+  // 2. DSS HiPS Allsky tile (Norder3) — always available, lower res
+  const MELLINGER_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
     + '?hips=CDS/P/Mellinger/color&width=4096&height=2048'
     + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
-  new TextureLoader().load(SKY_URL, (tex) => {
-    tex.colorSpace = 'srgb'
-    skyMat.map = tex
-    skyMat.needsUpdate = true
-  })
+  const DSS_ALLSKY_URL = 'https://alasky.cds.unistra.fr/DSS/DSSColor/Norder3/Allsky.jpg'
+
+  function upgradeSkyTex(url) {
+    new TextureLoader().load(url, (tex) => {
+      tex.colorSpace = 'srgb'
+      skyMat.map = tex
+      skyMat.needsUpdate = true
+    })
+  }
+  // Try Mellinger first; if it fails (502/timeout), fall back to DSS allsky
+  fetch(MELLINGER_URL, { method: 'HEAD' })
+    .then(r => upgradeSkyTex(r.ok ? MELLINGER_URL : DSS_ALLSKY_URL))
+    .catch(() => upgradeSkyTex(DSS_ALLSKY_URL))
 
   // ── Earth horizon hemisphere (below camera) ────────────────────────────────
   // A half-sphere representing the ground, with atmosphere glow at the rim
