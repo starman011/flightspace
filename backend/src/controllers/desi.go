@@ -71,7 +71,8 @@ const desiTAPURL = "https://datalab.noirlab.edu/tap/sync"
 var tapClient = &http.Client{Timeout: 300 * time.Second}
 
 // Bulk query: 1M galaxies + quasars with reliable redshifts
-const desiBulkQuery = `SELECT TOP 1000000 targetid, mean_fiber_ra, mean_fiber_dec, z, spectype FROM desi_dr1.zpix WHERE zwarn = 0 AND spectype IN ('GALAXY', 'QSO') AND z > 0.001 AND random_id < 1.0`
+// random_id is 0–100; < 7.0 ≈ 1.14M rows, TOP caps at 1M
+const desiBulkQuery = `SELECT TOP 1000000 targetid, mean_fiber_ra, mean_fiber_dec, z, spectype FROM desi_dr1.zpix WHERE zwarn = 0 AND spectype IN ('GALAXY', 'QSO') AND z > 0.001 AND random_id < 7.0`
 
 // Detail query: single object with photometry, morphology, emission lines, stellar mass
 const desiDetailQuery = `SELECT z.targetid, z.mean_fiber_ra, z.mean_fiber_dec, z.z, z.zerr, z.spectype, z.subtype, z.survey, z.program, z.deltachi2, p.flux_g, p.flux_r, p.flux_z, p.flux_w1, p.flux_w2, p.morphtype, p.shape_r, p.ebv, a.logmstar, a.halpha_flux, a.hbeta_flux, a.oiii_5007_flux FROM desi_dr1.zpix AS z LEFT JOIN desi_dr1.photometry AS p ON z.targetid = p.targetid LEFT JOIN desi_dr1.agngal AS a ON z.targetid = a.targetid WHERE z.targetid = %s`
