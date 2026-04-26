@@ -18,7 +18,7 @@ function loadScript(src) {
   return scriptCache[src]
 }
 
-export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin, onAppleLogin }) {
+export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -94,42 +94,7 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin,
     }
   }, [onGoogleLogin, onClose])
 
-  // ── Apple Sign-In ───────────────────────────────────────────────────────────
-  const handleApple = useCallback(async () => {
-    setError(null)
-    setLoading(true)
-    try {
-      await loadScript('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js')
-      const { AppleID } = window
-      if (!AppleID?.auth) throw new Error('Apple SDK failed to load')
 
-      AppleID.auth.init({
-        clientId: import.meta.env.VITE_APPLE_CLIENT_ID || '',
-        scope: 'name email',
-        redirectURI: window.location.origin,
-        usePopup: true,
-      })
-
-      const response = await AppleID.auth.signIn()
-      const idToken = response.authorization?.id_token
-      if (!idToken) throw new Error('No token received from Apple')
-
-      const fullName = response.user
-        ? [response.user.name?.firstName, response.user.name?.lastName].filter(Boolean).join(' ')
-        : null
-
-      await onAppleLogin(idToken, fullName)
-      onClose()
-    } catch (err) {
-      if (err.error === 'popup_closed_by_user') {
-        setLoading(false)
-        return
-      }
-      setError(err.message || 'Apple sign-in failed')
-    } finally {
-      setLoading(false)
-    }
-  }, [onAppleLogin, onClose])
 
   return (
     <div
@@ -164,13 +129,6 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin,
             Continue with Google
           </button>
           <div id="google-signin-fallback" />
-
-          <button className={styles.socialBtn} onClick={handleApple} disabled={loading}>
-            <svg className={styles.socialIcon} viewBox="0 0 24 24" fill="#fff">
-              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            Continue with Apple
-          </button>
         </div>
 
         <div className={styles.divider}>

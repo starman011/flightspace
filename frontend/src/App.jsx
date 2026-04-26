@@ -118,7 +118,7 @@ function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter,
 }
 
 export default function App() {
-  const { sessionToken, isAuthenticated, user, sessionError, login, register, logout, googleLogin, appleLogin } = useSession()
+  const { sessionToken, isAuthenticated, user, sessionError, login, register, logout, googleLogin } = useSession()
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
@@ -369,7 +369,6 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onLogin={login}
           onRegister={register}
           onGoogleLogin={googleLogin}
-          onAppleLogin={appleLogin}
         />
       )}
 
