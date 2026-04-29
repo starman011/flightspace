@@ -52,9 +52,9 @@ function comovingDistLY(z) {
 function distColor(z) {
   const c = new Color()
   const t = Math.min(z / 2.5, 1.0)
-  const hue = 0.52 + t * 0.35
-  const sat = 0.80
-  const lum = 0.55 - t * 0.10
+  const hue = 0.60 + t * 0.08     // faint blue, not cyan
+  const sat = 0.40 + t * 0.15
+  const lum = 0.45 - t * 0.12
   c.setHSL(hue, sat, lum)
   return c
 }
