@@ -13,9 +13,9 @@ import KDBush from 'kdbush'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const K_NEIGHBORS  = 3      // edges per node
-const MAX_EDGE_LEN = 35     // world units — tight to prevent long cross-sky lines
-const EDGE_OPACITY = 0.30
-const SUBSAMPLE    = 8      // every Nth galaxy — keeps node count ~12K
+const MAX_EDGE_LEN = 55     // world units — dome surface has wider spacing
+const EDGE_OPACITY = 0.22
+const SUBSAMPLE    = 10     // every Nth galaxy — keeps node count ~10K for dome
 
 // ── Shaders ───────────────────────────────────────────────────────────────────
 const vertexShader = `
