@@ -15,6 +15,7 @@ import {
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
 } from 'three'
+import { createCosmicWebMesh } from './CosmicWebMesh.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -117,6 +118,8 @@ export function createDESILayer() {
   let loading    = false
 
   const glowTex = makeGlowTexture()
+  const cosmicWeb = createCosmicWebMesh()
+  group.add(cosmicWeb.group)
 
   // ── Fetch + build ────────────────────────────────────────────────────────
   // 1. Static JSON for instant first paint (no backend needed).
@@ -250,8 +253,10 @@ export function createDESILayer() {
     })
 
     pointCloud = new Points(geom, mat)
-    pointCloud.renderOrder = 10   // render in front of sky dome (renderOrder 0)
+    pointCloud.renderOrder = 10
     group.add(pointCloud)
+
+    cosmicWeb.build(positions, n)
   }
 
   // ── Earth marker + distance shells ─────────────────────────────────────
@@ -304,9 +309,10 @@ export function createDESILayer() {
   // ── Visibility ───────────────────────────────────────────────────────────
   function show() {
     group.visible = true
+    cosmicWeb.show()
     if (!loaded && !loading) load()
   }
-  function hide() { group.visible = false }
+  function hide() { group.visible = false; cosmicWeb.hide() }
 
   // ── Screen-space pick ────────────────────────────────────────────────────
   // Projects every DESI point to screen coords, finds closest to tap.
@@ -453,6 +459,7 @@ export function createDESILayer() {
       if (m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose() }
     })
     glowTex.dispose()
+    cosmicWeb.dispose()
   }
 
   // ── Distance filter: show only galaxies in redshift range ──────────────

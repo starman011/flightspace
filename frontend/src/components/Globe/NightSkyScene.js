@@ -302,19 +302,59 @@ export function createNightSkyScene(scene) {
   const MELLINGER_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
     + '?hips=CDS/P/Mellinger/color&width=4096&height=2048'
     + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
-  const DSS_ALLSKY_URL = 'https://alasky.cds.unistra.fr/DSS/DSSColor/Norder3/Allsky.jpg'
+  const DSS_ALLSKY_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
+    + '?hips=CDS/P/DSS2/color&width=4096&height=2048'
+    + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
 
-  function upgradeSkyTex(url) {
-    new TextureLoader().load(url, (tex) => {
+  // Direct load — no HEAD check (avoids CORS/timeout failures that silently
+  // leave the low-quality procedural texture). Mellinger first, DSS fallback.
+  const skyLoader = new TextureLoader()
+  skyLoader.load(MELLINGER_URL, (tex) => {
+    tex.colorSpace = 'srgb'
+    skyMat.map.dispose()
+    skyMat.map = tex
+    skyMat.needsUpdate = true
+  }, undefined, () => {
+    skyLoader.load(DSS_ALLSKY_URL, (tex) => {
       tex.colorSpace = 'srgb'
+      skyMat.map.dispose()
       skyMat.map = tex
       skyMat.needsUpdate = true
     })
+  })
+
+  // ── DESI survey boundary — approximate DR1 footprint in red ─────────────────
+  const BOUNDARY_R = SKY_R * 0.97
+  const DESI_REGIONS = [
+    // Northern Galactic Cap
+    [[120,-5],[130,-8],[150,-10],[170,-10],[190,-10],[210,-10],
+     [230,-8],[250,-5],[260,0],[268,5],[272,12],[275,25],[275,40],
+     [273,55],[268,65],[260,72],[248,77],[230,80],[210,82],[190,82],
+     [170,80],[155,77],[142,72],[133,65],[128,55],[125,40],[123,25],
+     [121,12],[120,-5]],
+    // Southern Galactic Cap
+    [[320,-5],[330,-10],[340,-15],[350,-18],[0,-20],[10,-20],
+     [20,-18],[30,-15],[40,-10],[50,-5],[55,0],[58,10],[58,20],
+     [55,28],[48,32],[35,34],[20,35],[5,35],[350,34],[335,32],
+     [325,28],[322,20],[321,10],[320,-5]],
+  ]
+  const bVerts = []
+  for (const region of DESI_REGIONS) {
+    for (let i = 0; i < region.length - 1; i++) {
+      const [ra1, dec1] = region[i]
+      const [ra2, dec2] = region[i + 1]
+      const [x1, y1, z1] = lonLatToXYZ(ra1, dec1, BOUNDARY_R)
+      const [x2, y2, z2] = lonLatToXYZ(ra2, dec2, BOUNDARY_R)
+      bVerts.push(x1, y1, z1, x2, y2, z2)
+    }
   }
-  // Try Mellinger first; if it fails (502/timeout), fall back to DSS allsky
-  fetch(MELLINGER_URL, { method: 'HEAD' })
-    .then(r => upgradeSkyTex(r.ok ? MELLINGER_URL : DSS_ALLSKY_URL))
-    .catch(() => upgradeSkyTex(DSS_ALLSKY_URL))
+  const boundaryGeo = new BufferGeometry()
+  boundaryGeo.setAttribute('position', new Float32BufferAttribute(new Float32Array(bVerts), 3))
+  const boundaryLines = new LineSegments(boundaryGeo, new LineBasicMaterial({
+    color: 0xff3333, transparent: true, opacity: 0.55, depthWrite: false,
+  }))
+  boundaryLines.renderOrder = 6
+  skyGroup.add(boundaryLines)
 
   // ── Earth horizon hemisphere (below camera) ────────────────────────────────
   // A half-sphere representing the ground, with atmosphere glow at the rim
@@ -516,20 +556,22 @@ export function createNightSkyScene(scene) {
   // ── API ────────────────────────────────────────────────────────────────────
   function show() {
     skyGroup.visible = true
+    boundaryLines.visible = false   // boundaries only in deep-space mode
     _startTime = Date.now()
     try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
   }
 
   function showSkyOnly() {
-    // Show only the sky dome (background image) + stars — no horizon,
-    // constellations, or planets. Used in galaxy/DESI mode.
+    // Show only the sky dome (background image) + stars + DESI boundaries —
+    // no horizon, constellations, or planets. Used in galaxy/DESI mode.
     skyGroup.visible = true
     skyMesh.visible = true
     starPoints.visible = true
+    boundaryLines.visible = true
     horizonMesh.visible = false
     constLines.visible = false
     skyGroup.children.forEach(c => {
-      if (c instanceof Sprite) c.visible = false  // hide planet/label sprites
+      if (c instanceof Sprite) c.visible = false
     })
   }
 

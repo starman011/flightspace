@@ -25,6 +25,7 @@ import { createMoonScene } from './MoonScene.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
+import CompassBar from './CompassBar.jsx'
 import styles from './Globe.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -905,6 +906,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const [cameraScale, setCameraScale] = useState('earth')   // 'earth' | 'solar'
   const [moonTransit, setMoonTransit] = useState(false)  // warp overlay during Moon flight
   const [hoverTooltip, setHoverTooltip] = useState(null)  // { x, y, data }
+  const galaxyHeadingRef = useRef(null)   // { ra, dec } — updated per frame in galaxy mode
   const setHoverTooltipRef = useRef(null)
   setHoverTooltipRef.current = setHoverTooltip
 
@@ -2309,6 +2311,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (galaxySystem.skyGroup.visible) {
         galaxySystem.update()
         if (arController.isActive()) arController.update()
+        // Compute camera heading for compass bar
+        const _dir = new Vector3()
+        camera.getWorldDirection(_dir)
+        const _ra = ((Math.atan2(-_dir.z, _dir.x) * 180 / Math.PI) + 360) % 360
+        const _dec = Math.asin(Math.min(1, Math.max(-1, _dir.y / _dir.length()))) * 180 / Math.PI
+        galaxyHeadingRef.current = { ra: _ra, dec: _dec }
       }
 
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
@@ -2940,6 +2948,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       )}
 
       {moonTransit && createPortal(<WarpOverlay />, document.body)}
+
+      {cameraScale === 'galaxy' && createPortal(
+        <CompassBar headingRef={galaxyHeadingRef} />,
+        document.body
+      )}
 
     </div>
   )
