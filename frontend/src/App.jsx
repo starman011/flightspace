@@ -30,7 +30,6 @@ import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
 import DeepSpaceGuide from './components/DeepSpaceGuide/DeepSpaceGuide'
 import GalaxyConeView from './components/GalaxyConeView/GalaxyConeView'
 import DistanceSlicer from './components/DistanceSlicer/DistanceSlicer'
-import DESISkyMap from './components/DESISkyMap/DESISkyMap'
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -146,7 +145,6 @@ export default function App() {
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
   const [coneExpanded, setConeExpanded]     = useState(false)
-  const [skyMapOpen, setSkyMapOpen]         = useState(init.activeScale === 'galaxy')
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
@@ -190,12 +188,6 @@ export default function App() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Auto-open sky map when entering galaxy scale, close when leaving
-  useEffect(() => {
-    if (activeScale === 'galaxy') setSkyMapOpen(true)
-    else setSkyMapOpen(false)
-  }, [activeScale])
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
@@ -602,10 +594,6 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {activeScale === 'galaxy' && (
         <DistanceSlicer onChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)} />
-      )}
-
-      {activeScale === 'galaxy' && skyMapOpen && (
-        <DESISkyMap onClose={() => setSkyMapOpen(false)} />
       )}
 
       {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && !guideHidden && (

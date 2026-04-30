@@ -513,76 +513,6 @@ export function createNightSkyScene(scene) {
     }
   }
 
-  // ── DESI survey boundary lines (red) ──────────────────────────────────────
-  const DESI_BOUNDARY_R = SKY_R * 0.94  // just inside star shell
-  const DESI_REGIONS = [
-    { label: 'Spectroscopic', points: [
-      [120, 25], [130, 32], [140, 38], [150, 43], [160, 48],
-      [170, 53], [180, 57], [190, 59], [200, 60], [210, 60],
-      [220, 58], [230, 53], [240, 48], [250, 42], [255, 36],
-      [258, 30], [255, 24], [250, 18], [240, 14], [230, 10],
-      [220, 7],  [210, 5],  [200, 4],  [190, 4],  [180, 5],
-      [170, 7],  [160, 10], [150, 14], [140, 20], [130, 24],
-      [120, 25],
-    ]},
-    { label: 'BOS', points: [
-      [355, -2], [5, 3], [15, 8], [25, 14], [35, 18],
-      [45, 20], [52, 18], [56, 14], [55, 8], [50, 2],
-      [42, -4], [32, -8], [20, -10], [10, -8], [0, -4],
-      [355, -2],
-    ]},
-    { label: '', points: [
-      [130, -5], [145, -2], [165, 0], [185, 0], [205, -1],
-      [225, -4], [235, -7], [238, -10], [230, -13],
-      [210, -14], [190, -13], [170, -10], [150, -8],
-      [135, -7], [130, -5],
-    ]},
-  ]
-
-  const desiBoundaryGroup = new Object3D()
-  desiBoundaryGroup.visible = false
-  skyGroup.add(desiBoundaryGroup)
-
-  for (const region of DESI_REGIONS) {
-    // Smooth boundary line (interpolated pairs for curved segments on sphere)
-    const pairPts = []
-    for (let i = 0; i < region.points.length - 1; i++) {
-      const [ra1, dec1] = region.points[i]
-      const [ra2, dec2] = region.points[i + 1]
-      // Interpolate to make smooth curves on the sphere
-      const steps = 8
-      for (let s = 0; s < steps; s++) {
-        const t1 = s / steps, t2 = (s + 1) / steps
-        const r1 = (ra1 + (ra2 - ra1) * t1) / 15
-        const d1 = dec1 + (dec2 - dec1) * t1
-        const r2 = (ra1 + (ra2 - ra1) * t2) / 15
-        const d2 = dec1 + (dec2 - dec1) * t2
-        const [x1, y1, z1] = raDecToXYZ(r1, d1, DESI_BOUNDARY_R)
-        const [x2, y2, z2] = raDecToXYZ(r2, d2, DESI_BOUNDARY_R)
-        pairPts.push(x1, y1, z1, x2, y2, z2)
-      }
-    }
-    const smoothGeo = new BufferGeometry()
-    smoothGeo.setAttribute('position', new Float32BufferAttribute(new Float32Array(pairPts), 3))
-    const smoothLine = new LineSegments(smoothGeo, new LineBasicMaterial({
-      color: 0xdd3030, transparent: true, opacity: 0.55, depthWrite: false,
-    }))
-    smoothLine.renderOrder = 6
-    desiBoundaryGroup.add(smoothLine)
-
-    // Region label
-    if (region.label) {
-      const midIdx = Math.floor(region.points.length * 0.4)
-      const [mra, mdec] = region.points[midIdx]
-      const lbl = makeTextSprite(region.label, { fontSize: 44, color: 'rgba(220,60,60,0.6)' })
-      const [lx, ly, lz] = raDecToXYZ(mra / 15, mdec, DESI_BOUNDARY_R - 5)
-      lbl.position.set(lx, ly, lz)
-      lbl.scale.set(45, 18, 1)
-      lbl.renderOrder = 7
-      desiBoundaryGroup.add(lbl)
-    }
-  }
-
   // ── API ────────────────────────────────────────────────────────────────────
   function show() {
     skyGroup.visible = true
@@ -591,20 +521,16 @@ export function createNightSkyScene(scene) {
   }
 
   function showSkyOnly() {
-    // Full planetarium view with DESI survey boundaries.
-    // Shows sky dome, stars, horizon, constellations, planets — everything.
-    // Plus DESI boundary lines in red.
+    // Show only the sky dome (background image) + stars — no horizon,
+    // constellations, or planets. Used in galaxy/DESI mode.
     skyGroup.visible = true
     skyMesh.visible = true
     starPoints.visible = true
-    horizonMesh.visible = true
-    constLines.visible = true
-    desiBoundaryGroup.visible = true
-    // Re-show planet/constellation label sprites
+    horizonMesh.visible = false
+    constLines.visible = false
     skyGroup.children.forEach(c => {
-      if (c instanceof Sprite) c.visible = true
+      if (c instanceof Sprite) c.visible = false  // hide planet/label sprites
     })
-    try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
   }
 
   function hide() { skyGroup.visible = false }

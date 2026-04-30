@@ -15,16 +15,14 @@ import {
   ShaderMaterial, AdditiveBlending, CanvasTexture, Color, Vector3,
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
 } from 'three'
-import { createCosmicWebMesh } from './CosmicWebMesh.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 
 // ── Scale constants ──────────────────────────────────────────────────────────
 // NightSkyScene places stars at SKY_R * 0.95 ≈ 456 WU.
-// Galaxies projected onto dome surface at DOME_R for planetarium view.
+// DESI galaxies sit inside that sphere, filling 3D volume.
 const SKY_R    = 480
-const DOME_R   = SKY_R * 0.92   // galaxy dots on dome surface (just inside stars)
-const DESI_MAX = SKY_R * 0.80   // max radius for 3D volume mode (fallback)
+const DESI_MAX = SKY_R * 0.80   // max radius for furthest objects
 const DESI_MIN = 12             // min radius for nearest objects
 const Z_CEIL   = 3.5            // cap redshift mapping
 
@@ -42,17 +40,16 @@ export function zToRadius(z) {
 function zToColor(z, spectype) {
   const c = new Color()
   if (spectype === 'QSO') {
-    // Quasars: soft warm gold, subtle
+    // Amber → deep orange by distance
     const t = Math.min(z / 3.0, 1.0)
-    c.setHSL(0.08 - t * 0.03, 0.5, 0.45 - t * 0.10)
+    c.setHSL(0.08 - t * 0.03, 0.85, 0.55 - t * 0.12)
     return c
   }
-  // Galaxy gradient: faint blue (not cyan)
-  // nearby = lighter slate-blue, far = deeper indigo-blue
+  // Galaxy gradient
   const t = Math.min(z / 2.0, 1.0)
-  const hue = 0.60 + t * 0.08          // blue → slightly deeper blue
-  const sat = 0.40 + t * 0.15          // subtle saturation
-  const lum = 0.45 - t * 0.12          // dim with distance
+  const hue = 0.52 + t * 0.35          // cyan → magenta
+  const sat = 0.75 + (1 - t) * 0.15    // slightly more vivid nearby
+  const lum = 0.58 - t * 0.10          // slightly dimmer at distance
   c.setHSL(hue, sat, lum)
   return c
 }
@@ -120,8 +117,6 @@ export function createDESILayer() {
   let loading    = false
 
   const glowTex = makeGlowTexture()
-  const cosmicWeb = createCosmicWebMesh()
-  group.add(cosmicWeb.group)
 
   // ── Fetch + build ────────────────────────────────────────────────────────
   // 1. Static JSON for instant first paint (no backend needed).
@@ -223,8 +218,8 @@ export function createDESILayer() {
 
     for (let i = 0; i < n; i++) {
       const g = galaxyData[i]
-      // Project onto dome surface (planetarium view) — RA/Dec direction only
-      const [x, y, z] = raDecToXYZ(g.r, g.d, DOME_R)
+      const radius = zToRadius(g.z)
+      const [x, y, z] = raDecToXYZ(g.r, g.d, radius)
 
       positions[i * 3]     = x
       positions[i * 3 + 1] = y
@@ -235,8 +230,8 @@ export function createDESILayer() {
       colors[i * 3 + 1] = col.g
       colors[i * 3 + 2] = col.b
 
-      // Dome projection: smaller dots, quasars slightly larger
-      sizes[i] = g.s === 'QSO' ? 4.0 : 2.5
+      // Quasars slightly larger (they're brighter + rarer)
+      sizes[i] = g.s === 'QSO' ? 8.0 : 5.5
     }
 
     const geom = new BufferGeometry()
@@ -257,9 +252,6 @@ export function createDESILayer() {
     pointCloud = new Points(geom, mat)
     pointCloud.renderOrder = 10   // render in front of sky dome (renderOrder 0)
     group.add(pointCloud)
-
-    // Build cosmic web filament mesh from galaxy positions
-    cosmicWeb.build(positions, n)
   }
 
   // ── Earth marker + distance shells ─────────────────────────────────────
@@ -312,13 +304,9 @@ export function createDESILayer() {
   // ── Visibility ───────────────────────────────────────────────────────────
   function show() {
     group.visible = true
-    cosmicWeb.show()
-    // Hide 3D volume references (distance shells, earth marker) — dome mode
-    if (earthMarker) earthMarker.visible = false
-    shellMeshes.forEach(m => { m.visible = false })
     if (!loaded && !loading) load()
   }
-  function hide() { group.visible = false; cosmicWeb.hide() }
+  function hide() { group.visible = false }
 
   // ── Screen-space pick ────────────────────────────────────────────────────
   // Projects every DESI point to screen coords, finds closest to tap.
@@ -464,7 +452,6 @@ export function createDESILayer() {
       if (m.geometry) m.geometry.dispose()
       if (m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose() }
     })
-    cosmicWeb.dispose()
     glowTex.dispose()
   }
 
@@ -475,7 +462,7 @@ export function createDESILayer() {
     for (let i = 0; i < galaxyData.length; i++) {
       const gz = galaxyData[i].z
       sizes.array[i] = (gz >= minZ && gz <= maxZ)
-        ? (galaxyData[i].s === 'QSO' ? 4.0 : 2.5)
+        ? (galaxyData[i].s === 'QSO' ? 8.0 : 5.5)
         : 0
     }
     sizes.needsUpdate = true
