@@ -3,27 +3,32 @@ import styles from './DESISkyMap.module.css'
 
 const API = import.meta.env.VITE_API_URL || ''
 
-// ── Zenithal equidistant projection (circular all-sky like the reference) ────
-// Maps RA/Dec to a circular disc. North pole at center, Dec=-90 at edge.
-// Input: ra [0,360], dec [-90,90] → output: x,y in [-1,1] disc
-function zenithal(raDeg, decDeg) {
-  const ra = (raDeg - 180) * Math.PI / 180   // center on RA=180
+// ── Mellinger all-sky equirectangular image (CDS) ────────────────────────────
+const MELLINGER_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
+  + '?hips=CDS/P/Mellinger/color&width=4096&height=2048'
+  + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
+const DSS_FALLBACK = 'https://alasky.cds.unistra.fr/DSS/DSSColor/Norder3/Allsky.jpg'
+
+// ── Zenithal equidistant projection ──────────────────────────────────────────
+// North pole at center. Dec=-90 at edge. Full sky in a circle.
+function zenithal(raDeg, decDeg, rotation) {
+  const ra = (raDeg - 180 + rotation) * Math.PI / 180
   const dec = decDeg * Math.PI / 180
-  const r = (Math.PI / 2 - dec) / Math.PI     // 0 at pole, 1 at south pole
+  const r = (Math.PI / 2 - dec) / Math.PI  // 0 at NP, 1 at SP
   return [r * Math.sin(ra), -r * Math.cos(ra)]
 }
 
-function zenithalInverse(x, y) {
+function zenithalInverse(x, y, rotation) {
   const r = Math.sqrt(x * x + y * y)
-  if (r > 1) return null
+  if (r > 1.05) return null
   const dec = (Math.PI / 2 - r * Math.PI) * 180 / Math.PI
-  let ra = Math.atan2(x, -y) * 180 / Math.PI + 180
-  if (ra < 0) ra += 360
-  if (ra >= 360) ra -= 360
+  let ra = Math.atan2(x, -y) * 180 / Math.PI + 180 - rotation
+  while (ra < 0) ra += 360
+  while (ra >= 360) ra -= 360
   return { ra, dec }
 }
 
-// ── DESI DR1 survey footprint (simplified boundary polygons) ─────────────────
+// ── DESI survey boundary polygons ────────────────────────────────────────────
 const DESI_FOOTPRINT = [
   { label: 'Spectroscopic', points: [
     [120, 25], [130, 32], [140, 38], [150, 43], [160, 48],
@@ -48,67 +53,117 @@ const DESI_FOOTPRINT = [
   ]},
 ]
 
-// ── Seeded RNG for reproducible starfield ────────────────────────────────────
-function seededRNG(seed) {
-  let s = seed
-  return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647 }
-}
+// ── Reproject equirectangular image to zenithal circle (one-time) ─────────────
+function reprojectToZenithal(eqImg, size) {
+  const cv = document.createElement('canvas')
+  cv.width = cv.height = size
+  const ctx = cv.getContext('2d')
 
-// Pre-compute stars once — multiple layers for realistic density
-const rng = seededRNG(314159)
-const STARS_BRIGHT = Array.from({ length: 800 }, () => ({
-  ra: rng() * 360,
-  dec: Math.asin(2 * rng() - 1) * 180 / Math.PI,
-  r: 1.0 + rng() * 1.2,
-  a: 0.6 + rng() * 0.4,
-}))
-const STARS_MED = Array.from({ length: 4000 }, () => ({
-  ra: rng() * 360,
-  dec: Math.asin(2 * rng() - 1) * 180 / Math.PI,
-  r: 0.4 + rng() * 0.5,
-  a: 0.25 + rng() * 0.35,
-}))
-const STARS_DIM = Array.from({ length: 15000 }, () => ({
-  ra: rng() * 360,
-  dec: Math.asin(2 * rng() - 1) * 180 / Math.PI,
-  r: 0.2 + rng() * 0.3,
-  a: 0.08 + rng() * 0.15,
-}))
+  // Draw source image to temp canvas to read pixels
+  const srcCv = document.createElement('canvas')
+  srcCv.width = eqImg.naturalWidth || eqImg.width
+  srcCv.height = eqImg.naturalHeight || eqImg.height
+  const srcCtx = srcCv.getContext('2d')
+  srcCtx.drawImage(eqImg, 0, 0)
+  const srcData = srcCtx.getImageData(0, 0, srcCv.width, srcCv.height)
+  const src = srcData.data
+  const sw = srcCv.width, sh = srcCv.height
 
-// ── Milky Way density (galactic latitude) ────────────────────────────────────
-function galacticLat(raDeg, decDeg) {
-  const ra = raDeg * Math.PI / 180
-  const dec = decDeg * Math.PI / 180
-  return Math.asin(
-    Math.sin(dec) * 0.4560 + Math.cos(dec) * 0.8899 * Math.cos(ra - 3.3660)
-  )
-}
+  const outData = ctx.createImageData(size, size)
+  const out = outData.data
+  const half = size / 2
 
-// Pre-baked Milky Way texture on offscreen canvas (render once)
-let mwCanvas = null
-function getMilkyWayTexture(size) {
-  if (mwCanvas && mwCanvas.width === size) return mwCanvas
-  mwCanvas = document.createElement('canvas')
-  mwCanvas.width = mwCanvas.height = size
-  const ctx = mwCanvas.getContext('2d')
-  const step = 3
-  for (let px = 0; px < size; px += step) {
-    for (let py = 0; py < size; py += step) {
-      const x = (px / size - 0.5) * 2
-      const y = (py / size - 0.5) * 2
+  for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      const x = (px - half) / half  // [-1, 1]
+      const y = (py - half) / half
       const r = Math.sqrt(x * x + y * y)
-      if (r > 1) continue
-      const coords = zenithalInverse(x, y)
-      if (!coords) continue
-      const gb = galacticLat(coords.ra, coords.dec)
-      const intensity = Math.exp(-(gb * gb) / (2 * 0.035))  // ~10° sigma in radians²
-      if (intensity < 0.04) continue
-      const alpha = intensity * 0.18
-      ctx.fillStyle = `rgba(45, 40, 55, ${alpha})`
-      ctx.fillRect(px, py, step, step)
+      if (r > 1.0) continue
+
+      // Zenithal → RA/Dec
+      const dec = (Math.PI / 2 - r * Math.PI) * 180 / Math.PI
+      let ra = Math.atan2(x, -y) * 180 / Math.PI + 180
+      if (ra < 0) ra += 360
+      if (ra >= 360) ra -= 360
+
+      // RA/Dec → equirectangular pixel
+      const sx = Math.floor((ra / 360) * sw) % sw
+      const sy = Math.floor(((90 - dec) / 180) * sh)
+      if (sy < 0 || sy >= sh) continue
+
+      const si = (sy * sw + sx) * 4
+      const di = (py * size + px) * 4
+      out[di] = src[si]
+      out[di + 1] = src[si + 1]
+      out[di + 2] = src[si + 2]
+      out[di + 3] = 255
     }
   }
-  return mwCanvas
+
+  ctx.putImageData(outData, 0, 0)
+  return cv
+}
+
+// ── Terrain silhouette generator ─────────────────────────────────────────────
+function generateTerrain(size) {
+  const cv = document.createElement('canvas')
+  cv.width = size; cv.height = size
+  const ctx = cv.getContext('2d')
+  const half = size / 2
+
+  // Draw dark terrain around the edge of the circle
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(half, half, half, 0, Math.PI * 2)
+  ctx.clip()
+
+  // Terrain ring: dark silhouette near the edge (dec ~ -10 to -90)
+  // Use a jagged line to simulate tree/mountain silhouette
+  const rng = { s: 42 }
+  const rand = () => { rng.s = (rng.s * 16807) % 2147483647; return rng.s / 2147483647 }
+
+  const terrainR = 0.88  // start terrain at this fraction of radius
+  ctx.fillStyle = '#0a0c0a'
+
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.003) {
+    const jag = rand() * 0.04 + rand() * 0.02
+    const r = (terrainR + jag) * half
+    const x = half + Math.cos(angle) * r
+    const y = half + Math.sin(angle) * r
+
+    if (angle === 0) {
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+    } else {
+      ctx.lineTo(x, y)
+    }
+  }
+
+  // Close through the circle edge
+  ctx.lineTo(half + half, half)
+  ctx.arc(half, half, half, 0, Math.PI * 2)
+  ctx.closePath()
+  ctx.fill()
+
+  // Warm atmospheric glow at horizon
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.02) {
+    const glowR = (terrainR - 0.02) * half
+    const x = half + Math.cos(angle) * glowR
+    const y = half + Math.sin(angle) * glowR
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, half * 0.14)
+
+    // Warm brownish-orange atmosphere glow (light pollution)
+    const warmth = 0.5 + Math.sin(angle * 3 + 1.5) * 0.3
+    const a = 0.06 + warmth * 0.06
+    grad.addColorStop(0, `rgba(180, 120, 60, ${a})`)
+    grad.addColorStop(0.4, `rgba(120, 70, 30, ${a * 0.5})`)
+    grad.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, size, size)
+  }
+
+  ctx.restore()
+  return cv
 }
 
 export default function DESISkyMap({ onClose }) {
@@ -116,8 +171,9 @@ export default function DESISkyMap({ onClose }) {
   const wrapRef = useRef(null)
   const [hoverCoords, setHoverCoords] = useState(null)
   const galaxyDataRef = useRef(null)
-  const panRef = useRef({ ox: 0, oy: 0, zoom: 1, dragging: false, lx: 0, ly: 0 })
-  const mwTexRef = useRef(null)
+  const skyTexRef = useRef(null)
+  const terrainTexRef = useRef(null)
+  const stateRef = useRef({ rotation: 0, dragging: false, lx: 0, dragStartRA: 0 })
 
   // Load galaxy data
   useEffect(() => {
@@ -133,7 +189,30 @@ export default function DESISkyMap({ onClose }) {
     })()
   }, [])
 
-  const render = useCallback(() => {
+  // Load sky image and reproject
+  useEffect(() => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      skyTexRef.current = reprojectToZenithal(img, 1024)
+      terrainTexRef.current = generateTerrain(1024)
+      renderFrame()
+    }
+    img.onerror = () => {
+      // Fallback to DSS
+      const img2 = new Image()
+      img2.crossOrigin = 'anonymous'
+      img2.onload = () => {
+        skyTexRef.current = reprojectToZenithal(img2, 1024)
+        terrainTexRef.current = generateTerrain(1024)
+        renderFrame()
+      }
+      img2.src = DSS_FALLBACK
+    }
+    img.src = MELLINGER_URL
+  }, [])
+
+  const renderFrame = useCallback(() => {
     const canvas = canvasRef.current
     const wrap = wrapRef.current
     if (!canvas || !wrap) return
@@ -149,110 +228,63 @@ export default function DESISkyMap({ onClose }) {
     const ctx = canvas.getContext('2d')
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-    const pan = panRef.current
-    const zoom = pan.zoom
-
-    // Circular projection fills available space
-    const diameter = Math.min(w, h) * 0.92 * zoom
+    const st = stateRef.current
+    const diameter = Math.min(w, h) * 0.95
     const radius = diameter / 2
-    const cx = w / 2 + pan.ox
-    const cy = h / 2 + pan.oy
+    const cx = w / 2
+    const cy = h / 2
 
     function toScreen(raDeg, decDeg) {
-      const [px, py] = zenithal(raDeg, decDeg)
+      const [px, py] = zenithal(raDeg, decDeg, st.rotation)
       return [cx + px * radius, cy + py * radius]
     }
 
     function fromScreen(sx, sy) {
       const px = (sx - cx) / radius
       const py = (sy - cy) / radius
-      return zenithalInverse(px, py)
+      return zenithalInverse(px, py, st.rotation)
     }
 
-    // ── Background ──────────────────────────────────────────────────────
-    ctx.fillStyle = '#010204'
+    // ── Black background ────────────────────────────────────────────────
+    ctx.fillStyle = '#000'
     ctx.fillRect(0, 0, w, h)
 
-    // Clip to circle
+    // ── Sky photo background (reprojected Mellinger) ────────────────────
     ctx.save()
     ctx.beginPath()
     ctx.arc(cx, cy, radius, 0, Math.PI * 2)
     ctx.closePath()
     ctx.clip()
 
-    // Deep space background gradient (darker center, slightly lighter rim)
-    const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius)
-    bgGrad.addColorStop(0, '#050810')
-    bgGrad.addColorStop(0.5, '#030509')
-    bgGrad.addColorStop(1, '#080c15')
-    ctx.fillStyle = bgGrad
-    ctx.fillRect(cx - radius, cy - radius, diameter, diameter)
-
-    // ── Milky Way band (pre-baked texture) ──────────────────────────────
-    if (!mwTexRef.current) mwTexRef.current = getMilkyWayTexture(512)
-    ctx.drawImage(mwTexRef.current, cx - radius, cy - radius, diameter, diameter)
-
-    // ── Stars ───────────────────────────────────────────────────────────
-    // Dim stars first (background dust)
-    ctx.fillStyle = 'rgba(180, 190, 210, 0.12)'
-    for (const s of STARS_DIM) {
-      const [sx, sy] = toScreen(s.ra, s.dec)
-      if (sx < cx - radius || sx > cx + radius || sy < cy - radius || sy > cy + radius) continue
-      ctx.fillRect(sx, sy, s.r, s.r)
-    }
-
-    // Medium stars
-    for (const s of STARS_MED) {
-      const [sx, sy] = toScreen(s.ra, s.dec)
-      if (sx < cx - radius || sx > cx + radius || sy < cy - radius || sy > cy + radius) continue
-      ctx.fillStyle = `rgba(195, 205, 225, ${s.a})`
-      ctx.beginPath()
-      ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
-      ctx.fill()
-    }
-
-    // Bright stars with subtle glow
-    for (const s of STARS_BRIGHT) {
-      const [sx, sy] = toScreen(s.ra, s.dec)
-      if (sx < cx - radius || sx > cx + radius || sy < cy - radius || sy > cy + radius) continue
-
-      // Boost near Milky Way
-      const gb = galacticLat(s.ra, s.dec)
-      const mwBoost = Math.exp(-(gb * gb) * 8) * 0.15
-      const alpha = Math.min(s.a + mwBoost, 1)
-
-      // Glow
-      ctx.fillStyle = `rgba(200, 215, 240, ${alpha * 0.15})`
-      ctx.beginPath()
-      ctx.arc(sx, sy, s.r * 3, 0, Math.PI * 2)
-      ctx.fill()
-
-      // Core
-      ctx.fillStyle = `rgba(230, 235, 245, ${alpha})`
-      ctx.beginPath()
-      ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
-      ctx.fill()
+    if (skyTexRef.current) {
+      // Draw rotated sky
+      ctx.save()
+      ctx.translate(cx, cy)
+      ctx.rotate(-st.rotation * Math.PI / 180)
+      ctx.drawImage(skyTexRef.current, -radius, -radius, diameter, diameter)
+      ctx.restore()
+    } else {
+      // Fallback: dark gradient
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius)
+      bg.addColorStop(0, '#080c14')
+      bg.addColorStop(0.7, '#040610')
+      bg.addColorStop(1, '#0c1018')
+      ctx.fillStyle = bg
+      ctx.fillRect(cx - radius, cy - radius, diameter, diameter)
     }
 
     // ── Coordinate grid ─────────────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(120, 140, 180, 0.10)'
+    ctx.strokeStyle = 'rgba(150, 170, 210, 0.08)'
     ctx.lineWidth = 0.6
 
     // RA meridians every 30°
     for (let ra = 0; ra < 360; ra += 30) {
       ctx.beginPath()
-      for (let dec = -90; dec <= 90; dec += 2) {
+      for (let dec = -85; dec <= 90; dec += 2) {
         const [sx, sy] = toScreen(ra, dec)
-        dec === -90 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy)
+        dec === -85 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy)
       }
       ctx.stroke()
-
-      // RA label at equator
-      const [lx, ly] = toScreen(ra, 2)
-      ctx.fillStyle = 'rgba(150, 170, 210, 0.45)'
-      ctx.font = '9px monospace'
-      ctx.textAlign = 'center'
-      ctx.fillText(`${ra}`, lx, ly + 11)
     }
 
     // Dec parallels every 30°
@@ -263,196 +295,178 @@ export default function DESISkyMap({ onClose }) {
         ra === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy)
       }
       ctx.stroke()
-
-      // Dec label
-      const [lx, ly] = toScreen(185, dec)
-      ctx.fillStyle = 'rgba(150, 170, 210, 0.4)'
-      ctx.font = '8px monospace'
-      ctx.textAlign = 'left'
-      ctx.fillText(`${dec > 0 ? '+' : ''}${dec}°`, lx + 4, ly - 3)
     }
 
     // ── DESI survey boundaries (red) ────────────────────────────────────
     for (const region of DESI_FOOTPRINT) {
       ctx.beginPath()
+      let first = true
       for (let i = 0; i < region.points.length; i++) {
-        const [ra, dec] = region.points[i]
-        const [sx, sy] = toScreen(ra, dec)
-        i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy)
+        const [ra1, dec1] = region.points[i]
+        const [ra2, dec2] = region.points[(i + 1) % region.points.length]
+        // Interpolate for smooth curves
+        const steps = 10
+        for (let s = 0; s <= (i === region.points.length - 1 ? 0 : steps); s++) {
+          const t = s / steps
+          const ra = ra1 + (ra2 - ra1) * t
+          const dec = dec1 + (dec2 - dec1) * t
+          const [sx, sy] = toScreen(ra, dec)
+          if (first) { ctx.moveTo(sx, sy); first = false }
+          else ctx.lineTo(sx, sy)
+        }
       }
       ctx.closePath()
 
-      // Faint red fill
-      ctx.fillStyle = 'rgba(200, 30, 30, 0.04)'
-      ctx.fill()
-
-      // Red boundary
-      ctx.strokeStyle = 'rgba(230, 45, 45, 0.6)'
-      ctx.lineWidth = 1.8
+      ctx.strokeStyle = 'rgba(220, 40, 40, 0.65)'
+      ctx.lineWidth = 2.2
       ctx.stroke()
 
-      // Label
+      // Region label
       if (region.label) {
-        const mid = Math.floor(region.points.length * 0.4)
+        const mid = Math.floor(region.points.length * 0.45)
         const [lx, ly] = toScreen(region.points[mid][0], region.points[mid][1])
-        ctx.fillStyle = 'rgba(230, 70, 70, 0.55)'
-        ctx.font = 'bold 10px monospace'
+        ctx.fillStyle = 'rgba(230, 60, 60, 0.65)'
+        ctx.font = 'bold 13px monospace'
         ctx.textAlign = 'center'
-        ctx.fillText(region.label, lx, ly + 4)
+        ctx.fillText(region.label, lx, ly + 5)
       }
     }
 
-    // ── DESI galaxy/quasar dots (faint blue) ────────────────────────────
+    // ── Galaxy/quasar dots (faint blue) ─────────────────────────────────
     const data = galaxyDataRef.current
     if (data && data.length > 0) {
-      const step = zoom < 1.5 ? 5 : zoom < 3 ? 3 : 1
-
+      const step = 4
       for (let i = 0; i < data.length; i += step) {
         const g = data[i]
         const [sx, sy] = toScreen(g.r, g.d)
-
-        // Quick bounds check
         const dx = sx - cx, dy = sy - cy
         if (dx * dx + dy * dy > radius * radius) continue
 
         const isQSO = g.s === 'Q' || g.s === 'QSO'
-        const t = Math.min(g.z / 2.0, 1.0)
-
         if (isQSO) {
-          ctx.fillStyle = `rgba(190, 160, 90, ${0.25 + t * 0.15})`
+          ctx.fillStyle = 'rgba(180, 150, 80, 0.25)'
         } else {
-          // Faint blue — not cyan
-          ctx.fillStyle = `rgba(${55 - t * 15}, ${100 + t * 20}, ${160 + t * 40}, ${0.30 + t * 0.12})`
+          ctx.fillStyle = 'rgba(50, 90, 160, 0.22)'
         }
-
-        ctx.fillRect(sx - 0.5, sy - 0.5, 1, 1)  // pixel dot for speed
+        ctx.fillRect(sx - 0.5, sy - 0.5, 1, 1)
       }
+    }
+
+    // ── Terrain + horizon glow overlay ──────────────────────────────────
+    if (terrainTexRef.current) {
+      ctx.drawImage(terrainTexRef.current, cx - radius, cy - radius, diameter, diameter)
     }
 
     ctx.restore()
 
     // ── Circle border ───────────────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(80, 100, 140, 0.3)'
-    ctx.lineWidth = 1.5
+    ctx.strokeStyle = 'rgba(60, 50, 40, 0.5)'
+    ctx.lineWidth = 2
     ctx.beginPath()
     ctx.arc(cx, cy, radius, 0, Math.PI * 2)
     ctx.stroke()
 
-    // ── Outer RA ticks around circle rim ─────────────────────────────────
+    // ── RA tick labels around rim ───────────────────────────────────────
     for (let ra = 0; ra < 360; ra += 30) {
-      const angle = (ra - 180) * Math.PI / 180
-      const x1 = cx + Math.sin(angle) * radius
-      const y1 = cy - Math.cos(angle) * radius
-      const x2 = cx + Math.sin(angle) * (radius + 8)
-      const y2 = cy - Math.cos(angle) * (radius + 8)
-      ctx.strokeStyle = 'rgba(130, 150, 190, 0.3)'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(x1, y1)
-      ctx.lineTo(x2, y2)
-      ctx.stroke()
-
-      const lx = cx + Math.sin(angle) * (radius + 16)
-      const ly = cy - Math.cos(angle) * (radius + 16)
-      ctx.fillStyle = 'rgba(140, 160, 200, 0.5)'
+      const angle = ((ra - 180 + st.rotation) * Math.PI) / 180
+      const lx = cx + Math.sin(angle) * (radius + 14)
+      const ly = cy - Math.cos(angle) * (radius + 14)
+      ctx.fillStyle = 'rgba(160, 150, 130, 0.5)'
       ctx.font = '9px monospace'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(`${ra}°`, lx, ly)
+      ctx.fillText(`${ra}`, lx, ly)
     }
 
-    // ── Timestamp + info labels ─────────────────────────────────────────
+    // Internal RA labels on the grid
+    for (let ra = 0; ra < 360; ra += 30) {
+      const [lx, ly] = toScreen(ra, 5)
+      const dx = lx - cx, dy = ly - cy
+      if (dx * dx + dy * dy < (radius * 0.85) * (radius * 0.85)) {
+        ctx.fillStyle = 'rgba(180, 170, 150, 0.35)'
+        ctx.font = '10px monospace'
+        ctx.textAlign = 'center'
+        ctx.fillText(`${ra}`, lx, ly + 12)
+      }
+    }
+
+    // ── Info overlay (top-left like screenshot) ─────────────────────────
     const now = new Date()
     const utc = now.toISOString().replace('T', ' ').slice(0, 19) + ' UT'
-    ctx.fillStyle = 'rgba(140, 160, 200, 0.45)'
+    const st2 = `ST: ${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:${now.getUTCSeconds().toString().padStart(2, '0')}`
+
+    ctx.fillStyle = 'rgba(180, 170, 150, 0.45)'
     ctx.font = '10px monospace'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
-    ctx.fillText(utc, 12, 50)
+    ctx.fillText(utc, cx - radius + 8, cy - radius + 8)
+    ctx.fillText(st2, cx - radius + 8, cy - radius + 22)
 
-    panRef.current._fromScreen = fromScreen
+    // RA range indicator (top-right like screenshot)
+    const raCenter = ((st.rotation + 180) % 360).toFixed(1)
+    ctx.textAlign = 'right'
+    ctx.fillText(`${raCenter}°`, cx + radius - 8, cy - radius + 8)
+
+    // Bottom RA range
+    ctx.textAlign = 'center'
+    ctx.fillText('drag to rotate', cx, cy + radius + 16)
+
+    stateRef.current._fromScreen = fromScreen
   }, [])
 
   // Setup + resize + data poll
   useEffect(() => {
-    render()
-    const onResize = () => render()
+    renderFrame()
+    const onResize = () => renderFrame()
     window.addEventListener('resize', onResize)
     const poll = setInterval(() => {
-      if (galaxyDataRef.current) { render(); clearInterval(poll) }
+      if (galaxyDataRef.current) { renderFrame(); clearInterval(poll) }
     }, 500)
     return () => { window.removeEventListener('resize', onResize); clearInterval(poll) }
-  }, [render])
+  }, [renderFrame])
 
-  // Pan + zoom
+  // Drag rotation
   useEffect(() => {
     const wrap = wrapRef.current
     if (!wrap) return
 
-    const onWheel = (e) => {
-      e.preventDefault()
-      const p = panRef.current
-      p.zoom = Math.max(0.5, Math.min(6, p.zoom * (e.deltaY > 0 ? 0.92 : 1.08)))
-      render()
-    }
-
     const onDown = (e) => {
-      panRef.current.dragging = true
-      panRef.current.lx = e.clientX
-      panRef.current.ly = e.clientY
+      stateRef.current.dragging = true
+      stateRef.current.lx = e.clientX
+      stateRef.current.dragStartRA = stateRef.current.rotation
     }
 
     const onMove = (e) => {
-      const p = panRef.current
-      if (p._fromScreen) {
+      const st = stateRef.current
+      if (st._fromScreen) {
         const rect = wrap.getBoundingClientRect()
-        setHoverCoords(p._fromScreen(e.clientX - rect.left, e.clientY - rect.top))
+        setHoverCoords(st._fromScreen(e.clientX - rect.left, e.clientY - rect.top))
       }
-      if (!p.dragging) return
-      p.ox += e.clientX - p.lx
-      p.oy += e.clientY - p.ly
-      p.lx = e.clientX
-      p.ly = e.clientY
-      render()
+      if (!st.dragging) return
+      const dx = e.clientX - st.lx
+      st.rotation = st.dragStartRA + dx * 0.3
+      renderFrame()
     }
 
-    const onUp = () => { panRef.current.dragging = false }
+    const onUp = () => { stateRef.current.dragging = false }
 
-    let lastDist = 0
+    // Touch
     const onTS = (e) => {
-      if (e.touches.length === 2) {
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        lastDist = Math.sqrt(dx * dx + dy * dy)
-      } else if (e.touches.length === 1) {
-        panRef.current.dragging = true
-        panRef.current.lx = e.touches[0].clientX
-        panRef.current.ly = e.touches[0].clientY
+      if (e.touches.length === 1) {
+        stateRef.current.dragging = true
+        stateRef.current.lx = e.touches[0].clientX
+        stateRef.current.dragStartRA = stateRef.current.rotation
       }
     }
     const onTM = (e) => {
-      if (e.touches.length === 2) {
-        e.preventDefault()
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        const d = Math.sqrt(dx * dx + dy * dy)
-        if (lastDist > 0) {
-          panRef.current.zoom = Math.max(0.5, Math.min(6, panRef.current.zoom * d / lastDist))
-          render()
-        }
-        lastDist = d
-      } else if (e.touches.length === 1 && panRef.current.dragging) {
-        const p = panRef.current
-        p.ox += e.touches[0].clientX - p.lx
-        p.oy += e.touches[0].clientY - p.ly
-        p.lx = e.touches[0].clientX
-        p.ly = e.touches[0].clientY
-        render()
+      if (e.touches.length === 1 && stateRef.current.dragging) {
+        const dx = e.touches[0].clientX - stateRef.current.lx
+        stateRef.current.rotation = stateRef.current.dragStartRA + dx * 0.3
+        renderFrame()
       }
     }
-    const onTE = () => { panRef.current.dragging = false; lastDist = 0 }
+    const onTE = () => { stateRef.current.dragging = false }
 
-    wrap.addEventListener('wheel', onWheel, { passive: false })
     wrap.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -461,7 +475,6 @@ export default function DESISkyMap({ onClose }) {
     wrap.addEventListener('touchend', onTE)
 
     return () => {
-      wrap.removeEventListener('wheel', onWheel)
       wrap.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
@@ -469,9 +482,9 @@ export default function DESISkyMap({ onClose }) {
       wrap.removeEventListener('touchmove', onTM)
       wrap.removeEventListener('touchend', onTE)
     }
-  }, [render])
+  }, [renderFrame])
 
-  // Escape to close
+  // Escape
   useEffect(() => {
     const h = (e) => { if (e.key === 'Escape') onClose?.() }
     document.addEventListener('keydown', h)
@@ -496,10 +509,9 @@ export default function DESISkyMap({ onClose }) {
       )}
 
       <div className={styles.legend}>
-        <span><span className={styles.legendDot} style={{ background: 'rgba(55, 100, 180, 0.8)' }} />Galaxy</span>
-        <span><span className={styles.legendDot} style={{ background: 'rgba(190, 160, 90, 0.8)' }} />Quasar</span>
-        <span><span className={styles.legendDot} style={{ background: 'rgba(230, 45, 45, 0.8)' }} />DESI boundary</span>
-        <span>scroll zoom · drag pan</span>
+        <span><span className={styles.legendDot} style={{ background: 'rgba(50, 90, 160, 0.8)' }} />Galaxy</span>
+        <span><span className={styles.legendDot} style={{ background: 'rgba(180, 150, 80, 0.8)' }} />Quasar</span>
+        <span><span className={styles.legendDot} style={{ background: 'rgba(220, 40, 40, 0.8)' }} />DESI boundary</span>
       </div>
     </div>
   )

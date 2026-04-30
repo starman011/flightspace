@@ -146,7 +146,7 @@ export default function App() {
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
   const [coneExpanded, setConeExpanded]     = useState(false)
-  const [skyMapOpen, setSkyMapOpen]         = useState(false)
+  const [skyMapOpen, setSkyMapOpen]         = useState(init.activeScale === 'galaxy')
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
   const [focusedPad, setFocusedPad]         = useState(null)
@@ -190,6 +190,12 @@ export default function App() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Auto-open sky map when entering galaxy scale, close when leaving
+  useEffect(() => {
+    if (activeScale === 'galaxy') setSkyMapOpen(true)
+    else setSkyMapOpen(false)
+  }, [activeScale])
 
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
@@ -596,22 +602,6 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {activeScale === 'galaxy' && (
         <DistanceSlicer onChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)} />
-      )}
-
-      {activeScale === 'galaxy' && !skyMapOpen && (
-        <button
-          onClick={() => setSkyMapOpen(true)}
-          style={{
-            position: 'fixed', bottom: 24, left: 16, zIndex: 110,
-            padding: '6px 12px', background: 'rgba(20,25,35,0.85)',
-            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            border: '1px solid rgba(100,120,180,0.2)', borderRadius: 6,
-            fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
-            letterSpacing: '0.1em', color: 'rgba(160,180,220,0.7)', cursor: 'pointer',
-          }}
-        >
-          Sky Map
-        </button>
       )}
 
       {activeScale === 'galaxy' && skyMapOpen && (
