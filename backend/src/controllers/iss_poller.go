@@ -25,16 +25,17 @@ const (
 	streamRedisTTL  = 35 * time.Minute
 )
 
-// YouTube channels known to stream ISS live feeds
-var issStreamSources = []string{
-	"https://www.youtube.com/@NASA/live",
-	"https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ/live",
-	"https://www.youtube.com/@liveiss/live",
+// YouTube live search: sp=EgJAAQ%3D%3D filters to currently-live streams only
+var issSearchQueries = []string{
+	"https://www.youtube.com/results?search_query=NASA+ISS+live+stream&sp=EgJAAQ%3D%3D",
+	"https://www.youtube.com/results?search_query=ISS+live+earth+view&sp=EgJAAQ%3D%3D",
 }
 
+// Matches {"videoId":"XXXXXXXXXXX"} — used on search results pages
 var ytVideoIDRe = regexp.MustCompile(`"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"`)
-var ytCanonicalRe = regexp.MustCompile(`<link\s+rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})"`)
-var ytLiveRe = regexp.MustCompile(`"isLive"\s*:\s*true`)
+
+// Keywords that must appear near the video entry to confirm ISS relevance
+var issKeywords = []string{"iss", "international space station", "space station", "earth from space", "nasa live"}
 
 type issPositionResp struct {
 	ISSPosition struct {
@@ -166,11 +167,12 @@ func (p *ISSPoller) fetchCrew(ctx context.Context) int {
 	return crew.Number
 }
 
-// fetchStream discovers the current live ISS YouTube stream by scraping
-// channel live pages. Caches the video ID in Redis.
+// fetchStream searches YouTube for currently-live ISS streams.
+// The sp=EgJAAQ%3D%3D filter means only live-right-now results appear,
+// so every videoId on the page is a confirmed live stream.
 func (p *ISSPoller) fetchStream(ctx context.Context) {
-	for _, src := range issStreamSources {
-		vid := p.scrapeVideoID(ctx, src)
+	for _, searchURL := range issSearchQueries {
+		vid := p.searchLiveStream(ctx, searchURL)
 		if vid == "" {
 			continue
 		}
@@ -178,23 +180,25 @@ func (p *ISSPoller) fetchStream(ctx context.Context) {
 		data, _ := json.Marshal(map[string]string{
 			"video_id":  vid,
 			"embed_url": "https://www.youtube.com/embed/" + vid + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
-			"source":    src,
+			"source":    "youtube_search",
 		})
 		p.rdb.Set(ctx, streamRedisKey, data, streamRedisTTL)
-		log.Printf(`{"level":"info","service":"iss_poller","msg":"stream discovered","video_id":%q,"source":%q}`, vid, src)
+		log.Printf(`{"level":"info","service":"iss_poller","msg":"stream discovered","video_id":%q}`, vid)
 		return
 	}
+	// No live stream found — clear cache so frontend gets fallback
+	p.rdb.Del(ctx, streamRedisKey)
 	log.Println(`{"level":"warn","service":"iss_poller","msg":"no live ISS stream found"}`)
 }
 
-// scrapeVideoID fetches a YouTube channel live page and extracts the video ID
-// of the currently live stream.
-func (p *ISSPoller) scrapeVideoID(ctx context.Context, url string) string {
+// searchLiveStream fetches a YouTube live-filtered search page and finds
+// the first video ID whose surrounding context contains ISS-related keywords.
+func (p *ISSPoller) searchLiveStream(ctx context.Context, searchURL string) string {
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; FlightSpace/1.0)")
+	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, searchURL, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -203,25 +207,36 @@ func (p *ISSPoller) scrapeVideoID(ctx context.Context, url string) string {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB cap
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // 2MB cap
 	if err != nil {
 		return ""
 	}
-	html := string(body)
+	html := strings.ToLower(string(body))
 
-	// Only consider pages that indicate a live stream
-	if !ytLiveRe.MatchString(html) && !strings.Contains(html, `"isLive":true`) {
-		return ""
-	}
+	// Find all videoId matches and check surrounding context for ISS keywords
+	matches := ytVideoIDRe.FindAllStringSubmatchIndex(html, -1)
+	for _, loc := range matches {
+		// Extract the video ID (group 1)
+		vid := html[loc[2]:loc[3]]
+		// Convert back to original case by re-reading from original body
+		vid = string(body[loc[2]:loc[3]])
 
-	// Try canonical link first (most reliable)
-	if m := ytCanonicalRe.FindStringSubmatch(html); len(m) > 1 {
-		return m[1]
-	}
+		// Check ~500 chars around this match for ISS keywords
+		start := loc[0] - 500
+		if start < 0 {
+			start = 0
+		}
+		end := loc[1] + 500
+		if end > len(html) {
+			end = len(html)
+		}
+		context := html[start:end]
 
-	// Fall back to first videoId in page JSON
-	if m := ytVideoIDRe.FindStringSubmatch(html); len(m) > 1 {
-		return m[1]
+		for _, kw := range issKeywords {
+			if strings.Contains(context, kw) {
+				return vid
+			}
+		}
 	}
 
 	return ""
