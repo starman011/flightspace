@@ -72,20 +72,17 @@ function formatAge(timestamp) {
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
-const NASA_STREAM_URL = 'https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
-const NASA_STREAM_FALLBACK = 'https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false'
+const ISS_STREAM_URL = 'https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false'
 
 function ISSStream() {
-  const [src, setSrc] = useState(NASA_STREAM_URL)
   return (
     <div className={styles.issStream}>
       <iframe
-        src={src}
+        src={ISS_STREAM_URL}
         className={styles.issIframe}
         allow="autoplay; encrypted-media"
         allowFullScreen
         title="NASA ISS Live"
-        onError={() => setSrc(NASA_STREAM_FALLBACK)}
       />
       <div className={styles.streamBadge}>
         <span className={styles.liveDot} />
