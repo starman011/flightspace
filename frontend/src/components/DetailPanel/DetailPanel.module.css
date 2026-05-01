@@ -627,4 +627,159 @@
   .fitBtn { padding: 8px 14px; font-size: 10px; }
 
   .state { padding: 4px 14px; font-size: 10px; }
+  .issIframe { height: 160px; }
+  .crewGrid { gap: 4px; }
+  .crewName { font-size: 10px; }
+  .specsGrid { gap: 2px; }
+  .specLabel, .specValue { font-size: 9px; }
+  .missionRow { padding: 5px 0; }
+  .missionName { font-size: 10px; }
+  .missionDate { font-size: 9px; }
+}
+
+/* ── ISS Live Stream ── */
+.issStream {
+  position: relative;
+  background: #000;
+  border-bottom: 1px solid rgba(0,229,255,0.08);
+}
+
+.issIframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+  display: block;
+}
+
+.streamBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.8);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3333;
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── ISS Crew ── */
+.issCrew {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,229,255,0.06);
+}
+
+.issLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(0,229,255,0.5);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.crewGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.crewMember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(0,229,255,0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(0,229,255,0.06);
+}
+
+.crewName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(195,210,255,0.85);
+}
+
+/* ── ISS Specs ── */
+.issSpecs {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,229,255,0.06);
+}
+
+.specsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.specRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 8px;
+  background: rgba(0,229,255,0.03);
+  border-radius: 4px;
+}
+
+.specLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(195,210,255,0.45);
+  letter-spacing: 0.05em;
+}
+
+.specValue {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(195,210,255,0.8);
+  font-weight: 500;
+}
+
+/* ── ISS Missions ── */
+.issMissions {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,229,255,0.06);
+}
+
+.missionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(0,229,255,0.04);
+}
+
+.missionRow:last-child { border-bottom: none; }
+
+.missionName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(195,210,255,0.8);
+}
+
+.missionDate {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,229,255,0.5);
+  white-space: nowrap;
 }

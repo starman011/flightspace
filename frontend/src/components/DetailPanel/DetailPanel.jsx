@@ -71,6 +71,114 @@ function formatAge(timestamp) {
 
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
+// ── ISS live stream + crew + missions ─────────────────────────────────────
+const NASA_STREAM_URL = 'https://www.youtube.com/embed/P9C25Un7xaM?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
+const NASA_STREAM_FALLBACK = 'https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false'
+
+function ISSStream() {
+  const [src, setSrc] = useState(NASA_STREAM_URL)
+  return (
+    <div className={styles.issStream}>
+      <iframe
+        src={src}
+        className={styles.issIframe}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        title="NASA ISS Live"
+        onError={() => setSrc(NASA_STREAM_FALLBACK)}
+      />
+      <div className={styles.streamBadge}>
+        <span className={styles.liveDot} />
+        LIVE · NASA ISS
+      </div>
+    </div>
+  )
+}
+
+function ISSCrew() {
+  const [crew, setCrew] = useState(null)
+  useEffect(() => {
+    fetch('https://corsproxy.io/?url=http://api.open-notify.org/astros.json')
+      .then(r => r.json())
+      .then(data => setCrew(data.people?.filter(p => p.craft === 'ISS') || []))
+      .catch(() => {
+        // Fallback: try direct (works from some origins)
+        fetch('http://api.open-notify.org/astros.json')
+          .then(r => r.json())
+          .then(data => setCrew(data.people?.filter(p => p.craft === 'ISS') || []))
+          .catch(() => {})
+      })
+  }, [])
+  if (!crew || crew.length === 0) return null
+  return (
+    <div className={styles.issCrew}>
+      <div className={styles.issLabel}>
+        <span className="material-symbols-outlined" style={{ fontSize: 11 }}>group</span>
+        CREW ON BOARD · {crew.length}
+      </div>
+      <div className={styles.crewGrid}>
+        {crew.map(c => (
+          <div key={c.name} className={styles.crewMember}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(0,229,255,0.6)' }}>person</span>
+            <span className={styles.crewName}>{c.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ISSMissions() {
+  const [missions, setMissions] = useState(null)
+  useEffect(() => {
+    fetch(`${API}/api/v1/launches`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        const issMissions = data.filter(l =>
+          l.mission?.orbit?.name?.includes('Low Earth') ||
+          l.name?.toLowerCase().includes('iss') ||
+          l.name?.toLowerCase().includes('crew') ||
+          l.name?.toLowerCase().includes('progress') ||
+          l.name?.toLowerCase().includes('crs') ||
+          l.name?.toLowerCase().includes('starliner') ||
+          l.name?.toLowerCase().includes('soyuz')
+        ).slice(0, 4)
+        setMissions(issMissions)
+      })
+      .catch(() => {})
+  }, [])
+  if (!missions || missions.length === 0) return null
+  return (
+    <div className={styles.issMissions}>
+      <div className={styles.issLabel}>
+        <span className="material-symbols-outlined" style={{ fontSize: 11 }}>rocket_launch</span>
+        UPCOMING ISS MISSIONS
+      </div>
+      {missions.map((m, i) => (
+        <div key={i} className={styles.missionRow}>
+          <span className={styles.missionName}>{m.name}</span>
+          <span className={styles.missionDate}>
+            {m.net ? new Date(m.net).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── ISS Orbital Specs ─────────────────────────────────────────────────────
+const ISS_SPECS = [
+  { label: 'Inclination',    value: '51.64°' },
+  { label: 'Orbital Period', value: '92.68 min' },
+  { label: 'Mean Altitude',  value: '408 km' },
+  { label: 'Velocity',       value: '7.66 km/s' },
+  { label: 'Mass',           value: '~420,000 kg' },
+  { label: 'Wingspan',       value: '109 m' },
+  { label: 'Volume',         value: '916 m³' },
+  { label: 'In orbit since', value: 'Nov 1998' },
+]
+
 export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn }) {
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
@@ -291,28 +399,32 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       {/* ── Full peek content (hidden when mini) ── */}
       {!isMini && (
         <>
-          {/* ── Hero: aircraft photo ── */}
-          <div className={styles.hero}>
-            {photo?.url ? (
-              <img
-                src={photo.url}
-                className={styles.heroImg}
-                alt="aircraft"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={() => setPhoto(null)}
-              />
-            ) : (
-              <div className={styles.heroPlaceholder}>
-                <span className={styles.heroIcon}>
-                  {cat === 'satellite' ? '🛰' : cat === 'ship' ? '🚢' : cat === 'helicopter' ? '🚁' : '✈'}
-                </span>
-              </div>
-            )}
-            {photo?.photographer && (
-              <span className={styles.photoCredit}>{photo.photographer}</span>
-            )}
-          </div>
+          {/* ── Hero: live stream for ISS, photo for aircraft ── */}
+          {cat === 'satellite' && icao24 === 'ISS' ? (
+            <ISSStream />
+          ) : (
+            <div className={styles.hero}>
+              {photo?.url ? (
+                <img
+                  src={photo.url}
+                  className={styles.heroImg}
+                  alt="aircraft"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={() => setPhoto(null)}
+                />
+              ) : (
+                <div className={styles.heroPlaceholder}>
+                  <span className={styles.heroIcon}>
+                    {cat === 'satellite' ? '🛰' : cat === 'ship' ? '🚢' : cat === 'helicopter' ? '🚁' : '✈'}
+                  </span>
+                </div>
+              )}
+              {photo?.photographer && (
+                <span className={styles.photoCredit}>{photo.photographer}</span>
+              )}
+            </div>
+          )}
 
           {/* ── Flight identity ── */}
           <div className={styles.identity}>
@@ -432,6 +544,28 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 {etaMin != null && <span className={styles.statusEta}>ETA {fmtEta(etaMin)}</span>}
               </div>
             </div>
+          )}
+
+          {/* ── ISS details: crew, specs, upcoming missions ── */}
+          {cat === 'satellite' && icao24 === 'ISS' && (
+            <>
+              <ISSCrew />
+              <div className={styles.issSpecs}>
+                <div className={styles.issLabel}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 11 }}>info</span>
+                  ORBITAL PARAMETERS
+                </div>
+                <div className={styles.specsGrid}>
+                  {ISS_SPECS.map(s => (
+                    <div key={s.label} className={styles.specRow}>
+                      <span className={styles.specLabel}>{s.label}</span>
+                      <span className={styles.specValue}>{s.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <ISSMissions />
+            </>
           )}
 
           {/* ── Track / fit ── */}
