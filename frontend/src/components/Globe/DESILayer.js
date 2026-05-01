@@ -256,6 +256,9 @@ export function createDESILayer() {
     pointCloud.renderOrder = 10
     group.add(pointCloud)
 
+    // Re-apply pending distance filter (set before data loaded)
+    if (_pendingRange) _applyDistanceRange(_pendingRange[0], _pendingRange[1])
+
     cosmicWeb.build(positions, n)
   }
 
@@ -463,8 +466,15 @@ export function createDESILayer() {
   }
 
   // ── Distance filter: show only galaxies in redshift range ──────────────
+  let _pendingRange = null   // stored when filter fires before data loads
+
   function setDistanceRange(minZ, maxZ) {
+    _pendingRange = [minZ, maxZ]
     if (!pointCloud || !galaxyData) return
+    _applyDistanceRange(minZ, maxZ)
+  }
+
+  function _applyDistanceRange(minZ, maxZ) {
     const sizes = pointCloud.geometry.attributes.aSize
     for (let i = 0; i < galaxyData.length; i++) {
       const gz = galaxyData[i].z
