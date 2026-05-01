@@ -640,8 +640,8 @@
 /* ── ISS Live Stream ── */
 .issStream {
   position: relative;
-  background: #000;
-  border-bottom: 1px solid rgba(0,229,255,0.08);
+  background: #000000;
+  border-bottom: 1px solid rgba(178,255,26,0.1);
 }
 
 .issIframe {
@@ -661,8 +661,8 @@
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.8);
-  background: rgba(0,0,0,0.6);
+  color: rgba(178,255,26,0.9);
+  background: rgba(0,0,0,0.7);
   backdrop-filter: blur(8px);
   padding: 3px 8px;
   border-radius: 4px;
@@ -672,19 +672,20 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ff3333;
+  background: #b2ff1a;
   animation: livePulse 1.5s ease-in-out infinite;
 }
 
 @keyframes livePulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.3; }
 }
 
 /* ── ISS Crew ── */
 .issCrew {
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(0,229,255,0.06);
+  background: #000000;
+  border-bottom: 1px solid rgba(178,255,26,0.08);
 }
 
 .issLabel {
@@ -692,9 +693,9 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.12em;
-  color: rgba(0,229,255,0.5);
+  color: rgba(178,255,26,0.6);
   text-transform: uppercase;
   margin-bottom: 8px;
 }
@@ -710,21 +711,22 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: rgba(0,229,255,0.04);
+  background: rgba(178,255,26,0.04);
   border-radius: 6px;
-  border: 1px solid rgba(0,229,255,0.06);
+  border: 1px solid rgba(178,255,26,0.08);
 }
 
 .crewName {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(195,210,255,0.85);
+  color: rgba(178,255,26,0.85);
 }
 
 /* ── ISS Specs ── */
 .issSpecs {
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(0,229,255,0.06);
+  background: #000000;
+  border-bottom: 1px solid rgba(178,255,26,0.08);
 }
 
 .specsGrid {
@@ -737,28 +739,29 @@
   display: flex;
   justify-content: space-between;
   padding: 3px 8px;
-  background: rgba(0,229,255,0.03);
+  background: rgba(178,255,26,0.03);
   border-radius: 4px;
 }
 
 .specLabel {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(195,210,255,0.45);
+  color: rgba(178,255,26,0.4);
   letter-spacing: 0.05em;
 }
 
 .specValue {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(195,210,255,0.8);
+  color: rgba(178,255,26,0.85);
   font-weight: 500;
 }
 
 /* ── ISS Missions ── */
 .issMissions {
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(0,229,255,0.06);
+  background: #000000;
+  border-bottom: 1px solid rgba(178,255,26,0.08);
 }
 
 .missionRow {
@@ -766,7 +769,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 8px;
-  border-bottom: 1px solid rgba(0,229,255,0.04);
+  border-bottom: 1px solid rgba(178,255,26,0.05);
 }
 
 .missionRow:last-child { border-bottom: none; }
@@ -774,12 +777,12 @@
 .missionName {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(195,210,255,0.8);
+  color: rgba(178,255,26,0.85);
 }
 
 .missionDate {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(0,229,255,0.5);
+  color: rgba(178,255,26,0.5);
   white-space: nowrap;
 }
