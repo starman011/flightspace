@@ -98,16 +98,10 @@ function ISSStream() {
 function ISSCrew() {
   const [crew, setCrew] = useState(null)
   useEffect(() => {
-    fetch('https://corsproxy.io/?url=http://api.open-notify.org/astros.json')
+    fetch('http://api.open-notify.org/astros.json')
       .then(r => r.json())
       .then(data => setCrew(data.people?.filter(p => p.craft === 'ISS') || []))
-      .catch(() => {
-        // Fallback: try direct (works from some origins)
-        fetch('http://api.open-notify.org/astros.json')
-          .then(r => r.json())
-          .then(data => setCrew(data.people?.filter(p => p.craft === 'ISS') || []))
-          .catch(() => {})
-      })
+      .catch(() => {})
   }, [])
   if (!crew || crew.length === 0) return null
   return (
