@@ -16,6 +16,7 @@ func Setup(
 	rdb *redis.Client,
 	hub *controllers.Hub,
 	launchPoller *controllers.LaunchPoller,
+	issPoller *controllers.ISSPoller,
 	jwtSecret string,
 	nasaAPIKey string,
 	googleClientID string,
@@ -91,6 +92,7 @@ func Setup(
 
 	// ISS
 	mux.Handle("GET /api/v1/iss/crew", rateLimit(http.HandlerFunc(aircraft.GetISSCrew)))
+	mux.Handle("GET /api/v1/iss/stream", rateLimit(http.HandlerFunc(issPoller.GetStream)))
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)

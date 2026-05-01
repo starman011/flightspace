@@ -72,13 +72,21 @@ function formatAge(timestamp) {
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
-const ISS_STREAM_URL = 'https://www.youtube.com/embed/sWasdbDVNvc?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
+const ISS_STREAM_FALLBACK = 'https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false'
 
 function ISSStream() {
+  const [src, setSrc] = useState(null)
+  useEffect(() => {
+    fetch(`${API}/api/v1/iss/stream`)
+      .then(r => r.json())
+      .then(d => setSrc(d.embed_url || ISS_STREAM_FALLBACK))
+      .catch(() => setSrc(ISS_STREAM_FALLBACK))
+  }, [])
+  if (!src) return null
   return (
     <div className={styles.issStream}>
       <iframe
-        src={ISS_STREAM_URL}
+        src={src}
         className={styles.issIframe}
         allow="autoplay; encrypted-media"
         allowFullScreen

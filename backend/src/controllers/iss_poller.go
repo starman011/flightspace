@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -13,12 +15,26 @@ import (
 )
 
 const (
-	issPositionURL = "http://api.open-notify.org/iss-now.json"
-	issCrewURL     = "http://api.open-notify.org/astros.json"
-	issAltKM       = 408.0 // approximate ISS orbital altitude
-	issPollS       = 5     // seconds between position polls
-	crewPollMin    = 60    // minutes between crew polls
+	issPositionURL  = "http://api.open-notify.org/iss-now.json"
+	issCrewURL      = "http://api.open-notify.org/astros.json"
+	issAltKM        = 408.0  // approximate ISS orbital altitude
+	issPollS        = 5      // seconds between position polls
+	crewPollMin     = 60     // minutes between crew polls
+	streamPollMin   = 30     // minutes between stream discovery polls
+	streamRedisKey  = "iss:stream"
+	streamRedisTTL  = 35 * time.Minute
 )
+
+// YouTube channels known to stream ISS live feeds
+var issStreamSources = []string{
+	"https://www.youtube.com/@NASA/live",
+	"https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ/live",
+	"https://www.youtube.com/@liveiss/live",
+}
+
+var ytVideoIDRe = regexp.MustCompile(`"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"`)
+var ytCanonicalRe = regexp.MustCompile(`<link\s+rel="canonical"\s+href="https://www\.youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})"`)
+var ytLiveRe = regexp.MustCompile(`"isLive"\s*:\s*true`)
 
 type issPositionResp struct {
 	ISSPosition struct {
@@ -50,13 +66,15 @@ func NewISSPoller(rdb *redis.Client) *ISSPoller {
 func (p *ISSPoller) Start(ctx context.Context) {
 	log.Println(`{"level":"info","service":"iss_poller","msg":"starting"}`)
 
-	// Fetch crew once at startup, then every 60 minutes
 	crewCount := p.fetchCrew(ctx)
+	p.fetchStream(ctx)
 
-	crewTicker := time.NewTicker(crewPollMin * time.Minute)
-	posTicker  := time.NewTicker(issPollS * time.Second)
+	crewTicker   := time.NewTicker(crewPollMin * time.Minute)
+	posTicker    := time.NewTicker(issPollS * time.Second)
+	streamTicker := time.NewTicker(streamPollMin * time.Minute)
 	defer crewTicker.Stop()
 	defer posTicker.Stop()
+	defer streamTicker.Stop()
 
 	for {
 		select {
@@ -66,6 +84,8 @@ func (p *ISSPoller) Start(ctx context.Context) {
 			crewCount = p.fetchCrew(ctx)
 		case <-posTicker.C:
 			p.fetchPosition(ctx, crewCount)
+		case <-streamTicker.C:
+			p.fetchStream(ctx)
 		}
 	}
 }
@@ -144,4 +164,85 @@ func (p *ISSPoller) fetchCrew(ctx context.Context) int {
 
 	log.Printf(`{"level":"info","service":"iss_poller","msg":"crew updated","people":%d}`, crew.Number)
 	return crew.Number
+}
+
+// fetchStream discovers the current live ISS YouTube stream by scraping
+// channel live pages. Caches the video ID in Redis.
+func (p *ISSPoller) fetchStream(ctx context.Context) {
+	for _, src := range issStreamSources {
+		vid := p.scrapeVideoID(ctx, src)
+		if vid == "" {
+			continue
+		}
+
+		data, _ := json.Marshal(map[string]string{
+			"video_id":  vid,
+			"embed_url": "https://www.youtube.com/embed/" + vid + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
+			"source":    src,
+		})
+		p.rdb.Set(ctx, streamRedisKey, data, streamRedisTTL)
+		log.Printf(`{"level":"info","service":"iss_poller","msg":"stream discovered","video_id":%q,"source":%q}`, vid, src)
+		return
+	}
+	log.Println(`{"level":"warn","service":"iss_poller","msg":"no live ISS stream found"}`)
+}
+
+// scrapeVideoID fetches a YouTube channel live page and extracts the video ID
+// of the currently live stream.
+func (p *ISSPoller) scrapeVideoID(ctx context.Context, url string) string {
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; FlightSpace/1.0)")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB cap
+	if err != nil {
+		return ""
+	}
+	html := string(body)
+
+	// Only consider pages that indicate a live stream
+	if !ytLiveRe.MatchString(html) && !strings.Contains(html, `"isLive":true`) {
+		return ""
+	}
+
+	// Try canonical link first (most reliable)
+	if m := ytCanonicalRe.FindStringSubmatch(html); len(m) > 1 {
+		return m[1]
+	}
+
+	// Fall back to first videoId in page JSON
+	if m := ytVideoIDRe.FindStringSubmatch(html); len(m) > 1 {
+		return m[1]
+	}
+
+	return ""
+}
+
+// GetStream serves the cached live stream URL.
+func (p *ISSPoller) GetStream(w http.ResponseWriter, r *http.Request) {
+	raw, err := p.rdb.Get(r.Context(), streamRedisKey).Result()
+	if err != nil {
+		// No stream found — return fallback
+		fallback, _ := json.Marshal(map[string]string{
+			"video_id":  "",
+			"embed_url": "https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false",
+			"source":    "fallback",
+		})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(fallback)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(raw))
 }
