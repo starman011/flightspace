@@ -185,6 +185,49 @@ const SHEET_CATS = [
   { id: 'asteroids',  icon: 'wb_iridescent',   label: 'NEO',      type: 'asteroids',  scale: 'solar' },
 ]
 
+// ── Galaxy distance slider (compact, integrated into filter bar) ──────────
+const G_C_KMS = 299792.458, G_H0 = 67.4, G_OM = 0.315, G_OL = 0.685, G_MPC_LY = 3261600
+function gZtoLY(z) {
+  const n = 80, dz = z / n; let sum = 0
+  for (let i = 0; i < n; i++) { const zi = (i + 0.5) * dz; sum += dz / Math.sqrt(G_OM * (1 + zi) ** 3 + G_OL) }
+  return (G_C_KMS / G_H0) * sum * G_MPC_LY
+}
+function gFmtLY(ly) { return ly < 1e9 ? `${(ly / 1e6).toFixed(0)}M ly` : `${(ly / 1e9).toFixed(1)}B ly` }
+
+const GZ_MAX = 3.5, GZ_STEP = 0.01, GZ_DEFAULT_MAX = 0.15
+
+function GalaxyDistanceSlider({ onChange }) {
+  const [maxZ, setMaxZ] = useState(GZ_DEFAULT_MAX)
+  const emitRef = useRef(null)
+
+  // Emit default range on mount
+  useEffect(() => { onChange?.(0, GZ_DEFAULT_MAX) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Reset to full on unmount
+  useEffect(() => () => onChange?.(0, GZ_MAX), [onChange])
+
+  const handleChange = (e) => {
+    const v = Math.max(parseFloat(e.target.value), GZ_STEP)
+    setMaxZ(v)
+    clearTimeout(emitRef.current)
+    emitRef.current = setTimeout(() => onChange?.(0, v), 40)
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '2px 0' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(160,140,255,0.7)', whiteSpace: 'nowrap' }}>0</span>
+      <input
+        type="range" min={GZ_STEP} max={GZ_MAX} step={GZ_STEP} value={maxZ}
+        onChange={handleChange}
+        onPointerDown={e => e.stopPropagation()}
+        style={{ flex: 1, accentColor: '#8c64ff', height: 4, cursor: 'pointer' }}
+      />
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(160,140,255,0.95)', fontWeight: 600, whiteSpace: 'nowrap', minWidth: 48, textAlign: 'right' }}>
+        {gFmtLY(gZtoLY(maxZ))}
+      </span>
+    </div>
+  )
+}
+
 function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle }) {
   function handle(cat) {
     const deselect = (activeFilter ?? 'all') === cat.id
@@ -1068,6 +1111,7 @@ function PinnedCountdown({ launch, onUnpin }) {
 export default function CommandCenterOverlay({
   trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
+  activeScale, onDistanceChange,
 }) {
   const isLive  = connectionStatus === 'connected'
   const { news, loadMore: loadMoreNews, hasMore: hasMoreNews, fetching: fetchingNews } = useSpaceNews()
@@ -1301,16 +1345,20 @@ export default function CommandCenterOverlay({
         {/* Filter chips — globe filter, always visible as the peek layer */}
         <div className={`${styles.mobileFilterSection}${desktopOpen === 'wide' ? ' ' + styles.desktopFilterVisible : ''}`} data-tour="filter-bar">
           <p className={styles.mobileFilterLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>tune</span>
-            Globe Filter
+            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>{activeScale === 'galaxy' ? 'straighten' : 'tune'}</span>
+            {activeScale === 'galaxy' ? 'Distance Filter' : 'Globe Filter'}
           </p>
-          <MobileFilterRow
-            activeFilter={activeFilter}
-            onFiltersChange={onFiltersChange}
-            onCameraScale={onCameraScale}
-            onActiveFilterChange={onActiveFilterChange}
-            onLaunchPanelToggle={onLaunchPanelToggle}
-          />
+          {activeScale === 'galaxy' ? (
+            <GalaxyDistanceSlider onChange={onDistanceChange} />
+          ) : (
+            <MobileFilterRow
+              activeFilter={activeFilter}
+              onFiltersChange={onFiltersChange}
+              onCameraScale={onCameraScale}
+              onActiveFilterChange={onActiveFilterChange}
+              onLaunchPanelToggle={onLaunchPanelToggle}
+            />
+          )}
         </div>
 
         {/* Divider — signals content below is a separate stream */}

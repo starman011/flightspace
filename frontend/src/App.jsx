@@ -29,7 +29,7 @@ import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
 import GalaxyPanel from './components/GalaxyPanel/GalaxyPanel'
 import DeepSpaceGuide from './components/DeepSpaceGuide/DeepSpaceGuide'
 import GalaxyConeView from './components/GalaxyConeView/GalaxyConeView'
-import DistanceSlicer from './components/DistanceSlicer/DistanceSlicer'
+// DistanceSlicer now integrated into CommandCenterOverlay
 import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
@@ -485,6 +485,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         zoomedIn={zoomedIn}
         hidden={!showCommandCenter}
+        activeScale={activeScale}
+        onDistanceChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)}
       />
 
       {!focusedPad && (
@@ -592,9 +594,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
 
-      {activeScale === 'galaxy' && (
-        <DistanceSlicer onChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)} />
-      )}
+      {/* Distance filter now integrated into CommandCenterOverlay bottom bar */}
 
       {scaleReady === 'galaxy' && !selectedGalaxy && !selectedSkyObject && !guideHidden && (
         <DeepSpaceGuide onClose={() => setGuideHidden(true)} />

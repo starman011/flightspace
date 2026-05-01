@@ -1187,6 +1187,39 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     })
     renderer.domElement.addEventListener('wheel', () => { int.current.onInteract?.() }, { passive: true })
 
+    // Galaxy FOV zoom — scroll/pinch changes field of view for sky zoom
+    const galaxyWheel = (e) => {
+      if (int.current.targetCameraScale !== 'galaxy') return
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? 2 : -2
+      camera.fov = Math.max(10, Math.min(75, camera.fov + delta))
+      camera.updateProjectionMatrix()
+    }
+    renderer.domElement.addEventListener('wheel', galaxyWheel, { passive: false })
+
+    // Touch pinch → FOV zoom in galaxy mode
+    let _pinchDist = 0
+    const galaxyTouchStart = (e) => {
+      if (int.current.targetCameraScale !== 'galaxy' || e.touches.length !== 2) return
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      _pinchDist = Math.sqrt(dx * dx + dy * dy)
+    }
+    const galaxyTouchMove = (e) => {
+      if (int.current.targetCameraScale !== 'galaxy' || e.touches.length !== 2 || !_pinchDist) return
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const delta = (_pinchDist - dist) * 0.12
+      camera.fov = Math.max(10, Math.min(75, camera.fov + delta))
+      camera.updateProjectionMatrix()
+      _pinchDist = dist
+    }
+    const galaxyTouchEnd = () => { _pinchDist = 0 }
+    renderer.domElement.addEventListener('touchstart', galaxyTouchStart, { passive: true })
+    renderer.domElement.addEventListener('touchmove', galaxyTouchMove, { passive: true })
+    renderer.domElement.addEventListener('touchend', galaxyTouchEnd, { passive: true })
+
     // ── Viewport bounds → backend filtering ──────────────────────────
     // Sends lat/lon bounding box to the parent so the backend only streams
     // entities within the current view, preventing InstancedMesh overflow.
@@ -2241,6 +2274,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _earthVisible
           int.current.placeDotsMesh.visible = _earthVisible
           _setEarthEntitiesVisible(_earthVisible)
+          // Reset FOV when leaving galaxy mode
+          if (!isGalaxy && camera.fov !== 40) {
+            camera.fov = 40
+            camera.updateProjectionMatrix()
+          }
           int.current._scaleReadyFired = targetScale
           int.current.onScaleReady?.(targetScale)
         }
@@ -2338,9 +2376,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
+        controls.enableZoom  = true
+      } else if (isGalaxy) {
+        controls.rotateSpeed = 0.5
+        controls.enableZoom  = false   // FOV zoom handled by galaxyWheel
       } else {
         controls.rotateSpeed = 0.5
         controls.zoomSpeed   = 0.6
+        controls.enableZoom  = true
       }
 
       // Skip orbit controls when AR mode is driving the camera
@@ -2658,6 +2701,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       cloudsMesh: clouds,
       placeDotsMesh: placeDots,
       arController,
+      desiLayer,
       targetCameraScale: 'earth',   // set by setCameraScale via imperative handle
       camTweenStart: null,          // timestamp when tween began
       camTweenFrom: null,           // Vector3 camera start position
@@ -2683,6 +2727,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       el.removeEventListener('mouseleave', onMouseLeave)
       el.removeEventListener('pointerdown', onPointerDown)
       el.removeEventListener('pointerup',   onPointerUp)
+      renderer.domElement.removeEventListener('wheel', galaxyWheel)
+      renderer.domElement.removeEventListener('touchstart', galaxyTouchStart)
+      renderer.domElement.removeEventListener('touchmove', galaxyTouchMove)
+      renderer.domElement.removeEventListener('touchend', galaxyTouchEnd)
       mapDestroyed = true
       clearTiles()
       placeGeo.dispose()
