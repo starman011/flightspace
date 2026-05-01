@@ -54,6 +54,18 @@ func (ac *AircraftController) getISSDetail(w http.ResponseWriter, r *http.Reques
 	utils.JSON(w, http.StatusOK, resp)
 }
 
+// GetISSCrew serves the cached crew manifest from people:space Redis key.
+func (ac *AircraftController) GetISSCrew(w http.ResponseWriter, r *http.Request) {
+	raw, err := ac.rdb.Get(r.Context(), "people:space").Result()
+	if err != nil {
+		utils.Error(w, http.StatusServiceUnavailable, "crew data unavailable")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(raw))
+}
+
 const trailLimit = 200 // last N positions, no time constraint
 
 // AircraftController handles aircraft detail and search endpoints.

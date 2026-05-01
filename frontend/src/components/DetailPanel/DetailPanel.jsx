@@ -98,7 +98,7 @@ function ISSStream() {
 function ISSCrew() {
   const [crew, setCrew] = useState(null)
   useEffect(() => {
-    fetch('http://api.open-notify.org/astros.json')
+    fetch(`${API}/api/v1/iss/crew`)
       .then(r => r.json())
       .then(data => setCrew(data.people?.filter(p => p.craft === 'ISS') || []))
       .catch(() => {})
@@ -184,7 +184,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const panelRef = useRef(null)
   const photoTriedReg = useRef(false)
 
-  const cat = liveData?.cat || 'plane'
+  const cat = liveData?.cat || ''
   const isFlight = cat === 'plane' || cat === 'helicopter'
 
   const routeRef = useRef(null)

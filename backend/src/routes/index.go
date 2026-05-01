@@ -89,6 +89,9 @@ func Setup(
 	mux.Handle("GET /api/v1/desi/enrich", rateLimit(http.HandlerFunc(desi.GetGalaxyEnrichment)))
 	mux.Handle("GET /api/v1/desi/search", rateLimit(http.HandlerFunc(desi.SearchGalaxies)))
 
+	// ISS
+	mux.Handle("GET /api/v1/iss/crew", rateLimit(http.HandlerFunc(aircraft.GetISSCrew)))
+
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)
 }
