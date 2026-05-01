@@ -1582,6 +1582,14 @@
   margin: 0 0 var(--space-2);
 }
 
+.desktopFilterVisible .mobileFilterLabel {
+  display: flex !important;
+}
+
+.desktopFilterVisible .mobileFilterRow {
+  display: flex !important;
+}
+
 .desktopDividerVisible {
   display: flex !important;
 }

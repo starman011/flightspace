@@ -1343,7 +1343,7 @@ export default function CommandCenterOverlay({
         </div>
 
         {/* Filter chips — globe filter, always visible as the peek layer */}
-        <div className={`${styles.mobileFilterSection}${desktopOpen === 'wide' ? ' ' + styles.desktopFilterVisible : ''}`} data-tour="filter-bar">
+        <div className={`${styles.mobileFilterSection}${desktopOpen === 'wide' || activeScale === 'galaxy' ? ' ' + styles.desktopFilterVisible : ''}`} data-tour="filter-bar">
           <p className={styles.mobileFilterLabel}>
             <span className="material-symbols-outlined" style={{ fontSize: 9 }}>{activeScale === 'galaxy' ? 'straighten' : 'tune'}</span>
             {activeScale === 'galaxy' ? 'Distance Filter' : 'Globe Filter'}
