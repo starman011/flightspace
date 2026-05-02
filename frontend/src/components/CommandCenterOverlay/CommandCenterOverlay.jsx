@@ -1126,10 +1126,10 @@ export default function CommandCenterOverlay({
   const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
+  const heroSeenRef = useRef(false)
   const [heroCollapsed, setHeroCollapsed] = useState(() => {
-    // Show hero once per session, then hide permanently
-    if (sessionStorage.getItem('fs.hero.seen')) return true
-    setTimeout(() => { sessionStorage.setItem('fs.hero.seen', '1'); setHeroCollapsed(true) }, 4000)
+    if (sessionStorage.getItem('fs.hero.seen')) { heroSeenRef.current = true; return true }
+    setTimeout(() => { sessionStorage.setItem('fs.hero.seen', '1'); heroSeenRef.current = true; setHeroCollapsed(true) }, 5000)
     return false
   })
 
@@ -1146,7 +1146,7 @@ export default function CommandCenterOverlay({
       setHeroCollapsed(true)
     } else {
       setDesktopOpen('open')
-      setHeroCollapsed(false)
+      if (!heroSeenRef.current) setHeroCollapsed(false)
     }
   }, [zoomedIn])
   const grabRef       = useRef(null)
