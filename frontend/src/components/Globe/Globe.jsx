@@ -620,14 +620,14 @@ function buildPadMarkerTex() {
 
   // Glow halo
   const halo = ctx.createRadialGradient(cx, cy, sz * 0.05, cx, cy, sz * 0.5)
-  halo.addColorStop(0,   'rgba(178, 255, 26, 0.6)')
-  halo.addColorStop(0.4, 'rgba(178, 255, 26, 0.15)')
-  halo.addColorStop(1,   'rgba(178, 255, 26, 0)')
+  halo.addColorStop(0,   'rgba(0, 229, 255, 0.6)')
+  halo.addColorStop(0.4, 'rgba(0, 229, 255, 0.15)')
+  halo.addColorStop(1,   'rgba(0, 229, 255, 0)')
   ctx.fillStyle = halo
   ctx.beginPath(); ctx.arc(cx, cy, sz * 0.5, 0, Math.PI * 2); ctx.fill()
 
   // Bright center dot
-  ctx.fillStyle = '#b2ff1a'
+  ctx.fillStyle = '#00e5ff'
   ctx.beginPath(); ctx.arc(cx, cy, sz * 0.09, 0, Math.PI * 2); ctx.fill()
 
   return new CanvasTexture(c)
