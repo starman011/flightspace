@@ -72,14 +72,18 @@ function formatAge(timestamp) {
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
-const ISS_STREAM_FALLBACK = 'https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false'
+const ISS_STREAM_FALLBACK = 'https://www.youtube.com/embed/sWasdbDVNvc?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
 
 function ISSStream() {
   const [src, setSrc] = useState(null)
   useEffect(() => {
     fetch(`${API}/api/v1/iss/stream`)
       .then(r => r.json())
-      .then(d => setSrc(d.embed_url || ISS_STREAM_FALLBACK))
+      .then(d => {
+        // Only use backend stream if it found a real video (not IBM fallback)
+        if (d.video_id) setSrc(d.embed_url)
+        else setSrc(ISS_STREAM_FALLBACK)
+      })
       .catch(() => setSrc(ISS_STREAM_FALLBACK))
   }, [])
   if (!src) return null
