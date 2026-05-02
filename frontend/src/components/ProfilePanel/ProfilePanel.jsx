@@ -283,7 +283,7 @@ function LaunchCard({ launch, onRemove }) {
 function Empty({ icon, text }) {
   return (
     <div className={styles.empty}>
-      <span className="material-symbols-outlined" style={{ fontSize: 32, color: 'rgba(0,229,255,0.15)' }}>{icon}</span>
+      <span className="material-symbols-outlined" style={{ fontSize: 32, color: 'rgba(178,255,26,0.15)' }}>{icon}</span>
       <p>{text}</p>
     </div>
   )

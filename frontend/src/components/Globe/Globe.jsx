@@ -620,14 +620,14 @@ function buildPadMarkerTex() {
 
   // Glow halo
   const halo = ctx.createRadialGradient(cx, cy, sz * 0.05, cx, cy, sz * 0.5)
-  halo.addColorStop(0,   'rgba(0, 229, 255, 0.6)')
-  halo.addColorStop(0.4, 'rgba(0, 229, 255, 0.15)')
-  halo.addColorStop(1,   'rgba(0, 229, 255, 0)')
+  halo.addColorStop(0,   'rgba(178, 255, 26, 0.6)')
+  halo.addColorStop(0.4, 'rgba(178, 255, 26, 0.15)')
+  halo.addColorStop(1,   'rgba(178, 255, 26, 0)')
   ctx.fillStyle = halo
   ctx.beginPath(); ctx.arc(cx, cy, sz * 0.5, 0, Math.PI * 2); ctx.fill()
 
   // Bright center dot
-  ctx.fillStyle = '#00e5ff'
+  ctx.fillStyle = '#b2ff1a'
   ctx.beginPath(); ctx.arc(cx, cy, sz * 0.09, 0, Math.PI * 2); ctx.fill()
 
   return new CanvasTexture(c)
@@ -1566,11 +1566,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const airportLabelEls = AIRPORTS.map(a => {
       const div = document.createElement('div')
       div.innerHTML = `<span style="font-size:7px;vertical-align:middle;margin-right:2px">✈</span>${a.iata}`
-      div.style.cssText = `position:absolute;color:rgba(0,229,255,0.55);font:700 8px/1 var(--font-mono,monospace);white-space:nowrap;transform:translate(-50%,-100%);padding:2px 5px;display:none;letter-spacing:0.1em;pointer-events:auto;cursor:pointer;border-radius:3px;text-shadow:0 0 4px rgba(0,0,0,0.8)`
+      div.style.cssText = `position:absolute;color:rgba(178,255,26,0.55);font:700 8px/1 var(--font-mono,monospace);white-space:nowrap;transform:translate(-50%,-100%);padding:2px 5px;display:none;letter-spacing:0.1em;pointer-events:auto;cursor:pointer;border-radius:3px;text-shadow:0 0 4px rgba(0,0,0,0.8)`
       div.title = `${a.name} — ${a.city}`
       div.addEventListener('click', () => { int.current.onAirportClick?.(a.iata) })
-      div.addEventListener('mouseenter', () => { div.style.color = '#00e5ff'; div.style.background = 'rgba(0,229,255,0.08)' })
-      div.addEventListener('mouseleave', () => { div.style.color = 'rgba(0,229,255,0.55)'; div.style.background = 'none' })
+      div.addEventListener('mouseenter', () => { div.style.color = '#b2ff1a'; div.style.background = 'rgba(178,255,26,0.08)' })
+      div.addEventListener('mouseleave', () => { div.style.color = 'rgba(178,255,26,0.55)'; div.style.background = 'none' })
       labelContainer.appendChild(div)
       return { div, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
     })

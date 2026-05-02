@@ -52,26 +52,26 @@ function PadFocusBadge({ launch, onExit }) {
       position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
       zIndex: 200, display: 'flex', alignItems: 'center', gap: 16,
       background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(18px)',
-      border: '1px solid rgba(0,229,255,0.3)', borderRadius: 12,
-      padding: '12px 20px', boxShadow: '0 0 40px rgba(0,229,255,0.12)',
+      border: '1px solid rgba(178,255,26,0.3)', borderRadius: 12,
+      padding: '12px 20px', boxShadow: '0 0 40px rgba(178,255,26,0.12)',
     }}>
       {/* Pulsing ping dot */}
       <div style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
         <div style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          background: '#00e5ff', animation: 'padPing 1.6s ease-out infinite',
+          background: '#b2ff1a', animation: 'padPing 1.6s ease-out infinite',
         }} />
         <div style={{
-          position: 'absolute', inset: 0, borderRadius: '50%', background: '#00e5ff',
+          position: 'absolute', inset: 0, borderRadius: '50%', background: '#b2ff1a',
         }} />
       </div>
 
       <div>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
-          letterSpacing: '0.1em', color: 'rgba(0,229,255,0.6)', marginBottom: 3 }}>
+          letterSpacing: '0.1em', color: 'rgba(178,255,26,0.6)', marginBottom: 3 }}>
           Launch Pad · Locked
         </p>
-        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
+        <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14,
           color: '#fff', marginBottom: 2 }}>
           {launch.pad || (launch.mission_name || launch.name)}
         </p>
@@ -81,8 +81,8 @@ function PadFocusBadge({ launch, onExit }) {
       </div>
 
       <button onClick={onExit} style={{
-        background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)',
-        borderRadius: 8, color: 'rgba(0,229,255,0.7)', fontFamily: 'var(--font-mono)',
+        background: 'rgba(178,255,26,0.08)', border: '1px solid rgba(178,255,26,0.2)',
+        borderRadius: 8, color: 'rgba(178,255,26,0.7)', fontFamily: 'var(--font-mono)',
         fontSize: 11, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
         letterSpacing: '0.06em',
       }}>
@@ -616,14 +616,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           style={{
             position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
             zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
-            background: arActive ? 'rgba(0,229,255,0.18)' : 'rgba(6,12,18,0.85)',
+            background: arActive ? 'rgba(178,255,26,0.18)' : 'rgba(6,12,18,0.85)',
             backdropFilter: 'blur(16px)',
-            border: `1px solid ${arActive ? 'rgba(0,229,255,0.5)' : 'rgba(0,229,255,0.2)'}`,
+            border: `1px solid ${arActive ? 'rgba(178,255,26,0.5)' : 'rgba(178,255,26,0.2)'}`,
             borderRadius: 12, padding: '10px 20px', cursor: 'pointer',
-            color: arActive ? '#00e5ff' : 'rgba(195,245,255,0.7)',
+            color: arActive ? '#b2ff1a' : 'rgba(195,245,255,0.7)',
             fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
             letterSpacing: '0.08em', textTransform: 'uppercase',
-            boxShadow: arActive ? '0 0 30px rgba(0,229,255,0.15)' : 'none',
+            boxShadow: arActive ? '0 0 30px rgba(178,255,26,0.15)' : 'none',
             transition: 'all 0.2s ease',
           }}
         >

@@ -10,7 +10,7 @@ const CA_RINGS = [
   { r: 33, label: 'Milky Way',    dim: '30 kpc',  c: 'rgba(62,116,186,0.47)', ly: 58  },
   { r: 23, label: 'Orion Arm',    dim: '1.1 kpc', c: 'rgba(54,146,210,0.56)', ly: 74  },
   { r: 13, label: 'Solar System', dim: '287 AU',  c: 'rgba(0,194,224,0.66)',  ly: 90  },
-  { r: 5,  label: 'Earth',        dim: '◉ you are here', c: '#00e5ff',        ly: 106 },
+  { r: 5,  label: 'Earth',        dim: '◉ you are here', c: '#b2ff1a',        ly: 106 },
 ]
 
 function CosmicAddressWidget() {
@@ -30,8 +30,8 @@ function CosmicAddressWidget() {
         <defs>
           {/* Earth center glow */}
           <radialGradient id="caGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.38" />
-            <stop offset="100%" stopColor="#00e5ff" stopOpacity="0" />
+            <stop offset="0%" stopColor="#b2ff1a" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="#b2ff1a" stopOpacity="0" />
           </radialGradient>
           {/* Bloom filter for Earth dot */}
           <filter id="caBloom" x="-150%" y="-150%" width="400%" height="400%">
@@ -88,7 +88,7 @@ function CosmicAddressWidget() {
         <circle cx={cx} cy={cy} r={11} fill="url(#caGlow)" />
 
         {/* Earth: pulsing animated dot */}
-        <circle cx={cx} cy={cy} r={2.8} fill="#00e5ff" filter="url(#caBloom)">
+        <circle cx={cx} cy={cy} r={2.8} fill="#b2ff1a" filter="url(#caBloom)">
           <animate attributeName="r"       values="2.8;4.6;2.8" dur="2.4s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="1;0.4;1"     dur="2.4s" repeatCount="indefinite" />
         </circle>

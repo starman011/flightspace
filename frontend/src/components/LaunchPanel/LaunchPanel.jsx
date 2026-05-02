@@ -63,7 +63,7 @@ function HeroCountdown({ launch }) {
     <div className={styles.heroSection}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
         <span className={`${styles.statusChip} ${statusClass}`}>{launch.status_abbr || '?'}</span>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'var(--text-label-md)', color: 'var(--on-surface)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 'var(--text-label-md)', color: 'var(--on-surface)' }}>
           {launch.mission_name || launch.name}
         </span>
       </div>

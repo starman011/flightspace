@@ -81,16 +81,16 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: #b2ff1a;
+  background: rgba(178, 255, 26, 0.08);
+  border: 1px solid rgba(178, 255, 26, 0.25);
   border-radius: 4px;
   padding: 3px 10px;
   margin-bottom: 12px;
 }
 
 .title {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 700;
   color: #fff;
@@ -175,7 +175,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: rgba(0, 229, 255, 0.4);
+  background: rgba(178, 255, 26, 0.4);
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
@@ -200,10 +200,10 @@
   width: 100%;
   max-width: 280px;
   padding: 12px 0;
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.14), rgba(0, 229, 255, 0.06));
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.14), rgba(178, 255, 26, 0.06));
+  border: 1px solid rgba(178, 255, 26, 0.3);
   border-radius: 10px;
-  color: #00e5ff;
+  color: #b2ff1a;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -211,12 +211,12 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.18s;
-  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.08);
+  box-shadow: 0 4px 18px rgba(178, 255, 26, 0.08);
 }
 .enterBtn:hover {
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.22), rgba(0, 229, 255, 0.10));
-  border-color: rgba(0, 229, 255, 0.5);
-  box-shadow: 0 6px 24px rgba(0, 229, 255, 0.16);
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.22), rgba(178, 255, 26, 0.10));
+  border-color: rgba(178, 255, 26, 0.5);
+  box-shadow: 0 6px 24px rgba(178, 255, 26, 0.16);
   transform: translateY(-1px);
 }
 

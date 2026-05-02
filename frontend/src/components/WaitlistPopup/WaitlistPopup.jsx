@@ -80,13 +80,13 @@ export default function WaitlistPopup() {
         {/* Orbit glyph */}
         <div className={styles.glyph}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="20" stroke="rgba(0,229,255,0.15)" strokeWidth="1"/>
-            <circle cx="24" cy="24" r="12" stroke="rgba(0,229,255,0.25)" strokeWidth="1"/>
-            <circle cx="24" cy="24" r="4"  fill="#00e5ff" opacity=".8"/>
+            <circle cx="24" cy="24" r="20" stroke="rgba(178,255,26,0.15)" strokeWidth="1"/>
+            <circle cx="24" cy="24" r="12" stroke="rgba(178,255,26,0.25)" strokeWidth="1"/>
+            <circle cx="24" cy="24" r="4"  fill="#b2ff1a" opacity=".8"/>
             <ellipse cx="24" cy="24" rx="20" ry="7"
-              stroke="#00e5ff" strokeWidth="0.9" opacity=".35"
+              stroke="#b2ff1a" strokeWidth="0.9" opacity=".35"
               transform="rotate(-35 24 24)"/>
-            <circle cx="38" cy="17" r="2" fill="#00e5ff" opacity=".6"/>
+            <circle cx="38" cy="17" r="2" fill="#b2ff1a" opacity=".6"/>
           </svg>
         </div>
 

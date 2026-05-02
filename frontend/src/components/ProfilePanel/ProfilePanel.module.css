@@ -33,7 +33,7 @@
 }
 
 .title {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 700;
   color: var(--on-surface);
@@ -102,8 +102,8 @@
 .tab:hover { color: rgba(255, 255, 255, 0.6); }
 
 .tabActive {
-  color: #00e5ff;
-  border-bottom-color: #00e5ff;
+  color: #b2ff1a;
+  border-bottom-color: #b2ff1a;
 }
 
 .tabBadge {
@@ -111,8 +111,8 @@
   min-width: 16px;
   height: 16px;
   border-radius: 8px;
-  background: rgba(0, 229, 255, 0.12);
-  color: #00e5ff;
+  background: rgba(178, 255, 26, 0.12);
+  color: #b2ff1a;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +127,7 @@
   overflow-x: hidden;
   padding: 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 229, 255, 0.1) transparent;
+  scrollbar-color: rgba(178, 255, 26, 0.1) transparent;
 }
 
 /* ── Section ──────────────────────────────────────────────────────────────── */
@@ -178,8 +178,8 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .card:hover {
-  background: rgba(0, 229, 255, 0.04);
-  border-color: rgba(0, 229, 255, 0.15);
+  background: rgba(178, 255, 26, 0.04);
+  border-color: rgba(178, 255, 26, 0.15);
 }
 
 .cardLeft {
@@ -194,13 +194,13 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(0, 229, 255, 0.06);
-  border: 1px solid rgba(0, 229, 255, 0.12);
+  background: rgba(178, 255, 26, 0.06);
+  border: 1px solid rgba(178, 255, 26, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(0, 229, 255, 0.6);
+  color: rgba(178, 255, 26, 0.6);
 }
 
 .cardIconLaunch {
@@ -261,7 +261,7 @@
   margin-top: 3px;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(0, 229, 255, 0.6);
+  color: rgba(178, 255, 26, 0.6);
 }
 
 .telSep {

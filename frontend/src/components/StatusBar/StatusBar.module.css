@@ -32,14 +32,14 @@
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
 
-  border: 1px solid rgba(0, 229, 255, 0.10);
+  border: 1px solid rgba(178, 255, 26, 0.10);
   border-top: none;
   border-radius: 0 0 22px 22px;
 
   box-shadow:
-    0 1px 0 rgba(0, 229, 255, 0.08) inset,
+    0 1px 0 rgba(178, 255, 26, 0.08) inset,
     0 8px 40px rgba(0, 0, 0, 0.55),
-    0 0 50px rgba(0, 229, 255, 0.03);
+    0 0 50px rgba(178, 255, 26, 0.03);
 
   width: 290px;
   overflow: hidden;
@@ -57,11 +57,11 @@
 .expanded {
   width: 640px;
   grid-template-rows: auto 1fr;
-  border-color: rgba(0, 229, 255, 0.18);
+  border-color: rgba(178, 255, 26, 0.18);
   box-shadow:
-    0 1px 0 rgba(0, 229, 255, 0.14) inset,
+    0 1px 0 rgba(178, 255, 26, 0.14) inset,
     0 16px 56px rgba(0, 0, 0, 0.65),
-    0 0 60px rgba(0, 229, 255, 0.07);
+    0 0 60px rgba(178, 255, 26, 0.07);
 }
 
 /* ── Handle (collapsed pill) ─────────────────────────────────────────────── */
@@ -81,13 +81,13 @@
 }
 
 .handle:hover .wordmark {
-  color: #00e5ff;
+  color: #b2ff1a;
 }
 
 .logoIcon {
   flex-shrink: 0;
-  color: #00e5ff;
-  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.5));
+  color: #b2ff1a;
+  filter: drop-shadow(0 0 5px rgba(178, 255, 26, 0.5));
 }
 
 .wordmark {
@@ -107,9 +107,9 @@
   font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.1);
-  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: #b2ff1a;
+  background: rgba(178, 255, 26, 0.1);
+  border: 1px solid rgba(178, 255, 26, 0.25);
   border-radius: 3px;
   padding: 1px 4px;
   line-height: 1.3;
@@ -161,10 +161,10 @@
 .chevron {
   flex-shrink: 0;
   margin-left: auto;
-  color: rgba(0, 229, 255, 0.4);
+  color: rgba(178, 255, 26, 0.4);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s;
 }
-.handle:hover .chevron { color: rgba(0, 229, 255, 0.75); }
+.handle:hover .chevron { color: rgba(178, 255, 26, 0.75); }
 .chevronUp { transform: rotate(180deg); }
 
 /* Profile button embedded inside the notch handle */
@@ -200,8 +200,8 @@
   background: linear-gradient(
     to right,
     transparent,
-    rgba(0, 229, 255, 0.12) 20%,
-    rgba(0, 229, 255, 0.12) 80%,
+    rgba(178, 255, 26, 0.12) 20%,
+    rgba(178, 255, 26, 0.12) 80%,
     transparent
   );
   margin-bottom: 13px;
@@ -225,12 +225,12 @@
 .navSep {
   width: 1px;
   height: 12px;
-  background: rgba(0, 229, 255, 0.1);
+  background: rgba(178, 255, 26, 0.1);
   flex-shrink: 0;
 }
 
 .navBtn {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -245,11 +245,11 @@
 }
 .navBtn:hover {
   color: rgba(200, 220, 255, 0.9);
-  background: rgba(0, 229, 255, 0.05);
+  background: rgba(178, 255, 26, 0.05);
 }
 .navBtnActive {
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.08);
+  color: #b2ff1a;
+  background: rgba(178, 255, 26, 0.08);
 }
 
 /* ── Right-side panel actions ─────────────────────────────────────────────── */
@@ -318,16 +318,16 @@
   letter-spacing: 0.1em;
   padding: 5px 11px;
   border-radius: 6px;
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  color: rgba(0, 229, 255, 0.55);
-  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(178, 255, 26, 0.15);
+  color: rgba(178, 255, 26, 0.55);
+  background: rgba(178, 255, 26, 0.04);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 .searchBtn:hover {
-  border-color: rgba(0, 229, 255, 0.35);
-  color: rgba(0, 229, 255, 0.9);
-  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(178, 255, 26, 0.35);
+  color: rgba(178, 255, 26, 0.9);
+  background: rgba(178, 255, 26, 0.08);
 }
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */

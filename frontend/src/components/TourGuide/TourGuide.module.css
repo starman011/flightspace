@@ -13,7 +13,7 @@
   position: fixed;
   border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(2, 6, 12, 0.78);
-  border: 1.5px solid rgba(0, 229, 255, 0.45);
+  border: 1.5px solid rgba(178, 255, 26, 0.45);
   pointer-events: none;
   transition:
     top    0.38s cubic-bezier(0.22, 1, 0.36, 1),
@@ -24,8 +24,8 @@
 }
 
 @keyframes spotPulse {
-  0%, 100% { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 0 rgba(0,229,255,0.25); }
-  50%       { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 6px rgba(0,229,255,0.12); }
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 0 rgba(178,255,26,0.25); }
+  50%       { box-shadow: 0 0 0 9999px rgba(2,6,12,0.78), 0 0 0 6px rgba(178,255,26,0.12); }
 }
 
 /* Tooltip card */
@@ -33,13 +33,13 @@
   position: fixed;
   width: 300px;
   background: rgba(8, 14, 22, 0.97);
-  border: 1px solid rgba(0, 229, 255, 0.16);
+  border: 1px solid rgba(178, 255, 26, 0.16);
   border-radius: 16px;
   padding: 18px 18px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0,229,255,0.04) inset;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(178,255,26,0.04) inset;
   animation: tooltipIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 501;
 }
@@ -61,10 +61,10 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(0, 229, 255, 0.18);
+  background: rgba(178, 255, 26, 0.08);
+  border: 1px solid rgba(178, 255, 26, 0.18);
   border-radius: 8px;
-  color: #00e5ff;
+  color: #b2ff1a;
 }
 
 .stepCount {
@@ -76,7 +76,7 @@
 }
 
 .tooltipTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 15px;
   font-weight: 700;
   color: var(--on-surface);
@@ -114,8 +114,8 @@
 .dotActive {
   width: 16px;
   border-radius: 3px;
-  background: #00e5ff;
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  background: #b2ff1a;
+  box-shadow: 0 0 8px rgba(178, 255, 26, 0.4);
 }
 
 /* Buttons */
@@ -143,8 +143,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(0, 229, 255, 0.1);
-  border: 1px solid rgba(0, 229, 255, 0.25);
+  background: rgba(178, 255, 26, 0.1);
+  border: 1px solid rgba(178, 255, 26, 0.25);
   border-radius: 8px;
   padding: 7px 14px;
   font-family: var(--font-mono);
@@ -152,13 +152,13 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #00e5ff;
+  color: #b2ff1a;
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
 }
 .nextBtn:hover {
-  background: rgba(0, 229, 255, 0.18);
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.1);
+  background: rgba(178, 255, 26, 0.18);
+  box-shadow: 0 0 14px rgba(178, 255, 26, 0.1);
 }
 
 /* Mobile: full-width tooltip pinned to bottom */

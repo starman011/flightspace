@@ -173,10 +173,10 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
       ctx.closePath()
       const hasSelection = !!selectedId
       ctx.strokeStyle = isSelected
-        ? 'rgba(0,229,255,0.85)'
+        ? 'rgba(178,255,26,0.85)'
         : hasSelection
-        ? (isPHA ? 'rgba(207,66,56,0.1)' : 'rgba(0,229,255,0.04)')
-        : (isPHA ? 'rgba(207,66,56,0.35)' : 'rgba(0,229,255,0.12)')
+        ? (isPHA ? 'rgba(207,66,56,0.1)' : 'rgba(178,255,26,0.04)')
+        : (isPHA ? 'rgba(207,66,56,0.35)' : 'rgba(178,255,26,0.12)')
       ctx.lineWidth = isSelected ? 2 : isPHA ? 1.2 : 0.8
       ctx.stroke()
 
@@ -191,21 +191,21 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
       if (isSelected || isHovered) {
         // Glow ring
         const glowG = ctx.createRadialGradient(px, py, 0, px, py, 18)
-        glowG.addColorStop(0, 'rgba(0,229,255,0.5)')
-        glowG.addColorStop(1, 'rgba(0,229,255,0)')
+        glowG.addColorStop(0, 'rgba(178,255,26,0.5)')
+        glowG.addColorStop(1, 'rgba(178,255,26,0)')
         ctx.fillStyle = glowG
         ctx.beginPath(); ctx.arc(px, py, 18, 0, Math.PI * 2); ctx.fill()
       }
 
       ctx.fillStyle = isSelected
-        ? '#00e5ff'
+        ? '#b2ff1a'
         : hasSelection
-        ? (isPHA ? 'rgba(207,66,56,0.3)' : 'rgba(0,229,255,0.15)')
+        ? (isPHA ? 'rgba(207,66,56,0.3)' : 'rgba(178,255,26,0.15)')
         : isPHA
         ? '#cf4238'
         : isHovered
         ? '#7adeff'
-        : 'rgba(0,229,255,0.55)'
+        : 'rgba(178,255,26,0.55)'
       ctx.beginPath()
       ctx.arc(px, py, isSelected ? 6 : isHovered ? 4 : 3, 0, Math.PI * 2)
       ctx.fill()
@@ -221,7 +221,7 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
         ctx.beginPath()
         ctx.roundRect(px + 10, py - 16, tw + 10, 18, 4)
         ctx.fill()
-        ctx.fillStyle = '#00e5ff'
+        ctx.fillStyle = '#b2ff1a'
         ctx.fillText(label, px + 15, py - 3)
       } else if (isHovered) {
         const label = ast.name.replace(/^\(?\d+\)?\s*/, '') || ast.id

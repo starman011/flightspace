@@ -9,12 +9,12 @@
   overflow-y: auto;
 
   background:
-    radial-gradient(120% 60% at 50% 0%, rgba(0, 229, 255, 0.06) 0%, rgba(0, 0, 0, 0) 60%),
+    radial-gradient(120% 60% at 50% 0%, rgba(178, 255, 26, 0.06) 0%, rgba(0, 0, 0, 0) 60%),
     linear-gradient(180deg, rgba(10, 14, 22, 0.94) 0%, rgba(6, 10, 18, 0.96) 100%);
   backdrop-filter: blur(28px) saturate(140%);
   -webkit-backdrop-filter: blur(28px) saturate(140%);
 
-  border: 1px solid rgba(0, 229, 255, 0.14);
+  border: 1px solid rgba(178, 255, 26, 0.14);
   border-radius: 18px;
   padding: 22px 22px 20px;
   z-index: 120;
@@ -57,9 +57,9 @@
   transition: all 0.15s;
 }
 .close:hover {
-  background: rgba(0, 229, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.3);
-  color: #00e5ff;
+  background: rgba(178, 255, 26, 0.1);
+  border-color: rgba(178, 255, 26, 0.3);
+  color: #b2ff1a;
 }
 
 /* ── Return-to-Earth button ──────────────────────────────────────────────── */
@@ -73,7 +73,7 @@
   padding: 5px 11px 5px 9px;
   height: 26px;
   background: linear-gradient(180deg, rgba(0, 160, 220, 0.14), rgba(0, 120, 200, 0.08));
-  border: 1px solid rgba(0, 229, 255, 0.28);
+  border: 1px solid rgba(178, 255, 26, 0.28);
   border-radius: 999px;
   color: rgba(200, 235, 255, 0.9);
   font-family: var(--font-mono);
@@ -85,10 +85,10 @@
   transition: all 0.15s;
 }
 .homeBtn:hover {
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.2), rgba(0, 150, 220, 0.12));
-  border-color: rgba(0, 229, 255, 0.55);
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.2), rgba(0, 150, 220, 0.12));
+  border-color: rgba(178, 255, 26, 0.55);
   color: #eafaff;
-  box-shadow: 0 0 18px rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 18px rgba(178, 255, 26, 0.18);
 }
 .homeBtn svg { flex-shrink: 0; }
 
@@ -128,12 +128,12 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(0, 229, 255, 0.55);
+  color: rgba(178, 255, 26, 0.55);
   margin: 0;
 }
 
 .name {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 700;
   line-height: 1.05;
@@ -167,7 +167,7 @@
   width: fit-content;
   margin-top: 2px;
 }
-.crewed  { background: rgba(0, 229, 255, 0.10); color: #00e5ff; border-color: rgba(0, 229, 255, 0.35); }
+.crewed  { background: rgba(178, 255, 26, 0.10); color: #b2ff1a; border-color: rgba(178, 255, 26, 0.35); }
 .robotic { background: rgba(34, 255, 136, 0.10); color: #22ff88; border-color: rgba(34, 255, 136, 0.35); }
 .impact  { background: rgba(255, 80, 80, 0.10); color: #ff6464; border-color: rgba(255, 80, 80, 0.35); }
 
@@ -176,7 +176,7 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(0, 229, 255, 0.18) 50%,
+    rgba(178, 255, 26, 0.18) 50%,
     transparent 100%);
 }
 
@@ -184,7 +184,7 @@
 .siteName {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(0, 229, 255, 0.7);
+  color: rgba(178, 255, 26, 0.7);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin: 0;
@@ -206,8 +206,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.05), rgba(0, 160, 220, 0.025));
-  border: 1px solid rgba(0, 229, 255, 0.14);
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.05), rgba(0, 160, 220, 0.025));
+  border: 1px solid rgba(178, 255, 26, 0.14);
   border-radius: 12px;
   box-shadow: 0 0 24px rgba(0, 150, 255, 0.05) inset;
 }
@@ -217,8 +217,8 @@
   height: 8px;
   margin-top: 5px;
   border-radius: 50%;
-  background: #00e5ff;
-  box-shadow: 0 0 10px #00e5ff, 0 0 20px rgba(0, 229, 255, 0.4);
+  background: #b2ff1a;
+  box-shadow: 0 0 10px #b2ff1a, 0 0 20px rgba(178, 255, 26, 0.4);
   animation: hintPulse 2.2s ease-in-out infinite;
 }
 @keyframes hintPulse {
@@ -238,8 +238,8 @@
   flex-direction: column;
   gap: 3px;
   padding: 10px 12px;
-  background: rgba(0, 229, 255, 0.04);
-  border: 1px solid rgba(0, 229, 255, 0.12);
+  background: rgba(178, 255, 26, 0.04);
+  border: 1px solid rgba(178, 255, 26, 0.12);
   border-radius: 8px;
 }
 .crewLabel {
@@ -247,7 +247,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(0, 229, 255, 0.55);
+  color: rgba(178, 255, 26, 0.55);
 }
 .crewValue {
   font-family: var(--font-sans);
@@ -301,10 +301,10 @@
   gap: 8px;
   width: 100%;
   padding: 12px 0;
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.14), rgba(0, 229, 255, 0.06));
-  border: 1px solid rgba(0, 229, 255, 0.32);
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.14), rgba(178, 255, 26, 0.06));
+  border: 1px solid rgba(178, 255, 26, 0.32);
   border-radius: 10px;
-  color: #00e5ff;
+  color: #b2ff1a;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -312,12 +312,12 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.18s;
-  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.08), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  box-shadow: 0 4px 18px rgba(178, 255, 26, 0.08), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 .flyBtn:hover {
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.22), rgba(0, 229, 255, 0.10));
-  border-color: rgba(0, 229, 255, 0.5);
-  box-shadow: 0 6px 24px rgba(0, 229, 255, 0.18), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.22), rgba(178, 255, 26, 0.10));
+  border-color: rgba(178, 255, 26, 0.5);
+  box-shadow: 0 6px 24px rgba(178, 255, 26, 0.18), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
   transform: translateY(-1px);
 }
 .flyArrow {
@@ -473,7 +473,7 @@
   }
 
   .miniTitle {
-    font-family: var(--font-display);
+    font-family: var(--font-mono);
     font-size: 16px;
     font-weight: 700;
     color: #fff;
@@ -500,7 +500,7 @@
     gap: 4px;
     font-family: var(--font-mono);
     font-size: 10px;
-    color: rgba(0, 229, 255, 0.5);
+    color: rgba(178, 255, 26, 0.5);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     flex-shrink: 0;

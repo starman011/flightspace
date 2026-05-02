@@ -29,13 +29,13 @@
 
 .hamburger:hover {
   background: rgba(48, 53, 59, 0.9);
-  border-color: rgba(0, 229, 255, 0.3);
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+  border-color: rgba(178, 255, 26, 0.3);
+  box-shadow: 0 0 12px rgba(178, 255, 26, 0.15);
 }
 
 .hamburger.hamburgerOpen {
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
+  border-color: rgba(178, 255, 26, 0.4);
+  box-shadow: 0 0 16px rgba(178, 255, 26, 0.2);
 }
 
 /* The 3 bars */
@@ -43,7 +43,7 @@
   display: block;
   width: 18px;
   height: 2px;
-  background: #00E5FF;
+  background: #b2ff1a;
   border-radius: 1px;
   transition:
     transform var(--duration-panel) var(--ease-panel),
@@ -119,12 +119,12 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: rgba(0, 229, 255, 0.4);
+  color: rgba(178, 255, 26, 0.4);
   margin-bottom: 4px;
 }
 
 .sectorName {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--text-title);
   font-weight: 700;
   color: var(--on-surface);
@@ -170,8 +170,8 @@
 
 .navItem.active {
   background: var(--surface-container-highest);
-  color: #00E5FF;
-  border-left-color: #00E5FF;
+  color: #b2ff1a;
+  border-left-color: #b2ff1a;
 }
 
 .navIcon {
