@@ -42,6 +42,10 @@ func (c *WaitlistController) Subscribe(w http.ResponseWriter, r *http.Request) {
 	if source == "" {
 		source = "popup"
 	}
+	if len(source) > 50 {
+		utils.Error(w, http.StatusBadRequest, "source too long")
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()

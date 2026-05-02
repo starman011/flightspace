@@ -1,6 +1,6 @@
 {
-  "name": "FlightSpace — Live Flight, Ship & Satellite Tracker",
-  "short_name": "FlightSpace",
+  "name": "ObjectTracer — Live Flight, Ship & Satellite Tracker",
+  "short_name": "ObjectTracer",
   "description": "Track real-time flights, ships, ISS, and deep-space objects on an interactive 3D globe.",
   "start_url": "/",
   "display": "standalone",

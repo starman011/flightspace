@@ -299,6 +299,8 @@ func (dc *DESIController) SearchGalaxies(w http.ResponseWriter, r *http.Request)
 
 	if !isNumeric && len(results) < limit {
 		escaped := strings.ReplaceAll(q, "'", "''")
+		escaped = strings.ReplaceAll(escaped, "%", "\\%")
+		escaped = strings.ReplaceAll(escaped, "_", "\\_")
 		// Title-case the query so SIMBAD case-sensitive ident matches work
 		// e.g. "andromeda" → "Andromeda", "ngc" → "Ngc", "m 31" → "M 31"
 		words := strings.Fields(escaped)
