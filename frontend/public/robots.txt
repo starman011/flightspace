@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://objecttracer.com/sitemap.xml
+Sitemap: https://www.objecttracer.com/sitemap.xml

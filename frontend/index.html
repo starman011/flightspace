@@ -5,56 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- ── Primary SEO ──────────────────────────────────────────────── -->
-    <title>ObjectTracer — Live Flight Radar &amp; Ship Tracker</title>
+    <title>FlightSpace — Live Flight Tracker, ISS, Satellites &amp; Deep Space on 3D Globe</title>
     <meta name="description"
-          content="Track real-time flights, ships, and satellites on an interactive 3D globe. ObjectTracer delivers live ADS-B aircraft positions, AIS maritime vessels, and orbital data in a clean newspaper dot-projection interface." />
+          content="Track live flights, ships, ISS, satellites, rocket launches, asteroids, and DESI galaxies on a real-time interactive 3D globe. Free ADS-B flight radar with aircraft details, crew info, and orbital data." />
     <meta name="keywords"
-          content="flight tracker, live flight radar, real-time aircraft tracking, ADS-B, ship tracker, AIS maritime, satellite tracker, ISS tracker, 3D globe, flight map" />
-    <meta name="author" content="ObjectTracer" />
-    <link rel="canonical" href="https://objecttracer.com/" />
+          content="flight tracker, live flight radar, real-time aircraft tracking, ADS-B, ship tracker, AIS maritime, satellite tracker, ISS tracker, ISS live stream, space station, 3D globe, flight map, rocket launch tracker, asteroid tracker, near-earth objects, deep space, DESI galaxies, solar system, moon tracker, plane tracker, live plane map, flight status, aircraft tracking" />
+    <meta name="author" content="FlightSpace" />
+    <link rel="canonical" href="https://www.objecttracer.com/" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 
     <!-- ── Open Graph (Facebook, LinkedIn, WhatsApp) ────────────────── -->
     <meta property="og:type"        content="website" />
-    <meta property="og:url"         content="https://objecttracer.com/" />
-    <meta property="og:title"       content="ObjectTracer — Live Flight Radar &amp; Ship Tracker" />
-    <meta property="og:description" content="Track real-time flights, ships, and satellites on an interactive 3D globe. Live ADS-B, AIS maritime, and orbital data." />
-    <meta property="og:image"       content="https://objecttracer.com/og-image.png" />
+    <meta property="og:url"         content="https://www.objecttracer.com/" />
+    <meta property="og:title"       content="FlightSpace — Live Flight Tracker, ISS &amp; Deep Space on 3D Globe" />
+    <meta property="og:description" content="Track live flights, ships, ISS, satellites, rocket launches, asteroids, and galaxies on a real-time 3D globe. Free ADS-B flight radar." />
+    <meta property="og:image"       content="https://www.objecttracer.com/og-image.png" />
     <meta property="og:image:width"  content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale"      content="en_US" />
-    <meta property="og:site_name"   content="ObjectTracer" />
+    <meta property="og:site_name"   content="FlightSpace" />
 
     <!-- ── Twitter / X Card ─────────────────────────────────────────── -->
     <meta name="twitter:card"        content="summary_large_image" />
-    <meta name="twitter:url"         content="https://objecttracer.com/" />
-    <meta name="twitter:title"       content="ObjectTracer — Live Flight Radar &amp; Ship Tracker" />
-    <meta name="twitter:description" content="Track real-time flights, ships, and satellites on an interactive 3D globe." />
-    <meta name="twitter:image"       content="https://objecttracer.com/og-image.png" />
+    <meta name="twitter:url"         content="https://www.objecttracer.com/" />
+    <meta name="twitter:title"       content="FlightSpace — Live Flight Tracker, ISS &amp; Deep Space" />
+    <meta name="twitter:description" content="Track live flights, ships, ISS, satellites, rocket launches, and galaxies on a real-time 3D globe. Free." />
+    <meta name="twitter:image"       content="https://www.objecttracer.com/og-image.png" />
 
     <!-- ── Structured Data (JSON-LD) ────────────────────────────────── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "ObjectTracer",
-      "url": "https://objecttracer.com/",
-      "description": "Real-time 3D globe tracking live flights (ADS-B), maritime vessels (AIS), and satellites including the ISS.",
+      "name": "FlightSpace",
+      "alternateName": "ObjectTracer",
+      "url": "https://www.objecttracer.com/",
+      "description": "Real-time 3D globe tracking live flights (ADS-B), maritime vessels (AIS), satellites, ISS with live stream, rocket launches, asteroids, and DESI deep-space galaxies.",
       "applicationCategory": "UtilityApplication",
       "operatingSystem": "All",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "featureList": [
-        "Live ADS-B flight tracking",
+        "Live ADS-B flight tracking with aircraft photos and route maps",
         "Real-time AIS ship tracking",
-        "Satellite and ISS orbital tracking",
-        "Interactive 3D globe visualization",
-        "Flight detail panels with trail history",
-        "Search by callsign or ICAO24"
-      ]
+        "ISS live tracking with NASA video stream and crew manifest",
+        "Satellite and orbital object tracking",
+        "Rocket launch countdown tracker",
+        "Near-Earth asteroid tracker (NASA NeoWs)",
+        "DESI deep-space galaxy catalog with 3D cosmic web",
+        "Solar system and lunar orbiter visualization",
+        "Interactive 3D globe with multi-scale zoom (Earth to galaxy)",
+        "Search by callsign, ICAO24, or flight number"
+      ],
+      "screenshot": "https://www.objecttracer.com/og-image.png"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "FlightSpace",
+      "url": "https://www.objecttracer.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.objecttracer.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
     </script>
 
-    <!-- ── Favicon (placeholder — replace with actual icon) ─────────── -->
+    <!-- ── Favicon & PWA ─────────────────────────────────────────────── -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Preconnect to all external origins used by the app -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
