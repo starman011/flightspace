@@ -153,7 +153,7 @@ export default function App() {
   // recently pinned one (last in the list).
   const lastPin = pins.pinnedLaunches[pins.pinnedLaunches.length - 1] || null
   const pinnedLaunch = lastPin ? (lastPin._full || {
-    id: lastPin.launch_id,
+    id: lastPin.id,
     mission_name: lastPin.name,
     name: lastPin.name,
     net: lastPin.net_time,

@@ -179,7 +179,7 @@ export default function ProfilePanel({
                   <LaunchCard
                     key={l.launch_id || l.id}
                     launch={l}
-                    onRemove={() => onUnpinLaunch?.(l.launch_id || l.id)}
+                    onRemove={() => onUnpinLaunch?.(l.id)}
                   />
                 ))}
               </div>

@@ -42,7 +42,14 @@ export default function StatusBar({
         aria-label={expanded ? 'Collapse navigation' : 'Expand navigation'}
       >
         {/* Logo glyph */}
-        <img className={styles.logoIcon} src="/favicon.svg" alt="ObjectTracer" width="16" height="16" />
+        <svg className={styles.logoIcon} width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.1" opacity=".5"/>
+          <circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.3"/>
+          <circle cx="8" cy="8" r="1" fill="currentColor"/>
+          {/* orbit ring */}
+          <ellipse cx="8" cy="8" rx="6.5" ry="2.5" stroke="currentColor" strokeWidth="0.9" opacity=".35"
+            transform="rotate(-30 8 8)"/>
+        </svg>
 
         <span className={styles.wordmark}>OBJECTTRACER <span className={styles.alphaBadge}>ALPHA</span></span>
 
