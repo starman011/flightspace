@@ -79,6 +79,7 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin 
         },
         auto_select: false,
         ux_mode: 'popup',
+        use_fedcm_for_prompt: true,
       })
       google.accounts.id.prompt(() => {
         setLoading(false)
