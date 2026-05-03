@@ -78,7 +78,7 @@ func (oc *OAuthController) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Verify audience matches our client ID
 	if strings.TrimSpace(claims.Aud) != strings.TrimSpace(oc.googleClientID) {
-		fmt.Printf("[OAUTH DEBUG] aud mismatch: token_aud=%q config_id=%q\n", claims.Aud, oc.googleClientID)
+		fmt.Printf("[OAUTH DEBUG] aud mismatch: token_aud=%q (len=%d) config_id=%q (len=%d)\n", claims.Aud, len(claims.Aud), oc.googleClientID, len(oc.googleClientID))
 		utils.Error(w, http.StatusUnauthorized, "token not issued for this application")
 		return
 	}

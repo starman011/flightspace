@@ -109,6 +109,7 @@ func (a *App) Start() error {
 
 	// Build handler chain: logging → CORS → routes
 	mux := http.NewServeMux()
+	fmt.Printf("[STARTUP] GOOGLE_CLIENT_ID=%q (len=%d)\n", a.cfg.GoogleClientID, len(a.cfg.GoogleClientID))
 	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, issPoller, a.cfg.JWTSecret, a.cfg.NASAAPIKey, a.cfg.GoogleClientID, a.cfg.AppleClientID)
 
 	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
