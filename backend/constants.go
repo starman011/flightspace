@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds all application configuration loaded from environment variables.
@@ -90,7 +91,7 @@ func LoadConfig() (*Config, error) {
 		MaxWSConns:     100,
 		RetentionHours: 6,
 		TLSDomain:      os.Getenv("TLS_DOMAIN"),
-		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientID: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
 		AppleClientID:  os.Getenv("APPLE_CLIENT_ID"),
 	}, nil
 }
