@@ -131,9 +131,10 @@ export function useSession() {
   }, [])
 
   const logout = useCallback(async () => {
-    await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
+    setSessionToken(null)
     setIsAuthenticated(false)
     setUser(null)
+    await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
     await createAnonymousSession()
   }, [createAnonymousSession])
 
