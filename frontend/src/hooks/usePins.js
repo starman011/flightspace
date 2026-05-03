@@ -28,66 +28,52 @@ export function usePins(isAuthenticated, sessionToken) {
   useEffect(() => { saveLS(LS_LAUNCHES, pinnedLaunches) }, [pinnedLaunches])
   useEffect(() => { saveLS(LS_FLIGHTS, trackedFlights) }, [trackedFlights])
 
-  // On sign-in: push local pins to server, then fetch canonical list
+  // On sign-out: clear local state and localStorage
   useEffect(() => {
-    if (!isAuthenticated || !sessionToken) {
+    if (!isAuthenticated) {
+      setPinnedLaunches([])
+      setTrackedFlights([])
+      saveLS(LS_LAUNCHES, [])
+      saveLS(LS_FLIGHTS, [])
       syncedRef.current = false
       return
     }
-    if (syncedRef.current) return
+    if (!sessionToken || syncedRef.current) return
     syncedRef.current = true
 
+    // Signed in — fetch user's canonical list from server (don't replay localStorage)
     const opts = {
       credentials: 'include',
       headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
     }
 
-    const replayLaunches = pinnedLaunches.map(l =>
-      fetch(`${API}/api/v1/user/pinned-launches`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ launch_id: l.launch_id, name: l.name, net_time: l.net_time }),
-      }).catch(() => {})
-    )
-    const replayFlights = trackedFlights.map(f =>
-      fetch(`${API}/api/v1/user/watchlist`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ icao24: f.icao24, callsign: f.callsign, label: f.label }),
-      }).catch(() => {})
-    )
-
-    Promise.all([...replayLaunches, ...replayFlights]).then(() => {
-      fetch(`${API}/api/v1/user/pinned-launches`, opts)
-        .then(r => r.ok ? r.json() : null)
-        .then(d => {
-          if (!d?.items) return
-          // Deduplicate by launch_id — server is canonical after sync
-          const seen = new Set()
-          const unique = d.items.filter(l => {
-            const key = l.launch_id || l.id
-            if (seen.has(key)) return false
-            seen.add(key)
-            return true
-          })
-          setPinnedLaunches(unique)
+    fetch(`${API}/api/v1/user/pinned-launches`, opts)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d?.items) return
+        const seen = new Set()
+        const unique = d.items.filter(l => {
+          const key = l.launch_id || l.id
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
         })
-        .catch(() => {})
-      fetch(`${API}/api/v1/user/watchlist`, opts)
-        .then(r => r.ok ? r.json() : null)
-        .then(d => {
-          if (!d?.items) return
-          // Deduplicate by icao24
-          const seen = new Set()
-          const unique = d.items.filter(f => {
-            if (seen.has(f.icao24)) return false
-            seen.add(f.icao24)
-            return true
-          })
-          setTrackedFlights(unique)
+        setPinnedLaunches(unique)
+      })
+      .catch(() => {})
+    fetch(`${API}/api/v1/user/watchlist`, opts)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d?.items) return
+        const seen = new Set()
+        const unique = d.items.filter(f => {
+          if (seen.has(f.icao24)) return false
+          seen.add(f.icao24)
+          return true
         })
-        .catch(() => {})
-    })
+        setTrackedFlights(unique)
+      })
+      .catch(() => {})
   }, [isAuthenticated, sessionToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pinLaunch = useCallback((launch) => {
