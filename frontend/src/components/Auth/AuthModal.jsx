@@ -73,20 +73,15 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin 
             onClose()
           } catch (err) {
             setError(err.message || 'Google sign-in failed')
+          } finally {
             setLoading(false)
           }
         },
         auto_select: false,
+        ux_mode: 'popup',
       })
-      google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback: open One Tap popup manually
-          google.accounts.id.renderButton(
-            document.getElementById('google-signin-fallback'),
-            { theme: 'filled_black', size: 'large', width: '100%', shape: 'pill' }
-          )
-          setLoading(false)
-        }
+      google.accounts.id.prompt(() => {
+        setLoading(false)
       })
     } catch (err) {
       setError('Failed to load Google sign-in')
@@ -128,7 +123,6 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin 
             </svg>
             Continue with Google
           </button>
-          <div id="google-signin-fallback" />
         </div>
 
         <div className={styles.divider}>
