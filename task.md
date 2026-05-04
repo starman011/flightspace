@@ -50,8 +50,8 @@
 - [x] Lazy load with error handling
 
 ### 7. Airline Logos
-- [ ] Airline logo dataset (IATA codes → logo URLs)
-- [ ] Small logo icon next to callsign in DetailPanel
+- [x] Airline IATA code from adsbdb API + OpenFlights ICAO→IATA mapping
+- [x] Small logo icon next to callsign in DetailPanel (pics.avs.io CDN)
 - [ ] Logo in search results dropdown
 
 ### 8. Flight Alerts

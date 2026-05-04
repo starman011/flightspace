@@ -435,6 +435,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {/* ── Flight identity ── */}
           <div className={styles.identity}>
             <div className={styles.identityRow}>
+              {route?.airline_iata && (
+                <img
+                  className={styles.airlineLogo}
+                  src={`https://pics.avs.io/36/36/${route.airline_iata}@2x.png`}
+                  alt=""
+                  onError={e => { e.target.style.display = 'none' }}
+                />
+              )}
               <span className={styles.callsign}>{displayName}</span>
               {typeCode && <span className={styles.typeCode}>{typeCode}</span>}
             </div>

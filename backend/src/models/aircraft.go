@@ -103,6 +103,7 @@ type RouteResponse struct {
 	ArrLat        *float64 `json:"arr_lat,omitempty"`
 	ArrLon        *float64 `json:"arr_lon,omitempty"`
 	ETAMin        *float64 `json:"eta_min,omitempty"`
+	AirlineIATA   *string  `json:"airline_iata,omitempty"`
 	Source        string   `json:"source"`
 }
 

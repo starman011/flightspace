@@ -331,6 +331,13 @@ func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 	result.ArrLat = &arr.Lat
 	result.ArrLon = &arr.Lon
 
+	// Extract airline IATA from callsign ICAO prefix
+	if len(callsign) >= 3 {
+		if iata, ok := data.AirlineICAOtoIATA[callsign[:3]]; ok {
+			result.AirlineIATA = &iata
+		}
+	}
+
 	ac.computeETAInline(&result, &live)
 	utils.JSON(w, http.StatusOK, result)
 }
@@ -417,6 +424,11 @@ func (ac *AircraftController) lookupAdsbDB(callsign, icao24 string, live *models
 	result.ArrivalIATA = &fr.Dest.IATA
 	result.ArrLat = &fr.Dest.Lat
 	result.ArrLon = &fr.Dest.Lon
+
+	if fr.Airline != nil && fr.Airline.IATA != "" {
+		iata := fr.Airline.IATA
+		result.AirlineIATA = &iata
+	}
 
 	// Cache successful result for 1 hour
 	if b, err := json.Marshal(result); err == nil {
