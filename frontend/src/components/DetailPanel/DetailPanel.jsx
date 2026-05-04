@@ -612,6 +612,19 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                   </button>
                 )
               )}
+              <button
+                className={styles.fitBtn}
+                title="Copy link to this flight"
+                onClick={() => {
+                  const url = `${window.location.origin}/flight/${icao24}`
+                  navigator.clipboard.writeText(url).then(() => {
+                    const btn = document.activeElement
+                    if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = '↗ Share' }, 1500) }
+                  }).catch(() => {})
+                }}
+              >
+                ↗ Share
+              </button>
             </div>
           )}
         </>

@@ -10,9 +10,9 @@
 ## HIGH IMPACT — Drive Organic Traffic
 
 ### 1. Shareable Deep Links
-- [ ] URL-based routing: `/flight/:callsign`, `/launch/:id`, `/airport/:iata`
-- [ ] Share button on DetailPanel — copies link to clipboard
-- [ ] Open shared link → auto-fly to object + open panel
+- [x] URL-based routing: `/flight/:icao24`, `/launch/:id`, `/airport/:iata`
+- [x] Share button on DetailPanel — copies link to clipboard
+- [x] Open shared link → auto-fly to object + open panel
 - [ ] OG meta tags per route (SSR or prerender for social cards)
 
 ### 2. Push Notifications for Launches

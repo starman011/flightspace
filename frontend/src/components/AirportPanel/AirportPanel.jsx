@@ -31,6 +31,13 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
           <span className={styles.iata}>{iata}</span>
           <span className={styles.subtitle}>Inbound Traffic</span>
         </div>
+        <button className={styles.share} onClick={() => {
+          const url = `${window.location.origin}/airport/${iata}`
+          navigator.clipboard.writeText(url).then(() => {
+            const btn = document.activeElement
+            if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '↗' }, 1500) }
+          }).catch(() => {})
+        }} title="Copy link">↗</button>
         <button className={styles.close} onClick={onClose}>&times;</button>
       </div>
 

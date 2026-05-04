@@ -94,26 +94,28 @@ function PadFocusBadge({ launch, onExit }) {
 
 // ── URL ↔ State helpers ────────────────────────────────────────────────────
 function parseInitialState(pathname) {
-  if (pathname.startsWith('/flight/')) {
-    return { selectedIcao24: pathname.replace('/flight/', ''), activeScale: 'earth', launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
-  }
-  if (pathname === '/profile')      return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: true }
-  if (pathname === '/solar-system') return { selectedIcao24: null, activeScale: 'solar',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
-  if (pathname === '/deep-space')   return { selectedIcao24: null, activeScale: 'galaxy', launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
-  if (pathname === '/moon')         return { selectedIcao24: null, activeScale: 'moon',   launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
-  if (pathname === '/launches')     return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: true,  activeFilter: null, profilePanelOpen: false }
-  if (pathname === '/asteroids')    return { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: 'asteroids', profilePanelOpen: false }
-  return                                   { selectedIcao24: null, activeScale: 'earth',  launchPanelOpen: false, activeFilter: null, profilePanelOpen: false }
+  const base = { selectedIcao24: null, activeScale: 'earth', launchPanelOpen: false, activeFilter: null, profilePanelOpen: false, selectedAirport: null, selectedLaunchId: null }
+  if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
+  if (pathname.startsWith('/airport/')) return { ...base, selectedAirport: pathname.replace('/airport/', '').toUpperCase() }
+  if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true, selectedLaunchId: pathname.replace('/launch/', '') }
+  if (pathname === '/profile')      return { ...base, profilePanelOpen: true }
+  if (pathname === '/solar-system') return { ...base, activeScale: 'solar' }
+  if (pathname === '/deep-space')   return { ...base, activeScale: 'galaxy' }
+  if (pathname === '/moon')         return { ...base, activeScale: 'moon' }
+  if (pathname === '/launches')     return { ...base, launchPanelOpen: true }
+  if (pathname === '/asteroids')    return { ...base, activeFilter: 'asteroids' }
+  return base
 }
 
-function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen) {
-  if (selectedIcao24)             return `/flight/${selectedIcao24}`
-  if (profilePanelOpen)           return '/profile'
+function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport) {
+  if (selectedIcao24)               return `/flight/${selectedIcao24}`
+  if (selectedAirport)              return `/airport/${selectedAirport}`
+  if (profilePanelOpen)             return '/profile'
   if (activeFilter === 'asteroids') return '/asteroids'
-  if (launchPanelOpen)            return '/launches'
-  if (activeScale === 'solar')    return '/solar-system'
-  if (activeScale === 'galaxy')   return '/deep-space'
-  if (activeScale === 'moon')     return '/moon'
+  if (launchPanelOpen)              return '/launches'
+  if (activeScale === 'solar')      return '/solar-system'
+  if (activeScale === 'galaxy')     return '/deep-space'
+  if (activeScale === 'moon')       return '/moon'
   return '/'
 }
 
@@ -140,7 +142,7 @@ export default function App() {
   const [zoomedIn, setZoomedIn]             = useState(false)
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
-  const [selectedAirport, setSelectedAirport] = useState(null)
+  const [selectedAirport, setSelectedAirport] = useState(init.selectedAirport)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
@@ -162,7 +164,7 @@ export default function App() {
     if (launch) pins.pinLaunch(launch)
     else if (pinnedLaunch) pins.unpinLaunch(pinnedLaunch.id)
   }, [pins, pinnedLaunch])
-  const [returnMission, setReturnMission]   = useState(null)
+  const [returnMission, setReturnMission]   = useState(init.selectedLaunchId)
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [arActive, setArActive] = useState(false)
   const collapseTimerRef = useRef(null)
@@ -176,10 +178,10 @@ export default function App() {
 
   // Sync state → URL (replaceState only — no React Router re-renders)
   useEffect(() => {
-    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen)
+    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport)
     if (window.location.pathname === path) return
     window.history.replaceState(null, '', path)
-  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen])
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport])
 
 // Sync initial scale to Globe on mount (e.g., direct /deep-space URL)
   useEffect(() => {
