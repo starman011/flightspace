@@ -44,10 +44,10 @@
 ## MEDIUM IMPACT — Enhance Experience
 
 ### 6. Aircraft Photos
-- [ ] Integrate Planespotters.net API (free, non-commercial)
-- [ ] Show aircraft photo in DetailPanel identity section
-- [ ] Fallback placeholder for missing photos
-- [ ] Lazy load with blur-up
+- [x] Integrate Planespotters.net API (free, non-commercial)
+- [x] Show aircraft photo in DetailPanel identity section
+- [x] Fallback: tries hex, then registration-based lookup
+- [x] Lazy load with error handling
 
 ### 7. Airline Logos
 - [ ] Airline logo dataset (IATA codes → logo URLs)
@@ -61,9 +61,9 @@
 - [ ] Alert history in profile panel
 
 ### 9. Airport Departures Board
-- [ ] Backend endpoint: `/api/v1/airports/:iata/departures`
-- [ ] Tab switch in AirportPanel: Arrivals | Departures
-- [ ] Same card format as arrivals with destination info
+- [x] Backend endpoint: `/api/v1/airports/:iata/departures`
+- [x] Tab switch in AirportPanel: Arrivals | Departures
+- [x] Same card format as arrivals (no ETA for departures)
 
 ### 10. Starlink Satellite Constellation
 - [ ] Fetch Starlink TLE data (CelesTrak/Space-Track)

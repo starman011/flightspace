@@ -153,3 +153,95 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 		"count":    len(arrivals),
 	})
 }
+
+// DepartureEntry is a single outbound aircraft that recently departed
+type DepartureEntry struct {
+	ICAO24   string  `json:"icao24"`
+	Callsign string  `json:"callsign,omitempty"`
+	DistKm   float64 `json:"dist_km"`
+	AltFt    float64 `json:"alt_ft,omitempty"`
+	SpeedKts float64 `json:"speed_kts,omitempty"`
+	Heading  float64 `json:"heading,omitempty"`
+}
+
+// GetDepartures returns aircraft that recently departed a given airport.
+// GET /api/v1/airports/{iata}/departures
+func (ac *AirportController) GetDepartures(w http.ResponseWriter, r *http.Request) {
+	iata := strings.ToUpper(strings.TrimSpace(r.PathValue("iata")))
+	coords, ok := airports[iata]
+	if !ok {
+		utils.Error(w, http.StatusNotFound, "unknown airport")
+		return
+	}
+	aptLat, aptLon := coords[0], coords[1]
+	ctx := r.Context()
+
+	raw, err := ac.rdb.HGetAll(ctx, aircraftLiveKey).Result()
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to fetch aircraft")
+		return
+	}
+
+	var departures []DepartureEntry
+	for _, v := range raw {
+		var a models.LiveAircraft
+		if json.Unmarshal([]byte(v), &a) != nil {
+			continue
+		}
+		if a.Cat != "plane" && a.Cat != "heavy" && a.Cat != "regional" {
+			continue
+		}
+		if a.Grnd || a.Vel == nil || a.Hdg == nil || *a.Vel < 50 {
+			continue
+		}
+
+		dist := haversineKm(a.Lat, a.Lon, aptLat, aptLon)
+		// Recently departed: within 200km, heading AWAY from airport
+		if dist > 200 || dist < 2 {
+			continue
+		}
+
+		// Bearing from aircraft to airport — if aircraft heading is opposite, it departed
+		brg := bearing(a.Lat, a.Lon, aptLat, aptLon)
+		hdgDiff := math.Abs(brg - *a.Hdg)
+		if hdgDiff > 180 {
+			hdgDiff = 360 - hdgDiff
+		}
+		// Aircraft heading AWAY from airport (diff > 135°)
+		if hdgDiff < 135 {
+			continue
+		}
+
+		cs := ""
+		if a.Callsign != nil {
+			cs = *a.Callsign
+		}
+		altFt := 0.0
+		if a.Alt != nil {
+			altFt = *a.Alt
+		}
+
+		departures = append(departures, DepartureEntry{
+			ICAO24:   a.ID,
+			Callsign: cs,
+			DistKm:   math.Round(dist*10) / 10,
+			AltFt:    altFt,
+			SpeedKts: *a.Vel,
+			Heading:  *a.Hdg,
+		})
+	}
+
+	sort.Slice(departures, func(i, j int) bool {
+		return departures[i].DistKm < departures[j].DistKm
+	})
+
+	if len(departures) > 30 {
+		departures = departures[:30]
+	}
+
+	utils.JSON(w, http.StatusOK, map[string]interface{}{
+		"airport":    iata,
+		"departures": departures,
+		"count":      len(departures),
+	})
+}

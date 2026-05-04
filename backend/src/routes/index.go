@@ -79,6 +79,7 @@ func Setup(
 
 	// Airports
 	mux.Handle("GET /api/v1/airports/{iata}/arrivals", rateLimit(http.HandlerFunc(airport.GetArrivals)))
+	mux.Handle("GET /api/v1/airports/{iata}/departures", rateLimit(http.HandlerFunc(airport.GetDepartures)))
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
