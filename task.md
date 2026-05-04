@@ -88,10 +88,10 @@
 - [ ] RSS feed for blog
 
 ### 13. PWA Install Prompt
-- [ ] "Add to Home Screen" banner/button
-- [ ] Show after 2nd visit or 30s engagement
-- [ ] Custom install UI (not just browser default)
-- [ ] Track install rate
+- [x] "Add to Home Screen" banner with custom UI
+- [x] Show after 30s engagement, dismiss suppresses 30 days
+- [x] Custom install UI (slide-up banner, not browser default)
+- [x] Track install via localStorage flag
 
 ---
 

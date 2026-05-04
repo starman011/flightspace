@@ -40,6 +40,8 @@ import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
 import { usePins } from './hooks/usePins'
+import { usePWAInstall } from './hooks/usePWAInstall'
+import PWABanner from './components/PWABanner/PWABanner'
 
 // ── Pad Focus Badge ───────────────────────────────────────────────────────────
 function PadFocusBadge({ launch, onExit }) {
@@ -125,6 +127,7 @@ export default function App() {
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
+  const pwa = usePWAInstall()
 
   // Initialise from URL on first render
   const init = parseInitialState(window.location.pathname)
@@ -636,6 +639,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <AmbientAudio />
       <WaitlistPopup />
       <TourGuide />
+      {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
     </ErrorBoundary>
   )
 }
