@@ -268,7 +268,8 @@ func (ac *AircraftController) Search(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetRoute handles GET /api/v1/aircraft/{icao24}/route.
-// Priority: 1) OpenFlights route DB (callsign → airline → route), 2) heading-based estimation.
+// GetRoute handles GET /api/v1/aircraft/{icao24}/route.
+// Priority: 1) adsbdb.com API (real flight plan data), 2) OpenFlights route DB. No guesswork.
 func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 	icao24 := strings.ToLower(strings.TrimSpace(r.PathValue("icao24")))
 	if icao24 == "" || !icaoRe.MatchString(icao24) {
@@ -276,144 +277,159 @@ func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get live position — needed for route matching and ETA
+	empty := models.RouteResponse{ICAO24: icao24, Source: "none"}
+
+	// Get live position — needed for ETA
 	raw, err := ac.rdb.HGet(r.Context(), aircraftLiveKey, icao24).Result()
 	if err != nil {
-		ac.getRouteFromHeading(w, r, icao24)
+		utils.JSON(w, http.StatusOK, empty)
 		return
 	}
 	var live models.LiveAircraft
 	if json.Unmarshal([]byte(raw), &live) != nil {
-		ac.getRouteFromHeading(w, r, icao24)
+		utils.JSON(w, http.StatusOK, empty)
 		return
 	}
 
-	// Try callsign-based route lookup from OpenFlights database
 	callsign := ""
 	if live.Callsign != nil {
 		callsign = strings.TrimSpace(*live.Callsign)
 	}
-	if callsign != "" {
-		dep, arr := data.LookupRoute(callsign, live.Lat, live.Lon)
-		if dep != nil && arr != nil {
-			result := models.RouteResponse{
-				ICAO24: icao24,
-				Source: "routes_db",
-			}
-
-			depICAO := dep.ICAO
-			result.DepartureICAO = &depICAO
-			result.DepartureName = &dep.Name
-			result.DepartureIATA = &dep.IATA
-			result.DepLat = &dep.Lat
-			result.DepLon = &dep.Lon
-
-			arrICAO := arr.ICAO
-			result.ArrivalICAO = &arrICAO
-			result.ArrivalName = &arr.Name
-			result.ArrivalIATA = &arr.IATA
-			result.ArrLat = &arr.Lat
-			result.ArrLon = &arr.Lon
-
-			// Compute ETA from current position to arrival
-			if live.Vel != nil && *live.Vel > 20 {
-				dist := haversineKmAC(live.Lat, live.Lon, arr.Lat, arr.Lon)
-				speedKmh := *live.Vel * 1.852
-				if speedKmh > 0 {
-					etaMin := math.Round((dist / speedKmh) * 60)
-					result.ETAMin = &etaMin
-				}
-			}
-
-			utils.JSON(w, http.StatusOK, result)
-			return
-		}
+	if callsign == "" {
+		utils.JSON(w, http.StatusOK, empty)
+		return
 	}
 
-	// Fallback: heading-based estimation
-	ac.getRouteFromHeading(w, r, icao24)
-}
+	// Try adsbdb.com API first (real flight plan data)
+	if result, ok := ac.lookupAdsbDB(callsign, icao24, &live); ok {
+		utils.JSON(w, http.StatusOK, result)
+		return
+	}
 
-// getRouteFromHeading estimates departure/arrival airports from live position and heading.
-// Uses the large OpenFlights airport database (7700+ airports).
-func (ac *AircraftController) getRouteFromHeading(w http.ResponseWriter, r *http.Request, icao24 string) {
-	ctx := r.Context()
+	// Fallback: OpenFlights route DB
+	dep, arr := data.LookupRoute(callsign, live.Lat, live.Lon)
+	if dep == nil || arr == nil {
+		utils.JSON(w, http.StatusOK, empty)
+		return
+	}
 
 	result := models.RouteResponse{
 		ICAO24: icao24,
-		Source: "heading",
+		Source: "routes_db",
 	}
+	depICAO := dep.ICAO
+	result.DepartureICAO = &depICAO
+	result.DepartureName = &dep.Name
+	result.DepartureIATA = &dep.IATA
+	result.DepLat = &dep.Lat
+	result.DepLon = &dep.Lon
 
-	// Get live position
-	raw, err := ac.rdb.HGet(ctx, aircraftLiveKey, icao24).Result()
-	if err != nil {
-		utils.JSON(w, http.StatusOK, result)
-		return
-	}
+	arrICAO := arr.ICAO
+	result.ArrivalICAO = &arrICAO
+	result.ArrivalName = &arr.Name
+	result.ArrivalIATA = &arr.IATA
+	result.ArrLat = &arr.Lat
+	result.ArrLon = &arr.Lon
 
-	var live models.LiveAircraft
-	if json.Unmarshal([]byte(raw), &live) != nil {
-		utils.JSON(w, http.StatusOK, result)
-		return
-	}
-
-	hasHeading := live.Hdg != nil
-	hasSpeed := live.Vel != nil && *live.Vel > 20
-
-	// Departure: look behind aircraft using large airport DB
-	if hasHeading && hasSpeed {
-		reverseHdg := math.Mod(*live.Hdg+180, 360)
-		behind := data.FindAirportInDirection(live.Lat, live.Lon, reverseHdg, 3000, 70)
-		if behind != nil {
-			result.DepartureICAO = &behind.ICAO
-			result.DepartureName = &behind.Name
-			result.DepartureIATA = &behind.IATA
-			result.DepLat = &behind.Lat
-			result.DepLon = &behind.Lon
-		}
-	}
-	// Fallback: nearest airport behind or just nearest airport
-	if result.DepLat == nil {
-		nearest := data.FindNearestAirport(live.Lat, live.Lon, 3000)
-		if nearest != nil {
-			result.DepartureICAO = &nearest.ICAO
-			result.DepartureName = &nearest.Name
-			result.DepartureIATA = &nearest.IATA
-			result.DepLat = &nearest.Lat
-			result.DepLon = &nearest.Lon
-		}
-	}
-
-	// Arrival: look ahead of aircraft
-	if hasHeading && hasSpeed {
-		ahead := data.FindAirportInDirection(live.Lat, live.Lon, *live.Hdg, 3000, 50)
-		if ahead != nil {
-			result.ArrivalICAO = &ahead.ICAO
-			result.ArrivalName = &ahead.Name
-			result.ArrivalIATA = &ahead.IATA
-			result.ArrLat = &ahead.Lat
-			result.ArrLon = &ahead.Lon
-
-			dist := haversineKmAC(live.Lat, live.Lon, ahead.Lat, ahead.Lon)
-			speedKmh := *live.Vel * 1.852
-			if speedKmh > 0 {
-				etaMin := math.Round((dist / speedKmh) * 60)
-				result.ETAMin = &etaMin
-			}
-		}
-	}
-
+	ac.computeETAInline(&result, &live)
 	utils.JSON(w, http.StatusOK, result)
 }
 
-// computeETA sets ETAMin on the route response using live position and speed.
-func (ac *AircraftController) computeETA(result *models.RouteResponse, icao24 string) {
-	raw, err := ac.rdb.HGet(context.Background(), aircraftLiveKey, icao24).Result()
-	if err != nil {
-		return
+// adsbdb response types
+type adsbDBResponse struct {
+	Response struct {
+		FlightRoute *adsbDBRoute `json:"flightroute"`
+	} `json:"response"`
+}
+type adsbDBRoute struct {
+	Callsign string        `json:"callsign"`
+	Origin   *adsbDBPoint  `json:"origin"`
+	Dest     *adsbDBPoint  `json:"destination"`
+	Airline  *adsbDBAirline `json:"airline"`
+}
+type adsbDBPoint struct {
+	Name     string  `json:"name"`
+	ICAO     string  `json:"icao_code"`
+	IATA     string  `json:"iata_code"`
+	Lat      float64 `json:"latitude"`
+	Lon      float64 `json:"longitude"`
+	City     string  `json:"municipality"`
+}
+type adsbDBAirline struct {
+	Name string `json:"name"`
+	ICAO string `json:"icao"`
+	IATA string `json:"iata"`
+}
+
+var adsbDBClient = &http.Client{Timeout: 3 * time.Second}
+
+// lookupAdsbDB queries adsbdb.com for real flight route data.
+func (ac *AircraftController) lookupAdsbDB(callsign, icao24 string, live *models.LiveAircraft) (models.RouteResponse, bool) {
+	empty := models.RouteResponse{ICAO24: icao24, Source: "none"}
+
+	// Check Redis cache first (cache for 1 hour — routes don't change mid-flight)
+	cacheKey := "route:adsbdb:" + callsign
+	if cached, err := ac.rdb.Get(context.Background(), cacheKey).Result(); err == nil {
+		var result models.RouteResponse
+		if json.Unmarshal([]byte(cached), &result) == nil {
+			if result.Source == "none" {
+				return empty, false
+			}
+			ac.computeETAInline(&result, live)
+			return result, true
+		}
 	}
-	var live models.LiveAircraft
-	if json.Unmarshal([]byte(raw), &live) != nil || live.Vel == nil || *live.Vel < 20 {
+
+	resp, err := adsbDBClient.Get("https://api.adsbdb.com/v0/callsign/" + callsign)
+	if err != nil {
+		return empty, false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		// Cache miss for 10 min to avoid hammering
+		ac.rdb.Set(context.Background(), cacheKey, `{"source":"none"}`, 10*time.Minute)
+		return empty, false
+	}
+
+	var data adsbDBResponse
+	if json.NewDecoder(resp.Body).Decode(&data) != nil || data.Response.FlightRoute == nil {
+		return empty, false
+	}
+
+	fr := data.Response.FlightRoute
+	if fr.Origin == nil || fr.Dest == nil {
+		return empty, false
+	}
+
+	result := models.RouteResponse{
+		ICAO24: icao24,
+		Source: "adsbdb",
+	}
+	result.DepartureICAO = &fr.Origin.ICAO
+	result.DepartureName = &fr.Origin.Name
+	result.DepartureIATA = &fr.Origin.IATA
+	result.DepLat = &fr.Origin.Lat
+	result.DepLon = &fr.Origin.Lon
+
+	result.ArrivalICAO = &fr.Dest.ICAO
+	result.ArrivalName = &fr.Dest.Name
+	result.ArrivalIATA = &fr.Dest.IATA
+	result.ArrLat = &fr.Dest.Lat
+	result.ArrLon = &fr.Dest.Lon
+
+	// Cache successful result for 1 hour
+	if b, err := json.Marshal(result); err == nil {
+		ac.rdb.Set(context.Background(), cacheKey, string(b), time.Hour)
+	}
+
+	ac.computeETAInline(&result, live)
+	return result, true
+}
+
+// computeETAInline sets ETAMin on response using live speed and distance to arrival.
+func (ac *AircraftController) computeETAInline(result *models.RouteResponse, live *models.LiveAircraft) {
+	if result.ArrLat == nil || live.Vel == nil || *live.Vel <= 20 {
 		return
 	}
 	dist := haversineKmAC(live.Lat, live.Lon, *result.ArrLat, *result.ArrLon)
@@ -423,6 +439,7 @@ func (ac *AircraftController) computeETA(result *models.RouteResponse, icao24 st
 		result.ETAMin = &etaMin
 	}
 }
+
 
 
 // haversineKmAC calculates distance in km (avoid collision with airport.go's haversineKm).

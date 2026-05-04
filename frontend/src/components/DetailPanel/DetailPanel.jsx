@@ -345,6 +345,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const typeDesc = detail?.type_description
   const operator = detail?.operator
 
+  const hasRoute = route?.source === 'routes_db' || route?.source === 'adsbdb'
   const depIata = route?.departure_iata || '---'
   const arrIata = route?.arrival_iata || '---'
   const etaMin = route?.eta_min
@@ -386,13 +387,15 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             <span className={styles.miniCallsign}>{displayName}</span>
             {typeCode && <span className={styles.miniType}>{typeCode}</span>}
           </div>
-          <div className={styles.miniRoute}>
-            <span className={styles.miniIata}>{depIata}</span>
-            <svg viewBox="0 0 24 24" width="12" height="12" className={styles.miniPlane}>
-              <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor" />
-            </svg>
-            <span className={styles.miniIata}>{arrIata}</span>
-          </div>
+          {hasRoute && (
+            <div className={styles.miniRoute}>
+              <span className={styles.miniIata}>{depIata}</span>
+              <svg viewBox="0 0 24 24" width="12" height="12" className={styles.miniPlane}>
+                <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor" />
+              </svg>
+              <span className={styles.miniIata}>{arrIata}</span>
+            </div>
+          )}
           {etaMin != null && (
             <span className={styles.miniEta}>{fmtEta(etaMin)}</span>
           )}
@@ -446,7 +449,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {error && isFlight && <p className={styles.state}>error {error}</p>}
 
           {/* ── Route: departure → arrival ── */}
-          {route && (
+          {hasRoute && (
             <div className={styles.routeCard}>
               <div className={styles.routeRow}>
                 <div className={styles.routeAirport}>
@@ -480,7 +483,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           )}
 
           {/* ── Position fallback (no route) ── */}
-          {!route && hasPosition && (
+          {!hasRoute && hasPosition && (
             <div className={styles.posCard}>
               <div className={styles.posRow}>
                 <span className={styles.posLabel}>Position</span>
