@@ -54,6 +54,7 @@ export default function BottomBar({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [openPopover, setOpenPopover] = useState(null)
+  const [introMode, setIntroMode] = useState(true)
   const popoverTimeout = useRef(null)
   const collapseTimeout = useRef(null)
   const barRef = useRef(null)
@@ -130,9 +131,15 @@ export default function BottomBar({
     }, 3000)
   }, [])
 
-  // Auto-collapse after 5s on mount
+  // Intro mode: show all labels for 3s so first-time users see what icons mean
   useEffect(() => {
-    collapseTimeout.current = setTimeout(() => setCollapsed(true), 5000)
+    const t = setTimeout(() => setIntroMode(false), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Auto-collapse after 6s on mount
+  useEffect(() => {
+    collapseTimeout.current = setTimeout(() => setCollapsed(true), 6000)
     return () => clearTimeout(collapseTimeout.current)
   }, [])
 
@@ -165,7 +172,7 @@ export default function BottomBar({
 
       {/* ── Expanded: full sectioned bar ── */}
       {!collapsed && (
-        <div className={styles.content}>
+        <div className={`${styles.content} ${introMode ? styles.introMode : ''}`}>
           {/* TRACK section */}
           <div className={styles.section}>
             <span className={styles.sectionLabel}>Track</span>
@@ -185,6 +192,7 @@ export default function BottomBar({
                     <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
                     <span className={styles.label}>{f.label}</span>
                     {activeFilter === f.id && <span className={styles.dot} />}
+                    <span className={styles.tooltip}>{f.label}</span>
                   </button>
 
                   {openPopover === f.id && f.subs?.length > 0 && (
@@ -228,6 +236,7 @@ export default function BottomBar({
                   <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
                   <span className={styles.label}>{s.label}</span>
                   {activeScale === s.id && <span className={styles.dot} />}
+                  <span className={styles.tooltip}>{s.label}</span>
                 </button>
               ))}
             </div>
@@ -247,6 +256,7 @@ export default function BottomBar({
                   </svg>
                 </span>
                 <span className={styles.label}>Search</span>
+                <span className={styles.tooltip}>Search</span>
               </button>
               <button
                 className={`${styles.btn} ${styles.expandable} ${!audioMuted ? styles.audioOn : ''}`}
@@ -268,6 +278,7 @@ export default function BottomBar({
                   )}
                 </span>
                 <span className={styles.label}>{audioMuted ? 'Unmute' : 'Audio'}</span>
+                <span className={styles.tooltip}>{audioMuted ? 'Unmute Audio' : 'Mute Audio'}</span>
               </button>
               <button
                 className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : ''}`}
@@ -278,6 +289,7 @@ export default function BottomBar({
                 <span className={`${styles.liveLabel} ${liveEnabled ? styles.liveLabelOn : styles.liveLabelOff}`}>
                   {liveEnabled ? 'LIVE' : 'OFF'}
                 </span>
+                <span className={styles.tooltip}>{liveEnabled ? 'Disable Live Tracking' : 'Enable Live Tracking'}</span>
               </button>
             </div>
           </div>

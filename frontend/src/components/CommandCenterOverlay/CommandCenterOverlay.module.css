@@ -1635,6 +1635,7 @@
   /* Grab handle strip — full-width touch zone at top of sheet */
   .grabHandle {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
@@ -1797,7 +1798,7 @@
     flex-shrink: 0;
   }
 
-  /* The visual pill bar */
+  /* The visual pill bar — centered above filter icons */
   .grabBar {
     display: block;
     width: 36px;
@@ -1805,6 +1806,7 @@
     background: rgba(195, 245, 255, 0.22);
     border-radius: 2px;
     flex-shrink: 0;
+    margin-bottom: 6px;
   }
 
   /* peekPreview removed — filter chips serve as the peek layer */
