@@ -41,24 +41,24 @@
 /* Camera HUD — altitude + scale bar, portalled to body */
 .cameraHud {
   position: fixed;
-  left: 24px;
+  right: 24px;
   bottom: 124px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 8px;
   pointer-events: none;
   z-index: 50;
-  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 767px) {
   .cameraHud {
-    left: 14px;
+    right: 14px;
     bottom: 100px;
     gap: 5px;
     transform: scale(0.82);
-    transform-origin: left bottom;
+    transform-origin: right bottom;
   }
   .mapToggle {
     right: 14px;
@@ -88,13 +88,13 @@
   color: rgba(200, 225, 255, 0.9);
   text-shadow: 0 0 12px rgba(50, 130, 255, 0.5);
   min-width: 80px;
-  text-align: left;
+  text-align: right;
 }
 
 .hudScaleWrap {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 3px;
 }
 
@@ -104,7 +104,7 @@
   background: rgba(200, 225, 255, 0.55);
   border-left: 1px solid rgba(200, 225, 255, 0.8);
   border-right: 1px solid rgba(200, 225, 255, 0.8);
-  transform-origin: left center;        /* shrink/grow from the left edge */
+  transform-origin: right center;       /* shrink/grow from the right edge */
   /* transform runs on compositor thread — no layout thrash */
   transition: transform 0.2s ease;
   will-change: transform;

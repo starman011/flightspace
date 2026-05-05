@@ -321,31 +321,32 @@
 /* ── Signal Stream (right panel) ────────────────────────────────────────── */
 
 .streamHidden {
-  transform: translateX(-120%);
+  transform: translateX(100%);
   opacity: 0;
   pointer-events: none;
 }
 
 .stream {
   position: absolute;
-  left: 16px;
-  bottom: 88px;
-  top: auto;
-  width: 340px;
-  max-height: calc(100vh - 160px);
+  right: 0;
+  top: 68px;
+  bottom: 8px;
+  width: 368px;
   background: rgba(12, 16, 22, 0.82);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(59, 73, 76, 0.18);
-  border-radius: 16px;
+  border-right: none;
+  border-radius: 16px 0 0 16px;
   padding: var(--space-5);
+  padding-left: calc(var(--space-5) + 40px);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   pointer-events: auto;
   min-height: 0;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
 }
 
@@ -1397,10 +1398,26 @@
 /* Mobile intro — hidden on desktop */
 .mobileIntro { display: none; }
 
-/* ── Desktop vertical tab — collapse handle on right edge of left panel ── */
+/* ── Desktop vertical tab — the always-visible left-edge collapse handle ── */
 
 .desktopTab {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: rgba(8, 14, 22, 0.95);
+  border-right: 1px solid rgba(59, 73, 76, 0.2);
+  border-radius: 16px 0 0 16px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .desktopTab:hover {
@@ -1545,9 +1562,7 @@
 /* Only apply desktop stream transforms on non-mobile viewports */
 @media (min-width: 768px) {
   .streamDesktopCollapsed {
-    transform: translateY(calc(100% + 20px));
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(calc(100% - 40px));
   }
 
   .streamDesktopWide {
