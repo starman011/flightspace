@@ -601,6 +601,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 isAuthenticated ? (
                   <button
                     className={styles.fitBtn}
+                    data-haptic-heavy
                     title={isSaved ? 'Remove from saved flights' : 'Save flight to your account'}
                     onClick={() => onToggleSave({
                       icao24,

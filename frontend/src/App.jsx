@@ -39,6 +39,7 @@ import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
 import AuthModal from './components/Auth/AuthModal'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
+import { useHaptics } from './hooks/useHaptics'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
@@ -132,6 +133,7 @@ export default function App() {
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
   const audio = useAmbientAudio()
+  useHaptics()
 
   // Initialise from URL on first render
   const init = parseInitialState(window.location.pathname)
