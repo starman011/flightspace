@@ -25,7 +25,7 @@ import FAQPage from './components/StaticPages/FAQPage'
 import DonatePage from './components/StaticPages/DonatePage'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
-import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
+// OrbitalMapBar removed — filters now in BottomBar (desktop) and CommandCenterOverlay (mobile)
 import PlanetPanel from './components/PlanetPanel/PlanetPanel'
 import AirportPanel from './components/AirportPanel/AirportPanel'
 import SkyObjectPanel from './components/SkyObjectPanel/SkyObjectPanel'
@@ -480,15 +480,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onDistanceChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)}
       />
 
-      {!focusedPad && (
-        <OrbitalMapBar
-          onFiltersChange={setFilters}
-          onCameraScale={handleCameraScale}
-          onActiveFilterChange={setActiveFilter}
-          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
-          activeFilter={activeFilter}
-        />
-      )}
+      {/* OrbitalMapBar removed — filters in BottomBar + CommandCenterOverlay */}
 
       <DeepSpacePanel open={!focusedPad && activeFilter === 'asteroids'} onClose={handleClearFilter} />
 
