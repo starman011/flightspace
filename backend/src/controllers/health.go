@@ -95,10 +95,8 @@ func (h *HealthController) GetHealth(w http.ResponseWriter, r *http.Request) {
 		services["opensky"] = "unknown"
 	} else if time.Since(*pt) > 60*time.Second {
 		services["opensky"] = "stale"
-		overallStatus = "degraded"
 	} else if !lastPollSuccess.Load() {
 		services["opensky"] = "error"
-		overallStatus = "degraded"
 	} else {
 		services["opensky"] = "ok"
 	}
