@@ -7,41 +7,50 @@
 
   display: flex;
   align-items: center;
-  padding: 8px 14px;
+  padding: 6px 8px;
 
-  background: rgba(8, 12, 18, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(8, 12, 18, 0.94);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
 
-  border: 1px solid rgba(200, 210, 225, 0.1);
-  border-radius: 20px;
+  border: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 22px;
 
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(200, 210, 225, 0.04) inset;
+    0 8px 40px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.03) inset;
 
-  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Collapsed: compact preview pill ─────────────────────────────────────── */
 
 .collapsed {
-  padding: 6px 10px;
-  border-radius: 24px;
+  padding: 6px 12px;
+  border-radius: 28px;
   cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+.collapsed:hover {
+  border-color: rgba(200, 210, 225, 0.15);
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
 
 .preview {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0;
+  padding: 4px 6px;
   border: none;
   background: transparent;
   color: rgba(200, 210, 225, 0.5);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.2s;
 }
 
 .preview:hover {
@@ -68,27 +77,64 @@
 .content {
   display: flex;
   align-items: center;
-  gap: 4px;
-  animation: expandIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 0;
+  animation: expandIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes expandIn {
-  from { opacity: 0; transform: scaleX(0.7); }
-  to   { opacity: 1; transform: scaleX(1); }
+  from { opacity: 0; transform: scaleX(0.6) scaleY(0.92); filter: blur(4px); }
+  40%  { opacity: 0.6; filter: blur(1px); }
+  to   { opacity: 1; transform: scaleX(1) scaleY(1); filter: blur(0); }
 }
 
-.group {
+/* ── Section: labelled group ─────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0 2px;
+  position: relative;
+}
+
+.sectionLabel {
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(200, 210, 225, 0.2);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.section:hover .sectionLabel {
+  color: rgba(200, 210, 225, 0.35);
+}
+
+.sectionRow {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
+/* ── Separator between sections ──────────────────────────────────────────── */
+
 .sep {
   width: 1px;
-  height: 24px;
+  height: 32px;
   margin: 0 6px;
-  background: rgba(200, 210, 225, 0.08);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(200, 210, 225, 0.12) 30%,
+    rgba(200, 210, 225, 0.12) 70%,
+    transparent 100%
+  );
   flex-shrink: 0;
+  position: relative;
 }
 
 /* ── Icon button ──────────────────────────────────────────────────────────── */
@@ -98,27 +144,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: rgba(200, 210, 225, 0.4);
+  color: rgba(200, 210, 225, 0.35);
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s;
 }
 
 .btn:hover {
-  color: rgba(200, 210, 225, 0.75);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(200, 210, 225, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.94);
+  transition-duration: 0.08s;
 }
 
 .btn.active {
   color: #b2ff1a;
+  background: rgba(178, 255, 26, 0.06);
 }
 .btn.active:hover {
-  background: rgba(178, 255, 26, 0.06);
+  background: rgba(178, 255, 26, 0.12);
+  box-shadow: 0 0 16px rgba(178, 255, 26, 0.08);
 }
 
 /* ── Expandable icon + label ─────────────────────────────────────────────── */
@@ -128,6 +185,14 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn:hover .iconWrap {
+  transform: scale(1.08);
+}
+.btn:active .iconWrap {
+  transform: scale(0.95);
 }
 
 .label {
@@ -135,12 +200,12 @@
   overflow: hidden;
   white-space: nowrap;
   opacity: 0;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s ease 0.05s,
-              margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s ease 0.06s,
+              margin 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   margin-left: 0;
 }
 
@@ -148,38 +213,50 @@
   gap: 0;
   padding: 0 10px;
   border-radius: 20px;
-  transition: color 0.15s, background 0.15s, padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s,
+              padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .expandable:hover {
   background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .expandable:hover .label {
-  max-width: 100px;
+  max-width: 90px;
   opacity: 1;
-  margin-left: 6px;
+  margin-left: 5px;
 }
 
 .expandable.active:hover {
-  background: rgba(178, 255, 26, 0.08);
+  background: rgba(178, 255, 26, 0.1);
+  box-shadow: 0 0 16px rgba(178, 255, 26, 0.08);
 }
 
 .expandable.active:hover .label {
   color: #b2ff1a;
 }
 
-/* Active glow dot under icon */
+/* Active glow indicator under icon */
 .dot {
   position: absolute;
-  bottom: 2px;
+  bottom: 3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: #b2ff1a;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.6);
+  box-shadow: 0 0 8px rgba(178, 255, 26, 0.7);
+  animation: dotAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dotAppear {
+  from { opacity: 0; transform: translateX(-50%) scale(0); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
 /* ── Button wrapper (for popover positioning) ────────────────────────────── */
@@ -192,27 +269,29 @@
 
 .popover {
   position: absolute;
-  bottom: calc(100% + 14px);
+  bottom: calc(100% + 16px);
   left: 50%;
   transform: translateX(-50%);
-  min-width: 140px;
+  min-width: 150px;
   padding: 8px 6px;
 
-  background: rgba(10, 14, 20, 0.94);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(200, 210, 225, 0.12);
+  background: rgba(10, 14, 20, 0.96);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(200, 210, 225, 0.1);
   border-radius: 14px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(200, 210, 225, 0.05) inset;
+    0 12px 40px rgba(0, 0, 0, 0.65),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
 
-  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 70;
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.95); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.9); }
+  50%  { opacity: 0.8; }
   to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
@@ -223,18 +302,18 @@
   transform: translateX(-50%) rotate(45deg);
   width: 10px;
   height: 10px;
-  background: rgba(10, 14, 20, 0.94);
-  border-right: 1px solid rgba(200, 210, 225, 0.12);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.12);
+  background: rgba(10, 14, 20, 0.96);
+  border-right: 1px solid rgba(200, 210, 225, 0.1);
+  border-bottom: 1px solid rgba(200, 210, 225, 0.1);
 }
 
 .popoverTitle {
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 8px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(200, 210, 225, 0.35);
-  padding: 2px 10px 6px;
+  letter-spacing: 0.12em;
+  color: rgba(200, 210, 225, 0.3);
+  padding: 3px 10px 6px;
   margin: 0;
 }
 
@@ -243,15 +322,15 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
-  color: rgba(220, 225, 235, 0.75);
+  color: rgba(220, 225, 235, 0.7);
   font-size: 12px;
-  font-weight: 450;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
   white-space: nowrap;
   text-align: left;
 }
@@ -259,6 +338,7 @@
 .popoverItem:hover {
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
+  transform: translateX(2px);
 }
 
 .popoverItemActive:hover {
@@ -270,8 +350,9 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(200, 210, 225, 0.25);
+  background: rgba(200, 210, 225, 0.2);
   flex-shrink: 0;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .popoverItem:hover .popoverDot {
@@ -280,7 +361,7 @@
 
 .popoverItemActive:hover .popoverDot {
   background: #b2ff1a;
-  box-shadow: 0 0 4px rgba(178, 255, 26, 0.5);
+  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
 }
 
 /* ── Collapse button ─────────────────────────────────────────────────────── */
@@ -289,22 +370,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-left: 4px;
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: rgba(200, 210, 225, 0.25);
+  color: rgba(200, 210, 225, 0.2);
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.2s, background 0.2s, transform 0.2s;
   flex-shrink: 0;
 }
 
 .collapseBtn:hover {
   color: rgba(200, 210, 225, 0.6);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(1px);
 }
 
 /* ── Audio toggle ────────────────────────────────────────────────────────── */
@@ -316,33 +398,102 @@
 /* ── LIVE toggle ──────────────────────────────────────────────────────────── */
 
 .liveBtn {
-  width: 36px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.liveBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .liveDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 60, 60, 0.35);
-  transition: background 0.2s, box-shadow 0.2s;
+  background: rgba(255, 60, 60, 0.3);
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+
+.liveBtn:hover .liveDot {
+  transform: scale(1.2);
 }
 
 .liveDotOn {
   background: #22ef7e;
-  box-shadow: 0 0 8px rgba(34, 239, 126, 0.6);
-  animation: pulse 2.4s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(34, 239, 126, 0.6), 0 0 20px rgba(34, 239, 126, 0.2);
+  animation: livePulse 2s ease-in-out infinite;
 }
 
 .liveDotConnecting {
   background: #ffd700;
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
-  animation: pulse 0.8s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  animation: livePulse 0.6s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* LIVE label that appears on hover */
+.liveLabel {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.liveLabelOff {
+  color: rgba(200, 210, 225, 0.4);
+}
+
+.liveLabelOn {
+  color: rgba(34, 239, 126, 0.7);
+}
+
+.liveBtn:hover .liveLabel {
+  opacity: 1;
+}
+
+/* ── Tooltip — shows on hover for any icon ───────────────────────────────── */
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 4px 10px;
+  background: rgba(6, 10, 16, 0.95);
+  border: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(200, 210, 225, 0.7);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease 0.4s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+  z-index: 80;
+}
+
+.btn:hover .tooltip,
+.expandable:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Don't show tooltip if label is visible */
+.expandable:hover .tooltip {
+  opacity: 0;
 }
 
 /* ── Mobile: hide entirely — filters in CommandCenterOverlay sheet ──────── */

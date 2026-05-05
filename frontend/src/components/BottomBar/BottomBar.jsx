@@ -39,7 +39,7 @@ const FILTERS = [
 const SCALES = [
   { id: 'earth',  label: 'Earth' },
   { id: 'moon',   label: 'Moon' },
-  { id: 'solar',  label: 'Solar System' },
+  { id: 'solar',  label: 'Solar' },
   { id: 'galaxy', label: 'Deep Space' },
 ]
 
@@ -138,9 +138,7 @@ export default function BottomBar({
 
   if (hidden) return null
 
-  // Active icon for collapsed preview
   const activeFilterObj = FILTERS.find(f => f.id === activeFilter)
-  const activeScaleObj = SCALES.find(s => s.id === activeScale)
 
   return (
     <nav
@@ -150,7 +148,7 @@ export default function BottomBar({
       onMouseEnter={expand}
       onMouseLeave={scheduleCollapse}
     >
-      {/* ── Collapsed state: compact preview pill ── */}
+      {/* ── Collapsed: compact preview pill ── */}
       {collapsed && (
         <button className={styles.preview} onClick={expand}>
           <span className={styles.previewIcons}>
@@ -165,112 +163,126 @@ export default function BottomBar({
         </button>
       )}
 
-      {/* ── Expanded state: full icon bar ── */}
+      {/* ── Expanded: full sectioned bar ── */}
       {!collapsed && (
         <div className={styles.content}>
-          <div className={styles.group}>
-            {FILTERS.map(f => (
-              <div
-                key={f.id}
-                className={styles.btnWrap}
-                onMouseEnter={() => handleFilterHover(f)}
-                onMouseLeave={handleFilterLeave}
-              >
-                <button
-                  className={`${styles.btn} ${styles.expandable} ${activeFilter === f.id ? styles.active : ''}`}
-                  onClick={() => handleFilterClick(f)}
-                  aria-label={f.label}
+          {/* TRACK section */}
+          <div className={styles.section}>
+            <span className={styles.sectionLabel}>Track</span>
+            <div className={styles.sectionRow}>
+              {FILTERS.map(f => (
+                <div
+                  key={f.id}
+                  className={styles.btnWrap}
+                  onMouseEnter={() => handleFilterHover(f)}
+                  onMouseLeave={handleFilterLeave}
                 >
-                  <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
-                  <span className={styles.label}>{f.label}</span>
-                  {activeFilter === f.id && <span className={styles.dot} />}
-                </button>
-
-                {openPopover === f.id && f.subs?.length > 0 && (
-                  <div
-                    className={styles.popover}
-                    onMouseEnter={handlePopoverEnter}
-                    onMouseLeave={handleFilterLeave}
+                  <button
+                    className={`${styles.btn} ${styles.expandable} ${activeFilter === f.id ? styles.active : ''}`}
+                    onClick={() => handleFilterClick(f)}
+                    aria-label={f.label}
                   >
-                    <div className={styles.popoverArrow} />
-                    <p className={styles.popoverTitle}>{f.label}</p>
-                    {f.subs.map(sub => (
-                      <button
-                        key={sub.id}
-                        className={`${styles.popoverItem} ${activeFilter === f.id ? styles.popoverItemActive : ''}`}
-                        onClick={() => handleSubClick(f, sub)}
-                      >
-                        <span className={styles.popoverDot} />
-                        {sub.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                    <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
+                    <span className={styles.label}>{f.label}</span>
+                    {activeFilter === f.id && <span className={styles.dot} />}
+                  </button>
+
+                  {openPopover === f.id && f.subs?.length > 0 && (
+                    <div
+                      className={styles.popover}
+                      onMouseEnter={handlePopoverEnter}
+                      onMouseLeave={handleFilterLeave}
+                    >
+                      <div className={styles.popoverArrow} />
+                      <p className={styles.popoverTitle}>{f.label}</p>
+                      {f.subs.map(sub => (
+                        <button
+                          key={sub.id}
+                          className={`${styles.popoverItem} ${activeFilter === f.id ? styles.popoverItemActive : ''}`}
+                          onClick={() => handleSubClick(f, sub)}
+                        >
+                          <span className={styles.popoverDot} />
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           <span className={styles.sep} />
 
-          <div className={styles.group}>
-            {SCALES.map(s => (
-              <button
-                key={s.id}
-                className={`${styles.btn} ${styles.expandable} ${activeScale === s.id ? styles.active : ''}`}
-                onClick={() => handleScale(s)}
-                aria-label={s.label}
-              >
-                <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
-                <span className={styles.label}>{s.label}</span>
-                {activeScale === s.id && <span className={styles.dot} />}
+          {/* SCALE section */}
+          <div className={styles.section}>
+            <span className={styles.sectionLabel}>Scale</span>
+            <div className={styles.sectionRow}>
+              {SCALES.map(s => (
+                <button
+                  key={s.id}
+                  className={`${styles.btn} ${styles.expandable} ${activeScale === s.id ? styles.active : ''}`}
+                  onClick={() => handleScale(s)}
+                  aria-label={s.label}
+                >
+                  <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
+                  <span className={styles.label}>{s.label}</span>
+                  {activeScale === s.id && <span className={styles.dot} />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <span className={styles.sep} />
+
+          {/* ACTIONS section */}
+          <div className={styles.section}>
+            <span className={styles.sectionLabel}>Actions</span>
+            <div className={styles.sectionRow}>
+              <button className={`${styles.btn} ${styles.expandable}`} onClick={onSearchOpen} aria-label="Search">
+                <span className={styles.iconWrap}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                </span>
+                <span className={styles.label}>Search</span>
               </button>
-            ))}
+              <button
+                className={`${styles.btn} ${styles.expandable} ${!audioMuted ? styles.audioOn : ''}`}
+                onClick={onAudioToggle}
+                aria-label={audioMuted ? 'Unmute audio' : 'Mute audio'}
+              >
+                <span className={styles.iconWrap}>
+                  {audioMuted ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <line x1="23" y1="9" x2="17" y2="15" />
+                      <line x1="17" y1="9" x2="23" y2="15" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    </svg>
+                  )}
+                </span>
+                <span className={styles.label}>{audioMuted ? 'Unmute' : 'Audio'}</span>
+              </button>
+              <button
+                className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : ''}`}
+                onClick={onLiveToggle}
+                aria-label="Toggle live"
+              >
+                <span className={`${styles.liveDot} ${liveEnabled ? styles.liveDotOn : ''} ${connectionStatus === 'connecting' ? styles.liveDotConnecting : ''}`} />
+                <span className={`${styles.liveLabel} ${liveEnabled ? styles.liveLabelOn : styles.liveLabelOff}`}>
+                  {liveEnabled ? 'LIVE' : 'OFF'}
+                </span>
+              </button>
+            </div>
           </div>
 
-          <span className={styles.sep} />
-
-          <div className={styles.group}>
-            <button className={`${styles.btn} ${styles.expandable}`} onClick={onSearchOpen} aria-label="Search">
-              <span className={styles.iconWrap}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M21 21l-4.35-4.35" />
-                </svg>
-              </span>
-              <span className={styles.label}>Search</span>
-            </button>
-            <button
-              className={`${styles.btn} ${styles.expandable} ${!audioMuted ? styles.audioOn : ''}`}
-              onClick={onAudioToggle}
-              aria-label={audioMuted ? 'Unmute audio' : 'Mute audio'}
-            >
-              <span className={styles.iconWrap}>
-                {audioMuted ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                    <line x1="23" y1="9" x2="17" y2="15" />
-                    <line x1="17" y1="9" x2="23" y2="15" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  </svg>
-                )}
-              </span>
-              <span className={styles.label}>{audioMuted ? 'Unmute' : 'Audio'}</span>
-            </button>
-            <button
-              className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.liveOn : ''}`}
-              onClick={onLiveToggle}
-              title={liveEnabled ? 'Live tracking ON' : 'Live tracking OFF'}
-              aria-label="Toggle live"
-            >
-              <span className={`${styles.liveDot} ${liveEnabled ? styles.liveDotOn : ''} ${connectionStatus === 'connecting' ? styles.liveDotConnecting : ''}`} />
-            </button>
-          </div>
-
-          {/* Collapse button at the end */}
+          {/* Collapse chevron */}
           <button
             className={styles.collapseBtn}
             onClick={() => { setCollapsed(true); clearTimeout(collapseTimeout.current) }}
