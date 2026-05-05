@@ -1,0 +1,316 @@
+.bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+
+  background: rgba(8, 12, 18, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 20px;
+
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(200, 210, 225, 0.04) inset;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sep {
+  width: 1px;
+  height: 24px;
+  margin: 0 6px;
+  background: rgba(200, 210, 225, 0.08);
+  flex-shrink: 0;
+}
+
+/* ── Icon button ──────────────────────────────────────────────────────────── */
+
+.btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(200, 210, 225, 0.4);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.btn:hover {
+  color: rgba(200, 210, 225, 0.75);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btn.active {
+  color: #b2ff1a;
+}
+.btn.active:hover {
+  background: rgba(178, 255, 26, 0.06);
+}
+
+/* ── Expandable icon + label ─────────────────────────────────────────────── */
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease 0.05s,
+              margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 0;
+}
+
+.expandable {
+  gap: 0;
+  padding: 0 10px;
+  border-radius: 20px;
+  transition: color 0.15s, background 0.15s, padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expandable:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.expandable:hover .label {
+  max-width: 100px;
+  opacity: 1;
+  margin-left: 6px;
+}
+
+.expandable.active:hover {
+  background: rgba(178, 255, 26, 0.08);
+}
+
+.expandable.active:hover .label {
+  color: #b2ff1a;
+}
+
+/* Active glow dot under icon */
+.dot {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #b2ff1a;
+  box-shadow: 0 0 6px rgba(178, 255, 26, 0.6);
+}
+
+/* ── Button wrapper (for popover positioning) ────────────────────────────── */
+
+.btnWrap {
+  position: relative;
+}
+
+/* ── Sub-filter popover ──────────────────────────────────────────────────── */
+
+.popover {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 140px;
+  padding: 8px 6px;
+
+  background: rgba(10, 14, 20, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(200, 210, 225, 0.12);
+  border-radius: 14px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(200, 210, 225, 0.05) inset;
+
+  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 70;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.popoverArrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: rgba(10, 14, 20, 0.94);
+  border-right: 1px solid rgba(200, 210, 225, 0.12);
+  border-bottom: 1px solid rgba(200, 210, 225, 0.12);
+}
+
+.popoverTitle {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(200, 210, 225, 0.35);
+  padding: 2px 10px 6px;
+  margin: 0;
+}
+
+.popoverItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(220, 225, 235, 0.75);
+  font-size: 12px;
+  font-weight: 450;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.popoverItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.popoverItemActive:hover {
+  background: rgba(178, 255, 26, 0.08);
+  color: #b2ff1a;
+}
+
+.popoverDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(200, 210, 225, 0.25);
+  flex-shrink: 0;
+}
+
+.popoverItem:hover .popoverDot {
+  background: rgba(200, 210, 225, 0.6);
+}
+
+.popoverItemActive:hover .popoverDot {
+  background: #b2ff1a;
+  box-shadow: 0 0 4px rgba(178, 255, 26, 0.5);
+}
+
+/* ── Audio toggle ────────────────────────────────────────────────────────── */
+
+.audioOn {
+  color: rgba(200, 210, 225, 0.65);
+}
+
+/* ── LIVE toggle ──────────────────────────────────────────────────────────── */
+
+.liveBtn {
+  width: 36px;
+  height: 40px;
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 60, 60, 0.35);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.liveDotOn {
+  background: #22ef7e;
+  box-shadow: 0 0 8px rgba(34, 239, 126, 0.6);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+.liveDotConnecting {
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .bar {
+    bottom: 16px;
+    padding: 6px 10px;
+    gap: 2px;
+  }
+
+  .btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sep {
+    height: 20px;
+    margin: 0 4px;
+  }
+
+  /* No expand on mobile — touch has no hover */
+  .expandable { padding: 0; }
+  .label { display: none; }
+  .popover { display: none; }
+}
+
+@media (max-width: 400px) {
+  .bar {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    justify-content: space-between;
+  }
+
+  .btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sep {
+    margin: 0 2px;
+  }
+}

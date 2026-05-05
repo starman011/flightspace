@@ -15,11 +15,14 @@ class ErrorBoundary extends Component {
 import { Globe } from './components/Globe/Globe'
 import DetailPanel from './components/DetailPanel/DetailPanel'
 import SearchBar from './components/SearchBar/SearchBar'
-import FilterRail from './components/FilterRail/FilterRail'
 import LaunchPanel from './components/LaunchPanel/LaunchPanel'
 import ProfilePanel from './components/ProfilePanel/ProfilePanel'
-import HUD from './components/HUD/HUD'
-import StatusBar from './components/StatusBar/StatusBar'
+import BottomBar from './components/BottomBar/BottomBar'
+import TopRightPill from './components/TopRightPill/TopRightPill'
+import AboutPage from './components/StaticPages/AboutPage'
+import ContactPage from './components/StaticPages/ContactPage'
+import FAQPage from './components/StaticPages/FAQPage'
+import DonatePage from './components/StaticPages/DonatePage'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 import OrbitalMapBar from './components/OrbitalMapBar/OrbitalMapBar'
@@ -35,7 +38,7 @@ import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
 import AuthModal from './components/Auth/AuthModal'
-import AmbientAudio from './components/AmbientAudio/AmbientAudio'
+import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useSession } from './hooks/useSession'
 import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
@@ -128,6 +131,7 @@ export default function App() {
   const [liveEnabled, setLiveEnabled] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
+  const audio = useAmbientAudio()
 
   // Initialise from URL on first render
   const init = parseInitialState(window.location.pathname)
@@ -137,18 +141,17 @@ export default function App() {
   const [trackingId, setTrackingId]         = useState(null)
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
-  const [cameraInfo]                        = useState({ altM: null, lat: null, lon: null, scaleLabel: '' })
   const [activeScale, setActiveScale]       = useState(init.activeScale)
 
   const { asteroids } = useAsteroids(activeScale === 'solar')
   const [activeFilter, setActiveFilter]     = useState(init.activeFilter)
   const [zoomedIn, setZoomedIn]             = useState(false)
-  const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [selectedAirport, setSelectedAirport] = useState(init.selectedAirport)
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
+  const [activePage, setActivePage]         = useState(null)
   const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
@@ -404,52 +407,33 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         </div>
       )}
 
-      {!focusedPad && (
-        <StatusBar
-          connectionStatus={connectionStatus}
-          activeScale={activeScale}
-          onScaleChange={handleCameraScale}
-          onSearchOpen={() => setSearchOpen(true)}
-          liveEnabled={liveEnabled}
-          onLiveToggle={() => setLiveEnabled(v => !v)}
-          trackedCount={aircraftWithShips.size}
-          isAuthenticated={isAuthenticated}
-          user={user}
-          onSignIn={() => setAuthModalOpen(true)}
-          onSignOut={logout}
-          trackedFlights={pins.trackedFlights}
-          pinnedLaunches={pins.pinnedLaunches}
-          onSelectFlight={(icao24) => { setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
-          onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
-          onUnpinLaunch={(id) => pins.unpinLaunch(id)}
-          onProfileOpen={() => setProfilePanelOpen(true)}
-        />
-      )}
+      {/* ── Bottom navigation bar ── */}
+      <BottomBar
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
+        onFiltersChange={setFilters}
+        activeScale={activeScale}
+        onScaleChange={handleCameraScale}
+        onSearchOpen={() => setSearchOpen(true)}
+        onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        liveEnabled={liveEnabled}
+        onLiveToggle={() => setLiveEnabled(v => !v)}
+        connectionStatus={connectionStatus}
+        audioMuted={audio.muted}
+        onAudioToggle={audio.toggle}
+        hidden={focusedPad}
+      />
 
-      {!focusedPad && (
-        <HUD
-          trackedCount={aircraftWithShips.size}
-          connectionStatus={connectionStatus}
-          zoomedIn={zoomedIn}
-          cameraAltM={cameraInfo.altM}
-          cameraLat={cameraInfo.lat}
-          cameraLon={cameraInfo.lon}
-          scaleLabel={cameraInfo.scaleLabel}
-        />
-      )}
-
-      {!focusedPad && (
-        <FilterRail
-          onFiltersChange={setFilters}
-          onCameraScale={handleCameraScale}
-          onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
-          launchPanelOpen={launchPanelOpen}
-          onActiveFilterChange={setActiveFilter}
-          activeFilter={activeFilter}
-          sidebarOpen={sidebarOpen}
-          onSidebarToggle={() => setSidebarOpen(o => !o)}
-        />
-      )}
+      {/* ── Top-right profile + menu pill ── */}
+      <TopRightPill
+        isAuthenticated={isAuthenticated}
+        user={user}
+        onSignIn={() => setAuthModalOpen(true)}
+        onSignOut={logout}
+        onProfileOpen={() => setProfilePanelOpen(true)}
+        onPageOpen={setActivePage}
+        hidden={focusedPad}
+      />
 
       <Globe
         ref={globeRef}
@@ -636,7 +620,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         </button>
       )}
 
-      <AmbientAudio />
+      {/* ── Static pages ── */}
+      {activePage === 'about' && <AboutPage onClose={() => setActivePage(null)} />}
+      {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
+      {activePage === 'faq' && <FAQPage onClose={() => setActivePage(null)} />}
+      {activePage === 'donate' && <DonatePage onClose={() => setActivePage(null)} />}
+
+      {/* Audio now integrated into BottomBar */}
       <WaitlistPopup />
       <TourGuide />
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}

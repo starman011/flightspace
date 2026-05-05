@@ -1,0 +1,237 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.25s var(--ease-panel);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 80px);
+  overflow-y: auto;
+
+  background: rgba(12, 16, 22, 0.95);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 20px;
+
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  padding: 32px;
+
+  animation: slideUp 0.3s var(--ease-panel);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.01em;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(200, 210, 225, 0.5);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(200, 210, 225, 0.7);
+}
+
+.body h3 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.04em;
+  margin: 24px 0 10px;
+}
+
+.body h3:first-child {
+  margin-top: 0;
+}
+
+.body p {
+  margin: 0 0 14px;
+}
+
+.body a {
+  color: #b2ff1a;
+  text-decoration: none;
+}
+.body a:hover {
+  text-decoration: underline;
+}
+
+.body ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.body li {
+  margin-bottom: 6px;
+}
+
+.accentText {
+  color: #b2ff1a;
+}
+
+/* ── Contact form ─────────────────────────────────────────────────────────── */
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(200, 210, 225, 0.5);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.formInput,
+.formTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.formInput:focus,
+.formTextarea:focus {
+  border-color: rgba(178, 255, 26, 0.3);
+}
+
+.formTextarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.formSubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid rgba(178, 255, 26, 0.3);
+  border-radius: 10px;
+  background: rgba(178, 255, 26, 0.06);
+  color: #b2ff1a;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.formSubmit:hover {
+  background: rgba(178, 255, 26, 0.12);
+  border-color: rgba(178, 255, 26, 0.5);
+}
+
+/* ── Donate ───────────────────────────────────────────────────────────────── */
+
+.donateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border: 1px solid rgba(178, 255, 26, 0.3);
+  border-radius: 12px;
+  background: rgba(178, 255, 26, 0.08);
+  color: #b2ff1a;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+}
+.donateBtn:hover {
+  background: rgba(178, 255, 26, 0.14);
+  border-color: rgba(178, 255, 26, 0.5);
+  box-shadow: 0 0 20px rgba(178, 255, 26, 0.08);
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────────────────── */
+
+.faqItem {
+  margin-bottom: 16px;
+}
+
+.faqQ {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 6px;
+}
+
+.faqA {
+  font-size: 13px;
+  color: rgba(200, 210, 225, 0.6);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+}

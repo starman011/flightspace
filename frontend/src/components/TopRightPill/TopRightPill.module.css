@@ -1,0 +1,204 @@
+.pill {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 70;
+
+  display: flex;
+  align-items: center;
+
+  background: rgba(12, 16, 22, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 14px;
+
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(200, 210, 225, 0.03) inset;
+}
+
+/* ── Profile side ─────────────────────────────────────────────────────────── */
+
+.profileSide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(200, 210, 225, 0.7);
+  transition: color 0.15s;
+}
+.profileSide:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(178, 255, 26, 0.12);
+  border: 1px solid rgba(178, 255, 26, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #b2ff1a;
+  flex-shrink: 0;
+}
+
+.name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Divider ──────────────────────────────────────────────────────────────── */
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(200, 210, 225, 0.08);
+  flex-shrink: 0;
+}
+
+/* ── Menu side ────────────────────────────────────────────────────────────── */
+
+.menuSide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 0 14px 14px 0;
+  transition: background 0.15s;
+}
+.menuSide:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 16px;
+}
+
+.hbar {
+  display: block;
+  width: 100%;
+  height: 1.5px;
+  background: rgba(200, 210, 225, 0.5);
+  border-radius: 1px;
+  transition: transform 0.25s, opacity 0.2s, background 0.15s;
+}
+
+.menuSide:hover .hbar {
+  background: rgba(200, 210, 225, 0.8);
+}
+
+/* Animate to × when open */
+.menuOpen .hbar:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+.menuOpen .hbar:nth-child(2) { opacity: 0; }
+.menuOpen .hbar:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+/* ── Dropdown ─────────────────────────────────────────────────────────────── */
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+
+  background: rgba(12, 16, 22, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 14px;
+  padding: 6px;
+
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(200, 210, 225, 0.03) inset;
+
+  animation: dropIn 0.2s var(--ease-panel);
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.95);
+}
+.menuItem svg {
+  color: rgba(200, 210, 225, 0.4);
+  flex-shrink: 0;
+}
+.menuItem:hover svg {
+  color: rgba(200, 210, 225, 0.7);
+}
+
+.menuDivider {
+  display: block;
+  height: 1px;
+  margin: 4px 12px;
+  background: rgba(200, 210, 225, 0.06);
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .pill {
+    top: 12px;
+    right: 12px;
+  }
+
+  .name {
+    display: none;
+  }
+
+  .profileSide {
+    padding: 8px 10px;
+  }
+
+  .menuSide {
+    width: 38px;
+    height: 38px;
+  }
+}
