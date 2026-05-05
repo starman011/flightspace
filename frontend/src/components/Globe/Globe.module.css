@@ -9,10 +9,10 @@
 /* !important beats OrbitControls inline style="cursor:grab" */
 .globe canvas.hovered { cursor: pointer !important; }
 
-/* Map style toggle — bottom-right, portalled to body */
+/* Map style toggle — bottom-right, above BottomBar pill */
 .mapToggle {
   position: fixed;
-  bottom: 24px;
+  bottom: 88px;
   right: 24px;
   display: flex;
   gap: 3px;
@@ -42,7 +42,7 @@
 .cameraHud {
   position: fixed;
   right: 24px;
-  bottom: 60px;
+  bottom: 124px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -55,14 +55,14 @@
 @media (max-width: 767px) {
   .cameraHud {
     right: 14px;
-    bottom: 90px;
+    bottom: 100px;
     gap: 5px;
     transform: scale(0.82);
     transform-origin: right bottom;
   }
   .mapToggle {
     right: 14px;
-    bottom: 14px;
+    bottom: 80px;
   }
 }
 

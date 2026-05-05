@@ -55,7 +55,7 @@ function PadFocusBadge({ launch, onExit }) {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+      position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
       zIndex: 200, display: 'flex', alignItems: 'center', gap: 16,
       background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(18px)',
       border: '1px solid rgba(178,255,26,0.3)', borderRadius: 12,
@@ -597,7 +597,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <button
           onClick={handleARToggle}
           style={{
-            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            position: 'fixed', bottom: 88, left: '50%', transform: 'translateX(-50%)',
             zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
             background: arActive ? 'rgba(178,255,26,0.18)' : 'rgba(6,12,18,0.85)',
             backdropFilter: 'blur(16px)',

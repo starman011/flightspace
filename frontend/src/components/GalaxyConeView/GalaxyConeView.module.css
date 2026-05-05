@@ -10,9 +10,9 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
 }
 
-/* Mini mode: bottom-right thumbnail */
+/* Mini mode: bottom-right thumbnail, above BottomBar */
 .mini {
-  bottom: 24px;
+  bottom: 88px;
   right: 16px;
   width: 180px;
   height: 180px;
