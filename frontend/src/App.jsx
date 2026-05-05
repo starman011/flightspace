@@ -366,12 +366,9 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           70%  { transform: scale(3.5); opacity: 0; }
           100% { transform: scale(1);   opacity: 0; }
         }
-        /* Profile button now embedded inside StatusBar notch */
       `}</style>
 
       <BetaWelcome />
-
-      {/* ProfileButton now lives inside <StatusBar /> */}
 
       {authModalOpen && (
         <AuthModal
