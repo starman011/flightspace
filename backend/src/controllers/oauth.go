@@ -69,6 +69,7 @@ func (oc *OAuthController) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		Email         string `json:"email"`
 		EmailVerified string `json:"email_verified"`
 		Name          string `json:"name"`
+		Picture       string `json:"picture"`
 		Aud           string `json:"aud"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&claims); err != nil {
@@ -86,7 +87,7 @@ func (oc *OAuthController) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oc.oauthUpsert(w, r, "google", claims.Sub, claims.Email, claims.Name)
+	oc.oauthUpsert(w, r, "google", claims.Sub, claims.Email, claims.Name, claims.Picture)
 }
 
 // ── Apple Sign-In ────────────────────────────────────────────────────────────
@@ -220,12 +221,12 @@ func (oc *OAuthController) AppleLogin(w http.ResponseWriter, r *http.Request) {
 		name = *req.FullName
 	}
 
-	oc.oauthUpsert(w, r, "apple", sub, email, name)
+	oc.oauthUpsert(w, r, "apple", sub, email, name, "")
 }
 
 // ── Shared upsert: find-or-create user by provider ──────────────────────────
 
-func (oc *OAuthController) oauthUpsert(w http.ResponseWriter, r *http.Request, provider, providerID, email, name string) {
+func (oc *OAuthController) oauthUpsert(w http.ResponseWriter, r *http.Request, provider, providerID, email, name, picture string) {
 	ctx := r.Context()
 
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -293,6 +294,7 @@ func (oc *OAuthController) oauthUpsert(w http.ResponseWriter, r *http.Request, p
 		UserID:      userID,
 		Token:       token,
 		DisplayName: displayName,
+		Picture:     picture,
 		ExpiresAt:   expiresAt,
 	})
 }

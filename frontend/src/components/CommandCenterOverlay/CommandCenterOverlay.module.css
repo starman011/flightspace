@@ -1723,27 +1723,34 @@
   .mobileFilterChip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(15, 20, 28, 0.7);
-    border: 1px solid rgba(59, 73, 76, 0.3);
+    gap: 6px;
+    background: rgba(15, 20, 28, 0.6);
+    border: 1px solid rgba(200, 210, 225, 0.1);
     border-radius: 20px;
-    padding: 6px 12px;
+    padding: 7px 14px 7px 10px;
     font-family: var(--font-mono);
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: rgba(195, 245, 255, 0.45);
+    font-size: 0;
+    color: rgba(200, 210, 225, 0.4);
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  }
+  .mobileFilterChipLabel {
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
   .mobileFilterChip:active { background: rgba(178, 255, 26, 0.08); }
   .mobileFilterChipOn {
     color: #b2ff1a;
-    border-color: rgba(178, 255, 26, 0.45);
-    background: rgba(178, 255, 26, 0.1);
-    box-shadow: 0 0 10px rgba(178, 255, 26, 0.12);
+    border-color: rgba(178, 255, 26, 0.35);
+    background: rgba(178, 255, 26, 0.08);
+    box-shadow: 0 0 12px rgba(178, 255, 26, 0.1);
+  }
+  .mobileFilterChipOn svg {
+    filter: drop-shadow(0 0 3px rgba(178, 255, 26, 0.5));
   }
 
   /* Divider between filter and signal stream */

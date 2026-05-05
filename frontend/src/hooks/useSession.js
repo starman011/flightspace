@@ -108,7 +108,7 @@ export function useSession() {
     const data = await res.json()
     setSessionToken(data.token)
     setIsAuthenticated(true)
-    setUser({ display_name: data.display_name ?? null })
+    setUser({ display_name: data.display_name ?? null, picture: data.picture || null })
     return data
   }, [])
 

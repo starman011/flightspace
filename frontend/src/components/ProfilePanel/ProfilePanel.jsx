@@ -31,17 +31,36 @@ export default function ProfilePanel({
 
   return (
     <div className={`${styles.panel} ${open ? styles.open : ''}`}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <h2 className={styles.title}>{user?.display_name || 'Traveller'}</h2>
-          <p className={styles.subtitle}>{user?.email || ''}</p>
-        </div>
+      {/* Banner */}
+      <div className={styles.banner}>
+        {user?.picture ? (
+          <img src={user.picture} alt="" className={styles.bannerImg} referrerPolicy="no-referrer" />
+        ) : (
+          <div className={styles.bannerFallback} />
+        )}
+        <div className={styles.bannerOverlay} />
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
+      </div>
+
+      {/* Profile identity */}
+      <div className={styles.identity}>
+        <div className={styles.avatarLarge}>
+          {user?.picture ? (
+            <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
+          ) : (
+            <span className={styles.avatarInitial}>
+              {(user?.display_name || 'T')[0].toUpperCase()}
+            </span>
+          )}
+        </div>
+        <div>
+          <h2 className={styles.title}>{user?.display_name || 'Traveller'}</h2>
+          <p className={styles.subtitle}>{user?.email || ''}</p>
+        </div>
       </div>
 
       {/* Tabs */}

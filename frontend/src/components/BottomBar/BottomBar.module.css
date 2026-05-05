@@ -22,6 +22,68 @@
     0 1px 0 rgba(200, 210, 225, 0.04) inset;
 }
 
+/* ── Collapsible ─────────────────────────────────────────────────────────── */
+
+.collapsed .content {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 800px;
+  opacity: 1;
+  overflow: visible;
+  transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease 0.05s;
+}
+
+.grabHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.grabHandle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.grabDots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+.grabDots span {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(200, 210, 225, 0.3);
+  transition: background 0.15s;
+}
+
+.grabHandle:hover .grabDots span {
+  background: rgba(200, 210, 225, 0.6);
+}
+
+.collapsed .grabDots span {
+  background: rgba(178, 255, 26, 0.5);
+}
+
 .group {
   display: flex;
   align-items: center;
@@ -268,49 +330,7 @@
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 
-@media (max-width: 640px) {
-  .bar {
-    bottom: 16px;
-    padding: 6px 10px;
-    gap: 2px;
-  }
-
-  .btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-
-  .btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .sep {
-    height: 20px;
-    margin: 0 4px;
-  }
-
-  /* No expand on mobile — touch has no hover */
-  .expandable { padding: 0; }
-  .label { display: none; }
-  .popover { display: none; }
-}
-
-@media (max-width: 400px) {
-  .bar {
-    left: 12px;
-    right: 12px;
-    transform: none;
-    justify-content: space-between;
-  }
-
-  .btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .sep {
-    margin: 0 2px;
-  }
+/* ── Mobile: hide entirely — filters integrated into CommandCenterOverlay sheet */
+@media (max-width: 767px) {
+  .bar { display: none; }
 }

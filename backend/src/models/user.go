@@ -59,6 +59,7 @@ type AuthResponse struct {
 	UserID      string    `json:"user_id"`
 	Token       string    `json:"token"`
 	DisplayName *string   `json:"display_name,omitempty"`
+	Picture     string    `json:"picture,omitempty"`
 	ExpiresAt   time.Time `json:"expires_at"`
 }
 

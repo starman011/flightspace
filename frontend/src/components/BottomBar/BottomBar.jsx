@@ -52,8 +52,10 @@ export default function BottomBar({
   audioMuted, onAudioToggle,
   hidden,
 }) {
+  const [collapsed, setCollapsed] = useState(false)
   const [openPopover, setOpenPopover] = useState(null)
   const popoverTimeout = useRef(null)
+  const collapseTimeout = useRef(null)
   const barRef = useRef(null)
 
   // Close popover on outside click or Escape
@@ -120,10 +122,48 @@ export default function BottomBar({
     setOpenPopover(null)
   }, [onActiveFilterChange, onFiltersChange, onScaleChange])
 
+  const handleBarEnter = useCallback(() => {
+    clearTimeout(collapseTimeout.current)
+    if (collapsed) setCollapsed(false)
+  }, [collapsed])
+
+  const handleBarLeave = useCallback(() => {
+    clearTimeout(collapseTimeout.current)
+    collapseTimeout.current = setTimeout(() => {
+      setCollapsed(true)
+      setOpenPopover(null)
+    }, 2500)
+  }, [])
+
+  // Auto-collapse after 6s of inactivity on mount
+  useEffect(() => {
+    collapseTimeout.current = setTimeout(() => setCollapsed(true), 6000)
+    return () => clearTimeout(collapseTimeout.current)
+  }, [])
+
   if (hidden) return null
 
   return (
-    <nav className={styles.bar} aria-label="Navigation" ref={barRef}>
+    <nav
+      className={`${styles.bar} ${collapsed ? styles.collapsed : ''}`}
+      aria-label="Navigation"
+      ref={barRef}
+      onMouseEnter={handleBarEnter}
+      onMouseLeave={handleBarLeave}
+    >
+      {/* Grab handle — always visible, click toggles */}
+      <button
+        className={styles.grabHandle}
+        onClick={() => { setCollapsed(c => !c); clearTimeout(collapseTimeout.current) }}
+        aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+      >
+        <span className={styles.grabDots}>
+          <span /><span /><span />
+        </span>
+      </button>
+
+      {/* Collapsible content */}
+      <div className={styles.content}>
       {/* Filters */}
       <div className={styles.group}>
         {FILTERS.map(f => (
@@ -228,6 +268,7 @@ export default function BottomBar({
         >
           <span className={`${styles.liveDot} ${liveEnabled ? styles.liveDotOn : ''} ${connectionStatus === 'connecting' ? styles.liveDotConnecting : ''}`} />
         </button>
+      </div>
       </div>
     </nav>
   )
