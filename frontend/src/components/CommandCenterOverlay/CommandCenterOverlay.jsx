@@ -255,7 +255,8 @@ function MobileFilterIcon({ id }) {
 }
 
 function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle }) {
-  function handle(cat) {
+  function handle(e, cat) {
+    e.stopPropagation() // prevent grab handle click from firing
     const deselect = (activeFilter ?? 'all') === cat.id
     onFiltersChange?.({ type: deselect ? 'all' : cat.type, altitude: 'all' })
     onCameraScale?.(deselect ? 'earth' : cat.scale)
@@ -263,15 +264,15 @@ function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiv
     if (cat.id === 'rockets') onLaunchPanelToggle?.()
   }
   return (
-    <div className={styles.mobileFilterRow}>
+    <div className={styles.filterIconStrip}>
       {MOBILE_FILTERS.map(cat => (
         <button
           key={cat.id}
-          className={`${styles.mobileFilterChip} ${(activeFilter ?? 'all') === cat.id ? styles.mobileFilterChipOn : ''}`}
-          onClick={() => handle(cat)}
+          className={`${styles.filterIconBtn} ${(activeFilter ?? 'all') === cat.id ? styles.filterIconBtnOn : ''}`}
+          onClick={(e) => handle(e, cat)}
+          aria-label={cat.label}
         >
           <MobileFilterIcon id={cat.id} />
-          <span className={styles.mobileFilterChipLabel}>{cat.label}</span>
         </button>
       ))}
     </div>
@@ -1359,32 +1360,30 @@ export default function CommandCenterOverlay({
           </div>
         </div>
 
-        {/* Grab handle — swipe zone */}
+        {/* Grab handle + integrated filter icons */}
         <div
           ref={grabRef}
           className={styles.grabHandle}
           onClick={() => sheetState === 'peek' && setSheetState('half')}
         >
           <span className={styles.grabBar} />
-        </div>
 
-        {/* Filter chips — galaxy distance slider on desktop, full filter row on mobile only */}
-        <div className={`${styles.mobileFilterSection}${activeScale === 'galaxy' ? ' ' + styles.desktopFilterVisible : ''}`} data-tour="filter-bar">
-          <p className={styles.mobileFilterLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>{activeScale === 'galaxy' ? 'straighten' : 'tune'}</span>
-            {activeScale === 'galaxy' ? 'Distance Filter' : 'Globe Filter'}
-          </p>
-          {activeScale === 'galaxy' ? (
-            <GalaxyDistanceSlider onChange={onDistanceChange} />
-          ) : (
-            <MobileFilterRow
-              activeFilter={activeFilter}
-              onFiltersChange={onFiltersChange}
-              onCameraScale={onCameraScale}
-              onActiveFilterChange={onActiveFilterChange}
-              onLaunchPanelToggle={onLaunchPanelToggle}
-            />
-          )}
+          {/* Filter icons — integrated into grab zone, always visible in peek */}
+          <div className={styles.filterIconRow}>
+            {activeScale === 'galaxy' ? (
+              <div className={styles.galaxySliderWrap}>
+                <GalaxyDistanceSlider onChange={onDistanceChange} />
+              </div>
+            ) : (
+              <MobileFilterRow
+                activeFilter={activeFilter}
+                onFiltersChange={onFiltersChange}
+                onCameraScale={onCameraScale}
+                onActiveFilterChange={onActiveFilterChange}
+                onLaunchPanelToggle={onLaunchPanelToggle}
+              />
+            )}
+          </div>
         </div>
 
         {/* Divider — signals content below is a separate stream */}

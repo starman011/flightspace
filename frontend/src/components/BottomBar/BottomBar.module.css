@@ -7,7 +7,6 @@
 
   display: flex;
   align-items: center;
-  gap: 4px;
   padding: 8px 14px;
 
   background: rgba(8, 12, 18, 0.92);
@@ -20,68 +19,62 @@
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.5),
     0 1px 0 rgba(200, 210, 225, 0.04) inset;
+
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Collapsible ─────────────────────────────────────────────────────────── */
+/* ── Collapsed: compact preview pill ─────────────────────────────────────── */
 
-.collapsed .content {
-  max-width: 0;
-  opacity: 0;
-  overflow: hidden;
+.collapsed {
+  padding: 6px 10px;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(200, 210, 225, 0.5);
+  cursor: pointer;
+  transition: color 0.15s;
 }
+
+.preview:hover {
+  color: rgba(200, 210, 225, 0.85);
+}
+
+.previewIcons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.previewDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #b2ff1a;
+  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  margin-left: 2px;
+}
+
+/* ── Expanded content ────────────────────────────────────────────────────── */
 
 .content {
   display: flex;
   align-items: center;
   gap: 4px;
-  max-width: 800px;
-  opacity: 1;
-  overflow: visible;
-  transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.25s ease 0.05s;
+  animation: expandIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.grabHandle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.grabHandle:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.grabDots {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  align-items: center;
-}
-
-.grabDots span {
-  width: 14px;
-  height: 2px;
-  border-radius: 1px;
-  background: rgba(200, 210, 225, 0.3);
-  transition: background 0.15s;
-}
-
-.grabHandle:hover .grabDots span {
-  background: rgba(200, 210, 225, 0.6);
-}
-
-.collapsed .grabDots span {
-  background: rgba(178, 255, 26, 0.5);
+@keyframes expandIn {
+  from { opacity: 0; transform: scaleX(0.7); }
+  to   { opacity: 1; transform: scaleX(1); }
 }
 
 .group {
@@ -290,6 +283,30 @@
   box-shadow: 0 0 4px rgba(178, 255, 26, 0.5);
 }
 
+/* ── Collapse button ─────────────────────────────────────────────────────── */
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(200, 210, 225, 0.25);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.collapseBtn:hover {
+  color: rgba(200, 210, 225, 0.6);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 /* ── Audio toggle ────────────────────────────────────────────────────────── */
 
 .audioOn {
@@ -328,9 +345,7 @@
   50%      { opacity: 0.4; }
 }
 
-/* ── Mobile ───────────────────────────────────────────────────────────────── */
-
-/* ── Mobile: hide entirely — filters integrated into CommandCenterOverlay sheet */
+/* ── Mobile: hide entirely — filters in CommandCenterOverlay sheet ──────── */
 @media (max-width: 767px) {
   .bar { display: none; }
 }

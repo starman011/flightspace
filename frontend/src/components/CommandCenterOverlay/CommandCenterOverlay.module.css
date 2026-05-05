@@ -1572,23 +1572,7 @@
 
 /* ── Desktop filter section visible in wide mode ─────────────────────────── */
 
-.desktopFilterVisible {
-  display: flex !important;
-  flex-direction: column;
-  gap: 0;
-  flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 12px;
-  margin: 0 0 var(--space-2);
-}
-
-.desktopFilterVisible .mobileFilterLabel {
-  display: flex !important;
-}
-
-.desktopFilterVisible .mobileFilterRow {
-  display: flex !important;
-}
+/* desktopFilterVisible removed — filters now in BottomBar on desktop */
 
 .desktopDividerVisible {
   display: flex !important;
@@ -1683,74 +1667,59 @@
   }
   .sheetStateBtn:active { background: rgba(178, 255, 26, 0.12); color: #b2ff1a; }
 
-  /* Filter section — visually grouped as a distinct "Globe Filter" zone */
-  .mobileFilterSection {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.18);
-    border-radius: 12px;
-    margin: 0 var(--space-2) 0;
-    padding: 8px 0 6px;
-  }
+  /* Old mobileFilterSection/Row/Label removed — replaced by filterIconRow in grab zone */
 
-  .mobileFilterLabel {
+  /* ── Integrated filter icon strip (inside grab zone) ─────────────────── */
+
+  .filterIconRow {
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 4px 0 2px;
+  }
+
+  .filterIconStrip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
-    font-family: var(--font-mono);
-    font-size: 7.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: rgba(195, 245, 255, 0.28);
-    padding: 0 14px 5px;
-    flex-shrink: 0;
   }
 
-  /* Mobile filter row — chip strip */
-  .mobileFilterRow {
+  .filterIconBtn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding: 0 10px;
-    flex-shrink: 0;
-  }
-  .mobileFilterRow::-webkit-scrollbar { display: none; }
-
-  .mobileFilterChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(15, 20, 28, 0.6);
-    border: 1px solid rgba(200, 210, 225, 0.1);
-    border-radius: 20px;
-    padding: 7px 14px 7px 10px;
-    font-family: var(--font-mono);
-    font-size: 0;
-    color: rgba(200, 210, 225, 0.4);
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(200, 210, 225, 0.35);
     cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
-  .mobileFilterChipLabel {
-    font-size: 9.5px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .mobileFilterChip:active { background: rgba(178, 255, 26, 0.08); }
-  .mobileFilterChipOn {
-    color: #b2ff1a;
-    border-color: rgba(178, 255, 26, 0.35);
+
+  .filterIconBtn:active {
     background: rgba(178, 255, 26, 0.08);
-    box-shadow: 0 0 12px rgba(178, 255, 26, 0.1);
+    transform: scale(0.92);
   }
-  .mobileFilterChipOn svg {
-    filter: drop-shadow(0 0 3px rgba(178, 255, 26, 0.5));
+
+  .filterIconBtnOn {
+    color: #b2ff1a;
+    background: rgba(178, 255, 26, 0.1);
+    border-color: rgba(178, 255, 26, 0.25);
+    box-shadow: 0 0 10px rgba(178, 255, 26, 0.12);
+  }
+
+  .filterIconBtnOn svg {
+    filter: drop-shadow(0 0 2px rgba(178, 255, 26, 0.4));
+  }
+
+  .galaxySliderWrap {
+    width: 100%;
+    padding: 0 12px;
   }
 
   /* Divider between filter and signal stream */
