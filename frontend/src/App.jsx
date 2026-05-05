@@ -478,6 +478,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         hidden={!showCommandCenter}
         activeScale={activeScale}
         onDistanceChange={(minZ, maxZ) => globeRef.current?.setDistanceRange?.(minZ, maxZ)}
+        liveEnabled={liveEnabled}
+        onLiveToggle={() => setLiveEnabled(v => !v)}
+        onSearchOpen={() => setSearchOpen(true)}
+        audioMuted={audio.muted}
+        onAudioToggle={audio.toggle}
       />
 
       {/* OrbitalMapBar removed — filters in BottomBar + CommandCenterOverlay */}

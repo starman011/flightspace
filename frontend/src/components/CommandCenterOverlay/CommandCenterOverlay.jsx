@@ -254,15 +254,18 @@ function MobileFilterIcon({ id }) {
   }
 }
 
-function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle }) {
+function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle,
+  liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle, connectionStatus,
+}) {
   function handle(e, cat) {
-    e.stopPropagation() // prevent grab handle click from firing
+    e.stopPropagation()
     const deselect = (activeFilter ?? 'all') === cat.id
     onFiltersChange?.({ type: deselect ? 'all' : cat.type, altitude: 'all' })
     onCameraScale?.(deselect ? 'earth' : cat.scale)
     onActiveFilterChange?.(deselect ? null : cat.id)
     if (cat.id === 'rockets') onLaunchPanelToggle?.()
   }
+  const isConnecting = connectionStatus === 'connecting'
   return (
     <div className={styles.filterIconStrip}>
       {MOBILE_FILTERS.map(cat => (
@@ -275,6 +278,44 @@ function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiv
           <MobileFilterIcon id={cat.id} />
         </button>
       ))}
+
+      <span className={styles.filterIconSep} />
+
+      {/* LIVE toggle */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${liveEnabled ? styles.filterIconBtnLive : ''}`}
+        onClick={(e) => { e.stopPropagation(); onLiveToggle?.() }}
+        aria-label={liveEnabled ? 'Disable live' : 'Enable live'}
+        data-haptic-heavy
+      >
+        <span className={`${styles.liveDotMobile} ${liveEnabled ? styles.liveDotMobileOn : ''} ${isConnecting ? styles.liveDotMobileConnecting : ''}`} />
+      </button>
+
+      {/* Search */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn}`}
+        onClick={(e) => { e.stopPropagation(); onSearchOpen?.() }}
+        aria-label="Search"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+        </svg>
+      </button>
+
+      {/* Audio */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${!audioMuted ? styles.filterIconBtnOn : ''}`}
+        onClick={(e) => { e.stopPropagation(); onAudioToggle?.() }}
+        aria-label={audioMuted ? 'Unmute' : 'Mute'}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          {audioMuted ? (
+            <><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>
+          ) : (
+            <><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></>
+          )}
+        </svg>
+      </button>
     </div>
   )
 }
@@ -1139,6 +1180,7 @@ export default function CommandCenterOverlay({
   trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
   activeScale, onDistanceChange,
+  liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle,
 }) {
   const isLive  = connectionStatus === 'connected'
   const { news, loadMore: loadMoreNews, hasMore: hasMoreNews, fetching: fetchingNews } = useSpaceNews()
@@ -1381,6 +1423,12 @@ export default function CommandCenterOverlay({
                 onCameraScale={onCameraScale}
                 onActiveFilterChange={onActiveFilterChange}
                 onLaunchPanelToggle={onLaunchPanelToggle}
+                liveEnabled={liveEnabled}
+                onLiveToggle={onLiveToggle}
+                onSearchOpen={onSearchOpen}
+                audioMuted={audioMuted}
+                onAudioToggle={onAudioToggle}
+                connectionStatus={connectionStatus}
               />
             )}
           </div>

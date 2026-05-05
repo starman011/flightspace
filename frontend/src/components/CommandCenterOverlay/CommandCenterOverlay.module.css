@@ -1702,6 +1702,53 @@
     filter: drop-shadow(0 0 2px rgba(178, 255, 26, 0.4));
   }
 
+  /* Separator between filters and action icons */
+  .filterIconSep {
+    width: 1px;
+    height: 20px;
+    background: rgba(200, 210, 225, 0.12);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+
+  /* Action buttons (live, search, audio) — slightly smaller */
+  .filterActionBtn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* LIVE dot */
+  .liveDotMobile {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 60, 60, 0.35);
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .liveDotMobileOn {
+    background: #22ef7e;
+    box-shadow: 0 0 8px rgba(34, 239, 126, 0.6);
+    animation: mobilePulse 2.4s ease-in-out infinite;
+  }
+
+  .liveDotMobileConnecting {
+    background: #ffd700;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+    animation: mobilePulse 0.8s ease-in-out infinite;
+  }
+
+  @keyframes mobilePulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* LIVE active state — green border glow */
+  .filterIconBtnLive {
+    border-color: rgba(34, 239, 126, 0.3);
+    box-shadow: 0 0 10px rgba(34, 239, 126, 0.15);
+  }
+
   .galaxySliderWrap {
     width: 100%;
     padding: 0 12px;
