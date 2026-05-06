@@ -45,7 +45,14 @@ export function useAircraft(sessionToken, enabled = true) {
     if (data?.planets) setSolarData(data)
   }, [])
 
-  const { connectionStatus, setBounds } = useWebSocket(sessionToken, handleSnapshot, handleDelta, handleSolarSystem, enabled)
+  const [viewerCounts, setViewerCounts] = useState({})
+  const handleViewerCount = useCallback((data) => {
+    if (data?.object_id) {
+      setViewerCounts(prev => ({ ...prev, [data.object_id]: data.count }))
+    }
+  }, [])
+
+  const { connectionStatus, setBounds, watchObject } = useWebSocket(sessionToken, handleSnapshot, handleDelta, handleSolarSystem, handleViewerCount, enabled)
 
   // Remove stale aircraft (no update > 120s) on a 10s tick
   const pruneStalePeriodically = useCallback(() => {
@@ -104,5 +111,5 @@ export function useAircraft(sessionToken, enabled = true) {
     return result
   }, [aircraft, filters])
 
-  return { filteredAircraft, filters, setFilters, connectionStatus, setBounds, solarData }
+  return { filteredAircraft, filters, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject }
 }

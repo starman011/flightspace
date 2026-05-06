@@ -113,6 +113,60 @@ function parseInitialState(pathname) {
   return base
 }
 
+/* ── Per-route SEO metadata ───────────────────────────────────────────────── */
+const ROUTE_META = {
+  '/':             { title: 'ObjectTracer — Live Flight Tracker, ISS, Satellites & Deep Space on 3D Globe',
+                     description: 'Track live flights, ships, ISS, satellites, rocket launches, asteroids, and DESI galaxies on a real-time interactive 3D globe.' },
+  '/launches':     { title: 'Rocket Launch Tracker — Live Countdown & Mission Manifest | ObjectTracer',
+                     description: 'Track upcoming rocket launches with live countdowns, mission details, and launch pad locations on a 3D globe.' },
+  '/solar-system': { title: 'Solar System Explorer — Live Planet Positions | ObjectTracer',
+                     description: 'Explore real-time positions of planets in our solar system with an interactive 3D visualization.' },
+  '/deep-space':   { title: 'Deep Space — DESI Galaxy Catalog & Cosmic Web | ObjectTracer',
+                     description: 'Explore the DESI deep-space galaxy catalog and cosmic web structure in an interactive 3D visualization.' },
+  '/moon':         { title: 'Moon Tracker — Lunar Surface & Orbit View | ObjectTracer',
+                     description: 'Explore the Moon with real-time orbital data and surface visualization on an interactive 3D globe.' },
+  '/asteroids':    { title: 'Near-Earth Asteroid Tracker — NASA NeoWs Data | ObjectTracer',
+                     description: 'Track near-Earth asteroids in real-time using NASA NeoWs data on an interactive 3D globe.' },
+  '/profile':      { title: 'Your Profile — Tracked Flights & Launches | ObjectTracer',
+                     description: 'View your tracked flights, pinned launches, and personalized settings on ObjectTracer.' },
+  '/flight':       { title: 'Live Flight Tracking | ObjectTracer',
+                     description: 'Track this flight live on a 3D globe with real-time position, altitude, speed, and route information.' },
+  '/airport':      { title: 'Airport — Live Departures & Arrivals | ObjectTracer',
+                     description: 'View live departures and arrivals at this airport with real-time flight tracking on a 3D globe.' },
+}
+
+function updateRouteMeta(path) {
+  const base = 'https://www.objecttracer.com'
+  // Derive clean route key — /flight/xxx → /flight, /airport/xxx → /airport
+  const routeKey = path.startsWith('/flight/') ? '/flight'
+    : path.startsWith('/airport/') ? '/airport'
+    : path
+  const meta = ROUTE_META[routeKey] || ROUTE_META['/']
+  const fullUrl = `${base}${path}`
+
+  document.title = meta.title
+  // Canonical
+  const canon = document.querySelector('link[rel="canonical"]')
+  if (canon) canon.href = fullUrl
+  // Meta description
+  const desc = document.querySelector('meta[name="description"]')
+  if (desc) desc.content = meta.description
+  // OG tags
+  const ogUrl   = document.querySelector('meta[property="og:url"]')
+  const ogTitle = document.querySelector('meta[property="og:title"]')
+  const ogDesc  = document.querySelector('meta[property="og:description"]')
+  if (ogUrl)   ogUrl.content = fullUrl
+  if (ogTitle) ogTitle.content = meta.title
+  if (ogDesc)  ogDesc.content = meta.description
+  // Twitter tags
+  const twUrl   = document.querySelector('meta[name="twitter:url"]')
+  const twTitle = document.querySelector('meta[name="twitter:title"]')
+  const twDesc  = document.querySelector('meta[name="twitter:description"]')
+  if (twUrl)   twUrl.content = fullUrl
+  if (twTitle) twTitle.content = meta.title
+  if (twDesc)  twDesc.content = meta.description
+}
+
 function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport) {
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
@@ -130,7 +184,7 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
-  const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData } = useAircraft(sessionToken, liveEnabled)
+  const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
   const audio = useAmbientAudio()
   useHaptics()
@@ -184,9 +238,10 @@ export default function App() {
     collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
   }, [])
 
-  // Sync state → URL (replaceState only — no React Router re-renders)
+  // Sync state → URL + SEO meta tags (replaceState only — no React Router re-renders)
   useEffect(() => {
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport)
+    updateRouteMeta(path)
     if (window.location.pathname === path) return
     window.history.replaceState(null, '', path)
   }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport])
@@ -503,6 +558,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         pinnedLaunchId={pinnedLaunch?.id ?? null}
         onPinLaunch={handlePinLaunch}
         openToMission={returnMission}
+        viewerCounts={viewerCounts}
+        watchObject={watchObject}
       />
 
       <ProfilePanel
@@ -539,6 +596,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             if (pins.isFlightTracked(f.icao24)) pins.untrackFlight(f.icao24)
             else pins.trackFlight(f)
           }}
+          viewerCount={viewerCounts[selectedIcao24] || 0}
+          watchObject={watchObject}
         />
       )}
 

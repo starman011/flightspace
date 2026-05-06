@@ -48,6 +48,12 @@ func NewWSMessage(msgType string, data interface{}) WSMessage {
 	}
 }
 
+// WSViewerCount is the server → client payload for "viewer_count".
+type WSViewerCount struct {
+	ObjectID string `json:"object_id"`
+	Count    int    `json:"count"`
+}
+
 // WebSocket message type constants
 const (
 	WSTypeSnapshot    = "snapshot"
@@ -57,6 +63,8 @@ const (
 	WSTypeSetBounds   = "set_bounds"
 	WSTypePing        = "ping"
 	WSTypeSolarSystem = "solar_system"
+	WSTypeWatchObject = "watch_object"
+	WSTypeViewerCount = "viewer_count"
 )
 
 // PlanetPosition holds the heliocentric position of a solar system body.

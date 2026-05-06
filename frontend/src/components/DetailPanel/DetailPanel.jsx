@@ -182,7 +182,7 @@ const ISS_SPECS = [
   { label: 'In orbit since', value: 'Nov 1998' },
 ]
 
-export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn }) {
+export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject }) {
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -204,6 +204,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
   // Reset sheet to peek when a new flight is selected
   useEffect(() => { setSheet('peek') }, [icao24])
+
+  // Social presence: tell server we're watching this object
+  useEffect(() => {
+    if (icao24 && watchObject) {
+      watchObject(icao24)
+      return () => watchObject('')
+    }
+  }, [icao24, watchObject])
 
   /* ── Swipe gesture for mobile sheet ──────────────────────────────────────── */
   const touchStartY = useRef(null)
@@ -451,6 +459,12 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               {typeDesc && <span>{typeDesc}</span>}
               {detail?.registration && <span>{detail.registration}</span>}
             </div>
+            {viewerCount > 1 && (
+              <div className={styles.viewerCount}>
+                <span className={styles.viewerDot} />
+                {viewerCount} watching
+              </div>
+            )}
           </div>
 
           {loading && <p className={styles.state}>loading…</p>}

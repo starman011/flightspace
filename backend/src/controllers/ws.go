@@ -183,6 +183,32 @@ func (c *Client) readPump() {
 			c.mu.Unlock()
 			// Send a fresh snapshot with new bounds
 			go c.hub.sendSnapshot(c)
+
+		case models.WSTypeWatchObject:
+			// Client is viewing a specific object — track for viewer count
+			objectID := ""
+			if s, ok := msg.Data.(string); ok {
+				objectID = s
+			} else if m, ok := msg.Data.(map[string]interface{}); ok {
+				if id, ok := m["object_id"].(string); ok {
+					objectID = id
+				}
+			}
+			c.hub.WatchObject(c, objectID)
+			// Send current count immediately
+			count := c.hub.GetViewerCount(objectID)
+			if objectID != "" && count > 0 {
+				resp := models.NewWSMessage(models.WSTypeViewerCount, models.WSViewerCount{
+					ObjectID: objectID,
+					Count:    count,
+				})
+				if data, err := json.Marshal(resp); err == nil {
+					select {
+					case c.send <- data:
+					default:
+					}
+				}
+			}
 		}
 	}
 }

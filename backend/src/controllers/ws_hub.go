@@ -24,6 +24,7 @@ type Client struct {
 	conn         *websocket.Conn
 	send         chan []byte
 	bounds       *models.WSSetBounds // current viewport filter
+	watching     string              // object ID currently being viewed (empty = none)
 	mu           sync.RWMutex
 	msgCount     int64 // messages received in current window
 	msgWindowEnd int64 // unix nanoseconds when window resets
@@ -39,6 +40,8 @@ type Hub struct {
 	rdb        *redis.Client
 	lastState  map[string]models.LiveAircraft // last broadcast state for delta computation
 	stateMu    sync.RWMutex
+	viewers    map[string]int // object ID → viewer count
+	viewersMu  sync.RWMutex
 }
 
 // NewHub creates a Hub with the given Redis client.
@@ -49,6 +52,7 @@ func NewHub(rdb *redis.Client) *Hub {
 		unregister: make(chan *Client, 16),
 		rdb:        rdb,
 		lastState:  make(map[string]models.LiveAircraft),
+		viewers:    make(map[string]int),
 	}
 }
 
@@ -71,6 +75,14 @@ func (h *Hub) Run(ctx context.Context) {
 			go h.sendSnapshot(client)
 
 		case client := <-h.unregister:
+			// Clean up viewer tracking
+			client.mu.RLock()
+			watchID := client.watching
+			client.mu.RUnlock()
+			if watchID != "" {
+				h.updateViewerCount(watchID, -1, nil)
+			}
+
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -254,6 +266,66 @@ func filterByBounds(aircraft []models.LiveAircraft, b *models.WSSetBounds) []mod
 		}
 	}
 	return filtered
+}
+
+// WatchObject updates a client's watched object and adjusts viewer counts.
+func (h *Hub) WatchObject(c *Client, objectID string) {
+	c.mu.Lock()
+	prev := c.watching
+	c.watching = objectID
+	c.mu.Unlock()
+
+	if prev == objectID {
+		return
+	}
+	if prev != "" {
+		h.updateViewerCount(prev, -1, c)
+	}
+	if objectID != "" {
+		h.updateViewerCount(objectID, 1, c)
+	}
+}
+
+// updateViewerCount adjusts the viewer count for an object and broadcasts to all watchers.
+func (h *Hub) updateViewerCount(objectID string, delta int, exclude *Client) {
+	h.viewersMu.Lock()
+	h.viewers[objectID] += delta
+	count := h.viewers[objectID]
+	if count <= 0 {
+		delete(h.viewers, objectID)
+		count = 0
+	}
+	h.viewersMu.Unlock()
+
+	msg := models.NewWSMessage(models.WSTypeViewerCount, models.WSViewerCount{
+		ObjectID: objectID,
+		Count:    count,
+	})
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for c := range h.clients {
+		c.mu.RLock()
+		watching := c.watching
+		c.mu.RUnlock()
+		if watching == objectID {
+			select {
+			case c.send <- data:
+			default:
+			}
+		}
+	}
+}
+
+// GetViewerCount returns the current viewer count for an object.
+func (h *Hub) GetViewerCount(objectID string) int {
+	h.viewersMu.RLock()
+	defer h.viewersMu.RUnlock()
+	return h.viewers[objectID]
 }
 
 func min64(a, b float64) float64 {

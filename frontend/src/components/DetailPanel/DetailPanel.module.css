@@ -159,6 +159,30 @@
   letter-spacing: 0.02em;
 }
 
+/* ── Viewer count badge ──────────────────────────────────────────────── */
+
+.viewerCount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(200, 210, 225, 0.6);
+  letter-spacing: 0.03em;
+}
+.viewerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b2ff1a;
+  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  animation: viewerPulse 2s ease-in-out infinite;
+}
+@keyframes viewerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ── State messages ──────────────────────────────────────────────────── */
 
 .state {

@@ -143,8 +143,17 @@ function MissionRow({ launch, onClick, isPinned, onPin }) {
   )
 }
 
-function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin }) {
+function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin, viewerCount = 0, watchObject }) {
   const parts = useCountdownParts(launch.net)
+
+  // Social presence: tell server we're watching this launch
+  useEffect(() => {
+    const id = `launch:${launch.id}`
+    if (watchObject) {
+      watchObject(id)
+      return () => watchObject('')
+    }
+  }, [launch.id, watchObject])
   const statusClass = launch.status_abbr === 'Go' ? styles.statusGo
     : launch.status_abbr === 'TBD' ? styles.statusTbd
     : styles.statusHold
@@ -163,6 +172,12 @@ function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin }
         <span className={`${styles.statusChip} ${statusClass}`}>{launch.status || launch.status_abbr}</span>
         <h2 className={styles.detailTitle}>{launch.mission_name || launch.name}</h2>
         <p className={styles.detailSub}>{launch.provider}{launch.rocket ? ` · ${launch.rocket}` : ''}</p>
+        {viewerCount > 1 && (
+          <div className={styles.viewerCount}>
+            <span className={styles.viewerDot} />
+            {viewerCount} watching
+          </div>
+        )}
       </div>
 
       {/* Countdown */}
@@ -313,7 +328,7 @@ function PeopleSection({ people }) {
  * LaunchPanel — Mission Launchpad (Final) design.
  * Hero countdown at top for next launch + mission manifest list.
  */
-export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId, onPinLaunch, openToMission }) {
+export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId, onPinLaunch, openToMission, viewerCounts = {}, watchObject }) {
   const [data, setData]                   = useState(null)
   const [loading, setLoading]             = useState(false)
   const [selectedMission, setSelected]    = useState(null)
@@ -371,6 +386,8 @@ export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId
           onClose={onClose}
           isPinned={pinnedLaunchId === selectedMission.id}
           onPin={onPinLaunch}
+          viewerCount={viewerCounts[`launch:${selectedMission.id}`] || 0}
+          watchObject={watchObject}
         />
       ) : (
         <>

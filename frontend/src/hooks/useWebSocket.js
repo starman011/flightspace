@@ -5,7 +5,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || (_api.replace(/^http/, 'ws') + '/w
 const PING_INTERVAL = 30_000
 const MAX_BACKOFF   = 30_000
 
-export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem, enabled = true) {
+export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem, onViewerCount, enabled = true) {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
   const wsRef             = useRef(null)
   const backoffRef        = useRef(1000)
@@ -54,9 +54,10 @@ export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem, e
       if (!mountedRef.current) return
       try {
         const msg = JSON.parse(event.data)
-        if      (msg.type === 'snapshot'     && onSnapshot)    onSnapshot(msg.data?.aircraft ?? [])
-        else if (msg.type === 'delta'        && onDelta)       onDelta({ updated: msg.data?.updated ?? [], removed: msg.data?.removed ?? [] })
-        else if (msg.type === 'solar_system' && onSolarSystem) onSolarSystem(msg.data)
+        if      (msg.type === 'snapshot'      && onSnapshot)     onSnapshot(msg.data?.aircraft ?? [])
+        else if (msg.type === 'delta'         && onDelta)        onDelta({ updated: msg.data?.updated ?? [], removed: msg.data?.removed ?? [] })
+        else if (msg.type === 'solar_system'  && onSolarSystem)  onSolarSystem(msg.data)
+        else if (msg.type === 'viewer_count'  && onViewerCount)  onViewerCount(msg.data)
       } catch { /* ignore parse errors */ }
     }
 
@@ -71,7 +72,7 @@ export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem, e
       backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF)
       reconnectTimerRef.current = setTimeout(connect, delay)
     }
-  }, [sessionToken, onSnapshot, onDelta, onSolarSystem, closeSocket])
+  }, [sessionToken, onSnapshot, onDelta, onSolarSystem, onViewerCount, closeSocket])
 
   // ── Mount / sessionToken effect ─────────────────────────────────────────
   // Uses setTimeout(0) so React StrictMode's synchronous double-invocation
@@ -120,5 +121,11 @@ export function useWebSocket(sessionToken, onSnapshot, onDelta, onSolarSystem, e
     }
   }, [])
 
-  return { connectionStatus, setBounds }
+  const watchObject = useCallback((objectId) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'watch_object', data: objectId || '' }))
+    }
+  }, [])
+
+  return { connectionStatus, setBounds, watchObject }
 }
