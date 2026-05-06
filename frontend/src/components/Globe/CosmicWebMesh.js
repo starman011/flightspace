@@ -128,7 +128,6 @@ export function createCosmicWebMesh() {
     }))
     mesh.renderOrder = 9
     group.add(mesh)
-    console.log(`CosmicWeb: ${ec.toLocaleString()} edges from ${nodeCount.toLocaleString()} nodes`)
   }
 
   function show() { group.visible = true }

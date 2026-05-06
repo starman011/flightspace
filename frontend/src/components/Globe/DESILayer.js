@@ -210,7 +210,6 @@ export function createDESILayer() {
     }
     buildPointCloud()
     loaded = true
-    console.log(`DESI: loaded ${fresh.length.toLocaleString()} objects`)
   }
 
   function buildPointCloud() {
