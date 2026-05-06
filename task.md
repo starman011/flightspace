@@ -13,7 +13,7 @@
 - [x] URL-based routing: `/flight/:icao24`, `/launch/:id`, `/airport/:iata`
 - [x] Share button on DetailPanel — copies link to clipboard
 - [x] Open shared link → auto-fly to object + open panel
-- [ ] OG meta tags per route (SSR or prerender for social cards)
+- [x] Dynamic canonical/OG/title/description meta tags per SPA route (JS-based)
 
 ### 2. Push Notifications for Launches
 - [ ] Browser Push API integration (service worker)
@@ -34,10 +34,10 @@
 - [ ] Storm/hurricane markers with info popup
 
 ### 5. Social Presence
-- [ ] "X people tracking this flight" live counter via WebSocket
-- [ ] "X people watching this launch" counter
-- [ ] Anonymous — no login required to contribute count
-- [ ] Show on DetailPanel and LaunchPanel
+- [x] "X people tracking this flight" live counter via WebSocket
+- [x] "X people watching this launch" counter
+- [x] Anonymous — no login required to contribute count
+- [x] Show on DetailPanel and LaunchPanel
 
 ---
 
@@ -95,8 +95,21 @@
 
 ---
 
-## UI CHANGES (pending user input)
-- [ ] (awaiting user's UI change requests)
+## UI CHANGES
+- [x] Desktop BottomBar pill — icon nav with filters, scales, search, audio, LIVE toggle
+- [x] BottomBar section labels (Track / Scale / Actions) + spring animations + hover tooltips
+- [x] BottomBar intro mode — all labels visible for first 3s, active labels always shown
+- [x] BottomBar collapsible — auto-collapse after 6s, hover expand, preview pill
+- [x] TopRightPill — profile avatar (Google photo) + hamburger menu
+- [x] Hamburger menu dropdown — About, Contact, FAQs, Donate pages
+- [x] Static pages — About, Contact (form), FAQ, Donate (all modal overlays)
+- [x] ProfilePanel banner — blurred Google profile photo + circular avatar
+- [x] Mobile filter/action icons in CommandCenterOverlay grab zone (LIVE, search, audio)
+- [x] Haptic feedback on mobile taps (global event delegation)
+- [x] Overlap fixes — 10 bottom-positioned elements repositioned above BottomBar
+- [x] Stream panel cleared below TopRightPill (top: 68px)
+- [x] Mobile grab bar centered (flex-direction: column)
+- [x] Deleted legacy components: StatusBar, FilterRail, HUD, OrbitalMapBar, AmbientAudio, Filters
 
 ---
 
