@@ -17,6 +17,7 @@ func Setup(
 	hub *controllers.Hub,
 	launchPoller *controllers.LaunchPoller,
 	issPoller *controllers.ISSPoller,
+	pushCtrl *controllers.PushController,
 	jwtSecret string,
 	nasaAPIKey string,
 	googleClientID string,
@@ -94,6 +95,14 @@ func Setup(
 	// ISS
 	mux.Handle("GET /api/v1/iss/crew", rateLimit(http.HandlerFunc(aircraft.GetISSCrew)))
 	mux.Handle("GET /api/v1/iss/stream", rateLimit(http.HandlerFunc(issPoller.GetStream)))
+
+	// Push notifications (optional — nil when VAPID keys not set)
+	if pushCtrl != nil {
+		mux.Handle("GET /api/v1/push/vapid-key", rateLimit(http.HandlerFunc(pushCtrl.HandleGetVAPIDKey)))
+		mux.Handle("POST /api/v1/push/subscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleSubscribe)))
+		mux.Handle("POST /api/v1/push/unsubscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleUnsubscribe)))
+		mux.Handle("GET /api/v1/push/check", rateLimit(http.HandlerFunc(pushCtrl.HandleCheckSubscription)))
+	}
 
 	// WebSocket
 	mux.HandleFunc("GET /ws", ws.ServeWS)

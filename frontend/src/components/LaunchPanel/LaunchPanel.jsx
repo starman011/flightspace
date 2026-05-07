@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePushNotifications } from '../../hooks/usePushNotifications'
 import styles from './LaunchPanel.module.css'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -143,8 +144,10 @@ function MissionRow({ launch, onClick, isPinned, onPin }) {
   )
 }
 
-function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin, viewerCount = 0, watchObject }) {
+function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin, viewerCount = 0, watchObject, push }) {
   const parts = useCountdownParts(launch.net)
+  const [notifyOn, setNotifyOn] = useState(false)
+  const [notifyLoading, setNotifyLoading] = useState(false)
 
   // Social presence: tell server we're watching this launch
   useEffect(() => {
@@ -154,6 +157,13 @@ function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin, 
       return () => watchObject('')
     }
   }, [launch.id, watchObject])
+
+  // Check if already subscribed to notifications for this launch
+  useEffect(() => {
+    if (push?.supported) {
+      push.checkSubscription(launch.id).then(setNotifyOn)
+    }
+  }, [launch.id, push?.supported])
   const statusClass = launch.status_abbr === 'Go' ? styles.statusGo
     : launch.status_abbr === 'TBD' ? styles.statusTbd
     : styles.statusHold
@@ -239,6 +249,30 @@ function MissionDetail({ launch, onBack, onLocatePad, onClose, isPinned, onPin, 
         </span>
         {isPinned ? 'Pinned to Home Screen' : 'Pin Countdown to Home Screen'}
       </button>
+
+      {/* Notify Me — push notification for launch */}
+      {push?.supported && (
+        <button
+          className={`${styles.pinDetailBtn} ${notifyOn ? styles.pinDetailBtnActive : ''}`}
+          disabled={notifyLoading}
+          onClick={async () => {
+            setNotifyLoading(true)
+            if (notifyOn) {
+              await push.unsubscribe(launch.id)
+              setNotifyOn(false)
+            } else {
+              const ok = await push.subscribe(launch.id)
+              setNotifyOn(ok)
+            }
+            setNotifyLoading(false)
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+            {notifyOn ? 'notifications_active' : 'notifications'}
+          </span>
+          {notifyLoading ? 'Setting up…' : notifyOn ? 'Notification Set' : 'Notify Me Before Launch'}
+        </button>
+      )}
 
       {/* Ping on Globe */}
       <button
@@ -332,6 +366,7 @@ export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId
   const [data, setData]                   = useState(null)
   const [loading, setLoading]             = useState(false)
   const [selectedMission, setSelected]    = useState(null)
+  const push = usePushNotifications()
 
   useEffect(() => {
     if (!open || data) return
@@ -388,6 +423,7 @@ export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId
           onPin={onPinLaunch}
           viewerCount={viewerCounts[`launch:${selectedMission.id}`] || 0}
           watchObject={watchObject}
+          push={push}
         />
       ) : (
         <>

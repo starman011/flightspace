@@ -104,12 +104,26 @@ func (a *App) Start() error {
 	lunarPoller := controllers.NewLunarPoller(a.redis)
 	go lunarPoller.Start(ctx)
 
+	// Start push notification scheduler (optional — needs VAPID keys)
+	var pushCtrl *controllers.PushController
+	if a.cfg.VAPIDPublicKey != "" && a.cfg.VAPIDPrivateKey != "" {
+		pc, err := controllers.NewPushController(a.db, a.cfg.VAPIDPublicKey, a.cfg.VAPIDPrivateKey, a.cfg.VAPIDEmail)
+		if err != nil {
+			log.Printf(`{"level":"warn","service":"app","msg":"push notifications disabled","error":%q}`, err)
+		} else {
+			pushCtrl = pc
+			scheduler := controllers.NewPushScheduler(pc, a.redis)
+			go scheduler.Run(ctx)
+			log.Println(`{"level":"info","service":"app","msg":"push notification scheduler started"}`)
+		}
+	}
+
 	// Start data retention cleanup
 	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
 
 	// Build handler chain: logging → CORS → routes
 	mux := http.NewServeMux()
-	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, issPoller, a.cfg.JWTSecret, a.cfg.NASAAPIKey, a.cfg.GoogleClientID, a.cfg.AppleClientID)
+	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, issPoller, pushCtrl, a.cfg.JWTSecret, a.cfg.NASAAPIKey, a.cfg.GoogleClientID, a.cfg.AppleClientID)
 
 	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
 

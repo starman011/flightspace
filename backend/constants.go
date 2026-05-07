@@ -30,6 +30,11 @@ type Config struct {
 	// OAuth
 	GoogleClientID string
 	AppleClientID  string
+
+	// Web Push (VAPID)
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDEmail      string
 }
 
 // LoadConfig reads configuration from environment variables with sensible defaults.
@@ -91,8 +96,11 @@ func LoadConfig() (*Config, error) {
 		MaxWSConns:     100,
 		RetentionHours: 6,
 		TLSDomain:      os.Getenv("TLS_DOMAIN"),
-		GoogleClientID: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
-		AppleClientID:  os.Getenv("APPLE_CLIENT_ID"),
+		GoogleClientID:  strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
+		AppleClientID:   os.Getenv("APPLE_CLIENT_ID"),
+		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDEmail:      os.Getenv("VAPID_EMAIL"),
 	}, nil
 }
 
