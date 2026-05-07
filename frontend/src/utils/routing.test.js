@@ -169,4 +169,12 @@ describe('updateRouteMeta', () => {
     updateRouteMeta('/unknown')
     expect(document.title).toContain('ObjectTracer')
   })
+
+  it('creates canonical link if none exists in HTML', () => {
+    document.head.innerHTML = '' // no canonical tag
+    updateRouteMeta('/launches')
+    const canon = document.querySelector('link[rel="canonical"]')
+    expect(canon).not.toBeNull()
+    expect(canon.href).toBe('https://www.objecttracer.com/launches')
+  })
 })

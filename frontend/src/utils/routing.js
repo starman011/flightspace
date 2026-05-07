@@ -33,8 +33,13 @@ export function updateRouteMeta(path) {
   const fullUrl = `${base}${path}`
 
   document.title = meta.title
-  const canon = document.querySelector('link[rel="canonical"]')
-  if (canon) canon.href = fullUrl
+  let canon = document.querySelector('link[rel="canonical"]')
+  if (!canon) {
+    canon = document.createElement('link')
+    canon.rel = 'canonical'
+    document.head.appendChild(canon)
+  }
+  canon.href = fullUrl
   const desc = document.querySelector('meta[name="description"]')
   if (desc) desc.content = meta.description
   const ogUrl   = document.querySelector('meta[property="og:url"]')
