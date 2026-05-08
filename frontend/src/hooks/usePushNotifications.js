@@ -20,8 +20,11 @@ export function usePushNotifications() {
   const [permission, setPermission] = useState('default')
 
   useEffect(() => {
-    setSupported('PushManager' in window && 'serviceWorker' in navigator)
-    setPermission(Notification.permission)
+    const isSupported = typeof window !== 'undefined' && 'PushManager' in window && 'serviceWorker' in navigator && 'Notification' in window
+    setSupported(isSupported)
+    if (isSupported) {
+      setPermission(window.Notification.permission)
+    }
   }, [])
 
   // Fetch VAPID public key from backend
@@ -43,15 +46,15 @@ export function usePushNotifications() {
 
   // Subscribe to push for a specific launch
   const subscribe = useCallback(async (launchId) => {
-    if (!supported || !vapidKey || !swReg.current) return false
+    if (!supported || !vapidKey || !swReg.current || !('Notification' in window)) return false
 
     // Request permission if needed
-    if (Notification.permission === 'default') {
-      const result = await Notification.requestPermission()
+    if (window.Notification.permission === 'default') {
+      const result = await window.Notification.requestPermission()
       setPermission(result)
       if (result !== 'granted') return false
     }
-    if (Notification.permission !== 'granted') return false
+    if (window.Notification.permission !== 'granted') return false
 
     try {
       const sub = await swReg.current.pushManager.subscribe({
