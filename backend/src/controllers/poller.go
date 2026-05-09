@@ -332,6 +332,7 @@ func (p *Poller) storeTrails(ctx context.Context, aircraft []models.LiveAircraft
 }
 
 // removeStale removes aircraft from Redis that haven't been updated within staleThreshold seconds.
+// Before deletion, trails with ≥10 points are archived to Postgres for historical playback.
 func (p *Poller) removeStale(ctx context.Context) error {
 	raw, err := p.rdb.HGetAll(ctx, aircraftLiveKey).Result()
 	if err != nil {
@@ -340,6 +341,7 @@ func (p *Poller) removeStale(ctx context.Context) error {
 
 	cutoff := time.Now().Unix() - staleThreshold
 	stale := make([]string, 0)
+	staleAircraft := make(map[string]models.LiveAircraft)
 
 	for id, v := range raw {
 		var a models.LiveAircraft
@@ -348,14 +350,17 @@ func (p *Poller) removeStale(ctx context.Context) error {
 		}
 		if a.TS < cutoff {
 			stale = append(stale, id)
+			staleAircraft[id] = a
 		}
 	}
 
 	if len(stale) > 0 {
+		// Archive trails to Postgres before deleting from Redis
+		p.archiveTrails(ctx, stale, staleAircraft)
+
 		if err := p.rdb.HDel(ctx, aircraftLiveKey, stale...).Err(); err != nil {
 			return err
 		}
-		// Also delete stale trail lists (defence-in-depth; they also auto-expire via TTL)
 		trailKeys := make([]string, len(stale))
 		for i, id := range stale {
 			trailKeys[i] = trailKeyPrefix + id
@@ -366,6 +371,57 @@ func (p *Poller) removeStale(ctx context.Context) error {
 		log.Printf(`{"level":"info","service":"poller","msg":"removed stale aircraft","count":%d}`, len(stale))
 	}
 	return nil
+}
+
+// archiveTrails persists Redis trails to Postgres for historical playback.
+// Only archives trails with ≥10 points (short blips aren't worth storing).
+func (p *Poller) archiveTrails(ctx context.Context, ids []string, aircraft map[string]models.LiveAircraft) {
+	const minPoints = 10
+	archived := 0
+
+	for _, id := range ids {
+		key := trailKeyPrefix + id
+		raw, err := p.rdb.LRange(ctx, key, 0, int64(trailMaxPoints-1)).Result()
+		if err != nil || len(raw) < minPoints {
+			continue
+		}
+
+		points := make([]models.TrailPoint, 0, len(raw))
+		for _, r := range raw {
+			var tp models.TrailPoint
+			if err := json.Unmarshal([]byte(r), &tp); err == nil {
+				points = append(points, tp)
+			}
+		}
+		if len(points) < minPoints {
+			continue
+		}
+
+		trailJSON, err := json.Marshal(points)
+		if err != nil {
+			continue
+		}
+
+		// Points are newest-first (LPUSH order) — last element is earliest
+		startedAt := points[len(points)-1].Timestamp
+		endedAt := points[0].Timestamp
+		a := aircraft[id]
+
+		_, err = p.pool.Exec(ctx,
+			`INSERT INTO flight_trails (icao24, callsign, trail, point_count, started_at, ended_at)
+			 VALUES ($1, $2, $3, $4, $5, $6)`,
+			id, a.Callsign, trailJSON, len(points), startedAt, endedAt,
+		)
+		if err != nil {
+			log.Printf(`{"level":"warn","service":"poller","msg":"trail archive failed","icao24":%q,"error":%q}`, id, err)
+			continue
+		}
+		archived++
+	}
+
+	if archived > 0 {
+		log.Printf(`{"level":"info","service":"poller","msg":"archived flight trails","count":%d}`, archived)
+	}
 }
 
 func toBool(v interface{}) bool {

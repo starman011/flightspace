@@ -97,7 +97,16 @@
   background: rgba(178, 255, 26, 0.14);
 }
 
-/* Mobile */
+/* Mobile — smaller, centered at top */
 @media (max-width: 767px) {
-  .pill { display: none; }
+  .pill {
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .btn {
+    width: 28px;
+    height: 28px;
+  }
 }

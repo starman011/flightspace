@@ -479,3 +479,58 @@ func bearingAC(lat1, lon1, lat2, lon2 float64) float64 {
 	return b
 }
 
+// GetHistory handles GET /api/v1/aircraft/{icao24}/history
+// Returns archived flight trails for this aircraft (last 24h by default).
+func (ac *AircraftController) GetHistory(w http.ResponseWriter, r *http.Request) {
+	icao24 := r.PathValue("icao24")
+	if icao24 == "" {
+		http.Error(w, "missing icao24", http.StatusBadRequest)
+		return
+	}
+
+	since := time.Now().Add(-24 * time.Hour)
+	if s := r.URL.Query().Get("since"); s != "" {
+		if t, err := time.Parse(time.RFC3339, s); err == nil {
+			since = t
+		}
+	}
+
+	rows, err := ac.pool.Query(r.Context(),
+		`SELECT id, callsign, trail, point_count, started_at, ended_at
+		 FROM flight_trails
+		 WHERE icao24 = $1 AND ended_at >= $2
+		 ORDER BY ended_at DESC
+		 LIMIT 10`,
+		icao24, since,
+	)
+	if err != nil {
+		http.Error(w, "query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type trailRecord struct {
+		ID         string          `json:"id"`
+		Callsign   *string         `json:"callsign,omitempty"`
+		Trail      json.RawMessage `json:"trail"`
+		PointCount int             `json:"point_count"`
+		StartedAt  time.Time       `json:"started_at"`
+		EndedAt    time.Time       `json:"ended_at"`
+	}
+
+	results := make([]trailRecord, 0)
+	for rows.Next() {
+		var rec trailRecord
+		if err := rows.Scan(&rec.ID, &rec.Callsign, &rec.Trail, &rec.PointCount, &rec.StartedAt, &rec.EndedAt); err != nil {
+			continue
+		}
+		results = append(results, rec)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"icao24":  icao24,
+		"flights": results,
+	})
+}
+
