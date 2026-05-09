@@ -19,6 +19,7 @@ import LaunchPanel from './components/LaunchPanel/LaunchPanel'
 import ProfilePanel from './components/ProfilePanel/ProfilePanel'
 import BottomBar from './components/BottomBar/BottomBar'
 import TopRightPill from './components/TopRightPill/TopRightPill'
+import PagesPill from './components/PagesPill/PagesPill'
 import AboutPage from './components/StaticPages/AboutPage'
 import ContactPage from './components/StaticPages/ContactPage'
 import FAQPage from './components/StaticPages/FAQPage'
@@ -422,6 +423,17 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         connectionStatus={connectionStatus}
         audioMuted={audio.muted}
         onAudioToggle={audio.toggle}
+        hidden={focusedPad}
+      />
+
+      {/* ── Top-left pages pill ── */}
+      <PagesPill
+        activeScale={activeScale}
+        activeFilter={activeFilter}
+        onScaleChange={handleCameraScale}
+        onActiveFilterChange={setActiveFilter}
+        onFiltersChange={setFilters}
+        onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         hidden={focusedPad}
       />
 
