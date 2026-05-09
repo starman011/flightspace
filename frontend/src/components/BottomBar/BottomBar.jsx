@@ -179,7 +179,7 @@ export default function BottomBar({
         <div className={`${styles.content} ${introMode ? styles.introMode : ''}`}>
           {/* TRACK section */}
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>Track</span>
+            <span className={styles.sectionLabel}>Filters</span>
             <div className={styles.sectionRow}>
               {FILTERS.map(f => (
                 <div
@@ -228,7 +228,7 @@ export default function BottomBar({
 
           {/* EXPLORE section — scales + launches/NEO inside gradient pill */}
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>Explore</span>
+            <span className={styles.sectionLabel}>Pages</span>
             <div className={`${styles.sectionRow} ${styles.scalePill}`}>
               {SCALES.map(s => (
                 <button
