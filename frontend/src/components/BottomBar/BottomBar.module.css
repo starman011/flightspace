@@ -137,44 +137,53 @@
   position: relative;
 }
 
-/* ── Scale separator: animated blue-purple gradient ───────────────────────── */
+/* ── Scale pill: animated gradient border around Earth→Deep Space ─────────── */
 
-.scaleWrap {
-  display: flex;
-  align-items: center;
+.scalePill {
   position: relative;
+  padding: 3px 4px;
+  border-radius: 18px;
+  isolation: isolate;
 }
 
-.scaleSep {
-  width: 1.5px;
-  height: 24px;
-  margin: 0 1px;
-  flex-shrink: 0;
-  border-radius: 1px;
+/* Animated gradient border via pseudo-element */
+.scalePill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 1.5px;
   background: linear-gradient(
-    180deg,
-    transparent 0%,
-    #6366f1 20%,
-    #8b5cf6 40%,
-    #3b82f6 60%,
-    #6366f1 80%,
-    transparent 100%
+    135deg,
+    #6366f1,
+    #8b5cf6,
+    #3b82f6,
+    #a78bfa,
+    #6366f1
   );
-  background-size: 100% 200%;
-  animation: scaleSepFlow 3s ease-in-out infinite;
-  opacity: 0.5;
-  transition: opacity 0.3s, height 0.3s;
+  background-size: 300% 300%;
+  animation: scalePillFlow 4s ease-in-out infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.45;
+  transition: opacity 0.3s;
+  z-index: -1;
 }
 
-.section:hover .scaleSep {
-  opacity: 0.8;
-  height: 28px;
+.scalePill:hover::before {
+  opacity: 0.75;
 }
 
-@keyframes scaleSepFlow {
-  0%   { background-position: 0% 0%; }
-  50%  { background-position: 0% 100%; }
-  100% { background-position: 0% 0%; }
+@keyframes scalePillFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* ── Icon button ──────────────────────────────────────────────────────────── */
