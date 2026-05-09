@@ -162,7 +162,7 @@
     #6366f1
   );
   background-size: 300% 300%;
-  animation: scalePillFlow 4s ease-in-out infinite;
+  animation: scalePillFlow 10s ease-in-out infinite;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);

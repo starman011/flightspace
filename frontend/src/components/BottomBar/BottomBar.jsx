@@ -19,14 +19,18 @@ const FILTERS = [
     ],
   },
   {
-    id: 'rockets', type: 'rockets', scale: 'earth', label: 'Launches',
-    subs: [],
-  },
-  {
     id: 'ships', type: 'ships', scale: 'earth', label: 'Ships',
     subs: [
       { id: 'all-ships', label: 'All Ships', type: 'ships' },
     ],
+  },
+]
+
+// Filters that live inside the gradient pill with scale buttons
+const PILL_FILTERS = [
+  {
+    id: 'rockets', type: 'rockets', scale: 'earth', label: 'Launches',
+    subs: [],
   },
   {
     id: 'asteroids', type: 'asteroids', scale: 'solar', label: 'NEO',
@@ -222,9 +226,9 @@ export default function BottomBar({
 
           <span className={styles.sep} />
 
-          {/* SCALE section */}
+          {/* EXPLORE section — scales + launches/NEO inside gradient pill */}
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>Scale</span>
+            <span className={styles.sectionLabel}>Explore</span>
             <div className={`${styles.sectionRow} ${styles.scalePill}`}>
               {SCALES.map(s => (
                 <button
@@ -238,6 +242,46 @@ export default function BottomBar({
                   {activeScale === s.id && <span className={styles.dot} />}
                   <span className={styles.tooltip}>{s.label}</span>
                 </button>
+              ))}
+              {PILL_FILTERS.map(f => (
+                <div
+                  key={f.id}
+                  className={styles.btnWrap}
+                  onMouseEnter={() => handleFilterHover(f)}
+                  onMouseLeave={handleFilterLeave}
+                >
+                  <button
+                    className={`${styles.btn} ${styles.expandable} ${activeFilter === f.id ? styles.active : ''}`}
+                    onClick={() => handleFilterClick(f)}
+                    aria-label={f.label}
+                  >
+                    <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
+                    <span className={styles.label}>{f.label}</span>
+                    {activeFilter === f.id && <span className={styles.dot} />}
+                    <span className={styles.tooltip}>{f.label}</span>
+                  </button>
+
+                  {openPopover === f.id && f.subs?.length > 0 && (
+                    <div
+                      className={styles.popover}
+                      onMouseEnter={handlePopoverEnter}
+                      onMouseLeave={handleFilterLeave}
+                    >
+                      <div className={styles.popoverArrow} />
+                      <p className={styles.popoverTitle}>{f.label}</p>
+                      {f.subs.map(sub => (
+                        <button
+                          key={sub.id}
+                          className={`${styles.popoverItem} ${activeFilter === f.id ? styles.popoverItemActive : ''}`}
+                          onClick={() => handleSubClick(f, sub)}
+                        >
+                          <span className={styles.popoverDot} />
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
