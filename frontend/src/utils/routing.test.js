@@ -49,10 +49,15 @@ describe('parseInitialState', () => {
     expect(parseInitialState('/profile').profilePanelOpen).toBe(true)
   })
 
-  it('unknown path falls back to default', () => {
+  it('unknown path sets notFound flag', () => {
     const s = parseInitialState('/unknown-page')
+    expect(s.notFound).toBe(true)
     expect(s.activeScale).toBe('earth')
-    expect(s.selectedIcao24).toBeNull()
+  })
+
+  it('root path does not set notFound', () => {
+    const s = parseInitialState('/')
+    expect(s.notFound).toBe(false)
   })
 })
 

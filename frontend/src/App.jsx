@@ -347,6 +347,31 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       <BetaWelcome />
 
+      {init.notFound && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(5,10,15,0.95)', backdropFilter: 'blur(20px)',
+          fontFamily: 'var(--font-body)', color: '#fff', textAlign: 'center', padding: 32,
+        }}>
+          <p style={{ fontSize: 64, fontWeight: 700, fontFamily: 'var(--font-display)', color: '#b2ff1a', margin: 0 }}>404</p>
+          <p style={{ fontSize: 18, color: 'rgba(200,210,225,0.7)', marginTop: 8 }}>Page not found</p>
+          <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.4)', maxWidth: 400, marginTop: 12 }}>
+            The page <code style={{ color: '#b2ff1a' }}>{window.location.pathname}</code> doesn't exist.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/' }}
+            style={{
+              marginTop: 24, padding: '10px 28px', border: '1px solid rgba(178,255,26,0.3)',
+              borderRadius: 8, background: 'rgba(178,255,26,0.08)', color: '#b2ff1a',
+              fontFamily: 'var(--font-mono)', fontSize: 13, cursor: 'pointer',
+            }}
+          >
+            Go Home
+          </button>
+        </div>
+      )}
+
       {authModalOpen && (
         <AuthModal
           onClose={() => setAuthModalOpen(false)}

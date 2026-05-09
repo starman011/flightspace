@@ -16,10 +16,10 @@
 - [x] Dynamic canonical/OG/title/description meta tags per SPA route (JS-based)
 
 ### 2. Push Notifications for Launches
-- [ ] Browser Push API integration (service worker)
-- [ ] "Notify me" button on launch cards
-- [ ] Send notification 30 min + 5 min before launch
-- [ ] Notification click → opens app at launch
+- [x] Browser Push API integration (service worker)
+- [x] "Notify me" button on launch cards
+- [x] Send notification 30 min + 5 min before launch
+- [x] Notification click → opens app at launch
 
 ### 3. Historical Flight Playback
 - [ ] Backend: store flight trail snapshots (last 24h)

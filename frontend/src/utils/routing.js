@@ -77,6 +77,7 @@ export function parseInitialState(pathname) {
     profilePanelOpen: false,
     selectedAirport: null,
     selectedLaunchId: null,
+    notFound: false,
   }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
   if (pathname.startsWith('/airport/')) return { ...base, selectedAirport: pathname.replace('/airport/', '').toUpperCase() }
@@ -87,5 +88,6 @@ export function parseInitialState(pathname) {
   if (pathname === '/moon')         return { ...base, activeScale: 'moon' }
   if (pathname === '/launches')     return { ...base, launchPanelOpen: true }
   if (pathname === '/asteroids')    return { ...base, activeFilter: 'asteroids' }
-  return base
+  if (pathname === '/')             return base
+  return { ...base, notFound: true }
 }
