@@ -188,6 +188,9 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const [error,   setError]   = useState(null)
   const [photo,   setPhoto]   = useState(null)
   const [route,   setRoute]   = useState(null)
+  const [history, setHistory] = useState(null)
+  const [playback, setPlayback] = useState(null) // { trail, index, playing }
+  const playbackTimer = useRef(null)
   // Mobile sheet: 'peek' (default ~38dvh) or 'mini' (collapsed strip ~80px)
   const [sheet, setSheet]     = useState('peek')
   const panelRef = useRef(null)
@@ -299,6 +302,56 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     const t = setTimeout(() => onFitRoute?.(route), 350)
     return () => clearTimeout(t)
   }, [isTracking, route, detail?.trail]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch flight history (archived trails)
+  useEffect(() => {
+    if (!icao24 || !isFlight) return
+    setHistory(null)
+    fetch(`/api/v1/aircraft/${icao24}/history`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.flights?.length) setHistory(d.flights) })
+      .catch(() => {})
+  }, [icao24, isFlight])
+
+  // Playback animation tick
+  useEffect(() => {
+    if (!playback?.playing) return
+    playbackTimer.current = setInterval(() => {
+      setPlayback(prev => {
+        if (!prev || prev.index >= prev.trail.length - 1) {
+          clearInterval(playbackTimer.current)
+          return prev ? { ...prev, playing: false } : null
+        }
+        const next = prev.index + 1
+        // Send partial trail up to current index to Globe
+        onTrailData?.(prev.trail.slice(0, next + 1), route)
+        return { ...prev, index: next }
+      })
+    }, 80)
+    return () => clearInterval(playbackTimer.current)
+  }, [playback?.playing]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startPlayback = useCallback((trail) => {
+    // Trail is newest-first from Redis, reverse for chronological playback
+    const chronological = [...trail].reverse()
+    setPlayback({ trail: chronological, index: 0, playing: true })
+    onTrailData?.(chronological.slice(0, 1), route)
+  }, [route, onTrailData])
+
+  const stopPlayback = useCallback(() => {
+    clearInterval(playbackTimer.current)
+    setPlayback(null)
+    // Restore live trail
+    if (detail?.trail) onTrailData?.(detail.trail, route)
+  }, [detail, route, onTrailData])
+
+  const seekPlayback = useCallback((index) => {
+    setPlayback(prev => {
+      if (!prev) return null
+      onTrailData?.(prev.trail.slice(0, index + 1), route)
+      return { ...prev, index, playing: false }
+    })
+  }, [route, onTrailData])
 
   // Fallback: try registration-based photo if hex returned nothing
   useEffect(() => {
@@ -597,6 +650,62 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           )}
 
           {/* ── Track / fit ── */}
+          {/* ── Flight History Timeline ── */}
+          {isFlight && history && history.length > 0 && (
+            <div className={styles.historySection}>
+              <p className={styles.historyTitle}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Flight History
+              </p>
+              {history.map((h, i) => {
+                const start = new Date(h.started_at)
+                const end = new Date(h.ended_at)
+                const dur = Math.round((end - start) / 60000)
+                const isPlaying = playback && playback.trail === h._chronological
+                return (
+                  <div key={h.id || i} className={styles.historyItem}>
+                    <div className={styles.historyMeta}>
+                      <span>{start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                      <span>{start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} – {end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>{dur}min · {h.point_count}pts</span>
+                    </div>
+                    {!playback ? (
+                      <button className={styles.replayBtn} onClick={() => {
+                        const trail = typeof h.trail === 'string' ? JSON.parse(h.trail) : h.trail
+                        h._chronological = [...trail].reverse()
+                        startPlayback(h._chronological)
+                      }}>
+                        ▶ Replay
+                      </button>
+                    ) : isPlaying ? (
+                      <div className={styles.scrubberWrap}>
+                        <button className={styles.replayBtn} onClick={() => {
+                          if (playback.playing) {
+                            clearInterval(playbackTimer.current)
+                            setPlayback(p => p ? { ...p, playing: false } : null)
+                          } else {
+                            setPlayback(p => p ? { ...p, playing: true } : null)
+                          }
+                        }}>
+                          {playback.playing ? '⏸' : '▶'}
+                        </button>
+                        <input
+                          type="range"
+                          className={styles.scrubber}
+                          min={0}
+                          max={playback.trail.length - 1}
+                          value={playback.index}
+                          onChange={e => seekPlayback(parseInt(e.target.value))}
+                        />
+                        <button className={styles.replayBtn} onClick={stopPlayback}>✕</button>
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {isFlight && (detail || liveData) && (
             <div className={styles.trackRow}>
               <button

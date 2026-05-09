@@ -429,6 +429,120 @@
   color: rgba(178, 255, 26, 0.7);
 }
 
+/* ── Flight History / Playback ────────────────────────────────────────── */
+
+.historySection {
+  padding: 12px 20px;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(200, 210, 225, 0.04);
+}
+
+.historyTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(200, 210, 225, 0.35);
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(200, 210, 225, 0.04);
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.historyMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(200, 210, 225, 0.45);
+}
+
+.historyMeta span:first-child {
+  font-weight: 600;
+  color: rgba(200, 210, 225, 0.65);
+  font-size: 11px;
+}
+
+.replayBtn {
+  padding: 5px 12px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: rgba(139, 92, 246, 0.8);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.replayBtn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #a78bfa;
+}
+
+.scrubberWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scrubber {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.scrubber::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+.scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  border: none;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+  cursor: pointer;
+}
+
 /* ── Track row ───────────────────────────────────────────────────────── */
 
 .trackRow {
