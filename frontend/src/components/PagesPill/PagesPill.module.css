@@ -91,10 +91,28 @@
 .btn.active {
   color: #b2ff1a;
   background: rgba(178, 255, 26, 0.08);
+  width: auto;
+  padding: 0 10px;
+  gap: 5px;
 }
 
 .btn.active:hover {
   background: rgba(178, 255, 26, 0.14);
+}
+
+.activeLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #b2ff1a;
+  white-space: nowrap;
+  animation: labelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes labelIn {
+  from { opacity: 0; max-width: 0; margin-left: -4px; }
+  to   { opacity: 1; max-width: 80px; margin-left: 0; }
 }
 
 /* Mobile — smaller, centered at top */

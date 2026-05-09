@@ -83,6 +83,7 @@ export default function PagesPill({
           aria-label={page.label}
         >
           <PageIcon id={page.id} />
+          {isActive(page) && <span className={styles.activeLabel}>{page.label}</span>}
         </button>
       ))}
     </nav>
