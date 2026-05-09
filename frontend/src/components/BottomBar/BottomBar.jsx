@@ -226,18 +226,20 @@ export default function BottomBar({
           <div className={styles.section}>
             <span className={styles.sectionLabel}>Scale</span>
             <div className={styles.sectionRow}>
-              {SCALES.map(s => (
-                <button
-                  key={s.id}
-                  className={`${styles.btn} ${styles.expandable} ${activeScale === s.id ? styles.active : ''}`}
-                  onClick={() => handleScale(s)}
-                  aria-label={s.label}
-                >
-                  <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
-                  <span className={styles.label}>{s.label}</span>
-                  {activeScale === s.id && <span className={styles.dot} />}
-                  <span className={styles.tooltip}>{s.label}</span>
-                </button>
+              {SCALES.map((s, i) => (
+                <div key={s.id} className={styles.scaleWrap}>
+                  {i > 0 && <span className={styles.scaleSep} />}
+                  <button
+                    className={`${styles.btn} ${styles.expandable} ${activeScale === s.id ? styles.active : ''}`}
+                    onClick={() => handleScale(s)}
+                    aria-label={s.label}
+                  >
+                    <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
+                    <span className={styles.label}>{s.label}</span>
+                    {activeScale === s.id && <span className={styles.dot} />}
+                    <span className={styles.tooltip}>{s.label}</span>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
