@@ -2764,8 +2764,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (showWeather) {
       int.current.windLayer.show()
       // Fetch wind data; retry every 30s if backend not ready yet
+      const API = import.meta.env.VITE_API_URL || ''
       const fetchWind = () => {
-        fetch('/api/v1/weather/wind')
+        fetch(`${API}/api/v1/weather/wind`)
           .then(r => {
             if (r.status === 503) {
               // poller not ready — retry after 30s

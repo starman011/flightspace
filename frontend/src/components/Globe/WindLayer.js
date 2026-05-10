@@ -1,6 +1,6 @@
 import {
   BufferGeometry, BufferAttribute, Points, ShaderMaterial,
-  NormalBlending, Color, DynamicDrawUsage,
+  AdditiveBlending, Color, DynamicDrawUsage,
 } from 'three'
 
 const WIND_R       = 1.0065   // just above cloud layer
@@ -102,7 +102,7 @@ const fragmentShader = `
     float d = length(gl_PointCoord - vec2(0.5));
     if (d > 0.5) discard;
     float fade = 1.0 - smoothstep(0.2, 0.5, d);
-    gl_FragColor = vec4(vColor, vAlpha * fade * 0.25);
+    gl_FragColor = vec4(vColor, vAlpha * fade * 0.06);
   }
 `
 
@@ -143,7 +143,7 @@ export function createWindLayer(scene) {
     fragmentShader,
     transparent: true,
     depthWrite: false,
-    blending: NormalBlending,
+    blending: AdditiveBlending,
   })
 
   const points = new Points(geo, mat)
