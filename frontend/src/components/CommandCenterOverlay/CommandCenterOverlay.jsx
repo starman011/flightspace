@@ -1368,19 +1368,18 @@ export default function CommandCenterOverlay({
         <div
           className={styles.desktopTab}
           onClick={() => setDesktopOpen(d => d === 'collapsed' ? 'open' : 'collapsed')}
-          title={desktopOpen === 'collapsed' ? 'Open Signal Stream' : 'Collapse Signal Stream'}
+          title={desktopOpen === 'collapsed' ? 'Open Feed' : 'Collapse Feed'}
         >
           <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(178,255,26,0.5)' }}>
             {desktopOpen === 'collapsed' ? 'chevron_left' : 'chevron_right'}
           </span>
-          <span className={styles.desktopTabLabel}>Signal Stream</span>
+          <span className={styles.desktopTabLabel}>Feed</span>
         </div>
 
         {/* Desktop: panel header with expand/collapse controls */}
         <div className={styles.desktopHeader}>
           <span className={styles.desktopHeaderTitle}>
-            <span className="material-symbols-outlined" style={{ fontSize: 11 }}>signal_cellular_alt</span>
-            Signal Stream
+            Space Feed
           </span>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <button
@@ -1438,8 +1437,7 @@ export default function CommandCenterOverlay({
         <div className={`${styles.mobileSheetDivider}${desktopOpen === 'wide' ? ' ' + styles.desktopDividerVisible : ''}`}>
           <span className={styles.mobileSheetDividerLine} />
           <span className={styles.mobileSheetDividerLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 9 }}>signal_cellular_alt</span>
-            Signal Stream
+            Feed
           </span>
           <span className={styles.mobileSheetDividerLine} />
         </div>

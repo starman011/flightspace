@@ -335,9 +335,9 @@
   background: rgba(12, 16, 22, 0.82);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(59, 73, 76, 0.18);
+  border: 1px solid rgba(200, 210, 225, 0.1);
   border-right: none;
-  border-radius: 16px 0 0 16px;
+  border-radius: 20px 0 0 20px;
   padding: var(--space-5);
   padding-left: calc(var(--space-5) + 40px);
   display: flex;
@@ -402,16 +402,16 @@
   width: 26px;
   height: 26px;
   background: rgba(23, 28, 34, 0.7);
-  border: 1px solid rgba(59, 73, 76, 0.25);
-  border-radius: 7px;
-  color: rgba(195, 245, 255, 0.45);
+  border: 1px solid rgba(200, 210, 225, 0.15);
+  border-radius: 10px;
+  color: rgba(200, 210, 225, 0.5);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 .stackNavBtn:hover {
-  color: var(--primary);
-  border-color: rgba(178, 255, 26, 0.35);
-  background: rgba(178, 255, 26, 0.06);
+  color: rgba(200, 210, 225, 0.9);
+  border-color: rgba(200, 210, 225, 0.3);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Swipe wrapper — clips horizontal drag translate, fills remaining height */
@@ -895,7 +895,7 @@
 .newsHeroAge {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(195, 245, 255, 0.32);
+  color: rgba(200, 210, 225, 0.45);
 }
 
 /* Open-in-new badge — invisible until hover; details reward attention */
@@ -919,8 +919,9 @@
 
 /* Secondary — pure typography, zero decoration; let the words do the work */
 .newsSecondary {
-  background: rgba(5, 8, 16, 0.7);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 14px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -930,11 +931,11 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.newsSecondaryRow:hover { background: rgba(178, 255, 26, 0.04); }
+.newsSecondaryRow:hover { background: rgba(255, 255, 255, 0.04); }
 
 .newsDivider {
   height: 1px;
-  background: rgba(59, 73, 76, 0.22);
+  background: rgba(200, 210, 225, 0.08);
   margin: 0 14px;
 }
 
@@ -957,7 +958,7 @@
 .newsSecondaryMeta {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: rgba(195, 245, 255, 0.28);
+  color: rgba(200, 210, 225, 0.4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1412,7 +1413,7 @@
   bottom: 0;
   width: 40px;
   background: rgba(8, 14, 22, 0.95);
-  border-right: 1px solid rgba(59, 73, 76, 0.2);
+  border-right: 1px solid rgba(200, 210, 225, 0.1);
   border-radius: 16px 0 0 16px;
   cursor: pointer;
   z-index: 2;
@@ -1421,7 +1422,7 @@
 }
 
 .desktopTab:hover {
-  background: rgba(178, 255, 26, 0.07);
+  background: rgba(200, 210, 225, 0.05);
 }
 
 .desktopTabLabel {
@@ -1445,7 +1446,7 @@
   justify-content: space-between;
   flex-shrink: 0;
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
+  border-bottom: 1px solid rgba(200, 210, 225, 0.08);
 }
 
 .desktopHeaderTitle {
@@ -1453,10 +1454,10 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: rgba(195, 245, 255, 0.4);
+  letter-spacing: 0.12em;
+  color: rgba(200, 210, 225, 0.65);
 }
 
 .desktopHeaderBtn {
@@ -1466,17 +1467,17 @@
   width: 26px;
   height: 26px;
   background: rgba(23, 28, 34, 0.7);
-  border: 1px solid rgba(59, 73, 76, 0.25);
-  border-radius: 7px;
-  color: rgba(195, 245, 255, 0.45);
+  border: 1px solid rgba(200, 210, 225, 0.15);
+  border-radius: 10px;
+  color: rgba(200, 210, 225, 0.5);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .desktopHeaderBtn:hover {
-  color: var(--primary);
-  border-color: rgba(178, 255, 26, 0.35);
-  background: rgba(178, 255, 26, 0.06);
+  color: rgba(200, 210, 225, 0.9);
+  border-color: rgba(200, 210, 225, 0.3);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* ── Hero hidden (zoomed in or user-collapsed) ────────────────────────── */
@@ -1603,9 +1604,9 @@
     width: 100%;
     height: 95dvh;
     border-radius: 20px 20px 0 0;
-    border-left: 1px solid rgba(59, 73, 76, 0.18);
-    border-right: 1px solid rgba(59, 73, 76, 0.18);
-    border-top: 1px solid rgba(59, 73, 76, 0.22);
+    border-left: 1px solid rgba(200, 210, 225, 0.1);
+    border-right: 1px solid rgba(200, 210, 225, 0.1);
+    border-top: 1px solid rgba(200, 210, 225, 0.14);
     border-bottom: none;
     padding: 4px var(--space-4) var(--space-4);
     padding-left: var(--space-4); /* reset desktop 40px collapse-tab offset */
