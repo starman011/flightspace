@@ -30,8 +30,8 @@ export function usePushNotifications() {
   // Fetch VAPID public key from backend
   useEffect(() => {
     fetch(`${API}/api/v1/push/vapid-key`)
-      .then(r => r.json())
-      .then(d => { if (d.public_key) setVapidKey(d.public_key) })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.public_key) setVapidKey(d.public_key) })
       .catch(() => {})
   }, [])
 

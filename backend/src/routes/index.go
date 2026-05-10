@@ -102,8 +102,16 @@ func Setup(
 	mux.Handle("GET /api/v1/iss/stream", rateLimit(http.HandlerFunc(issPoller.GetStream)))
 
 	// Push notifications (optional — nil when VAPID keys not set)
+	// Always register vapid-key so frontend gets { enabled: false } instead of 404
+	mux.Handle("GET /api/v1/push/vapid-key", rateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if pushCtrl != nil {
+			pushCtrl.HandleGetVAPIDKey(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"enabled":false}`))
+	})))
 	if pushCtrl != nil {
-		mux.Handle("GET /api/v1/push/vapid-key", rateLimit(http.HandlerFunc(pushCtrl.HandleGetVAPIDKey)))
 		mux.Handle("POST /api/v1/push/subscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleSubscribe)))
 		mux.Handle("POST /api/v1/push/unsubscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleUnsubscribe)))
 		mux.Handle("GET /api/v1/push/check", rateLimit(http.HandlerFunc(pushCtrl.HandleCheckSubscription)))
