@@ -127,4 +127,13 @@
     width: 28px;
     height: 28px;
   }
+
+  .activeLabel {
+    display: none;
+  }
+
+  .btn.active {
+    width: 28px;
+    padding: 0;
+  }
 }
