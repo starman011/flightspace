@@ -90,7 +90,7 @@ const vertexShader = `
     vAlpha = alpha;
     vColor = aColor;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(1.8 * (120.0 / -mvPosition.z), 1.0, 3.0);
+    gl_PointSize = clamp(2.5 * (120.0 / -mvPosition.z), 1.5, 5.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -102,7 +102,7 @@ const fragmentShader = `
     float d = length(gl_PointCoord - vec2(0.5));
     if (d > 0.5) discard;
     float fade = 1.0 - smoothstep(0.2, 0.5, d);
-    gl_FragColor = vec4(vColor, vAlpha * fade * 0.06);
+    gl_FragColor = vec4(vColor, vAlpha * fade * 0.18);
   }
 `
 
@@ -128,7 +128,7 @@ export function createWindLayer(scene) {
     positions[i * 3 + 1] = y
     positions[i * 3 + 2] = z
     alphas[i] = 0
-    colors[i * 3] = 0.3; colors[i * 3 + 1] = 0.5; colors[i * 3 + 2] = 0.8
+    colors[i * 3] = 0.3; colors[i * 3 + 1] = 0.85; colors[i * 3 + 2] = 1.0
     ages[i]    = Math.random() * MAX_AGE  // stagger births
     maxAges[i] = MAX_AGE * (0.6 + Math.random() * 0.8)
   }
