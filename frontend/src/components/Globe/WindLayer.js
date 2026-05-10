@@ -166,7 +166,7 @@ export function createWindLayer(scene) {
     hide() { points.visible = false },
 
     update() {
-      if (!points.visible || !windLookup) return
+      if (!points.visible) return
 
       const posAttr   = geo.attributes.position
       const alphaAttr = geo.attributes.alpha
@@ -183,28 +183,23 @@ export function createWindLayer(scene) {
           pLon[i] = Math.random() * 360 - 180
         }
 
-        // Get wind at current position
-        const w = windLookup(pLat[i], pLon[i])
-        if (w) {
-          // Advect particle along wind vector
-          // U = east/west (affects longitude), V = north/south (affects latitude)
-          const cosLat = Math.cos(pLat[i] * Math.PI / 180)
-          const speedFactor = SPEED_SCALE * (1 + w.speed * 0.15)
-          pLat[i] += w.v * speedFactor
-          pLon[i] += w.u * speedFactor / Math.max(cosLat, 0.1)
-
-          // Wrap longitude
-          if (pLon[i] > 180) pLon[i] -= 360
-          if (pLon[i] < -180) pLon[i] += 360
-          // Clamp latitude
-          if (pLat[i] > 85) pLat[i] = 85
-          if (pLat[i] < -85) pLat[i] = -85
-
-          // Color by speed
-          const col = speedToColor(w.speed)
-          colorAttr.array[i * 3]     = col.r
-          colorAttr.array[i * 3 + 1] = col.g
-          colorAttr.array[i * 3 + 2] = col.b
+        // Advect particle along wind vector (skip if data not yet loaded)
+        if (windLookup) {
+          const w = windLookup(pLat[i], pLon[i])
+          if (w) {
+            const cosLat = Math.cos(pLat[i] * Math.PI / 180)
+            const speedFactor = SPEED_SCALE * (1 + w.speed * 0.15)
+            pLat[i] += w.v * speedFactor
+            pLon[i] += w.u * speedFactor / Math.max(cosLat, 0.1)
+            if (pLon[i] > 180) pLon[i] -= 360
+            if (pLon[i] < -180) pLon[i] += 360
+            if (pLat[i] > 85) pLat[i] = 85
+            if (pLat[i] < -85) pLat[i] = -85
+            const col = speedToColor(w.speed)
+            colorAttr.array[i * 3]     = col.r
+            colorAttr.array[i * 3 + 1] = col.g
+            colorAttr.array[i * 3 + 2] = col.b
+          }
         }
 
         // Update 3D position

@@ -2749,6 +2749,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       galaxySystem.dispose()
       desiLayer.dispose()
       moonScene.dispose()
+      clearTimeout(int.current?._windRetry)
       windLayer.dispose()
       if (arController.isActive()) arController.disable()
       controls.dispose()
@@ -2762,16 +2763,27 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     int.current._showWeather = !!showWeather
     if (showWeather) {
       int.current.windLayer.show()
-      // Fetch wind data if not yet loaded
+      // Fetch wind data; retry every 30s if backend not ready yet
+      const fetchWind = () => {
+        fetch('/api/v1/weather/wind')
+          .then(r => {
+            if (r.status === 503) {
+              // poller not ready — retry after 30s
+              int.current._windRetry = setTimeout(fetchWind, 30_000)
+              return null
+            }
+            return r.ok ? r.json() : null
+          })
+          .then(data => { if (data) int.current.windLayer?.setWindData(data) })
+          .catch(() => { int.current._windRetry = setTimeout(fetchWind, 30_000) })
+      }
       if (!int.current._windFetched) {
         int.current._windFetched = true
-        fetch('/api/v1/weather/wind')
-          .then(r => r.ok ? r.json() : null)
-          .then(data => { if (data) int.current.windLayer?.setWindData(data) })
-          .catch(() => {})
+        fetchWind()
       }
     } else {
       int.current.windLayer.hide()
+      clearTimeout(int.current._windRetry)
     }
   }, [showWeather])
 
