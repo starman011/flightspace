@@ -1,12 +1,12 @@
 import {
   BufferGeometry, BufferAttribute, Points, ShaderMaterial,
-  AdditiveBlending, Color, DynamicDrawUsage,
+  NormalBlending, Color, DynamicDrawUsage,
 } from 'three'
 
 const WIND_R       = 1.0065   // just above cloud layer
-const PARTICLE_COUNT = 8000
-const MAX_AGE      = 200      // frames before particle resets
-const SPEED_SCALE  = 0.00004  // metres/s → world-unit/frame
+const PARTICLE_COUNT = 3000
+const MAX_AGE      = 160      // frames before particle resets
+const SPEED_SCALE  = 0.00005  // metres/s → world-unit/frame
 
 // Wind speed thresholds (m/s) and colors
 const SPEED_COLORS = [
@@ -90,7 +90,7 @@ const vertexShader = `
     vAlpha = alpha;
     vColor = aColor;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = max(1.5, 3.0 * (300.0 / -mvPosition.z));
+    gl_PointSize = clamp(1.8 * (120.0 / -mvPosition.z), 1.0, 3.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -102,7 +102,7 @@ const fragmentShader = `
     float d = length(gl_PointCoord - vec2(0.5));
     if (d > 0.5) discard;
     float fade = 1.0 - smoothstep(0.2, 0.5, d);
-    gl_FragColor = vec4(vColor, vAlpha * fade * 0.8);
+    gl_FragColor = vec4(vColor, vAlpha * fade * 0.25);
   }
 `
 
@@ -143,7 +143,7 @@ export function createWindLayer(scene) {
     fragmentShader,
     transparent: true,
     depthWrite: false,
-    blending: AdditiveBlending,
+    blending: NormalBlending,
   })
 
   const points = new Points(geo, mat)
