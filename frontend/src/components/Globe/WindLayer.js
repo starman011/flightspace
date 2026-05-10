@@ -1,36 +1,36 @@
 import {
-  BufferGeometry, BufferAttribute, Points, ShaderMaterial,
+  BufferGeometry, BufferAttribute, Points, PointsMaterial,
   AdditiveBlending, Color, DynamicDrawUsage,
 } from 'three'
 
-const WIND_R       = 1.0065   // just above cloud layer
-const PARTICLE_COUNT = 3000
-const MAX_AGE      = 160      // frames before particle resets
-const SPEED_SCALE  = 0.00005  // metres/s → world-unit/frame
+const WIND_R         = 1.007   // above cloud layer (1.006)
+const PARTICLE_COUNT = 4000
+const MAX_AGE        = 150     // frames at 60fps ≈ 2.5s life
+const SPEED_SCALE    = 0.00005 // wind m/s → world-unit displacement per frame
+const BASE_ALPHA     = 0.55    // peak per-particle brightness
 
-// Wind speed thresholds (m/s) and colors
+// Speed → color (blue calm → red gale)
 const SPEED_COLORS = [
-  { threshold: 0,  color: new Color(0x4a90d9) },  // calm — soft blue
-  { threshold: 3,  color: new Color(0x43b6a0) },  // light — teal
-  { threshold: 6,  color: new Color(0x7ec850) },  // moderate — green
-  { threshold: 10, color: new Color(0xe8c840) },  // fresh — yellow
-  { threshold: 15, color: new Color(0xf09030) },  // strong — orange
-  { threshold: 25, color: new Color(0xe05050) },  // gale — red
+  { threshold: 0,  color: new Color(0x29b6f6) },  // calm — light blue
+  { threshold: 4,  color: new Color(0x26c6da) },  // light — cyan
+  { threshold: 8,  color: new Color(0x66bb6a) },  // moderate — green
+  { threshold: 12, color: new Color(0xffee58) },  // fresh — yellow
+  { threshold: 18, color: new Color(0xffa726) },  // strong — orange
+  { threshold: 28, color: new Color(0xef5350) },  // gale — red
 ]
 
 function speedToColor(speed) {
   for (let i = SPEED_COLORS.length - 1; i >= 0; i--) {
     if (speed >= SPEED_COLORS[i].threshold) {
-      if (i === SPEED_COLORS.length - 1) return SPEED_COLORS[i].color
+      if (i === SPEED_COLORS.length - 1) return SPEED_COLORS[i].color.clone()
       const lo = SPEED_COLORS[i], hi = SPEED_COLORS[i + 1]
       const t = (speed - lo.threshold) / (hi.threshold - lo.threshold)
       return lo.color.clone().lerp(hi.color, t)
     }
   }
-  return SPEED_COLORS[0].color
+  return SPEED_COLORS[0].color.clone()
 }
 
-// Convert lat/lon to 3D position on sphere
 function ll2v(lat, lon, r) {
   const phi   = (90 - lat) * (Math.PI / 180)
   const theta = (lon + 180) * (Math.PI / 180)
@@ -41,187 +41,141 @@ function ll2v(lat, lon, r) {
   ]
 }
 
-// Build bilinear interpolator from wind grid
-function buildWindLookup(points, gridStep) {
+function buildWindLookup(pts, gridStep) {
   const map = new Map()
-  for (const p of points) {
-    const key = `${p.lat.toFixed(1)},${p.lon.toFixed(1)}`
-    map.set(key, p)
-  }
+  for (const p of pts) map.set(`${p.lat.toFixed(1)},${p.lon.toFixed(1)}`, p)
 
-  return function getWind(lat, lon) {
-    // Snap to grid corners
+  return (lat, lon) => {
     const latLo = Math.floor(lat / gridStep) * gridStep
     const lonLo = Math.floor(lon / gridStep) * gridStep
-    const latHi = latLo + gridStep
-    const lonHi = lonLo + gridStep
-
-    const tLat = (lat - latLo) / gridStep
-    const tLon = (lon - lonLo) / gridStep
+    const tLat  = (lat - latLo) / gridStep
+    const tLon  = (lon - lonLo) / gridStep
 
     const p00 = map.get(`${latLo.toFixed(1)},${lonLo.toFixed(1)}`)
-    const p10 = map.get(`${latHi.toFixed(1)},${lonLo.toFixed(1)}`)
-    const p01 = map.get(`${latLo.toFixed(1)},${lonHi.toFixed(1)}`)
-    const p11 = map.get(`${latHi.toFixed(1)},${lonHi.toFixed(1)}`)
+    const p10 = map.get(`${(latLo + gridStep).toFixed(1)},${lonLo.toFixed(1)}`)
+    const p01 = map.get(`${latLo.toFixed(1)},${(lonLo + gridStep).toFixed(1)}`)
+    const p11 = map.get(`${(latLo + gridStep).toFixed(1)},${(lonLo + gridStep).toFixed(1)}`)
 
     if (!p00 && !p10 && !p01 && !p11) return null
-
-    // Bilinear interpolation (fallback to nearest if corners missing)
-    const u00 = p00?.u ?? 0, v00 = p00?.v ?? 0, s00 = p00?.speed ?? 0
-    const u10 = p10?.u ?? 0, v10 = p10?.v ?? 0, s10 = p10?.speed ?? 0
-    const u01 = p01?.u ?? 0, v01 = p01?.v ?? 0, s01 = p01?.speed ?? 0
-    const u11 = p11?.u ?? 0, v11 = p11?.v ?? 0, s11 = p11?.speed ?? 0
+    const w = (a, b, c, d) =>
+      (a ?? 0) * (1 - tLat) * (1 - tLon) + (b ?? 0) * tLat * (1 - tLon) +
+      (c ?? 0) * (1 - tLat) * tLon       + (d ?? 0) * tLat * tLon
 
     return {
-      u:     u00 * (1 - tLat) * (1 - tLon) + u10 * tLat * (1 - tLon) + u01 * (1 - tLat) * tLon + u11 * tLat * tLon,
-      v:     v00 * (1 - tLat) * (1 - tLon) + v10 * tLat * (1 - tLon) + v01 * (1 - tLat) * tLon + v11 * tLat * tLon,
-      speed: s00 * (1 - tLat) * (1 - tLon) + s10 * tLat * (1 - tLon) + s01 * (1 - tLat) * tLon + s11 * tLat * tLon,
+      u:     w(p00?.u, p10?.u, p01?.u, p11?.u),
+      v:     w(p00?.v, p10?.v, p01?.v, p11?.v),
+      speed: w(p00?.speed, p10?.speed, p01?.speed, p11?.speed),
     }
   }
 }
 
-// Vertex + fragment shaders for wind particles
-const vertexShader = `
-  attribute float alpha;
-  attribute vec3 aColor;
-  varying float vAlpha;
-  varying vec3 vColor;
-  void main() {
-    vAlpha = alpha;
-    vColor = aColor;
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(2.5 * (120.0 / -mvPosition.z), 1.5, 5.0);
-    gl_Position = projectionMatrix * mvPosition;
-  }
-`
-
-const fragmentShader = `
-  varying float vAlpha;
-  varying vec3 vColor;
-  void main() {
-    float d = length(gl_PointCoord - vec2(0.5));
-    if (d > 0.5) discard;
-    float fade = 1.0 - smoothstep(0.2, 0.5, d);
-    gl_FragColor = vec4(vColor, vAlpha * fade * 0.18);
-  }
-`
-
 export function createWindLayer(scene) {
-  const positions = new Float32Array(PARTICLE_COUNT * 3)
-  const alphas    = new Float32Array(PARTICLE_COUNT)
-  const colors    = new Float32Array(PARTICLE_COUNT * 3)
-  const ages      = new Float32Array(PARTICLE_COUNT)
-  const maxAges   = new Float32Array(PARTICLE_COUNT)
+  const N       = PARTICLE_COUNT
+  const pos     = new Float32Array(N * 3)
+  const col     = new Float32Array(N * 3)  // premultiplied alpha color
+  const pLat    = new Float32Array(N)
+  const pLon    = new Float32Array(N)
+  const ages    = new Float32Array(N)
+  const maxAges = new Float32Array(N)
 
-  // Particle state (lat/lon for advection)
-  const pLat = new Float32Array(PARTICLE_COUNT)
-  const pLon = new Float32Array(PARTICLE_COUNT)
-
-  // Initialize randomly on sphere
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const lat = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
-    const lon = Math.random() * 360 - 180
-    pLat[i] = lat
-    pLon[i] = lon
-    const [x, y, z] = ll2v(lat, lon, WIND_R)
-    positions[i * 3]     = x
-    positions[i * 3 + 1] = y
-    positions[i * 3 + 2] = z
-    alphas[i] = 0
-    colors[i * 3] = 0.3; colors[i * 3 + 1] = 0.85; colors[i * 3 + 2] = 1.0
-    ages[i]    = Math.random() * MAX_AGE  // stagger births
-    maxAges[i] = MAX_AGE * (0.6 + Math.random() * 0.8)
+  for (let i = 0; i < N; i++) {
+    pLat[i]    = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
+    pLon[i]    = Math.random() * 360 - 180
+    const [x, y, z] = ll2v(pLat[i], pLon[i], WIND_R)
+    pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z
+    // start transparent (alpha=0 → col = 0,0,0)
+    col[i * 3] = 0; col[i * 3 + 1] = 0; col[i * 3 + 2] = 0
+    ages[i]    = Math.random() * MAX_AGE
+    maxAges[i] = MAX_AGE * (0.5 + Math.random() * 1.0)
   }
 
   const geo = new BufferGeometry()
-  geo.setAttribute('position', new BufferAttribute(positions, 3).setUsage(DynamicDrawUsage))
-  geo.setAttribute('alpha',    new BufferAttribute(alphas, 1).setUsage(DynamicDrawUsage))
-  geo.setAttribute('aColor',   new BufferAttribute(colors, 3).setUsage(DynamicDrawUsage))
+  geo.setAttribute('position', new BufferAttribute(pos, 3).setUsage(DynamicDrawUsage))
+  geo.setAttribute('color',    new BufferAttribute(col, 3).setUsage(DynamicDrawUsage))
 
-  const mat = new ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    transparent: true,
-    depthWrite: false,
-    blending: AdditiveBlending,
+  const mat = new PointsMaterial({
+    size:         0.007,
+    vertexColors: true,
+    transparent:  true,
+    opacity:      1.0,
+    depthWrite:   false,
+    blending:     AdditiveBlending,
+    sizeAttenuation: true,
   })
 
-  const points = new Points(geo, mat)
-  points.renderOrder = 1
-  points.frustumCulled = false
-  points.visible = false
-  scene.add(points)
+  const pts = new Points(geo, mat)
+  pts.renderOrder   = 3
+  pts.frustumCulled = false
+  pts.visible       = false
+  scene.add(pts)
 
   let windLookup = null
+  // Cache color per particle (updated when wind data arrives)
+  const particleColor = Array.from({ length: N }, () => new Color(0x29b6f6))
 
   return {
-    mesh: points,
+    mesh: pts,
 
     setWindData(data) {
       if (!data?.points?.length) return
       windLookup = buildWindLookup(data.points, data.grid_step || 10)
     },
 
-    show() { points.visible = true },
-    hide() { points.visible = false },
+    show() { pts.visible = true },
+    hide() { pts.visible = false },
 
     update() {
-      if (!points.visible) return
+      if (!pts.visible) return
 
-      const posAttr   = geo.attributes.position
-      const alphaAttr = geo.attributes.alpha
-      const colorAttr = geo.attributes.aColor
+      const posAttr = geo.attributes.position
+      const colAttr = geo.attributes.color
 
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
+      for (let i = 0; i < N; i++) {
         ages[i]++
 
-        // Reset particle when too old
         if (ages[i] > maxAges[i]) {
-          ages[i] = 0
-          maxAges[i] = MAX_AGE * (0.6 + Math.random() * 0.8)
-          pLat[i] = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
-          pLon[i] = Math.random() * 360 - 180
+          ages[i]    = 0
+          maxAges[i] = MAX_AGE * (0.5 + Math.random() * 1.0)
+          pLat[i]    = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
+          pLon[i]    = Math.random() * 360 - 180
         }
 
-        // Advect particle along wind vector (skip if data not yet loaded)
         if (windLookup) {
           const w = windLookup(pLat[i], pLon[i])
           if (w) {
-            const cosLat = Math.cos(pLat[i] * Math.PI / 180)
-            const speedFactor = SPEED_SCALE * (1 + w.speed * 0.15)
-            pLat[i] += w.v * speedFactor
-            pLon[i] += w.u * speedFactor / Math.max(cosLat, 0.1)
-            if (pLon[i] > 180) pLon[i] -= 360
+            const cosLat = Math.max(Math.cos(pLat[i] * Math.PI / 180), 0.05)
+            const sf = SPEED_SCALE * (1 + w.speed * 0.1)
+            pLat[i] += w.v * sf
+            pLon[i] += w.u * sf / cosLat
+            if (pLon[i] >  180) pLon[i] -= 360
             if (pLon[i] < -180) pLon[i] += 360
-            if (pLat[i] > 85) pLat[i] = 85
-            if (pLat[i] < -85) pLat[i] = -85
-            const col = speedToColor(w.speed)
-            colorAttr.array[i * 3]     = col.r
-            colorAttr.array[i * 3 + 1] = col.g
-            colorAttr.array[i * 3 + 2] = col.b
+            pLat[i] = Math.max(-85, Math.min(85, pLat[i]))
+            particleColor[i] = speedToColor(w.speed)
           }
         }
 
-        // Update 3D position
         const [x, y, z] = ll2v(pLat[i], pLon[i], WIND_R)
         posAttr.array[i * 3]     = x
         posAttr.array[i * 3 + 1] = y
         posAttr.array[i * 3 + 2] = z
 
-        // Fade in/out
-        const life = ages[i] / maxAges[i]
-        const fadeIn  = Math.min(ages[i] / 15, 1)
-        const fadeOut = Math.max(1 - (life - 0.7) / 0.3, 0)
-        alphaAttr.array[i] = fadeIn * (life > 0.7 ? fadeOut : 1)
+        // Fade in/out — bake alpha into vertex color (additive = color * alpha)
+        const life    = ages[i] / maxAges[i]
+        const fadeIn  = Math.min(ages[i] / 20, 1)
+        const fadeOut = life > 0.7 ? Math.max(1 - (life - 0.7) / 0.3, 0) : 1
+        const alpha   = fadeIn * fadeOut * BASE_ALPHA
+        const c       = particleColor[i]
+        colAttr.array[i * 3]     = c.r * alpha
+        colAttr.array[i * 3 + 1] = c.g * alpha
+        colAttr.array[i * 3 + 2] = c.b * alpha
       }
 
-      posAttr.needsUpdate   = true
-      alphaAttr.needsUpdate = true
-      colorAttr.needsUpdate = true
+      posAttr.needsUpdate = true
+      colAttr.needsUpdate = true
     },
 
     dispose() {
-      scene.remove(points)
+      scene.remove(pts)
       geo.dispose()
       mat.dispose()
     },
