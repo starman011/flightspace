@@ -22,6 +22,7 @@ import { createDESILayer, raDecToXYZ, zToRadius } from './DESILayer.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
 import { createMoonScene } from './MoonScene.js'
+import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
@@ -895,7 +896,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel, onScaleReady }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel, onScaleReady, showWeather }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -1320,6 +1321,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const clouds = new Mesh(new SphereGeometry(CLOUD_R, 64, 64), cloudMat)
     scene.add(clouds)
 
+    // ── Wind layer (Windy-style particle flow) ───────────────────────
+    const windLayer = createWindLayer(scene)
+
     // ── Atmosphere ───────────────────────────────────────────────────
     scene.add(makeAtmosphere())
 
@@ -1408,6 +1412,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Trails (created later) — set via int.current
       if (int.current?.trailMesh)     int.current.trailMesh.visible     = v
       if (int.current?.trailGlowMesh) int.current.trailGlowMesh.visible = v
+      if (int.current?.windLayer)     { if (v && int.current._showWeather) int.current.windLayer.show(); else int.current.windLayer.hide() }
       // Selection ring + API trail also belong to Earth
       if (int.current?.ringMesh)      int.current.ringMesh.visible      = v
     }
@@ -2659,10 +2664,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         padGeo.setDrawRange(0, 0)
       }
 
+      windLayer.update()
       renderer.render(scene, camera)
     }
     int.current = {
       renderer, scene, camera, controls,
+      windLayer,
+      _showWeather: false,
       planeMesh, heavyMesh, regionalMesh, heliMesh, satMesh, shipMesh,
       acPts, acGeo, acPos,
       trailMesh, trailGeo, trailPos, trailCol,
@@ -2741,12 +2749,31 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       galaxySystem.dispose()
       desiLayer.dispose()
       moonScene.dispose()
+      windLayer.dispose()
       if (arController.isActive()) arController.disable()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!int.current?.windLayer) return
+    int.current._showWeather = !!showWeather
+    if (showWeather) {
+      int.current.windLayer.show()
+      // Fetch wind data if not yet loaded
+      if (!int.current._windFetched) {
+        int.current._windFetched = true
+        fetch('/api/v1/weather/wind')
+          .then(r => r.ok ? r.json() : null)
+          .then(data => { if (data) int.current.windLayer?.setWindData(data) })
+          .catch(() => {})
+      }
+    } else {
+      int.current.windLayer.hide()
+    }
+  }, [showWeather])
 
   useEffect(() => {
     if (int.current) int.current.onAircraftClick = onAircraftClick

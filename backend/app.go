@@ -104,6 +104,10 @@ func (a *App) Start() error {
 	lunarPoller := controllers.NewLunarPoller(a.redis)
 	go lunarPoller.Start(ctx)
 
+	// Start weather wind grid poller (Open-Meteo — every 30 min)
+	weatherCtrl := controllers.NewWeatherController(a.redis)
+	go weatherCtrl.StartPoller(ctx)
+
 	// Start push notification scheduler (optional — needs VAPID keys)
 	var pushCtrl *controllers.PushController
 	if a.cfg.VAPIDPublicKey != "" && a.cfg.VAPIDPrivateKey != "" {

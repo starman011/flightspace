@@ -93,6 +93,10 @@ func Setup(
 	mux.Handle("GET /api/v1/desi/enrich", rateLimit(http.HandlerFunc(desi.GetGalaxyEnrichment)))
 	mux.Handle("GET /api/v1/desi/search", rateLimit(http.HandlerFunc(desi.SearchGalaxies)))
 
+	// Weather
+	weather := controllers.NewWeatherController(rdb)
+	mux.Handle("GET /api/v1/weather/wind", rateLimit(http.HandlerFunc(weather.GetWind)))
+
 	// ISS
 	mux.Handle("GET /api/v1/iss/crew", rateLimit(http.HandlerFunc(aircraft.GetISSCrew)))
 	mux.Handle("GET /api/v1/iss/stream", rateLimit(http.HandlerFunc(issPoller.GetStream)))

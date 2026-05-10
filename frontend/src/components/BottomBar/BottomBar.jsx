@@ -54,6 +54,7 @@ export default function BottomBar({
   liveEnabled, onLiveToggle,
   connectionStatus,
   audioMuted, onAudioToggle,
+  showWeather, onWeatherToggle,
   hidden,
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -323,6 +324,21 @@ export default function BottomBar({
                 </span>
                 <span className={styles.label}>{audioMuted ? 'Unmute' : 'Audio'}</span>
                 <span className={styles.tooltip}>{audioMuted ? 'Unmute Audio' : 'Mute Audio'}</span>
+              </button>
+              <button
+                className={`${styles.btn} ${styles.expandable} ${showWeather ? styles.active : ''}`}
+                onClick={onWeatherToggle}
+                aria-label="Toggle wind overlay"
+              >
+                <span className={styles.iconWrap}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+                    <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+                    <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+                  </svg>
+                </span>
+                <span className={styles.label}>Wind</span>
+                <span className={styles.tooltip}>{showWeather ? 'Hide Wind Overlay' : 'Show Wind Overlay'}</span>
               </button>
               <button
                 className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : ''}`}

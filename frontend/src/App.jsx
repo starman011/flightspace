@@ -107,6 +107,7 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
+  const [showWeather, setShowWeather] = useState(false)
   const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
   const audio = useAmbientAudio()
@@ -423,6 +424,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         connectionStatus={connectionStatus}
         audioMuted={audio.muted}
         onAudioToggle={audio.toggle}
+        showWeather={showWeather}
+        onWeatherToggle={() => setShowWeather(v => !v)}
         hidden={focusedPad}
       />
 
@@ -466,6 +469,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onZoomChange={setZoomedIn}
         onScaleReady={handleScaleReady}
         mobilePanel={!!selectedIcao24}
+        showWeather={showWeather}
       />
 
       <CommandCenterOverlay
