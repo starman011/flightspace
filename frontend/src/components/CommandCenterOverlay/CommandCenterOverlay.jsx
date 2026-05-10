@@ -615,7 +615,7 @@ function NewsStack({ news, loadMore, hasMore, fetching, expanded }) {
         {news.map((item) => (
           <div key={item.id} className={styles.newsExpandedRow} onClick={() => item.url && openTab(item.url)}>
             {item.image_url && (
-              <div className={styles.newsExpandedThumb} style={{ backgroundImage: `url(${item.image_url})` }} />
+              <div className={styles.newsExpandedThumb} style={{ backgroundImage: `url(${item.image_url?.replace(/^http:\/\//, 'https://')})` }} />
             )}
             <div className={styles.newsExpandedBody}>
               <span className={styles.newsExpandedSource}>{item.news_site}</span>
@@ -642,7 +642,7 @@ function NewsStack({ news, loadMore, hasMore, fetching, expanded }) {
     <div className={styles.newsStack}>
       <div
         className={styles.newsHero}
-        style={hero.image_url ? { backgroundImage: `url(${hero.image_url})` } : undefined}
+        style={hero.image_url ? { backgroundImage: `url(${hero.image_url?.replace(/^http:\/\//, 'https://')})` } : undefined}
         onClick={() => hero.url && openTab(hero.url)}
       >
         <div className={styles.newsHeroShade} />
