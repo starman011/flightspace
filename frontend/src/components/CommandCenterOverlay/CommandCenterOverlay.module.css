@@ -2592,3 +2592,337 @@
   color: rgba(178, 255, 26, 0.5);
   letter-spacing: 0.04em;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Space Feed — vertical scrollable card feed
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.feedScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+.feedScroll::-webkit-scrollbar { width: 0; }
+
+/* ── Base card ── */
+.feedCard {
+  flex-shrink: 0;
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: rgba(14, 18, 26, 0.65);
+  border: 1px solid rgba(200, 210, 225, 0.07);
+  border-top-width: 2px;
+  border-top-color: rgba(200, 210, 225, 0.18);
+  transition: background 0.18s;
+}
+
+.feedCardBlue   { border-top-color: rgba(56,  189, 248, 0.55); }
+.feedCardSteel  { border-top-color: rgba(96,  165, 250, 0.55); }
+.feedCardAmber  { border-top-color: rgba(251, 191, 36,  0.55); }
+.feedCardViolet { border-top-color: rgba(167, 139, 250, 0.55); }
+.feedCardAPOD   { border-top-color: rgba(200, 210, 225, 0.25); cursor: pointer; }
+.feedCardIndigo { border-top-color: rgba(129, 140, 248, 0.55); }
+.feedCardQuote  {
+  border-top-color: rgba(251, 191, 36, 0.4);
+  border-left: 2px solid rgba(251, 191, 36, 0.35);
+  cursor: pointer;
+}
+
+/* ── Card head row ── */
+.feedHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.feedHeadLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedLabel {
+  font: 600 11px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.65);
+  letter-spacing: 0.01em;
+}
+.feedBadge {
+  font: 600 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 4px;
+  padding: 3px 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.feedBadgeLive {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.28);
+  animation: feedPulse 2.2s ease infinite;
+}
+@keyframes feedPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ── ISS metrics ── */
+.feedISSMetrics {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+.feedMetric {
+  flex: 1;
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  border-radius: 10px;
+  padding: 8px 10px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.feedMetricNum {
+  font: 700 20px/1 system-ui, -apple-system, sans-serif;
+  color: #38bdf8;
+  letter-spacing: -0.02em;
+}
+.feedMetricUnit {
+  font: 500 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(56, 189, 248, 0.5);
+  margin-top: 1px;
+}
+.feedMetricLabel {
+  font: 400 8px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+.feedISSLocation {
+  font: 400 10px/1.3 system-ui, -apple-system, sans-serif;
+  color: rgba(56, 189, 248, 0.55);
+  margin-bottom: 9px;
+}
+.feedLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(56, 189, 248, 0.09);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 7px;
+  color: #38bdf8;
+  font: 600 10px/1 system-ui, -apple-system, sans-serif;
+  padding: 6px 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+.feedLinkBtn:hover { background: rgba(56, 189, 248, 0.16); }
+.feedToast {
+  margin-top: 7px;
+  font: 500 10px/1 system-ui, -apple-system, sans-serif;
+  color: #4ade80;
+}
+
+/* ── News card ── */
+.feedNewsHero {
+  height: 112px;
+  border-radius: 9px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.feedNewsHeroBody {
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.feedNewsSource {
+  font: 600 9px/1 system-ui, -apple-system, sans-serif;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.feedNewsTitle {
+  font: 600 12px/1.35 system-ui, -apple-system, sans-serif;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 4px 0 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.feedNewsAge {
+  font: 400 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.32);
+}
+.feedNewsDivider {
+  height: 1px;
+  background: rgba(200, 210, 225, 0.06);
+  margin: 1px 0;
+}
+.feedNewsRow {
+  padding: 7px 0;
+  cursor: pointer;
+}
+.feedNewsRow:hover .feedNewsRowTitle { color: rgba(255,255,255,0.95); }
+.feedNewsRowTitle {
+  font: 500 11px/1.35 system-ui, -apple-system, sans-serif;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s;
+}
+.feedNewsRowMeta {
+  font: 400 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(96, 165, 250, 0.55);
+}
+
+/* ── Solar card ── */
+.feedSolarRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 7px;
+}
+.feedSolarKp {
+  display: block;
+  font: 700 34px/1 system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.03em;
+}
+.feedSolarKpLabel {
+  display: block;
+  font: 400 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.38);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+.feedKpMini {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 38px;
+  flex: 1;
+}
+.feedKpBar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 4px;
+}
+.feedSolarDesc {
+  font: 400 10px/1.4 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.42);
+}
+
+/* ── Meteor card ── */
+.feedMeteorName {
+  font: 700 19px/1 system-ui, -apple-system, sans-serif;
+  color: #a78bfa;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.feedMeteorSub {
+  font: 400 10px/1.4 system-ui, -apple-system, sans-serif;
+  color: rgba(167, 139, 250, 0.55);
+  margin-bottom: 10px;
+}
+.feedMeteorBar {
+  height: 3px;
+  background: rgba(167, 139, 250, 0.14);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.feedMeteorFill {
+  height: 100%;
+  background: linear-gradient(to right, #a78bfa, #c084fc);
+  border-radius: 2px;
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── APOD card ── */
+.feedApodImg {
+  height: 130px;
+  border-radius: 9px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 8px;
+}
+.feedApodTitle {
+  font: 600 12px/1.35 system-ui, -apple-system, sans-serif;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 3px;
+}
+.feedApodCredit {
+  font: 400 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.32);
+}
+
+/* ── Night Sky card ── */
+.feedPlanetsRow {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 9px;
+  overflow-x: auto;
+}
+.feedPlanetsRow::-webkit-scrollbar { height: 0; }
+.feedPlanetCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: rgba(129, 140, 248, 0.06);
+  border: 1px solid rgba(129, 140, 248, 0.1);
+  border-radius: 9px;
+  padding: 7px 6px 6px;
+  min-width: 48px;
+}
+.feedPlanetImg {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.feedPlanetName {
+  font: 500 8px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(200, 210, 225, 0.6);
+}
+.feedPlanetMag {
+  font: 600 9px/1 system-ui, -apple-system, sans-serif;
+}
+.feedCometNote {
+  display: flex;
+  align-items: center;
+  font: 400 9px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(129, 140, 248, 0.48);
+}
+
+/* ── Quote card ── */
+.feedQuoteMark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 44px;
+  line-height: 0.6;
+  color: rgba(251, 191, 36, 0.28);
+  margin-bottom: 6px;
+  user-select: none;
+}
+.feedQuoteText {
+  font: italic 600 12px/1.55 Georgia, 'Times New Roman', serif;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 8px;
+}
+.feedQuoteAuthor {
+  font: 500 10px/1 system-ui, -apple-system, sans-serif;
+  color: rgba(251, 191, 36, 0.55);
+}

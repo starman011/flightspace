@@ -4,6 +4,16 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+## Session: 2026-05-11
+
+### Changes
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **SpaceFeed replaces SmartStack carousel** | Replaced the rotating carousel (one panel at a time, dot navigation) with `SpaceFeed` — a vertical scrollable feed showing all 7 data cards simultaneously. Cards: ISS Tracker (sky-blue, live metrics), Space News (steel-blue, hero image + 3 rows), Solar Activity (amber, large Kp + mini bar chart), Meteor Showers (violet, name + ZHR bar), APOD (neutral, full-bleed image), Night Sky (indigo, planet cells + comet note), Daily Quote (amber, serif block quote). Each card has a 2px colored top-border as accent identity, system-ui typography throughout, and semantic color per data type. `SmartStack` function kept in file but no longer rendered. |
+
+---
+
 ## Session: 2026-04-09
 
 ### Fixes

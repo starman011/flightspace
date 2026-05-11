@@ -947,6 +947,245 @@ function ISSStack({ issData, onISSLink, expanded }) {
   )
 }
 
+// ── Space Feed — vertical scrollable card feed ────────────────────────────
+function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink }) {
+  const [toast, setToast]   = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  const hasISS    = issData != null
+  const issLat    = issData?.lat
+  const issLon    = issData?.lon
+  const issAlt    = issData?.alt_km ?? 408
+  const issLatStr = issLat != null ? `${Math.abs(issLat).toFixed(2)}° ${issLat >= 0 ? 'N' : 'S'}` : '—'
+  const issLonStr = issLon != null ? `${Math.abs(issLon).toFixed(2)}° ${issLon >= 0 ? 'E' : 'W'}` : '—'
+  const region    = geoRegion(issLat, issLon)
+
+  const level      = kp == null ? null : kp >= 5 ? 'STORM' : kp >= 4 ? 'ACTIVE' : 'NOMINAL'
+  const solarColor = level === 'STORM' ? '#ff6b35' : level === 'ACTIVE' ? '#ffd700' : '#fbbf24'
+
+  const sh = showers[0]
+  const [heroNews, ...moreNews] = news.slice(0, 4)
+
+  const copyQuote = (q) => {
+    navigator.clipboard?.writeText(`"${q.q}" — ${q.a}`).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <div className={styles.feedScroll}>
+      {pinnedLaunch && <PinnedCountdown launch={pinnedLaunch} onUnpin={onUnpinLaunch} />}
+
+      {/* ── ISS Card ── */}
+      <div className={`${styles.feedCard} ${styles.feedCardBlue}`}>
+        <div className={styles.feedHead}>
+          <div className={styles.feedHeadLeft}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#38bdf8' }}>satellite_alt</span>
+            <span className={styles.feedLabel}>ISS Tracker</span>
+          </div>
+          {hasISS && <span className={`${styles.feedBadge} ${styles.feedBadgeLive}`}>LIVE</span>}
+        </div>
+        <div className={styles.feedISSMetrics}>
+          <div className={styles.feedMetric}>
+            <span className={styles.feedMetricNum}>27.6K</span>
+            <span className={styles.feedMetricUnit}>km/h</span>
+            <span className={styles.feedMetricLabel}>Velocity</span>
+          </div>
+          <div className={styles.feedMetric}>
+            <span className={styles.feedMetricNum}>{issAlt.toFixed(0)}</span>
+            <span className={styles.feedMetricUnit}>km</span>
+            <span className={styles.feedMetricLabel}>Altitude</span>
+          </div>
+          <div className={styles.feedMetric}>
+            <span className={styles.feedMetricNum}>{issData?.crew ?? '—'}</span>
+            <span className={styles.feedMetricUnit}>aboard</span>
+            <span className={styles.feedMetricLabel}>Crew</span>
+          </div>
+        </div>
+        <p className={styles.feedISSLocation}>
+          {hasISS ? `${issLatStr}, ${issLonStr} · ${region}` : 'Awaiting signal…'}
+        </p>
+        <button
+          className={styles.feedLinkBtn}
+          onClick={() => {
+            onISSLink?.selectISS()
+            onISSLink?.trackISS()
+            if (hasISS) {
+              onISSLink?.flyTo(issLat, issLon)
+              navigator.clipboard?.writeText(`${issLatStr}, ${issLonStr}`).catch(() => {})
+              setToast('Locked on ISS')
+              setTimeout(() => setToast(null), 2200)
+            }
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 11 }}>wifi_tethering</span>
+          Link to ISS
+        </button>
+        {toast && <p className={styles.feedToast}>{toast}</p>}
+      </div>
+
+      {/* ── Space News Card ── */}
+      {heroNews && (
+        <div className={`${styles.feedCard} ${styles.feedCardSteel}`}>
+          <div className={styles.feedHead}>
+            <div className={styles.feedHeadLeft}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#60a5fa' }}>article</span>
+              <span className={styles.feedLabel}>Space News</span>
+            </div>
+            <span className={styles.feedBadge}>{news.length} stories</span>
+          </div>
+          {heroNews.image_url && (
+            <div
+              className={styles.feedNewsHero}
+              style={{ backgroundImage: `url(${heroNews.image_url.replace(/^http:\/\//, 'https://')})` }}
+              onClick={() => heroNews.url && openTab(heroNews.url)}
+            />
+          )}
+          <div className={styles.feedNewsHeroBody} onClick={() => heroNews.url && openTab(heroNews.url)}>
+            <span className={styles.feedNewsSource}>{heroNews.news_site}</span>
+            <p className={styles.feedNewsTitle}>{heroNews.title}</p>
+            <p className={styles.feedNewsAge}>{timeAgo(heroNews.published_at)}</p>
+          </div>
+          {moreNews.map((item) => (
+            <div key={item.id}>
+              <div className={styles.feedNewsDivider} />
+              <div className={styles.feedNewsRow} onClick={() => item.url && openTab(item.url)}>
+                <p className={styles.feedNewsRowTitle}>{item.title}</p>
+                <p className={styles.feedNewsRowMeta}>{item.news_site} · {timeAgo(item.published_at)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Solar Activity Card ── */}
+      <div className={`${styles.feedCard} ${styles.feedCardAmber}`}>
+        <div className={styles.feedHead}>
+          <div className={styles.feedHeadLeft}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#fbbf24' }}>wb_sunny</span>
+            <span className={styles.feedLabel}>Solar Activity</span>
+          </div>
+          <span
+            className={styles.feedBadge}
+            style={level ? { color: solarColor, borderColor: `${solarColor}33`, background: `${solarColor}18` } : undefined}
+          >
+            {level ?? 'Loading'}
+          </span>
+        </div>
+        <div className={styles.feedSolarRow}>
+          <div>
+            <span className={styles.feedSolarKp} style={{ color: solarColor }}>
+              {kp != null ? kp.toFixed(1) : '—'}
+            </span>
+            <span className={styles.feedSolarKpLabel}>Kp Index</span>
+          </div>
+          {kpHistory.length > 0 && (
+            <div className={styles.feedKpMini}>
+              {kpHistory.slice(-16).map((r, i) => (
+                <div
+                  key={i}
+                  className={styles.feedKpBar}
+                  style={{
+                    height: `${Math.max(10, (r.kp / 9) * 100)}%`,
+                    background: r.kp >= 5 ? '#ff6b35' : r.kp >= 4 ? '#ffd700' : '#fbbf24',
+                    opacity: 0.5 + (i / 16) * 0.5,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        {kp != null && (
+          <p className={styles.feedSolarDesc}>
+            Aurora equatorward of {Math.max(30, 66.5 - kp * 2.5).toFixed(0)}° latitude
+          </p>
+        )}
+      </div>
+
+      {/* ── Meteor Showers Card ── */}
+      {sh && (
+        <div className={`${styles.feedCard} ${styles.feedCardViolet}`}>
+          <div className={styles.feedHead}>
+            <div className={styles.feedHeadLeft}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#a78bfa' }}>star_rate</span>
+              <span className={styles.feedLabel}>Meteor Showers</span>
+            </div>
+            <span className={styles.feedBadge} style={{ color: '#a78bfa', borderColor: '#a78bfa33', background: '#a78bfa18' }}>
+              {sh.daysAway === 0 ? 'Tonight' : `${sh.daysAway}d away`}
+            </span>
+          </div>
+          <p className={styles.feedMeteorName}>{sh.name}</p>
+          <p className={styles.feedMeteorSub}>Peak {fmtPeakNight(sh.date)} · {sh.zhr} ZHR · Moon {sh.illum}%</p>
+          <div className={styles.feedMeteorBar}>
+            <div className={styles.feedMeteorFill} style={{ width: `${Math.min(100, (sh.zhr / 150) * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* ── APOD Card ── */}
+      {apod && (
+        <div
+          className={`${styles.feedCard} ${styles.feedCardAPOD}`}
+          onClick={() => openTab(apod?.hdurl || apod?.url || 'https://apod.nasa.gov/')}
+        >
+          <div className={styles.feedHead}>
+            <div className={styles.feedHeadLeft}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#e2e8f0' }}>photo_camera</span>
+              <span className={styles.feedLabel}>Picture of the Day</span>
+            </div>
+            <span className="material-symbols-outlined" style={{ fontSize: 12, color: 'rgba(200,210,225,0.3)' }}>open_in_new</span>
+          </div>
+          {apod.url && <div className={styles.feedApodImg} style={{ backgroundImage: `url(${apod.url})` }} />}
+          <p className={styles.feedApodTitle}>{apod.title}</p>
+          {apod.copyright && <p className={styles.feedApodCredit}>© {apod.copyright.trim().replace(/\n/g, ' ')}</p>}
+        </div>
+      )}
+
+      {/* ── Night Sky Card ── */}
+      <div className={`${styles.feedCard} ${styles.feedCardIndigo}`}>
+        <div className={styles.feedHead}>
+          <div className={styles.feedHeadLeft}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#818cf8' }}>nights_stay</span>
+            <span className={styles.feedLabel}>Night Sky</span>
+          </div>
+          <span className={styles.feedBadge} style={{ color: '#818cf8', borderColor: '#818cf833', background: '#818cf818' }}>
+            {COMETS.length} comets
+          </span>
+        </div>
+        <div className={styles.feedPlanetsRow}>
+          {PLANETS.map(p => (
+            <div key={p.name} className={styles.feedPlanetCell}>
+              <img src={p.img} alt={p.name} className={styles.feedPlanetImg} />
+              <span className={styles.feedPlanetName}>{p.name}</span>
+              <span className={styles.feedPlanetMag} style={{ color: p.color }}>{p.mag > 0 ? '+' : ''}{p.mag.toFixed(1)}</span>
+            </div>
+          ))}
+        </div>
+        <p className={styles.feedCometNote}>
+          <span className="material-symbols-outlined" style={{ fontSize: 10, color: 'rgba(129,140,248,0.6)', marginRight: 4 }}>blur_circular</span>
+          {COMETS[0].name} · {COMETS[0].currentMag}
+        </p>
+      </div>
+
+      {/* ── Daily Quote Card ── */}
+      {quote && (
+        <div className={`${styles.feedCard} ${styles.feedCardQuote}`} onClick={() => copyQuote(quote)}>
+          <div className={styles.feedHead}>
+            <div className={styles.feedHeadLeft}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#fbbf24' }}>format_quote</span>
+              <span className={styles.feedLabel}>Daily Inspiration</span>
+            </div>
+            <span className={styles.feedBadge}>{copied ? 'Copied!' : 'Tap to copy'}</span>
+          </div>
+          <p className={styles.feedQuoteMark}>"</p>
+          <p className={styles.feedQuoteText}>{quote.q}</p>
+          <p className={styles.feedQuoteAuthor}>— {quote.a}{quote.t ? `, ${quote.t}` : ''}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Smart Stack container ──────────────────────────────────────────────────
 function SmartStack({ apod, kp, kpHistory, showers, news, loadMoreNews, hasMoreNews, fetchingNews, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, onPanelChange, expanded }) {
   const [active, setActive]   = useState(0)
@@ -1183,7 +1422,7 @@ export default function CommandCenterOverlay({
   liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle,
 }) {
   const isLive  = connectionStatus === 'connected'
-  const { news, loadMore: loadMoreNews, hasMore: hasMoreNews, fetching: fetchingNews } = useSpaceNews()
+  const { news } = useSpaceNews()
   const solarKp  = useSolarKp()
   const kpHistory = useSolarKpHistory()
   const apod     = useApod()
@@ -1273,7 +1512,8 @@ export default function CommandCenterOverlay({
     }
   }, [])
 
-  const expanded = sheetState === 'full' || desktopOpen === 'wide'
+  // expanded kept for potential future use
+  // const expanded = sheetState === 'full' || desktopOpen === 'wide'
 
 
   return (
@@ -1443,22 +1683,17 @@ export default function CommandCenterOverlay({
           <span className={styles.mobileSheetDividerLine} />
         </div>
 
-        <SmartStack
+        <SpaceFeed
           apod={apod}
           kp={solarKp}
           kpHistory={kpHistory}
           showers={showers}
           news={news}
-          loadMoreNews={loadMoreNews}
-          hasMoreNews={hasMoreNews}
-          fetchingNews={fetchingNews}
           quote={quote}
           pinnedLaunch={pinnedLaunch}
           onUnpinLaunch={onUnpinLaunch}
           issData={issData}
           onISSLink={onISSLink}
-          onPanelChange={() => {}}
-          expanded={expanded}
         />
       </div>
 
