@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import './TrueFocus.css';
 
@@ -17,51 +17,41 @@ const TrueFocus = ({
   const [lastActiveIndex, setLastActiveIndex] = useState(null);
   const containerRef = useRef(null);
   const wordRefs = useRef([]);
-  const indexRef = useRef(0);
+  const mountedRef = useRef(true);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [frameReady, setFrameReady] = useState(false);
-  const mountedRef = useRef(true);
-  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
-  const computeRect = useCallback((index) => {
-    if (!wordRefs.current[index] || !containerRef.current) return null;
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  // Auto-cycle — simple index increment, no rect work here
+  useEffect(() => {
+    if (manualMode) return;
+    const interval = setInterval(() => {
+      if (mountedRef.current) setCurrentIndex(prev => (prev + 1) % words.length);
+    }, (animationDuration + pauseBetweenAnimations) * 1000);
+    return () => clearInterval(interval);
+  }, [manualMode, animationDuration, pauseBetweenAnimations, words.length]);
+
+  // Rect computed here — useLayoutEffect runs sync before paint,
+  // so no layout reflow jank and no visible jump from stale position
+  useLayoutEffect(() => {
+    if (!wordRefs.current[currentIndex] || !containerRef.current) return;
     const parentRect = containerRef.current.getBoundingClientRect();
-    const activeRect = wordRefs.current[index].getBoundingClientRect();
-    return {
+    const activeRect = wordRefs.current[currentIndex].getBoundingClientRect();
+    setFocusRect({
       x: activeRect.left - parentRect.left,
       y: activeRect.top - parentRect.top,
       width: activeRect.width,
       height: activeRect.height,
-    };
-  }, []);
-
-  const goToIndex = useCallback((next) => {
-    if (!mountedRef.current) return;
-    const rect = computeRect(next);
-    if (rect) setFocusRect(rect);
-    indexRef.current = next;
-    setCurrentIndex(next);
-  }, [computeRect]);
-
-  // Initial rect — sync before first paint so frame appears at word 0, not 0,0
-  useLayoutEffect(() => {
-    const rect = computeRect(0);
-    if (rect) { setFocusRect(rect); setFrameReady(true); }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (manualMode) return;
-    const interval = setInterval(() => {
-      goToIndex((indexRef.current + 1) % words.length);
-    }, (animationDuration + pauseBetweenAnimations) * 1000);
-    return () => clearInterval(interval);
-  }, [manualMode, animationDuration, pauseBetweenAnimations, words.length, goToIndex]);
+    });
+    if (!frameReady) setFrameReady(true);
+  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMouseEnter = index => {
-    if (manualMode) { setLastActiveIndex(index); goToIndex(index); }
+    if (manualMode) { setLastActiveIndex(index); setCurrentIndex(index); }
   };
   const handleMouseLeave = () => {
-    if (manualMode && lastActiveIndex !== null) goToIndex(lastActiveIndex);
+    if (manualMode && lastActiveIndex !== null) setCurrentIndex(lastActiveIndex);
   };
 
   return (
@@ -77,7 +67,7 @@ const TrueFocus = ({
               filter: isActive ? 'blur(0px)' : `blur(${blurAmount}px)`,
               '--border-color': borderColor,
               '--glow-color': glowColor,
-              transition: `filter ${animationDuration}s ease`,
+              transition: `filter ${animationDuration}s ease-out`,
             }}
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
@@ -87,7 +77,7 @@ const TrueFocus = ({
         );
       })}
 
-      {/* width/height in style (not animate) — corners never collapse to a square */}
+      {/* tween + easeOut matches the CSS blur timing exactly — no spring overshoot */}
       <motion.div
         className="focus-frame"
         animate={{
@@ -95,7 +85,11 @@ const TrueFocus = ({
           y: focusRect.y,
           opacity: frameReady ? 1 : 0,
         }}
-        transition={{ duration: animationDuration }}
+        transition={{
+          x:       { type: 'tween', duration: animationDuration, ease: 'easeOut' },
+          y:       { type: 'tween', duration: animationDuration, ease: 'easeOut' },
+          opacity: { type: 'tween', duration: animationDuration * 0.5, ease: 'easeOut' },
+        }}
         style={{
           width: focusRect.width,
           height: focusRect.height,
