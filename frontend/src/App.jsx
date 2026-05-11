@@ -38,6 +38,7 @@ import MoonPanel from './components/MoonPanel/MoonPanel'
 import WaitlistPopup from './components/WaitlistPopup/WaitlistPopup'
 import TourGuide from './components/TourGuide/TourGuide'
 import BetaWelcome from './components/BetaWelcome/BetaWelcome'
+import LoadingScreen from './components/LoadingScreen/LoadingScreen'
 import AuthModal from './components/Auth/AuthModal'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useHaptics } from './hooks/useHaptics'
@@ -104,6 +105,7 @@ function PadFocusBadge({ launch, onExit }) {
 
 export default function App() {
   const { sessionToken, isAuthenticated, user, sessionError, login, register, logout, googleLogin } = useSession()
+  const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
@@ -347,6 +349,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         }
       `}</style>
 
+      {showLoading && <LoadingScreen duration={10000} onDone={() => setShowLoading(false)} />}
       <BetaWelcome />
 
       {init.notFound && (
