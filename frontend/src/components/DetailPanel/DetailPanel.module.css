@@ -33,6 +33,12 @@
   background: rgba(200, 210, 225, 0.2);
   margin: 10px auto 6px;
   flex-shrink: 0;
+  animation: handlePulse 1.8s 1.4s ease-in-out 2;
+}
+
+@keyframes handlePulse {
+  0%, 100% { background: rgba(200, 210, 225, 0.2); transform: scaleX(1); }
+  40%      { background: rgba(200, 210, 225, 0.55); transform: scaleX(1.15); }
 }
 
 /* ── Close ───────────────────────────────────────────────────────────────── */
@@ -615,12 +621,19 @@
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.7);
     -webkit-overflow-scrolling: touch;
     transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+               nudgeHint 1.4s 1.2s ease-in-out 2;
   }
 
   @keyframes sheetUp {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  @keyframes nudgeHint {
+    0%, 100% { transform: translateY(0); }
+    35%      { transform: translateY(-10px); }
+    65%      { transform: translateY(-4px); }
   }
 
   /* ── Mini collapsed state ── */

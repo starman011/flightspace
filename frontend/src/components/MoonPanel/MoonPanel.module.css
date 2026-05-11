@@ -394,6 +394,12 @@
   border-radius: 2px;
   background: rgba(200, 210, 225, 0.15);
   margin: 10px auto 4px;
+  animation: handlePulse 1.8s 1.4s ease-in-out 2;
+}
+
+@keyframes handlePulse {
+  0%, 100% { background: rgba(200, 210, 225, 0.15); transform: scaleX(1); }
+  40%      { background: rgba(200, 210, 225, 0.5); transform: scaleX(1.15); }
 }
 .miniStrip { display: none; }
 
@@ -412,12 +418,19 @@
     max-height: 38dvh;
     padding: 0 18px 22px;
     transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+               nudgeHint 1.4s 1.2s ease-in-out 2;
   }
 
   @keyframes sheetUp {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  @keyframes nudgeHint {
+    0%, 100% { transform: translateY(0); }
+    35%      { transform: translateY(-10px); }
+    65%      { transform: translateY(-4px); }
   }
 
   /* ── Mini collapsed dock ── */
@@ -426,12 +439,7 @@
     overflow: hidden;
     padding-bottom: 0;
     animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-               nudgeHint 2s 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2;
-  }
-
-  @keyframes nudgeHint {
-    0%, 100% { transform: translateY(0); }
-    40%      { transform: translateY(-8px); }
+               nudgeHint 1.4s 1.2s ease-in-out 2;
   }
 
   /* ── Drag zone visible on mobile ── */

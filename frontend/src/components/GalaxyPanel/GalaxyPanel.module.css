@@ -260,11 +260,17 @@
     border-top: 1px solid rgba(200, 210, 225, 0.1);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
-    animation-name: slideUp;
+    animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+               nudgeHint 1.4s 1s ease-in-out 2;
   }
 
   @keyframes slideUp {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
+  }
+  @keyframes nudgeHint {
+    0%, 100% { transform: translateY(0); }
+    35%      { transform: translateY(-10px); }
+    65%      { transform: translateY(-4px); }
   }
 }
