@@ -154,19 +154,21 @@
 }
 
 .focusLabel {
-  font-family: var(--font-mono);
+  font-family: system-ui, -apple-system, sans-serif;
   font-size: 10px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--on-surface-variant);
+  letter-spacing: 0.08em;
+  color: rgba(56, 189, 248, 0.7);
   margin-bottom: var(--space-1);
 }
 
 .focusTitle {
-  font-family: var(--font-mono);
-  font-size: var(--text-headline);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--on-surface);
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-2);
 }
 
@@ -202,7 +204,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  filter: drop-shadow(0 0 6px rgba(178, 255, 26, 0.7));
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.65));
 }
 
 .issSolarL,
@@ -210,7 +212,7 @@
   display: block;
   width: 14px;
   height: 7px;
-  background: rgba(178, 255, 26, 0.9);
+  background: rgba(56, 189, 248, 0.9);
   border-radius: 1px;
 }
 
@@ -218,9 +220,9 @@
   display: block;
   width: 10px;
   height: 10px;
-  background: rgba(195, 245, 255, 0.95);
+  background: rgba(226, 232, 240, 0.95);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(178, 255, 26, 0.8);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
 }
 
 /* Pulsing live dot on icon */
@@ -696,9 +698,9 @@
 
 /* Kp + description — one compact line, steps back */
 .solarKp {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(195, 245, 255, 0.5);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  color: rgba(200, 210, 225, 0.65);
   line-height: 1.5;
 }
 
@@ -804,18 +806,19 @@
 
 /* Upcoming — zero decoration; pure type */
 .meteorsUpcoming {
-  background: rgba(4, 7, 14, 0.7);
+  background: rgba(167, 139, 250, 0.04);
+  border: 1px solid rgba(167, 139, 250, 0.1);
   border-radius: 12px;
   padding: 8px 12px 6px;
   flex-shrink: 0;
 }
 
 .meteorsUpcomingLabel {
-  font-family: var(--font-mono);
-  font-size: 7px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: rgba(178, 255, 26, 0.38);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(167, 139, 250, 0.65);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -834,8 +837,8 @@
   cursor: pointer;
   transition: background 0.12s;
 }
-.meteorsUpcomingRow:hover   { background: rgba(178, 255, 26, 0.05); }
-.meteorsUpcomingActive      { background: rgba(178, 255, 26, 0.08) !important; }
+.meteorsUpcomingRow:hover   { background: rgba(167, 139, 250, 0.07); }
+.meteorsUpcomingActive      { background: rgba(167, 139, 250, 0.12) !important; }
 
 .meteorsUpcomingName {
   font-family: var(--font-mono);
@@ -846,9 +849,9 @@
 }
 
 .meteorsUpcomingDate {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: rgba(195, 245, 255, 0.3);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  color: rgba(200, 210, 225, 0.4);
 }
 
 /* ── News stack (Jobs law: content > chrome, hierarchy, breathing room) ── */
@@ -911,12 +914,12 @@
 
 /* Source label — quiet, upper-case, mono */
 .newsHeroSource {
-  font-family: var(--font-mono);
-  font-size: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: rgba(178, 255, 26, 0.6);
+  letter-spacing: 0.1em;
+  color: rgba(96, 165, 250, 0.9);
 }
 
 /* Headline — the dominant voice; generous size, tight tracking */
@@ -1010,9 +1013,9 @@
 
 .quoteStack {
   flex: 1;
-  background: rgba(5, 8, 18, 0.88);
-  border: 1px solid rgba(59, 73, 76, 0.2);
-  border-left: 3px solid rgba(178, 255, 26, 0.4);
+  background: rgba(251, 191, 36, 0.04);
+  border: 1px solid rgba(251, 191, 36, 0.12);
+  border-left: 3px solid rgba(251, 191, 36, 0.5);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -1020,33 +1023,37 @@
   gap: 8px;
   justify-content: center;
   cursor: pointer;
-  transition: border-left-color 0.2s;
+  transition: border-left-color 0.2s, background 0.2s;
   min-height: 160px;
 }
-.quoteStack:hover { border-left-color: rgba(178, 255, 26, 0.7); }
+.quoteStack:hover {
+  border-left-color: rgba(251, 191, 36, 0.8);
+  background: rgba(251, 191, 36, 0.07);
+}
 
 .quoteStackMark {
   font-family: Georgia, serif;
   font-size: 3.5rem;
-  color: rgba(178, 255, 26, 0.12);
+  color: rgba(251, 191, 36, 0.18);
   line-height: 0.8;
   margin-top: -4px;
   user-select: none;
 }
 
 .quoteStackText {
-  font-family: var(--font-body);
+  font-family: system-ui, -apple-system, sans-serif;
   font-size: 13px;
   font-style: italic;
-  color: rgba(195, 245, 255, 0.85);
-  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.68;
 }
 
 .quoteStackAuthor {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(178, 255, 26, 0.55);
-  letter-spacing: 0.05em;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(251, 191, 36, 0.7);
+  letter-spacing: 0.01em;
 }
 
 /* ── ISS Stack panel ─────────────────────────────────────────────────────── */
@@ -1063,10 +1070,10 @@
 .issStackWrap::-webkit-scrollbar { display: none; }
 
 .issRegionNote {
-  font-family: var(--font-body);
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: rgba(195, 245, 255, 0.45);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(200, 210, 225, 0.65);
 }
 
 /* ── Night Sky stack ─────────────────────────────────────────────────────── */
@@ -2274,34 +2281,39 @@
 .issOrbitalGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
 .issOrbitalCell {
-  background: rgba(178, 255, 26, 0.03);
-  border: 1px solid rgba(178, 255, 26, 0.08);
-  border-radius: 8px;
-  padding: 8px 10px;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.issOrbitalCell:hover {
+  background: rgba(56, 189, 248, 0.09);
+  border-color: rgba(56, 189, 248, 0.25);
 }
 
 .issOrbitalLabel {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(132, 147, 150, 0.6);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(200, 210, 225, 0.5);
+  letter-spacing: 0.01em;
 }
 
 .issOrbitalValue {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--primary-container);
-  letter-spacing: 0.01em;
+  color: #38bdf8;
+  letter-spacing: -0.01em;
 }
 
 /* ── News expanded feed ──────────────────────────────────────────────────── */
@@ -2543,21 +2555,24 @@
 .quotesExpanded::-webkit-scrollbar { display: none; }
 
 .quoteExpandedCard {
-  background: rgba(5, 8, 18, 0.75);
-  border: 1px solid rgba(59, 73, 76, 0.2);
-  border-left: 3px solid rgba(178, 255, 26, 0.3);
+  background: rgba(251, 191, 36, 0.03);
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  border-left: 3px solid rgba(251, 191, 36, 0.35);
   border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: border-left-color 0.15s;
+  transition: border-left-color 0.15s, background 0.15s;
 }
-.quoteExpandedCard:active { border-left-color: rgba(178, 255, 26, 0.7); }
+.quoteExpandedCard:active {
+  border-left-color: rgba(251, 191, 36, 0.75);
+  background: rgba(251, 191, 36, 0.07);
+}
 
 .quoteExpandedMark {
   font-family: Georgia, serif;
   font-size: 2.5rem;
-  color: rgba(178, 255, 26, 0.1);
+  color: rgba(251, 191, 36, 0.14);
   line-height: 0.8;
   user-select: none;
 }

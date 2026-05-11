@@ -385,13 +385,13 @@ const PLANETS = [
 
 // ── Smart Stack definitions ────────────────────────────────────────────────
 const STACK_DEFS = [
-  { id: 'iss',      label: 'ISS Tracker',       icon: 'satellite_alt' },
-  { id: 'apod',     label: 'Image of the Day',  icon: 'photo_camera'  },
-  { id: 'solar',    label: 'Solar Activity',    icon: 'wb_sunny'      },
-  { id: 'meteors',  label: 'Meteor Showers',    icon: 'star_rate'     },
-  { id: 'news',     label: 'Space News',        icon: 'article'       },
-  { id: 'nightsky', label: 'Night Sky',         icon: 'nights_stay'   },
-  { id: 'quote',    label: 'Daily Inspiration', icon: 'format_quote'  },
+  { id: 'iss',      label: 'ISS Tracker',       icon: 'satellite_alt', color: '#38bdf8' },
+  { id: 'apod',     label: 'Astronomy Picture', icon: 'photo_camera',  color: '#e2e8f0' },
+  { id: 'solar',    label: 'Solar Activity',    icon: 'wb_sunny',      color: '#fbbf24' },
+  { id: 'meteors',  label: 'Meteor Showers',    icon: 'star_rate',     color: '#a78bfa' },
+  { id: 'news',     label: 'Space News',        icon: 'article',       color: '#60a5fa' },
+  { id: 'nightsky', label: 'Night Sky',         icon: 'nights_stay',   color: '#818cf8' },
+  { id: 'quote',    label: 'Daily Quote',       icon: 'format_quote',  color: '#fbbf24' },
 ]
 
 // ── Stack slide components ─────────────────────────────────────────────────
@@ -1033,7 +1033,7 @@ function SmartStack({ apod, kp, kpHistory, showers, news, loadMoreNews, hasMoreN
           <span className="material-symbols-outlined" style={{ fontSize: 14 }}>chevron_left</span>
         </button>
         <span className={styles.stackLabel}>
-          <span className="material-symbols-outlined" style={{ fontSize: 11 }}>{def.icon}</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 13, color: def.color, filter: `drop-shadow(0 0 6px ${def.color}55)` }}>{def.icon}</span>
           {def.label}
         </span>
         <button className={styles.stackNavBtn} onClick={next} aria-label="Next">
