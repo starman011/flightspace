@@ -19,7 +19,7 @@ const FACTS = [
   'Space begins 100 km above Earth — the Kármán line.',
 ];
 
-const LoadingScreen = ({ duration = 10000, onDone }) => {
+const LoadingScreen = ({ duration = 5000, onDone }) => {
   const [fading, setFading] = useState(false);
 
   const fact = useMemo(
