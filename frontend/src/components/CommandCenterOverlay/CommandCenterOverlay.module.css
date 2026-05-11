@@ -328,26 +328,53 @@
 
 .stream {
   position: absolute;
-  right: 0;
-  top: 68px;
-  bottom: 8px;
-  width: 368px;
-  background: rgba(12, 16, 22, 0.82);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(200, 210, 225, 0.1);
-  border-right: none;
-  border-radius: 20px 0 0 20px;
-  padding: var(--space-5);
-  padding-left: calc(var(--space-5) + 40px);
+  right: 12px;
+  top: 76px;
+  bottom: 12px;
+  width: 360px;
+
+  /* Match pill glass exactly */
+  background: rgba(8, 12, 18, 0.94);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+
+  /* Full floating card — no flush edges */
+  border: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 20px;
+
+  padding: 16px;
+  padding-left: calc(16px + 40px); /* preserve desktopTab space */
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
   pointer-events: auto;
   min-height: 0;
   overflow: hidden;
-  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+
+  /* Pill shadow system */
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  /* Spring transition — matches pill open/close */
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  animation: feedSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes feedSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+    filter: blur(6px);
+  }
+  50% { filter: blur(0); }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .streamHeader {
@@ -387,31 +414,38 @@
 .stackLabel {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(195, 245, 255, 0.55);
+  gap: 6px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(220, 225, 235, 0.72);
 }
 
 .stackNavBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  background: rgba(23, 28, 34, 0.7);
-  border: 1px solid rgba(200, 210, 225, 0.15);
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(200, 210, 225, 0.12);
+  border-radius: 50%;
   color: rgba(200, 210, 225, 0.5);
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  backdrop-filter: blur(8px);
+  transition: color 0.18s, border-color 0.18s, background 0.18s,
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .stackNavBtn:hover {
-  color: rgba(200, 210, 225, 0.9);
-  border-color: rgba(200, 210, 225, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(200, 210, 225, 0.28);
+  background: rgba(255, 255, 255, 0.09);
+  transform: scale(1.08);
+}
+.stackNavBtn:active {
+  transform: scale(0.93);
+  transition-duration: 0.08s;
 }
 
 /* Swipe wrapper — clips horizontal drag translate, fills remaining height */
@@ -437,8 +471,9 @@
 .stackSlide::-webkit-scrollbar { display: none; }
 
 @keyframes stackFadeIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.985); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);     }
+  from { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(3px); }
+  60%  { filter: blur(0); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
 /* Dot indicators */
@@ -455,17 +490,23 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(195, 245, 255, 0.18);
+  background: rgba(200, 210, 225, 0.2);
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: background 0.2s, width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s;
+}
+.stackDot:hover {
+  background: rgba(200, 210, 225, 0.4);
 }
 .stackDotActive {
-  width: 16px;
+  width: 20px;
   border-radius: 3px;
-  background: var(--primary);
-  box-shadow: 0 0 8px rgba(178, 255, 26, 0.45);
+  background: #b2ff1a;
+  box-shadow: 0 0 10px rgba(178, 255, 26, 0.55), 0 0 24px rgba(178, 255, 26, 0.15);
 }
 
 /* Shared chip label used across all stacks */
@@ -473,15 +514,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(178, 255, 26, 0.7);
-  background: rgba(0, 0, 20, 0.6);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(200, 210, 225, 0.55);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(8px);
-  padding: 3px 7px;
-  border-radius: 4px;
+  border: 1px solid rgba(200, 210, 225, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
   width: fit-content;
 }
 
@@ -1412,8 +1454,9 @@
   top: 0;
   bottom: 0;
   width: 40px;
-  background: rgba(8, 14, 22, 0.95);
-  border-right: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+  border-right: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 20px 0 0 20px;
   border-radius: 16px 0 0 16px;
   cursor: pointer;
   z-index: 2;
@@ -1422,7 +1465,7 @@
 }
 
 .desktopTab:hover {
-  background: rgba(200, 210, 225, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .desktopTabLabel {
@@ -1433,7 +1476,7 @@
   font-size: 8px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: rgba(195, 245, 255, 0.3);
+  color: rgba(200, 210, 225, 0.3);
   white-space: nowrap;
   user-select: none;
 }
@@ -1452,12 +1495,12 @@
 .desktopHeaderTitle {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(200, 210, 225, 0.65);
+  gap: 6px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .desktopHeaderBtn {
@@ -1562,12 +1605,14 @@
 
 /* Only apply desktop stream transforms on non-mobile viewports */
 @media (min-width: 768px) {
+  /* Slide mostly offscreen: keep 40px tab visible, accounting for right:12px offset */
   .streamDesktopCollapsed {
-    transform: translateX(calc(100% - 40px));
+    transform: translateX(calc(100% - 28px));
+    box-shadow: none;
   }
 
   .streamDesktopWide {
-    width: 420px;
+    width: 440px;
   }
 }
 

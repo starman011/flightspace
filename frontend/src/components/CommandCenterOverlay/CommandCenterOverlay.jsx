@@ -1379,6 +1379,7 @@ export default function CommandCenterOverlay({
         {/* Desktop: panel header with expand/collapse controls */}
         <div className={styles.desktopHeader}>
           <span className={styles.desktopHeaderTitle}>
+            <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} style={{ position: 'static', transform: 'none', bottom: 'auto' }} />
             Space Feed
           </span>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
