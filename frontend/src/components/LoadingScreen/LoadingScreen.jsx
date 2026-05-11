@@ -5,16 +5,19 @@ import styles from './LoadingScreen.module.css';
 
 const LoadingScreen = ({ duration = 10000, onDone }) => {
   const [fading, setFading] = useState(false);
+  // Defer WebGL mount: let dark bg + text paint first, then compile shaders
+  const [pillarMounted, setPillarMounted] = useState(false);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setFading(true), duration - 800);
-    const doneTimer = setTimeout(() => onDone?.(), duration);
-    return () => { clearTimeout(fadeTimer); clearTimeout(doneTimer); };
+    const pillarTimer = setTimeout(() => setPillarMounted(true), 80);
+    const fadeTimer   = setTimeout(() => setFading(true), duration - 800);
+    const doneTimer   = setTimeout(() => onDone?.(), duration);
+    return () => { clearTimeout(pillarTimer); clearTimeout(fadeTimer); clearTimeout(doneTimer); };
   }, [duration, onDone]);
 
   return (
     <div className={`${styles.overlay}${fading ? ` ${styles.fading}` : ''}`}>
-      <div className={styles.pillarWrap}>
+      {pillarMounted && <div className={styles.pillarWrap}>
         <LightPillar
           topColor="#5227FF"
           bottomColor="#FF9FFC"
@@ -29,7 +32,7 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
           mixBlendMode="screen"
           quality="high"
         />
-      </div>
+      </div>}
 
       <div className={styles.textWrap}>
         <TrueFocus

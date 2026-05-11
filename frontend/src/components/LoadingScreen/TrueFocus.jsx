@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import './TrueFocus.css';
 
@@ -18,6 +18,7 @@ const TrueFocus = ({
   const containerRef = useRef(null);
   const wordRefs = useRef([]);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [frameReady, setFrameReady] = useState(false);
 
   useEffect(() => {
     if (manualMode) return;
@@ -27,7 +28,8 @@ const TrueFocus = ({
     return () => clearInterval(interval);
   }, [manualMode, animationDuration, pauseBetweenAnimations, words.length]);
 
-  useEffect(() => {
+  // useLayoutEffect: runs sync before paint — no jump from 0,0 to word position
+  useLayoutEffect(() => {
     if (currentIndex === null || currentIndex === -1) return;
     if (!wordRefs.current[currentIndex] || !containerRef.current) return;
     const parentRect = containerRef.current.getBoundingClientRect();
@@ -38,6 +40,7 @@ const TrueFocus = ({
       width: activeRect.width,
       height: activeRect.height,
     });
+    if (!frameReady) setFrameReady(true);
   }, [currentIndex, words.length]);
 
   const handleMouseEnter = index => {
@@ -77,7 +80,7 @@ const TrueFocus = ({
           y: focusRect.y,
           width: focusRect.width,
           height: focusRect.height,
-          opacity: currentIndex >= 0 ? 1 : 0,
+          opacity: frameReady ? 1 : 0,
         }}
         transition={{ duration: animationDuration }}
         style={{ '--border-color': borderColor, '--glow-color': glowColor }}
