@@ -231,10 +231,11 @@ func (p *ISSPoller) isVideoLive(ctx context.Context, videoID string) bool {
 	lower := strings.ToLower(string(body))
 
 	// YouTube sets these in ytInitialData / ytInitialPlayerResponse when live
-	live := strings.Contains(lower, `"islive":true`) ||
+	live := (strings.Contains(lower, `"islive":true`) ||
 		strings.Contains(lower, `"islivenow":true`) ||
-		strings.Contains(lower, `"livebadgerenderer"`) ||
-		strings.Contains(lower, `"live_stream_offline"`) == false && strings.Contains(lower, `"badgestyle":"live"`)
+		strings.Contains(lower, `"livebadgerenderer"`)) &&
+		!strings.Contains(lower, `"live_stream_offline"`) &&
+		!strings.Contains(lower, `"playabilityStatus":{"status":"live_stream_not_live"`)
 
 	log.Printf(`{"level":"debug","service":"iss_poller","msg":"liveness check","video_id":%q,"live":%v}`, videoID, live)
 	return live
@@ -293,7 +294,7 @@ func (p *ISSPoller) GetStream(w http.ResponseWriter, r *http.Request) {
 		// No stream found — return fallback
 		fallback, _ := json.Marshal(map[string]string{
 			"video_id":  "",
-			"embed_url": "https://video.ibm.com/embed/9408562?autoplay=true&controls=true&showtitle=false",
+			"embed_url": "https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
 			"source":    "fallback",
 		})
 		w.Header().Set("Content-Type", "application/json")

@@ -72,7 +72,8 @@ function formatAge(timestamp) {
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
-const ISS_STREAM_FALLBACK = 'https://www.youtube.com/embed/sWasdbDVNvc?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
+// NASA TV official channel live embed — always-on, no scraping needed
+const ISS_STREAM_FALLBACK = 'https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
 
 function ISSStream() {
   const [src, setSrc] = useState(null)
