@@ -73,25 +73,53 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
 // NASA TV official channel live embed — always-on, no scraping needed
-const ISS_STREAM_FALLBACK = 'https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0'
+const NASA_WATCH_URL = 'https://www.youtube.com/@NASATVNews/live'
 
 function ISSStream() {
   const [src, setSrc] = useState(null)
+  const [embedFailed, setEmbedFailed] = useState(false)
+
   useEffect(() => {
     fetch(`${API}/api/v1/iss/stream`)
       .then(r => r.json())
-      .then(d => {
-        // Only use backend stream if it found a real video (not IBM fallback)
-        if (d.video_id) setSrc(d.embed_url)
-        else setSrc(ISS_STREAM_FALLBACK)
-      })
-      .catch(() => setSrc(ISS_STREAM_FALLBACK))
+      .then(d => { if (d.video_id) setSrc(d.embed_url) })
+      .catch(() => {})
   }, [])
-  if (!src) return null
+
+  // YouTube sends postMessage errors when playback fails
+  useEffect(() => {
+    if (!src) return
+    const handler = e => {
+      if (e.origin !== 'https://www.youtube.com') return
+      try {
+        const data = JSON.parse(e.data)
+        if (data.event === 'onError' || data.event === 'infoDelivery') {
+          if (data.info?.playerState === -1 || data.info?.error) setEmbedFailed(true)
+        }
+      } catch {}
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [src])
+
+  if (embedFailed || !src) {
+    return (
+      <div className={styles.issStreamLink}>
+        <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#3A9AFF' }}>live_tv</span>
+        <div>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(200,210,225,0.6)' }}>NASA TV is broadcasting live</p>
+          <a href={NASA_WATCH_URL} target="_blank" rel="noopener noreferrer" className={styles.issWatchBtn}>
+            Watch on YouTube →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.issStream}>
       <iframe
-        src={src}
+        src={src + '&enablejsapi=1'}
         className={styles.issIframe}
         allow="autoplay; encrypted-media"
         allowFullScreen
@@ -99,7 +127,7 @@ function ISSStream() {
       />
       <div className={styles.streamBadge}>
         <span className={styles.liveDot} />
-        LIVE · NASA ISS
+        LIVE · NASA TV
       </div>
     </div>
   )

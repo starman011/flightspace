@@ -833,6 +833,26 @@
   50% { opacity: 0.3; }
 }
 
+.issStreamLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(58,154,255,0.06);
+  border-bottom: 1px solid rgba(58,154,255,0.12);
+}
+
+.issWatchBtn {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #3A9AFF;
+  text-decoration: none;
+}
+.issWatchBtn:hover { text-decoration: underline; }
+
 /* ── ISS Crew ── */
 .issCrew {
   padding: 10px 16px;
