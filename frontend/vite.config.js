@@ -23,7 +23,7 @@ export default defineConfig({
         // so browsers can cache them independently between deploys
         manualChunks(id) {
           if (id.includes('node_modules/three'))       return 'three'
-          if (id.includes('node_modules/react'))       return 'react'
+          if (id.includes('node_modules/react') || id.includes('node_modules/motion')) return 'react'
           if (id.includes('node_modules/'))            return 'vendor'
           // Split Globe 3D scenes into cacheable chunk — keeps main bundle smaller
           if (id.includes('/Globe/') && !id.endsWith('.css'))  return 'globe'
