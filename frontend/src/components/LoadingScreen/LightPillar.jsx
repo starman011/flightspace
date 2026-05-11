@@ -39,8 +39,9 @@ const LightPillar = ({
     if (!containerRef.current || !webGLSupported) return;
 
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    // clientHeight unreliable on mobile before 100dvh resolves — use window dimensions
+    const width  = window.innerWidth;
+    const height = window.innerHeight;
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
@@ -250,8 +251,8 @@ const LightPillar = ({
       clearTimeout(resizeTimeout);
       resizeTimeout = window.setTimeout(() => {
         if (!rendererRef.current || !materialRef.current || !containerRef.current) return;
-        const w = containerRef.current.clientWidth;
-        const h = containerRef.current.clientHeight;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
         rendererRef.current.setSize(w, h);
         materialRef.current.uniforms.uResolution.value.set(w, h);
       }, 150);
