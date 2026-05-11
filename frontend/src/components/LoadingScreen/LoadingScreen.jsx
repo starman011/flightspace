@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import LightPillar from './LightPillar';
-import TrueFocus from './TrueFocus';
 import styles from './LoadingScreen.module.css';
 
 const FACTS = [
@@ -37,33 +35,13 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
 
   return (
     <div className={`${styles.overlay}${fading ? ` ${styles.fading}` : ''}`}>
-      <div className={styles.pillarWrap}>
-        <LightPillar
-          topColor="#5227FF"
-          bottomColor="#FF9FFC"
-          intensity={1}
-          rotationSpeed={0.3}
-          glowAmount={0.002}
-          pillarWidth={3}
-          pillarHeight={0.4}
-          noiseIntensity={0.5}
-          pillarRotation={25}
-          interactive={false}
-          mixBlendMode="screen"
-          quality="high"
-        />
-      </div>
-
-      <div className={styles.textWrap}>
-        <TrueFocus
-          sentence="Object Tracer"
-          manualMode={false}
-          blurAmount={5}
-          borderColor="#84CC16"
-          animationDuration={0.5}
-          pauseBetweenAnimations={1}
-        />
-        <span className={styles.subtitle}>{fact}</span>
+      <div className={styles.center}>
+        <div className={styles.logoWrap}>
+          <div className={styles.ring} />
+          <div className={styles.dot} />
+        </div>
+        <p className={styles.appName}>Object Tracer</p>
+        <p className={styles.fact}>{fact}</p>
       </div>
     </div>
   );
