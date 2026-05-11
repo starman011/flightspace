@@ -948,9 +948,12 @@ function ISSStack({ issData, onISSLink, expanded }) {
 }
 
 // ── Space Feed — vertical scrollable card feed ────────────────────────────
-function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink }) {
-  const [toast, setToast]   = useState(null)
-  const [copied, setCopied] = useState(false)
+
+// ── Space Feed — vertical scrollable card feed ────────────────────────────
+function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, trackedFlights = [] }) {
+  const [toast, setToast]       = useState(null)
+  const [copied, setCopied]     = useState(false)
+  const [expanded, setExpanded] = useState(null) // null | 'iss'|'solar'|'news'|'meteors'|'apod'|'nightsky'|'quote'|'flights'
 
   const hasISS    = issData != null
   const issLat    = issData?.lat
@@ -972,18 +975,274 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
     setTimeout(() => setCopied(false), 1800)
   }
 
+  // ── Expanded detail panel — fills entire feed area ───────────────────────
+  if (expanded) {
+    return (
+      <div className={styles.feedExpanded}>
+        <button className={styles.feedExpandBack} onClick={() => setExpanded(null)}>
+          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>arrow_back_ios</span>
+          Back
+        </button>
+
+        <div className={styles.feedExpandScroll}>
+
+          {/* ISS detail */}
+          {expanded === 'iss' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#3A9AFF' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>satellite_alt</span>
+              International Space Station
+            </p>
+            <div className={styles.feedISSMetrics} style={{ marginBottom: 12 }}>
+              {[
+                { num: issLatStr,          unit: '',    label: 'Latitude'  },
+                { num: issLonStr,          unit: '',    label: 'Longitude' },
+                { num: issAlt.toFixed(0),  unit: 'km',  label: 'Altitude'  },
+                { num: '27.6K',            unit: 'km/h',label: 'Velocity'  },
+              ].map(c => (
+                <div key={c.label} className={styles.feedMetric}>
+                  <span className={styles.feedMetricNum} style={{ color: '#3A9AFF', fontSize: 15 }}>{c.num}</span>
+                  {c.unit && <span className={styles.feedMetricUnit}>{c.unit}</span>}
+                  <span className={styles.feedMetricLabel}>{c.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className={styles.feedISSLocation} style={{ marginBottom: 14 }}>
+              {hasISS ? `Over ${region} · Orbiting at 27,600 km/h` : 'Awaiting signal…'}
+            </p>
+            <p className={styles.feedExpandSectionLabel}>Orbital Parameters</p>
+            <div className={styles.feedOrbitalGrid}>
+              {ISS_ORBITAL.map(p => (
+                <div key={p.label} className={styles.feedOrbitalCell}>
+                  <span className={styles.feedOrbitalLabel}>{p.label}</span>
+                  <span className={styles.feedOrbitalValue}>{p.value}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              className={styles.feedLinkBtn}
+              style={{ marginTop: 14 }}
+              onClick={() => {
+                onISSLink?.selectISS(); onISSLink?.trackISS()
+                if (hasISS) { onISSLink?.flyTo(issLat, issLon); setToast('Locked on ISS'); setTimeout(() => setToast(null), 2200) }
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>wifi_tethering</span>
+              Link to ISS
+            </button>
+            {toast && <p className={styles.feedToast}>{toast}</p>}
+            <button className={styles.feedOutLink} onClick={() => openTab('https://spotthestation.nasa.gov/')}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>open_in_new</span>
+              Spot the Station · NASA
+            </button>
+          </>}
+
+          {/* Solar detail */}
+          {expanded === 'solar' && <>
+            <p className={styles.feedExpandTitle} style={{ color: solarColor }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>wb_sunny</span>
+              Solar Activity
+            </p>
+            <div className={styles.feedSolarRow} style={{ marginBottom: 14 }}>
+              <div>
+                <span className={styles.feedSolarKp} style={{ color: solarColor, fontSize: 48 }}>
+                  {kp != null ? kp.toFixed(1) : '—'}
+                </span>
+                <span className={styles.feedSolarKpLabel}>Planetary Kp Index</span>
+              </div>
+              {kpHistory.length > 0 && (
+                <div className={styles.feedKpMini} style={{ height: 56 }}>
+                  {kpHistory.map((r, i) => (
+                    <div key={i} className={styles.feedKpBar} style={{
+                      height: `${Math.max(10, (r.kp / 9) * 100)}%`,
+                      background: r.kp >= 5 ? '#ff6b35' : r.kp >= 4 ? '#ffd700' : '#fbbf24',
+                      opacity: 0.4 + (i / kpHistory.length) * 0.6,
+                    }} />
+                  ))}
+                </div>
+              )}
+            </div>
+            {kp != null && (
+              <div className={styles.feedExpandInfoBox} style={{ borderColor: `${solarColor}30`, background: `${solarColor}0e` }}>
+                <p style={{ color: solarColor, fontWeight: 700, fontSize: 13, marginBottom: 5, fontFamily: 'system-ui' }}>{level}</p>
+                <p style={{ color: '#DCDCDC', fontSize: 11, lineHeight: 1.55, fontFamily: 'system-ui' }}>
+                  {level === 'STORM'
+                    ? 'Geomagnetic storm in progress. Aurora visible at mid-latitudes.'
+                    : level === 'ACTIVE'
+                    ? 'Elevated solar activity. Aurora possible at high latitudes.'
+                    : 'Solar activity nominal. No significant disturbances.'}
+                </p>
+                <p style={{ color: 'rgba(220,220,220,0.45)', fontSize: 10, marginTop: 6, fontFamily: 'system-ui' }}>
+                  Aurora equatorward of {Math.max(30, 66.5 - kp * 2.5).toFixed(0)}° latitude
+                </p>
+              </div>
+            )}
+            <p className={styles.feedExpandSectionLabel} style={{ marginTop: 14 }}>Solar Cycle 25 · Near Maximum</p>
+            <p style={{ color: 'rgba(220,220,220,0.5)', fontSize: 10, lineHeight: 1.65, fontFamily: 'system-ui' }}>
+              Cycle 25 began Dec 2019. Solar maximum expected 2025–2026 — prime time for aurora observation and solar imaging. The Sun's 11-year activity cycle drives geomagnetic storms and HF radio blackouts.
+            </p>
+            <button className={styles.feedOutLink} onClick={() => openTab('https://www.swpc.noaa.gov/')}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>open_in_new</span>
+              NOAA Space Weather Center
+            </button>
+          </>}
+
+          {/* News detail */}
+          {expanded === 'news' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#4C8CE4' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>article</span>
+              Space News · {news.length} stories
+            </p>
+            {news.map(item => (
+              <div key={item.id} className={styles.feedExpandNewsRow} onClick={() => item.url && openTab(item.url)}>
+                {item.image_url && (
+                  <div className={styles.feedExpandNewsThumb} style={{ backgroundImage: `url(${item.image_url.replace(/^http:\/\//, 'https://')})` }} />
+                )}
+                <div className={styles.feedExpandNewsBody}>
+                  <span className={styles.feedNewsSource}>{item.news_site}</span>
+                  <p className={styles.feedNewsRowTitle}>{item.title}</p>
+                  <p className={styles.feedNewsAge}>{timeAgo(item.published_at)}</p>
+                </div>
+              </div>
+            ))}
+          </>}
+
+          {/* Meteors detail */}
+          {expanded === 'meteors' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#a78bfa' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>star_rate</span>
+              Meteor Shower Calendar
+            </p>
+            {nextShowers(9).map(s => (
+              <div key={s.name} className={styles.feedExpandMeteorCard} onClick={() => openTab(s.url)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 3 }}>
+                  <p className={styles.feedMeteorName} style={{ fontSize: 14, marginBottom: 0 }}>{s.name}</p>
+                  <p style={{ color: '#a78bfa', fontWeight: 700, fontSize: 13, fontFamily: 'system-ui', flexShrink: 0 }}>
+                    {s.zhr} <span style={{ fontWeight: 400, fontSize: 9, opacity: 0.6 }}>ZHR</span>
+                  </p>
+                </div>
+                <p className={styles.feedMeteorSub} style={{ marginBottom: 7 }}>Peak {fmtPeakNight(s.date)} · Moon {s.illum}% · {fmtRange(s.active)}</p>
+                <div className={styles.feedMeteorBar}>
+                  <div className={styles.feedMeteorFill} style={{ width: `${Math.min(100, (s.zhr / 150) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+            <p style={{ color: 'rgba(220,220,220,0.28)', fontSize: 9, marginTop: 10, fontFamily: 'system-ui', lineHeight: 1.5 }}>
+              ZHR = Zenithal Hourly Rate under ideal conditions
+            </p>
+          </>}
+
+          {/* APOD detail */}
+          {expanded === 'apod' && apod && <>
+            <p className={styles.feedExpandTitle}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>photo_camera</span>
+              Astronomy Picture of the Day
+            </p>
+            {apod.url && (
+              <div
+                className={styles.feedApodImg}
+                style={{ backgroundImage: `url(${apod.url})`, height: 200, cursor: 'pointer', marginBottom: 12 }}
+                onClick={() => openTab(apod.hdurl || apod.url)}
+              />
+            )}
+            <p style={{ color: '#F3F2EC', fontWeight: 700, fontSize: 14, lineHeight: 1.4, fontFamily: 'system-ui', marginBottom: 5 }}>{apod.title}</p>
+            {apod.copyright && <p style={{ color: 'rgba(220,220,220,0.4)', fontSize: 10, fontFamily: 'system-ui', marginBottom: 10 }}>© {apod.copyright.trim().replace(/\n/g, ' ')}</p>}
+            {apod.explanation && <p style={{ color: 'rgba(220,220,220,0.6)', fontSize: 11, lineHeight: 1.65, fontFamily: 'system-ui' }}>{apod.explanation}</p>}
+            <button className={styles.feedOutLink} style={{ marginTop: 12 }} onClick={() => openTab(apod.hdurl || apod.url)}>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>open_in_new</span>
+              Full resolution · NASA APOD
+            </button>
+          </>}
+
+          {/* Night Sky detail */}
+          {expanded === 'nightsky' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#818cf8' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>nights_stay</span>
+              Night Sky
+            </p>
+            <p className={styles.feedExpandSectionLabel}>Planetary Visibility · {new Date().getFullYear()}</p>
+            {PLANETS.map(p => (
+              <div key={p.name} className={styles.feedExpandPlanetRow}>
+                <img src={p.img} alt={p.name} className={styles.feedPlanetImg} style={{ width: 32, height: 32 }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: '#F3F2EC', fontSize: 12, fontWeight: 600, fontFamily: 'system-ui', marginBottom: 2 }}>{p.name}</p>
+                  <p style={{ color: '#DCDCDC', fontSize: 9, fontFamily: 'system-ui', opacity: 0.5 }}>{p.sky} sky · {p.naked ? 'Unaided eye' : 'Optical'}</p>
+                </div>
+                <span style={{ color: p.color, fontWeight: 700, fontSize: 13, fontFamily: 'system-ui' }}>{p.mag > 0 ? '+' : ''}{p.mag.toFixed(1)}</span>
+              </div>
+            ))}
+            <p className={styles.feedExpandSectionLabel} style={{ marginTop: 16 }}>Active Comets · {COMETS.length} tracked</p>
+            {COMETS.map(c => (
+              <div key={c.name} className={styles.feedExpandCometCard}>
+                <p style={{ color: '#818cf8', fontWeight: 600, fontSize: 12, marginBottom: 3, fontFamily: 'system-ui' }}>{c.name}</p>
+                <p style={{ color: 'rgba(220,220,220,0.5)', fontSize: 10, lineHeight: 1.5, fontFamily: 'system-ui' }}>{c.desc}</p>
+                <p style={{ color: 'rgba(129,140,248,0.45)', fontSize: 9, marginTop: 4, fontFamily: 'system-ui' }}>
+                  {c.currentMag}{c.nextReturn ? ` · Returns ${c.nextReturn}` : ''}
+                </p>
+              </div>
+            ))}
+          </>}
+
+          {/* Quote detail */}
+          {expanded === 'quote' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#fbbf24' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>format_quote</span>
+              Science Quotes
+            </p>
+            {QUOTES.map((q, i) => (
+              <div key={i} className={styles.feedExpandQuoteCard} onClick={() => copyQuote(q)}>
+                <p className={styles.feedQuoteMark} style={{ fontSize: 36, marginBottom: 4 }}>"</p>
+                <p className={styles.feedQuoteText}>{q.q}</p>
+                <p className={styles.feedQuoteAuthor}>— {q.a}{q.t ? `, ${q.t}` : ''}</p>
+              </div>
+            ))}
+            {copied && <p className={styles.feedToast}>Copied!</p>}
+          </>}
+
+          {/* Flights detail */}
+          {expanded === 'flights' && <>
+            <p className={styles.feedExpandTitle} style={{ color: '#2DD4BF' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: 'middle', marginRight: 6 }}>airplanemode_active</span>
+              Tracked Flights
+            </p>
+            {trackedFlights.length === 0 ? (
+              <div className={styles.feedExpandEmpty}>
+                <span className="material-symbols-outlined" style={{ fontSize: 32, color: 'rgba(220,220,220,0.18)' }}>flight_takeoff</span>
+                <p style={{ color: 'rgba(220,220,220,0.38)', fontSize: 11, marginTop: 10, fontFamily: 'system-ui', textAlign: 'center', lineHeight: 1.6 }}>
+                  No tracked flights yet.<br />Tap a plane on the globe to track it.
+                </p>
+              </div>
+            ) : trackedFlights.map(f => (
+              <div key={f.icao24} className={styles.feedExpandFlightRow}>
+                <span className="material-symbols-outlined" style={{ fontSize: 15, color: '#2DD4BF' }}>flight</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: '#F3F2EC', fontWeight: 600, fontSize: 13, fontFamily: 'system-ui', marginBottom: 2 }}>{f.callsign || f.icao24}</p>
+                  <p style={{ color: 'rgba(220,220,220,0.42)', fontSize: 10, fontFamily: 'system-ui' }}>{f.icao24}{f.label ? ` · ${f.label}` : ''}</p>
+                </div>
+              </div>
+            ))}
+          </>}
+
+        </div>
+      </div>
+    )
+  }
+
+  // ── Feed card list ────────────────────────────────────────────────────────
   return (
     <div className={styles.feedScroll}>
       {pinnedLaunch && <PinnedCountdown launch={pinnedLaunch} onUnpin={onUnpinLaunch} />}
 
       {/* ── ISS Card ── */}
-      <div className={`${styles.feedCard} ${styles.feedCardBlue}`}>
+      <div className={`${styles.feedCard} ${styles.feedCardBlue}`} onClick={() => setExpanded('iss')}>
         <div className={styles.feedHead}>
           <div className={styles.feedHeadLeft}>
-            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#38bdf8' }}>satellite_alt</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#3A9AFF' }}>satellite_alt</span>
             <span className={styles.feedLabel}>ISS Tracker</span>
           </div>
-          {hasISS && <span className={`${styles.feedBadge} ${styles.feedBadgeLive}`}>LIVE</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {hasISS && <span className={`${styles.feedBadge} ${styles.feedBadgeLive}`}>LIVE</span>}
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+          </div>
         </div>
         <div className={styles.feedISSMetrics}>
           <div className={styles.feedMetric}>
@@ -1005,51 +1264,63 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
         <p className={styles.feedISSLocation}>
           {hasISS ? `${issLatStr}, ${issLonStr} · ${region}` : 'Awaiting signal…'}
         </p>
-        <button
-          className={styles.feedLinkBtn}
-          onClick={() => {
-            onISSLink?.selectISS()
-            onISSLink?.trackISS()
-            if (hasISS) {
-              onISSLink?.flyTo(issLat, issLon)
-              navigator.clipboard?.writeText(`${issLatStr}, ${issLonStr}`).catch(() => {})
-              setToast('Locked on ISS')
-              setTimeout(() => setToast(null), 2200)
-            }
-          }}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 11 }}>wifi_tethering</span>
-          Link to ISS
-        </button>
-        {toast && <p className={styles.feedToast}>{toast}</p>}
+      </div>
+
+      {/* ── Tracked Flights Card ── */}
+      <div className={`${styles.feedCard} ${styles.feedCardTeal}`} onClick={() => setExpanded('flights')}>
+        <div className={styles.feedHead}>
+          <div className={styles.feedHeadLeft}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#2DD4BF' }}>airplanemode_active</span>
+            <span className={styles.feedLabel}>Tracked Flights</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className={styles.feedBadge}>{trackedFlights.length} tracked</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+          </div>
+        </div>
+        {trackedFlights.length === 0 ? (
+          <p className={styles.feedEmptyNote}>No tracked flights · tap a plane on the globe</p>
+        ) : (
+          <div className={styles.feedFlightList}>
+            {trackedFlights.slice(0, 3).map(f => (
+              <div key={f.icao24} className={styles.feedFlightRow}>
+                <span className="material-symbols-outlined" style={{ fontSize: 11, color: '#2DD4BF' }}>flight</span>
+                <span className={styles.feedFlightCall}>{f.callsign || f.icao24}</span>
+                <span className={styles.feedFlightIcao}>{f.icao24}</span>
+              </div>
+            ))}
+            {trackedFlights.length > 3 && (
+              <p className={styles.feedFlightMore}>+{trackedFlights.length - 3} more</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Space News Card ── */}
       {heroNews && (
-        <div className={`${styles.feedCard} ${styles.feedCardSteel}`}>
+        <div className={`${styles.feedCard} ${styles.feedCardSteel}`} onClick={() => setExpanded('news')}>
           <div className={styles.feedHead}>
             <div className={styles.feedHeadLeft}>
-              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#60a5fa' }}>article</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#4C8CE4' }}>article</span>
               <span className={styles.feedLabel}>Space News</span>
             </div>
-            <span className={styles.feedBadge}>{news.length} stories</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={styles.feedBadge}>{news.length} stories</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+            </div>
           </div>
           {heroNews.image_url && (
-            <div
-              className={styles.feedNewsHero}
-              style={{ backgroundImage: `url(${heroNews.image_url.replace(/^http:\/\//, 'https://')})` }}
-              onClick={() => heroNews.url && openTab(heroNews.url)}
-            />
+            <div className={styles.feedNewsHero} style={{ backgroundImage: `url(${heroNews.image_url.replace(/^http:\/\//, 'https://')})` }} />
           )}
-          <div className={styles.feedNewsHeroBody} onClick={() => heroNews.url && openTab(heroNews.url)}>
+          <div className={styles.feedNewsHeroBody}>
             <span className={styles.feedNewsSource}>{heroNews.news_site}</span>
             <p className={styles.feedNewsTitle}>{heroNews.title}</p>
             <p className={styles.feedNewsAge}>{timeAgo(heroNews.published_at)}</p>
           </div>
-          {moreNews.map((item) => (
+          {moreNews.slice(0, 2).map(item => (
             <div key={item.id}>
               <div className={styles.feedNewsDivider} />
-              <div className={styles.feedNewsRow} onClick={() => item.url && openTab(item.url)}>
+              <div className={styles.feedNewsRow}>
                 <p className={styles.feedNewsRowTitle}>{item.title}</p>
                 <p className={styles.feedNewsRowMeta}>{item.news_site} · {timeAgo(item.published_at)}</p>
               </div>
@@ -1059,60 +1330,53 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
       )}
 
       {/* ── Solar Activity Card ── */}
-      <div className={`${styles.feedCard} ${styles.feedCardAmber}`}>
+      <div className={`${styles.feedCard} ${styles.feedCardAmber}`} onClick={() => setExpanded('solar')}>
         <div className={styles.feedHead}>
           <div className={styles.feedHeadLeft}>
             <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#fbbf24' }}>wb_sunny</span>
             <span className={styles.feedLabel}>Solar Activity</span>
           </div>
-          <span
-            className={styles.feedBadge}
-            style={level ? { color: solarColor, borderColor: `${solarColor}33`, background: `${solarColor}18` } : undefined}
-          >
-            {level ?? 'Loading'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className={styles.feedBadge} style={level ? { color: solarColor, borderColor: `${solarColor}33`, background: `${solarColor}18` } : undefined}>
+              {level ?? 'Loading'}
+            </span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+          </div>
         </div>
         <div className={styles.feedSolarRow}>
           <div>
-            <span className={styles.feedSolarKp} style={{ color: solarColor }}>
-              {kp != null ? kp.toFixed(1) : '—'}
-            </span>
+            <span className={styles.feedSolarKp} style={{ color: solarColor }}>{kp != null ? kp.toFixed(1) : '—'}</span>
             <span className={styles.feedSolarKpLabel}>Kp Index</span>
           </div>
           {kpHistory.length > 0 && (
             <div className={styles.feedKpMini}>
               {kpHistory.slice(-16).map((r, i) => (
-                <div
-                  key={i}
-                  className={styles.feedKpBar}
-                  style={{
-                    height: `${Math.max(10, (r.kp / 9) * 100)}%`,
-                    background: r.kp >= 5 ? '#ff6b35' : r.kp >= 4 ? '#ffd700' : '#fbbf24',
-                    opacity: 0.5 + (i / 16) * 0.5,
-                  }}
-                />
+                <div key={i} className={styles.feedKpBar} style={{
+                  height: `${Math.max(10, (r.kp / 9) * 100)}%`,
+                  background: r.kp >= 5 ? '#ff6b35' : r.kp >= 4 ? '#ffd700' : '#fbbf24',
+                  opacity: 0.5 + (i / 16) * 0.5,
+                }} />
               ))}
             </div>
           )}
         </div>
-        {kp != null && (
-          <p className={styles.feedSolarDesc}>
-            Aurora equatorward of {Math.max(30, 66.5 - kp * 2.5).toFixed(0)}° latitude
-          </p>
-        )}
+        {kp != null && <p className={styles.feedSolarDesc}>Aurora equatorward of {Math.max(30, 66.5 - kp * 2.5).toFixed(0)}° latitude</p>}
       </div>
 
       {/* ── Meteor Showers Card ── */}
       {sh && (
-        <div className={`${styles.feedCard} ${styles.feedCardViolet}`}>
+        <div className={`${styles.feedCard} ${styles.feedCardViolet}`} onClick={() => setExpanded('meteors')}>
           <div className={styles.feedHead}>
             <div className={styles.feedHeadLeft}>
               <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#a78bfa' }}>star_rate</span>
               <span className={styles.feedLabel}>Meteor Showers</span>
             </div>
-            <span className={styles.feedBadge} style={{ color: '#a78bfa', borderColor: '#a78bfa33', background: '#a78bfa18' }}>
-              {sh.daysAway === 0 ? 'Tonight' : `${sh.daysAway}d away`}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={styles.feedBadge} style={{ color: '#a78bfa', borderColor: '#a78bfa33', background: '#a78bfa18' }}>
+                {sh.daysAway === 0 ? 'Tonight' : `${sh.daysAway}d away`}
+              </span>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+            </div>
           </div>
           <p className={styles.feedMeteorName}>{sh.name}</p>
           <p className={styles.feedMeteorSub}>Peak {fmtPeakNight(sh.date)} · {sh.zhr} ZHR · Moon {sh.illum}%</p>
@@ -1124,16 +1388,13 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
 
       {/* ── APOD Card ── */}
       {apod && (
-        <div
-          className={`${styles.feedCard} ${styles.feedCardAPOD}`}
-          onClick={() => openTab(apod?.hdurl || apod?.url || 'https://apod.nasa.gov/')}
-        >
+        <div className={`${styles.feedCard} ${styles.feedCardAPOD}`} onClick={() => setExpanded('apod')}>
           <div className={styles.feedHead}>
             <div className={styles.feedHeadLeft}>
               <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#e2e8f0' }}>photo_camera</span>
               <span className={styles.feedLabel}>Picture of the Day</span>
             </div>
-            <span className="material-symbols-outlined" style={{ fontSize: 12, color: 'rgba(200,210,225,0.3)' }}>open_in_new</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
           </div>
           {apod.url && <div className={styles.feedApodImg} style={{ backgroundImage: `url(${apod.url})` }} />}
           <p className={styles.feedApodTitle}>{apod.title}</p>
@@ -1142,15 +1403,18 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
       )}
 
       {/* ── Night Sky Card ── */}
-      <div className={`${styles.feedCard} ${styles.feedCardIndigo}`}>
+      <div className={`${styles.feedCard} ${styles.feedCardIndigo}`} onClick={() => setExpanded('nightsky')}>
         <div className={styles.feedHead}>
           <div className={styles.feedHeadLeft}>
             <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#818cf8' }}>nights_stay</span>
             <span className={styles.feedLabel}>Night Sky</span>
           </div>
-          <span className={styles.feedBadge} style={{ color: '#818cf8', borderColor: '#818cf833', background: '#818cf818' }}>
-            {COMETS.length} comets
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className={styles.feedBadge} style={{ color: '#818cf8', borderColor: '#818cf833', background: '#818cf818' }}>
+              {COMETS.length} comets
+            </span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+          </div>
         </div>
         <div className={styles.feedPlanetsRow}>
           {PLANETS.map(p => (
@@ -1169,13 +1433,16 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
 
       {/* ── Daily Quote Card ── */}
       {quote && (
-        <div className={`${styles.feedCard} ${styles.feedCardQuote}`} onClick={() => copyQuote(quote)}>
+        <div className={`${styles.feedCard} ${styles.feedCardQuote}`} onClick={() => setExpanded('quote')}>
           <div className={styles.feedHead}>
             <div className={styles.feedHeadLeft}>
               <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#fbbf24' }}>format_quote</span>
               <span className={styles.feedLabel}>Daily Inspiration</span>
             </div>
-            <span className={styles.feedBadge}>{copied ? 'Copied!' : 'Tap to copy'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={styles.feedBadge}>{copied ? 'Copied!' : 'Tap to copy'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(220,220,220,0.22)' }}>chevron_right</span>
+            </div>
           </div>
           <p className={styles.feedQuoteMark}>"</p>
           <p className={styles.feedQuoteText}>{quote.q}</p>
@@ -1416,7 +1683,7 @@ function PinnedCountdown({ launch, onUnpin }) {
 }
 
 export default function CommandCenterOverlay({
-  trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed,
+  trackedCount, connectionStatus, issData, onISSLink, pinnedLaunch, onUnpinLaunch, forceCollapsed, trackedFlights = [],
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
   activeScale, onDistanceChange,
   liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle,
@@ -1694,6 +1961,7 @@ export default function CommandCenterOverlay({
           onUnpinLaunch={onUnpinLaunch}
           issData={issData}
           onISSLink={onISSLink}
+          trackedFlights={trackedFlights}
         />
       </div>
 

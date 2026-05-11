@@ -424,6 +424,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         connectionStatus={connectionStatus}
         audioMuted={audio.muted}
         onAudioToggle={audio.toggle}
+        trackedFlights={pins.trackedFlights}
         showWeather={showWeather}
         onWeatherToggle={() => setShowWeather(v => !v)}
         hidden={focusedPad}
@@ -498,6 +499,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onSearchOpen={() => setSearchOpen(true)}
         audioMuted={audio.muted}
         onAudioToggle={audio.toggle}
+        trackedFlights={pins.trackedFlights}
       />
 
       {/* OrbitalMapBar removed — filters in BottomBar + CommandCenterOverlay */}
