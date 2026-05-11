@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import './TrueFocus.css';
 
@@ -17,37 +17,50 @@ const TrueFocus = ({
   const [lastActiveIndex, setLastActiveIndex] = useState(null);
   const containerRef = useRef(null);
   const wordRefs = useRef([]);
+  const indexRef = useRef(0);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [frameReady, setFrameReady] = useState(false);
 
-  useEffect(() => {
-    if (manualMode) return;
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % words.length);
-    }, (animationDuration + pauseBetweenAnimations) * 1000);
-    return () => clearInterval(interval);
-  }, [manualMode, animationDuration, pauseBetweenAnimations, words.length]);
-
-  // useLayoutEffect: runs sync before paint — no jump from 0,0 to word position
-  useLayoutEffect(() => {
-    if (currentIndex === null || currentIndex === -1) return;
-    if (!wordRefs.current[currentIndex] || !containerRef.current) return;
+  const computeRect = useCallback((index) => {
+    if (!wordRefs.current[index] || !containerRef.current) return null;
     const parentRect = containerRef.current.getBoundingClientRect();
-    const activeRect = wordRefs.current[currentIndex].getBoundingClientRect();
-    setFocusRect({
+    const activeRect = wordRefs.current[index].getBoundingClientRect();
+    return {
       x: activeRect.left - parentRect.left,
       y: activeRect.top - parentRect.top,
       width: activeRect.width,
       height: activeRect.height,
-    });
-    if (!frameReady) setFrameReady(true);
-  }, [currentIndex, words.length]);
+    };
+  }, []);
+
+  // Batch rect + index update together so new motion.div key sees correct initial position
+  const goToIndex = useCallback((next) => {
+    const rect = computeRect(next);
+    if (rect) setFocusRect(rect);
+    indexRef.current = next;
+    setCurrentIndex(next);
+  }, [computeRect]);
+
+  // Initial rect — sync before first paint
+  useLayoutEffect(() => {
+    const rect = computeRect(0);
+    if (rect) { setFocusRect(rect); setFrameReady(true); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-cycle — use indexRef to avoid stale closure in interval
+  useEffect(() => {
+    if (manualMode) return;
+    const interval = setInterval(() => {
+      goToIndex((indexRef.current + 1) % words.length);
+    }, (animationDuration + pauseBetweenAnimations) * 1000);
+    return () => clearInterval(interval);
+  }, [manualMode, animationDuration, pauseBetweenAnimations, words.length, goToIndex]);
 
   const handleMouseEnter = index => {
-    if (manualMode) { setLastActiveIndex(index); setCurrentIndex(index); }
+    if (manualMode) { setLastActiveIndex(index); goToIndex(index); }
   };
   const handleMouseLeave = () => {
-    if (manualMode) setCurrentIndex(lastActiveIndex);
+    if (manualMode && lastActiveIndex !== null) goToIndex(lastActiveIndex);
   };
 
   return (
@@ -73,17 +86,25 @@ const TrueFocus = ({
         );
       })}
 
+      {/*
+        key={currentIndex} → remount on each word so frame appears at correct
+        position immediately (no cross-word travel). width/height in style (not
+        animate) so corners never collapse to a square.
+      */}
       <motion.div
+        key={currentIndex}
         className="focus-frame"
-        animate={{
+        initial={{ opacity: 0 }}
+        animate={{ opacity: frameReady ? 1 : 0 }}
+        transition={{ opacity: { duration: animationDuration * 0.7, ease: 'easeOut' } }}
+        style={{
           x: focusRect.x,
           y: focusRect.y,
           width: focusRect.width,
           height: focusRect.height,
-          opacity: frameReady ? 1 : 0,
+          '--border-color': borderColor,
+          '--glow-color': glowColor,
         }}
-        transition={{ duration: animationDuration }}
-        style={{ '--border-color': borderColor, '--glow-color': glowColor }}
       >
         <span className="corner top-left" />
         <span className="corner top-right" />
