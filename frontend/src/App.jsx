@@ -349,7 +349,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         }
       `}</style>
 
-      {showLoading && <LoadingScreen duration={5000} onDone={() => setShowLoading(false)} />}
+      {showLoading && <LoadingScreen duration={2500} onDone={() => setShowLoading(false)} />}
       <BetaWelcome />
 
       {init.notFound && (
