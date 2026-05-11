@@ -261,6 +261,11 @@ func filterByBounds(aircraft []models.LiveAircraft, b *models.WSSetBounds) []mod
 	maxLon := max64(b.NE.Lng, b.SW.Lng)
 
 	for _, a := range aircraft {
+		// Satellites and ships are global — never clip by viewport
+		if a.Cat == "satellite" || a.Cat == "ship" {
+			filtered = append(filtered, a)
+			continue
+		}
 		if a.Lat >= minLat && a.Lat <= maxLat && a.Lon >= minLon && a.Lon <= maxLon {
 			filtered = append(filtered, a)
 		}
