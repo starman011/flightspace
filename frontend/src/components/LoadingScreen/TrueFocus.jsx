@@ -20,6 +20,8 @@ const TrueFocus = ({
   const indexRef = useRef(0);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [frameReady, setFrameReady] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
   const computeRect = useCallback((index) => {
     if (!wordRefs.current[index] || !containerRef.current) return null;
@@ -34,6 +36,7 @@ const TrueFocus = ({
   }, []);
 
   const goToIndex = useCallback((next) => {
+    if (!mountedRef.current) return;
     const rect = computeRect(next);
     if (rect) setFocusRect(rect);
     indexRef.current = next;

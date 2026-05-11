@@ -110,7 +110,7 @@ export default function App() {
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [liveEnabled, setLiveEnabled] = useState(false)
   const [showWeather, setShowWeather] = useState(false)
-  const { filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
+  const { aircraft, filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
   const audio = useAmbientAudio()
   useHaptics()
@@ -479,7 +479,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <CommandCenterOverlay
         trackedCount={aircraftWithShips.size}
         connectionStatus={connectionStatus}
-        issData={aircraftWithShips.get('ISS') ?? null}
+        issData={aircraft.get('ISS') ?? null}
         pinnedLaunch={pinnedLaunch}
         onUnpinLaunch={() => pinnedLaunch && pins.unpinLaunch(pinnedLaunch.id)}
         forceCollapsed={streamCollapsed}

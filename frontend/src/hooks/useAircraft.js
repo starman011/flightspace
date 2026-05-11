@@ -111,5 +111,5 @@ export function useAircraft(sessionToken, enabled = true) {
     return result
   }, [aircraft, filters])
 
-  return { filteredAircraft, filters, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject }
+  return { aircraft, filteredAircraft, filters, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject }
 }
