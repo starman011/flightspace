@@ -5,10 +5,10 @@
   width: 320px;
   max-height: calc(100vh - 80px);
   overflow-y: auto;
-  background: rgba(6, 12, 20, 0.92);
+  background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(178, 255, 26, 0.12);
-  border-bottom: 1px solid rgba(178, 255, 26, 0.08);
+  border-left: 1px solid rgba(200, 210, 225, 0.08);
+  border-bottom: 1px solid rgba(200, 210, 225, 0.06);
   border-bottom-left-radius: 16px;
   padding: 20px;
   z-index: 120;
@@ -48,7 +48,7 @@
   font-family: var(--font-mono);
   font-size: 22px;
   font-weight: 700;
-  color: #fff;
+  color: #F3F2EC;
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -69,7 +69,7 @@
 .close {
   background: none;
   border: none;
-  color: rgba(195, 245, 255, 0.4);
+  color: rgba(160, 170, 185, 0.42);
   font-size: 14px;
   cursor: pointer;
   padding: 4px;
@@ -78,14 +78,14 @@
   margin-top: 2px;
   transition: color 0.15s;
 }
-.close:hover { color: rgba(195, 245, 255, 0.9); }
+.close:hover { color: rgba(220, 220, 220, 0.9); }
 
 /* ── Stats ── */
 .stats {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid rgba(178, 255, 26, 0.1);
+  border: 1px solid rgba(200, 210, 225, 0.07);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -99,7 +99,7 @@
 }
 
 .statRow:nth-child(odd) {
-  background: rgba(178, 255, 26, 0.03);
+  background: rgba(44, 57, 71, 0.3);
 }
 
 .statLabel {
@@ -107,7 +107,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: rgba(195, 245, 255, 0.45);
+  color: rgba(160, 170, 185, 0.45);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -115,7 +115,7 @@
 .statValue {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(195, 245, 255, 0.85);
+  color: rgba(220, 220, 220, 0.85);
   text-align: right;
 }
 
@@ -124,7 +124,7 @@
   font-family: var(--font-body, sans-serif);
   font-size: 12.5px;
   line-height: 1.65;
-  color: rgba(195, 245, 255, 0.6);
+  color: rgba(200, 210, 225, 0.55);
   margin: 0;
 }
 
@@ -136,10 +136,10 @@
   gap: 7px;
   width: 100%;
   padding: 10px 0;
-  background: rgba(178, 255, 26, 0.07);
-  border: 1px solid rgba(178, 255, 26, 0.22);
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.22);
   border-radius: 8px;
-  color: rgba(178, 255, 26, 0.8);
+  color: rgba(251, 191, 36, 0.85);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
@@ -149,14 +149,14 @@
   transition: background 0.15s, color 0.15s;
 }
 .focusBtn:hover {
-  background: rgba(178, 255, 26, 0.14);
-  color: #b2ff1a;
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
 }
 
 /* ── Scrollbar ── */
 .panel::-webkit-scrollbar { width: 4px; }
 .panel::-webkit-scrollbar-track { background: transparent; }
-.panel::-webkit-scrollbar-thumb { background: rgba(178, 255, 26, 0.15); border-radius: 2px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(200, 210, 225, 0.1); border-radius: 2px; }
 
 /* ── Mobile ── */
 @media (max-width: 600px) {
@@ -166,7 +166,7 @@
     bottom: 0;
     right: 0;
     border-left: none;
-    border-top: 1px solid rgba(178, 255, 26, 0.12);
+    border-top: 1px solid rgba(200, 210, 225, 0.1);
     border-bottom-left-radius: 0;
     max-height: 60vh;
     animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
