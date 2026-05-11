@@ -45,14 +45,14 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
             topColor="#5227FF"
             bottomColor="#FF9FFC"
             intensity={1}
-            rotationSpeed={0.3}
-            glowAmount={0.002}
+            rotationSpeed={0.4}
+            glowAmount={0.003}
             pillarWidth={3}
-            pillarHeight={0.4}
+            pillarHeight={0.3}
             noiseIntensity={0.5}
-            pillarRotation={25}
+            pillarRotation={90}
             interactive={false}
-            mixBlendMode="screen"
+            mixBlendMode="normal"
             quality="high"
           />
         </div>
@@ -63,9 +63,9 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
           sentence="Object Tracer"
           manualMode={false}
           blurAmount={5}
-          borderColor="#84CC16"
-          animationDuration={1.2}
-          pauseBetweenAnimations={1.5}
+          borderColor="#5227FF"
+          animationDuration={0.5}
+          pauseBetweenAnimations={1}
         />
         <span className={styles.subtitle}>{fact}</span>
       </div>
