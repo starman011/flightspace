@@ -280,10 +280,11 @@ func (p *ISSPoller) isVideoLive(ctx context.Context, videoID string) bool {
 func (p *ISSPoller) GetStream(w http.ResponseWriter, r *http.Request) {
 	raw, err := p.rdb.Get(r.Context(), streamRedisKey).Result()
 	if err != nil {
-		// No stream found — return fallback
+		// RSS found nothing — fall back to NASA TV's persistent live stream video
+		const nasaTVFallback = "21X5lGlDOfg"
 		fallback, _ := json.Marshal(map[string]string{
-			"video_id":  "",
-			"embed_url": "https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
+			"video_id":  nasaTVFallback,
+			"embed_url": "https://www.youtube.com/embed/" + nasaTVFallback + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
 			"source":    "fallback",
 		})
 		w.Header().Set("Content-Type", "application/json")

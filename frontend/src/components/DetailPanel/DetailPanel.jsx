@@ -73,53 +73,27 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 
 // ── ISS live stream + crew + missions ─────────────────────────────────────
 // NASA TV official channel live embed — always-on, no scraping needed
-const NASA_WATCH_URL = 'https://www.youtube.com/@NASATVNews/live'
+// NASA TV persistent live stream — fallback when RSS finds nothing
+const NASA_TV_FALLBACK = 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&enablejsapi=1'
 
 function ISSStream() {
   const [src, setSrc] = useState(null)
-  const [embedFailed, setEmbedFailed] = useState(false)
 
   useEffect(() => {
     fetch(`${API}/api/v1/iss/stream`)
       .then(r => r.json())
-      .then(d => { if (d.video_id) setSrc(d.embed_url) })
-      .catch(() => {})
+      .then(d => setSrc(d.embed_url
+        ? d.embed_url.replace('&enablejsapi=1', '') + '&enablejsapi=1'
+        : NASA_TV_FALLBACK))
+      .catch(() => setSrc(NASA_TV_FALLBACK))
   }, [])
 
-  // YouTube sends postMessage errors when playback fails
-  useEffect(() => {
-    if (!src) return
-    const handler = e => {
-      if (e.origin !== 'https://www.youtube.com') return
-      try {
-        const data = JSON.parse(e.data)
-        if (data.event === 'onError' || data.event === 'infoDelivery') {
-          if (data.info?.playerState === -1 || data.info?.error) setEmbedFailed(true)
-        }
-      } catch {}
-    }
-    window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
-  }, [src])
-
-  if (embedFailed || !src) {
-    return (
-      <div className={styles.issStreamLink}>
-        <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#3A9AFF' }}>live_tv</span>
-        <div>
-          <p style={{ margin: 0, fontSize: 12, color: 'rgba(200,210,225,0.6)' }}>NASA TV is broadcasting live</p>
-          <a href={NASA_WATCH_URL} target="_blank" rel="noopener noreferrer" className={styles.issWatchBtn}>
-            Watch on YouTube →
-          </a>
-        </div>
-      </div>
-    )
-  }
+  if (!src) return null
 
   return (
     <div className={styles.issStream}>
       <iframe
-        src={src + '&enablejsapi=1'}
+        src={src}
         className={styles.issIframe}
         allow="autoplay; encrypted-media"
         allowFullScreen
