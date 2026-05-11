@@ -2,8 +2,8 @@
   position: fixed;
   top: 0;
   right: 0;
-  height: calc(100dvh - 64px);
-  width: 320px;
+  width: 360px;
+  height: 100dvh;
   background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);

@@ -23,7 +23,6 @@ const FACTS = [
 
 const LoadingScreen = ({ duration = 10000, onDone }) => {
   const [fading, setFading] = useState(false);
-  const [pillarMounted, setPillarMounted] = useState(false);
 
   const fact = useMemo(
     () => FACTS[Math.floor(Math.random() * FACTS.length)],
@@ -31,39 +30,36 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
   );
 
   useEffect(() => {
-    const pillarTimer = setTimeout(() => setPillarMounted(true), 80);
-    const fadeTimer   = setTimeout(() => setFading(true), duration - 800);
-    const doneTimer   = setTimeout(() => onDone?.(), duration);
-    return () => { clearTimeout(pillarTimer); clearTimeout(fadeTimer); clearTimeout(doneTimer); };
+    const fadeTimer = setTimeout(() => setFading(true), duration - 800);
+    const doneTimer = setTimeout(() => onDone?.(), duration);
+    return () => { clearTimeout(fadeTimer); clearTimeout(doneTimer); };
   }, [duration, onDone]);
 
   return (
     <div className={`${styles.overlay}${fading ? ` ${styles.fading}` : ''}`}>
-      {pillarMounted && (
-        <div className={styles.pillarWrap}>
-          <LightPillar
-            topColor="#5227FF"
-            bottomColor="#FF9FFC"
-            intensity={1}
-            rotationSpeed={0.4}
-            glowAmount={0.003}
-            pillarWidth={3}
-            pillarHeight={0.3}
-            noiseIntensity={0.5}
-            pillarRotation={90}
-            interactive={false}
-            mixBlendMode="normal"
-            quality="high"
-          />
-        </div>
-      )}
+      <div className={styles.pillarWrap}>
+        <LightPillar
+          topColor="#5227FF"
+          bottomColor="#FF9FFC"
+          intensity={1}
+          rotationSpeed={0.3}
+          glowAmount={0.002}
+          pillarWidth={3}
+          pillarHeight={0.4}
+          noiseIntensity={0.5}
+          pillarRotation={25}
+          interactive={false}
+          mixBlendMode="screen"
+          quality="high"
+        />
+      </div>
 
       <div className={styles.textWrap}>
         <TrueFocus
           sentence="Object Tracer"
           manualMode={false}
           blurAmount={5}
-          borderColor="#5227FF"
+          borderColor="#84CC16"
           animationDuration={0.5}
           pauseBetweenAnimations={1}
         />

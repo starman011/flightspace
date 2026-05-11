@@ -2,18 +2,18 @@
 
 .panel {
   position: fixed;
-  top: 64px;
-  right: 16px;
+  top: 0;
+  right: 0;
   width: 360px;
-  max-height: calc(100dvh - 96px);
+  height: 100dvh;
   overflow-y: auto;
 
   background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(28px) saturate(140%);
   -webkit-backdrop-filter: blur(28px) saturate(140%);
 
-  border: 1px solid rgba(200, 210, 225, 0.08);
-  border-radius: 18px;
+  border-left: 1px solid rgba(200, 210, 225, 0.08);
+  border-radius: 0;
   padding: 22px 22px 20px;
   z-index: 120;
 
@@ -21,10 +21,7 @@
   flex-direction: column;
   gap: 16px;
 
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.03) inset,
-    0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 60px rgba(0, 180, 255, 0.03);
+  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.6);
 
   animation: slideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   scrollbar-width: thin;
@@ -96,7 +93,7 @@
   align-items: center;
   gap: 14px;
   padding-right: 30px;
-  padding-top: 22px;  /* clear the absolute close + home buttons */
+  padding-top: 36px;  /* clear the absolute close + home buttons */
 }
 
 .moonGlyph {
