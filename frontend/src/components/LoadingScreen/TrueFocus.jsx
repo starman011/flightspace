@@ -33,7 +33,6 @@ const TrueFocus = ({
     };
   }, []);
 
-  // Batch rect + index update together so new motion.div key sees correct initial position
   const goToIndex = useCallback((next) => {
     const rect = computeRect(next);
     if (rect) setFocusRect(rect);
@@ -41,13 +40,12 @@ const TrueFocus = ({
     setCurrentIndex(next);
   }, [computeRect]);
 
-  // Initial rect — sync before first paint
+  // Initial rect — sync before first paint so frame appears at word 0, not 0,0
   useLayoutEffect(() => {
     const rect = computeRect(0);
     if (rect) { setFocusRect(rect); setFrameReady(true); }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-cycle — use indexRef to avoid stale closure in interval
   useEffect(() => {
     if (manualMode) return;
     const interval = setInterval(() => {
@@ -86,20 +84,16 @@ const TrueFocus = ({
         );
       })}
 
-      {/*
-        key={currentIndex} → remount on each word so frame appears at correct
-        position immediately (no cross-word travel). width/height in style (not
-        animate) so corners never collapse to a square.
-      */}
+      {/* width/height in style (not animate) — corners never collapse to a square */}
       <motion.div
-        key={currentIndex}
         className="focus-frame"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: frameReady ? 1 : 0 }}
-        transition={{ opacity: { duration: animationDuration * 0.7, ease: 'easeOut' } }}
-        style={{
+        animate={{
           x: focusRect.x,
           y: focusRect.y,
+          opacity: frameReady ? 1 : 0,
+        }}
+        transition={{ duration: animationDuration }}
+        style={{
           width: focusRect.width,
           height: focusRect.height,
           '--border-color': borderColor,

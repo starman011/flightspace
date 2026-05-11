@@ -40,8 +40,8 @@ const LoadingScreen = ({ duration = 10000, onDone }) => {
           manualMode={false}
           blurAmount={5}
           borderColor="#84CC16"
-          animationDuration={0.5}
-          pauseBetweenAnimations={1}
+          animationDuration={1.2}
+          pauseBetweenAnimations={1.5}
         />
         <span className={styles.subtitle}>flightspace</span>
       </div>
