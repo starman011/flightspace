@@ -13,6 +13,7 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "astronomy-engine": "^2.1.19",
+    "gsap": "^3.15.0",
     "kdbush": "^4.0.2",
     "leaflet": "^1.9.4",
     "motion": "^12.38.0",

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
 import styles from './WaitlistPage.module.css'
 
 /* ── Hero image pool ─────────────────────────────────────────────── */
@@ -111,7 +112,35 @@ export default function WaitlistPage({ onClose }) {
   const [email, setEmail]   = useState('')
   const [status, setStatus] = useState('idle')
 
-  const heroId = useMemo(() => HEROES[Math.floor(Math.random() * HEROES.length)], [])
+  const heroId  = useMemo(() => HEROES[Math.floor(Math.random() * HEROES.length)], [])
+  const starsRef = useRef(null)
+
+  useEffect(() => {
+    const container = starsRef.current
+    if (!container) return
+    const stars = []
+    for (let i = 0; i < 28; i++) {
+      const el = document.createElement('div')
+      const size = 1 + Math.random() * 2.5
+      el.style.cssText = `position:absolute;width:${size}px;height:${size}px;background:white;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;`
+      container.appendChild(el)
+      stars.push(el)
+    }
+    stars.forEach((star) => {
+      const angle    = Math.random() * Math.PI * 2
+      const dist     = 40 + Math.random() * 110
+      const dur      = 1.8 + Math.random() * 1.4
+      const delay    = Math.random() * 2.5
+      const tl = gsap.timeline({ repeat: -1, delay })
+      tl.fromTo(star,
+        { x: 0, y: 0, scale: 0, opacity: 0 },
+        { x: Math.cos(angle) * dist * 0.55, y: Math.sin(angle) * dist * 0.55, scale: 1, opacity: 0.75, duration: dur * 0.55, ease: 'power2.in' }
+      ).to(star,
+        { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, scale: 0.3, opacity: 0, duration: dur * 0.45, ease: 'power1.out' }
+      )
+    })
+    return () => { stars.forEach(s => { gsap.killTweensOf(s); s.remove() }) }
+  }, [])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -198,43 +227,45 @@ export default function WaitlistPage({ onClose }) {
         {/* RIGHT */}
         <div className={styles.right}>
 
-          {/* Form section */}
-          <p className={styles.formLabel}>Join the mission</p>
-          <h3 className={styles.formHeadline}>Get notified as new features launch.</h3>
-          <p className={styles.formSub}>
-            You joined early. Your feedback shapes what we build next. Reply to your welcome email anytime — we read everything.
-          </p>
+          {/* Gradient form card */}
+          <div className={styles.formCard}>
+            <p className={styles.formLabel}>Join the mission</p>
+            <h3 className={styles.formHeadline}>Get notified as new features launch.</h3>
+            <p className={styles.formSub}>
+              You joined early. Your feedback shapes what we build next. Reply to your welcome email anytime — we read everything.
+            </p>
 
-          {status === 'done' ? (
-            <div className={styles.success}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="#b2ff1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <p className={styles.successText}>You're in. Welcome aboard.</p>
-            </div>
-          ) : (
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <input
-                className={styles.input}
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                disabled={status === 'loading'}
-                autoComplete="email"
-              />
-              <button className={styles.submitBtn} type="submit" disabled={status === 'loading'}>
-                {status === 'loading'
-                  ? <span className={styles.spinner}/>
-                  : 'Join the mission'}
-              </button>
-              {status === 'error' && (
-                <p className={styles.errorText}>Something went wrong — please try again.</p>
-              )}
-            </form>
-          )}
+            {status === 'done' ? (
+              <div className={styles.success}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="#b2ff1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <p className={styles.successText}>You're in. Welcome aboard.</p>
+              </div>
+            ) : (
+              <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input
+                  className={styles.input}
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  disabled={status === 'loading'}
+                  autoComplete="email"
+                />
+                <button className={styles.submitBtn} type="submit" disabled={status === 'loading'}>
+                  {status === 'loading'
+                    ? <span className={styles.spinner}/>
+                    : 'Join the mission'}
+                </button>
+                {status === 'error' && (
+                  <p className={styles.errorText}>Something went wrong — please try again.</p>
+                )}
+              </form>
+            )}
+          </div>
 
           {/* Divider */}
           <div className={styles.divider}>
@@ -256,15 +287,18 @@ export default function WaitlistPage({ onClose }) {
             ))}
           </div>
 
-          {/* Share line */}
-          <p className={styles.share}>
-            Know someone who loves space or aviation?{' '}
-            Send them to{' '}
-            <a href="https://objecttracer.com" className={styles.shareLink}>
-              objecttracer.com
-            </a>
-            {' '}— every person who joins makes the platform better.
-          </p>
+          {/* Stars + share line */}
+          <div className={styles.shareWrap}>
+            <div className={styles.starsContainer} ref={starsRef} />
+            <p className={styles.share}>
+              Know someone who loves space or aviation?{' '}
+              Send them to{' '}
+              <a href="https://objecttracer.com" className={styles.shareLink}>
+                objecttracer.com
+              </a>
+              {' '}— every person who joins makes the platform better.
+            </p>
+          </div>
 
         </div>
       </div>
