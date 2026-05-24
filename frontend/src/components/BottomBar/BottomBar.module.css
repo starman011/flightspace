@@ -475,11 +475,32 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* Sonar ping when LIVE is OFF */
+.liveBtnOff {
+  position: relative;
+}
+.liveBtnOff::before,
+.liveBtnOff::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(178, 255, 26, 0.4);
+  animation: sonarPingBar 2.4s ease-out infinite;
+  pointer-events: none;
+}
+.liveBtnOff::after { animation-delay: 1.2s; }
+@keyframes sonarPingBar {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  80%  { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
 .liveDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 60, 60, 0.3);
+  background: rgba(178, 255, 26, 0.2);
   transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
 }
 

@@ -1791,7 +1791,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(255, 60, 60, 0.35);
+    background: rgba(178, 255, 26, 0.2);
     transition: background 0.2s, box-shadow 0.2s;
   }
 
@@ -1816,6 +1816,28 @@
   .filterIconBtnLive {
     border-color: rgba(34, 239, 126, 0.3);
     box-shadow: 0 0 10px rgba(34, 239, 126, 0.15);
+  }
+
+  /* LIVE off state — sonar ping draws attention */
+  .filterIconBtnLiveOff {
+    position: relative;
+    border-color: rgba(178, 255, 26, 0.15);
+  }
+  .filterIconBtnLiveOff::before,
+  .filterIconBtnLiveOff::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(178, 255, 26, 0.45);
+    animation: sonarPingMobile 2.4s ease-out infinite;
+    pointer-events: none;
+  }
+  .filterIconBtnLiveOff::after { animation-delay: 1.2s; }
+  @keyframes sonarPingMobile {
+    0%   { transform: scale(1);   opacity: 0.55; }
+    80%  { transform: scale(2);   opacity: 0; }
+    100% { transform: scale(2);   opacity: 0; }
   }
 
   .galaxySliderWrap {

@@ -283,7 +283,7 @@ function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiv
 
       {/* LIVE toggle */}
       <button
-        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${liveEnabled ? styles.filterIconBtnLive : ''}`}
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${liveEnabled ? styles.filterIconBtnLive : styles.filterIconBtnLiveOff}`}
         onClick={(e) => { e.stopPropagation(); onLiveToggle?.() }}
         aria-label={liveEnabled ? 'Disable live' : 'Enable live'}
         data-haptic-heavy

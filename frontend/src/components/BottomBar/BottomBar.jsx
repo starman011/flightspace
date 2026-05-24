@@ -341,7 +341,7 @@ export default function BottomBar({
                 <span className={styles.tooltip}>{showWeather ? 'Hide Wind Overlay' : 'Show Wind Overlay'}</span>
               </button>
               <button
-                className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : ''}`}
+                className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : styles.liveBtnOff}`}
                 onClick={onLiveToggle}
                 aria-label="Toggle live"
               >
