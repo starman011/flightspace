@@ -1,6 +1,29 @@
+import { useState } from 'react'
 import styles from './StaticPages.module.css'
 
 export default function ContactPage({ onClose }) {
+  const [name,    setName]    = useState('')
+  const [email,   setEmail]   = useState('')
+  const [message, setMessage] = useState('')
+  const [status,  setStatus]  = useState('idle')
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setStatus('loading')
+    try {
+      const API = import.meta.env.VITE_API_URL || ''
+      const res = await fetch(`${API}/api/v1/contact`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      setStatus('done')
+    } catch {
+      setStatus('error')
+    }
+  }
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
@@ -8,29 +31,77 @@ export default function ContactPage({ onClose }) {
           <h2 className={styles.title}>Contact</h2>
           <button className={styles.closeBtn} onClick={onClose}>&times;</button>
         </div>
+
         <div className={styles.body}>
-          <p>
-            Have feedback, found a bug, or want to collaborate? Reach out.
-          </p>
+          {status === 'done' ? (
+            <>
+              <p style={{ color: '#b2ff1a', fontFamily: 'var(--font-mono)', fontSize: 13, marginBottom: 8 }}>
+                Message sent.
+              </p>
+              <p>We'll get back to you at <strong>{email}</strong>. We read every message.</p>
+              <button className={styles.formSubmit} onClick={onClose} style={{ marginTop: 16 }}>
+                Close
+              </button>
+            </>
+          ) : (
+            <>
+              <p>Have feedback, found a bug, or want to collaborate? We read everything.</p>
+              <form onSubmit={submit}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Name (optional)</label>
+                  <input
+                    className={styles.formInput}
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    disabled={status === 'loading'}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Email</label>
+                  <input
+                    className={styles.formInput}
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    disabled={status === 'loading'}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Message</label>
+                  <textarea
+                    className={styles.formTextarea}
+                    placeholder="Tell us what's on your mind..."
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    required
+                    disabled={status === 'loading'}
+                  />
+                </div>
+                {status === 'error' && (
+                  <p style={{ color: 'rgba(255,100,100,0.8)', fontSize: 12, fontFamily: 'var(--font-mono)', marginBottom: 10 }}>
+                    Something went wrong — please try again.
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className={styles.formSubmit}
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? 'Sending…' : 'Send Message'}
+                </button>
+              </form>
 
-          <form onSubmit={e => { e.preventDefault(); onClose() }}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Email</label>
-              <input className={styles.formInput} type="email" placeholder="you@example.com" />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Message</label>
-              <textarea className={styles.formTextarea} placeholder="Tell us what's on your mind..." />
-            </div>
-            <button type="submit" className={styles.formSubmit}>
-              Send Message
-            </button>
-          </form>
-
-          <h3>Other Ways</h3>
-          <p>
-            You can also reach us on GitHub or via email at <a href="mailto:helldiver.star@gmail.com">helldiver.star@gmail.com</a>.
-          </p>
+              <h3>Other ways to reach us</h3>
+              <p>
+                Email us directly at{' '}
+                <a href="mailto:hello@objecttracer.com">hello@objecttracer.com</a>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

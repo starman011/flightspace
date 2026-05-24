@@ -85,6 +85,7 @@ func Setup(
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
+	mux.Handle("POST /api/v1/contact",  rateLimit(http.HandlerFunc(controllers.ContactSubmit)))
 	mux.Handle("GET /api/v1/admin/waitlist.csv", http.HandlerFunc(waitlist.Export))
 
 	// DESI deep space catalog
