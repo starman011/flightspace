@@ -1497,138 +1497,6 @@ function SpaceFeed({ apod, kp, kpHistory, showers, news, quote, pinnedLaunch, on
   )
 }
 
-// ── Smart Stack container ──────────────────────────────────────────────────
-function SmartStack({ apod, kp, kpHistory, showers, news, loadMoreNews, hasMoreNews, fetchingNews, quote, pinnedLaunch, onUnpinLaunch, issData, onISSLink, onPanelChange, expanded }) {
-  const [active, setActive]   = useState(0)
-  const pausedRef             = useRef(false)
-  const pauseTimerRef         = useRef(null)
-  const total = STACK_DEFS.length
-
-  // Auto-rotate every 9 s, pauses for 25 s after user interaction
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!pausedRef.current) setActive(a => {
-        const next = (a + 1) % total
-        onPanelChange?.(next)
-        return next
-      })
-    }, 9000)
-    return () => clearInterval(id)
-  }, [total, onPanelChange])
-
-  const go = (idx) => {
-    pausedRef.current = true
-    setActive(idx)
-    onPanelChange?.(idx)
-    clearTimeout(pauseTimerRef.current)
-    pauseTimerRef.current = setTimeout(() => { pausedRef.current = false }, 25000)
-  }
-  const prev = () => go((active - 1 + total) % total)
-  const next = () => go((active + 1) % total)
-
-  // ── Horizontal swipe to change panel ──────────────────────────────────────
-  const swipeWrapRef = useRef(null)
-  const swipeTRef    = useRef({ startX: 0, startY: 0, dir: null, on: false })
-  // Keep latest go/active in refs so the passive-false listener sees them
-  const goRef        = useRef(go);     goRef.current     = go
-  const activeRef    = useRef(active); activeRef.current = active
-
-  useEffect(() => {
-    const el = swipeWrapRef.current
-    if (!el) return
-    const onMove = (e) => {
-      const t  = swipeTRef.current
-      if (!t.on) return
-      const dx = e.touches[0].clientX - t.startX
-      const dy = e.touches[0].clientY - t.startY
-      // Lock direction on first 8 px of movement
-      if (!t.dir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
-        t.dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v'
-      }
-      if (t.dir === 'h') {
-        e.preventDefault()
-        el.style.transition = 'none'
-        el.style.transform  = `translateX(${dx * 0.5}px)`
-      }
-    }
-    // Must be non-passive to call preventDefault
-    el.addEventListener('touchmove', onMove, { passive: false })
-    return () => el.removeEventListener('touchmove', onMove)
-  }, [])
-
-  const onSwipeStart = (e) => {
-    swipeTRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, dir: null, on: true }
-  }
-  const onSwipeEnd = (e) => {
-    const t  = swipeTRef.current
-    t.on     = false
-    const dx = e.changedTouches[0].clientX - t.startX
-    if (swipeWrapRef.current) {
-      swipeWrapRef.current.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)'
-      swipeWrapRef.current.style.transform  = ''
-    }
-    if (t.dir === 'h') {
-      if (dx < -50) goRef.current((activeRef.current + 1) % total)
-      if (dx >  50) goRef.current((activeRef.current - 1 + total) % total)
-    }
-  }
-
-  const def = STACK_DEFS[active]
-
-  return (
-    <div className={styles.smartStack}>
-      {/* Navigation header */}
-      <div className={styles.stackHeader}>
-        <button className={styles.stackNavBtn} onClick={prev} aria-label="Previous">
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>chevron_left</span>
-        </button>
-        <span className={styles.stackLabel}>
-          <span className="material-symbols-outlined" style={{ fontSize: 13, color: def.color, filter: `drop-shadow(0 0 6px ${def.color}55)` }}>{def.icon}</span>
-          {def.label}
-        </span>
-        <button className={styles.stackNavBtn} onClick={next} aria-label="Next">
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>chevron_right</span>
-        </button>
-      </div>
-
-      {/* Pinned launch — always visible */}
-      {pinnedLaunch && <PinnedCountdown launch={pinnedLaunch} onUnpin={onUnpinLaunch} />}
-
-      {/* Swipe wrapper — horizontal swipe changes panel, vertical scroll passes through */}
-      <div
-        ref={swipeWrapRef}
-        className={styles.swipeArea}
-        onTouchStart={onSwipeStart}
-        onTouchEnd={onSwipeEnd}
-      >
-        {/* Animated slide content — key forces remount + CSS animation */}
-        <div key={`${active}-${expanded}`} className={styles.stackSlide}>
-          {active === 0 && <ISSStack issData={issData} onISSLink={onISSLink} expanded={expanded} />}
-          {active === 1 && <ApodStack apod={apod} />}
-          {active === 2 && <SolarStack kp={kp} kpHistory={kpHistory} expanded={expanded} />}
-          {active === 3 && <MeteorsStack showers={showers} expanded={expanded} />}
-          {active === 4 && <NewsStack news={news} loadMore={loadMoreNews} hasMore={hasMoreNews} fetching={fetchingNews} expanded={expanded} />}
-          {active === 5 && <NightSkyStack expanded={expanded} />}
-          {active === 6 && <QuoteStack quote={quote} expanded={expanded} />}
-        </div>
-      </div>
-
-      {/* Dot indicators */}
-      <div className={styles.stackDots}>
-        {STACK_DEFS.map((d, i) => (
-          <button
-            key={d.id}
-            className={`${styles.stackDot} ${i === active ? styles.stackDotActive : ''}`}
-            onClick={() => go(i)}
-            aria-label={d.label}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-
 /** Derive a human-readable region from lat/lon */
 function geoRegion(lat, lon) {
   if (lat == null || lon == null) return 'Unknown Region'
@@ -1742,7 +1610,6 @@ export default function CommandCenterOverlay({
 
   // ── Mobile bottom sheet — 3-state: 'peek' | 'half' | 'full' ─────────────
   const [sheetState, setSheetState] = useState('peek')
-  const [introGone, setIntroGone]   = useState(false)
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
   const heroSeenRef = useRef(false)
@@ -2010,23 +1877,6 @@ export default function CommandCenterOverlay({
         />
       </div>
 
-      {/* Mobile intro — fades in on load then dissolves to reveal the globe */}
-      {!introGone && (
-        <div className={styles.mobileIntro} onAnimationEnd={() => setIntroGone(true)}>
-          <div className={styles.mobileIntroContent}>
-            <p className={styles.mobileIntroTag}>
-              <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
-              Active Tracking
-            </p>
-            <h1 className={styles.mobileIntroTitle}>
-              PLANETARY<br /><span className={styles.mobileIntroAccent}>OBSERVER</span>
-            </h1>
-            <p className={styles.mobileIntroSub}>
-              {trackedCount > 0 ? `${trackedCount.toLocaleString()} objects tracked` : 'Initialising sensors…'}
-            </p>
-          </div>
-        </div>
-      )}
 
     </div>
   )
