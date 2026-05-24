@@ -229,13 +229,6 @@ const MOBILE_FILTERS = [
   { id: 'asteroids',  type: 'asteroids',  scale: 'solar', label: 'NEO' },
 ]
 
-const MOBILE_SCALES = [
-  { id: 'earth',  label: 'Earth' },
-  { id: 'moon',   label: 'Moon' },
-  { id: 'solar',  label: 'Solar' },
-  { id: 'galaxy', label: 'Deep Space' },
-]
-
 function MobileFilterIcon({ id }) {
   const s = { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' }
   switch (id) {
@@ -261,28 +254,8 @@ function MobileFilterIcon({ id }) {
   }
 }
 
-function MobileScaleIcon({ id }) {
-  const s = { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' }
-  switch (id) {
-    case 'earth': return (
-      <svg {...s}><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-    )
-    case 'moon': return (
-      <svg {...s}><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" /></svg>
-    )
-    case 'solar': return (
-      <svg {...s}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
-    )
-    case 'galaxy': return (
-      <svg {...s}><circle cx="12" cy="12" r="2" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10" /><path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2" /><path d="M2 12c0-3 4-6 10-6s10 3 10 6-4 6-10 6-10-3-10-6" /></svg>
-    )
-    default: return null
-  }
-}
-
 function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle,
   liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle, connectionStatus,
-  activeScale, onScaleChange,
 }) {
   function handle(e, cat) {
     e.stopPropagation()
@@ -294,72 +267,55 @@ function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiv
   }
   const isConnecting = connectionStatus === 'connecting'
   return (
-    <div className={styles.filterRowWrap}>
-      <div className={styles.filterIconStrip}>
-        {MOBILE_FILTERS.map(cat => (
-          <button
-            key={cat.id}
-            className={`${styles.filterIconBtn} ${(activeFilter ?? 'all') === cat.id ? styles.filterIconBtnOn : ''}`}
-            onClick={(e) => handle(e, cat)}
-            aria-label={cat.label}
-          >
-            <MobileFilterIcon id={cat.id} />
-          </button>
-        ))}
-
-        <span className={styles.filterIconSep} />
-
-        {/* LIVE toggle */}
+    <div className={styles.filterIconStrip}>
+      {MOBILE_FILTERS.map(cat => (
         <button
-          className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${liveEnabled ? styles.filterIconBtnLive : ''}`}
-          onClick={(e) => { e.stopPropagation(); onLiveToggle?.() }}
-          aria-label={liveEnabled ? 'Disable live' : 'Enable live'}
-          data-haptic-heavy
+          key={cat.id}
+          className={`${styles.filterIconBtn} ${(activeFilter ?? 'all') === cat.id ? styles.filterIconBtnOn : ''}`}
+          onClick={(e) => handle(e, cat)}
+          aria-label={cat.label}
         >
-          <span className={`${styles.liveDotMobile} ${liveEnabled ? styles.liveDotMobileOn : ''} ${isConnecting ? styles.liveDotMobileConnecting : ''}`} />
+          <MobileFilterIcon id={cat.id} />
         </button>
+      ))}
 
-        {/* Search */}
-        <button
-          className={`${styles.filterIconBtn} ${styles.filterActionBtn}`}
-          onClick={(e) => { e.stopPropagation(); onSearchOpen?.() }}
-          aria-label="Search"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-          </svg>
-        </button>
+      <span className={styles.filterIconSep} />
 
-        {/* Audio */}
-        <button
-          className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${!audioMuted ? styles.filterIconBtnOn : ''}`}
-          onClick={(e) => { e.stopPropagation(); onAudioToggle?.() }}
-          aria-label={audioMuted ? 'Unmute' : 'Mute'}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            {audioMuted ? (
-              <><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>
-            ) : (
-              <><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></>
-            )}
-          </svg>
-        </button>
-      </div>
+      {/* LIVE toggle */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${liveEnabled ? styles.filterIconBtnLive : ''}`}
+        onClick={(e) => { e.stopPropagation(); onLiveToggle?.() }}
+        aria-label={liveEnabled ? 'Disable live' : 'Enable live'}
+        data-haptic-heavy
+      >
+        <span className={`${styles.liveDotMobile} ${liveEnabled ? styles.liveDotMobileOn : ''} ${isConnecting ? styles.liveDotMobileConnecting : ''}`} />
+      </button>
 
-      {/* Pages row — scale/view switcher */}
-      <div className={styles.scaleIconStrip}>
-        {MOBILE_SCALES.map(s => (
-          <button
-            key={s.id}
-            className={`${styles.filterIconBtn} ${styles.scaleIconBtn} ${activeScale === s.id ? styles.scaleIconBtnOn : ''}`}
-            onClick={(e) => { e.stopPropagation(); onScaleChange?.(s.id) }}
-            aria-label={s.label}
-          >
-            <MobileScaleIcon id={s.id} />
-            <span className={styles.scaleIconLabel}>{s.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Search */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn}`}
+        onClick={(e) => { e.stopPropagation(); onSearchOpen?.() }}
+        aria-label="Search"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+        </svg>
+      </button>
+
+      {/* Audio */}
+      <button
+        className={`${styles.filterIconBtn} ${styles.filterActionBtn} ${!audioMuted ? styles.filterIconBtnOn : ''}`}
+        onClick={(e) => { e.stopPropagation(); onAudioToggle?.() }}
+        aria-label={audioMuted ? 'Unmute' : 'Mute'}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          {audioMuted ? (
+            <><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>
+          ) : (
+            <><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></>
+          )}
+        </svg>
+      </button>
     </div>
   )
 }
@@ -1842,8 +1798,6 @@ export default function CommandCenterOverlay({
               audioMuted={audioMuted}
               onAudioToggle={onAudioToggle}
               connectionStatus={connectionStatus}
-              activeScale={activeScale}
-              onScaleChange={onCameraScale}
             />
             {activeScale === 'galaxy' && (
               <div className={styles.galaxySliderWrap}>

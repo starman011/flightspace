@@ -283,15 +283,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     if (selectedMoonSite) {
       setSelectedMoonSite(null)
     } else {
-      setActiveScale('earth')
-      globeRef.current?.setCameraScale?.('earth')
+      handleCameraScale('earth')
     }
-  }, [selectedMoonSite])
+  }, [selectedMoonSite, handleCameraScale])
   const handleMoonReturnHome = useCallback(() => {
     setSelectedMoonSite(null)
-    setActiveScale('earth')
-    globeRef.current?.setCameraScale?.('earth')
-  }, [])
+    handleCameraScale('earth')
+  }, [handleCameraScale])
   const handleMoonFilterChange = useCallback((filter) => {
     globeRef.current?.setMoonFilter?.(filter)
   }, [])

@@ -1818,51 +1818,6 @@
     box-shadow: 0 0 10px rgba(34, 239, 126, 0.15);
   }
 
-  /* ── Filter row wrapper (filters + scale rows) ─────────────────────────── */
-
-  .filterRowWrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-  }
-
-  /* ── Pages / scale row ─────────────────────────────────────────────────── */
-
-  .scaleIconStrip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding-bottom: 2px;
-  }
-
-  .scaleIconBtn {
-    width: 72px;
-    height: 28px;
-    border-radius: 6px;
-    flex-direction: row;
-    gap: 4px;
-    border-color: rgba(200, 210, 225, 0.08);
-  }
-
-  .scaleIconLabel {
-    font-family: var(--font-mono, monospace);
-    font-size: 9px;
-    letter-spacing: 0.05em;
-    color: inherit;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  .scaleIconBtnOn {
-    color: #b2ff1a;
-    background: rgba(178, 255, 26, 0.08);
-    border-color: rgba(178, 255, 26, 0.22);
-    box-shadow: 0 0 8px rgba(178, 255, 26, 0.1);
-  }
-
   .galaxySliderWrap {
     width: 100%;
     padding: 0 12px;

@@ -129,11 +129,11 @@
   }
 
   .activeLabel {
-    display: none;
+    font-size: 9px;
   }
 
   .btn.active {
-    width: 28px;
-    padding: 0;
+    width: auto;
+    padding: 0 8px;
   }
 }
