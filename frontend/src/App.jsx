@@ -134,7 +134,9 @@ export default function App() {
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
-  const [activePage, setActivePage]         = useState(null)
+  const [activePage, setActivePage]         = useState(
+    window.location.pathname === '/waitlist' ? 'waitlist' : null
+  )
   const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)

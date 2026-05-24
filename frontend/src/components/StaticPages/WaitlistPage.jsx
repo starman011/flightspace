@@ -1,74 +1,117 @@
-import { useState } from 'react'
-import styles from './StaticPages.module.css'
+import { useState, useMemo } from 'react'
+import styles from './WaitlistPage.module.css'
 
-const CURRENT_FEATURES = [
-  { name: 'Live Flights',     desc: '10,000+ planes tracked in real time' },
-  { name: 'ISS Position',     desc: 'International Space Station live at 28,000 km/h' },
-  { name: 'Satellites',       desc: 'Hundreds of active satellites with live orbits' },
-  { name: 'Wind Layer',       desc: 'Global atmospheric wind patterns, live overlay' },
-  { name: 'Moon Explorer',    desc: '3D lunar surface — Apollo sites, craters, missions' },
-  { name: 'Solar System',     desc: 'All 8 planets at real positions, rendered to scale' },
-  { name: 'Rocket Launches',  desc: 'Live countdowns — SpaceX, ISRO, ESA, Rocket Lab' },
-  { name: 'Deep Space',       desc: '2M+ galaxies — fly through the observable universe', beta: true },
+/* ── Hero image pool ─────────────────────────────────────────────── */
+const HEROES = [
+  'photo-1462331940025-496dfbfc7564', // Milky Way
+  'photo-1543722530-d2c3201371e7',    // Deep space galaxies
+  'photo-1451187580459-43490279c0fa', // Earth from space
+  'photo-1419242902214-272b3f66ee7a', // Meteor/stars
 ]
 
-const SECTIONS = [
-  {
-    label: '01 — EARTH VIEW',
-    photo: 'photo-1614730321146-b6fa6a46bcb4',
-    heading: 'Live Flights, ISS & Wind Layer',
-    body: 'Watch 10,000+ commercial flights move in real time. Track the ISS completing a full lap every 90 minutes at 28,000 km/h. Overlay live global wind patterns.',
-  },
-  {
-    label: '02 — LUNAR SURFACE',
-    photo: 'photo-1446941611757-91d2c3bd3d45',
-    heading: 'Lunar Explorer',
-    body: 'Navigate the Moon in 3D. Every Apollo landing site, Chang\'e missions, future Artemis targets.',
-  },
-  {
-    label: '03 — SOLAR SYSTEM',
-    photo: 'photo-1614732414444-096e5f1122d5',
-    heading: 'Planets in Motion',
-    body: 'All eight planets at their real positions right now. Orbital mechanics, active missions, asteroid belt — live 3D to scale.',
-  },
-  {
-    label: '04 — DEEP SPACE (BETA)',
-    photo: 'photo-1543722530-d2c3201371e7',
-    heading: 'Galaxies & Deep Field',
-    body: 'Over 2 million galaxies mapped into a 3D deep-field view. Fly through the observable universe from the Milky Way\'s edge to objects 13 billion light-years away.',
-  },
-  {
-    label: '05 — LAUNCHES',
-    photo: 'photo-1541185934-01b600ea069c',
-    heading: 'Every Launch, Live',
-    body: 'Live countdown timers for every scheduled orbital launch — SpaceX, Rocket Lab, ISRO, ESA and more.',
-  },
-  {
-    label: '06 — NEAR-EARTH OBJECTS',
-    photo: 'photo-1419242902214-272b3f66ee7a',
-    heading: 'Asteroids & Close Approaches',
-    body: 'Monitor near-Earth asteroids, visualise orbital paths, track confirmed close approaches. Data from NASA\'s Center for Near-Earth Object Studies.',
-  },
+/* ── Feature icons (inline SVG, 16×16) ──────────────────────────── */
+function IconLiveFlights() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+    </svg>
+  )
+}
+
+function IconISS() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <ellipse cx="12" cy="12" rx="10" ry="4"/>
+      <circle cx="12" cy="2" r="1.5" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
+
+function IconSatellites() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12a10 10 0 1 1 20 0"/>
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+    </svg>
+  )
+}
+
+function IconWind() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+    </svg>
+  )
+}
+
+function IconMoon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+}
+
+function IconSolar() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+  )
+}
+
+function IconRocket() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+    </svg>
+  )
+}
+
+function IconDeepSpace() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+    </svg>
+  )
+}
+
+/* ── Feature data ────────────────────────────────────────────────── */
+const FEATURES = [
+  { name: 'Live Flights',    desc: '10,000+ planes in real time',           Icon: IconLiveFlights },
+  { name: 'ISS Position',   desc: 'Live at 28,000 km/h',                   Icon: IconISS         },
+  { name: 'Satellites',     desc: 'Hundreds with live orbits',              Icon: IconSatellites  },
+  { name: 'Wind Layer',     desc: 'Global atmospheric patterns',            Icon: IconWind        },
+  { name: 'Moon Explorer',  desc: 'Apollo sites, craters, missions',        Icon: IconMoon        },
+  { name: 'Solar System',   desc: '8 planets at real positions',            Icon: IconSolar       },
+  { name: 'Rocket Launches',desc: 'SpaceX, ISRO, ESA live',                Icon: IconRocket      },
+  { name: 'Deep Space',     desc: '2M+ galaxies — fly the universe',        Icon: IconDeepSpace, beta: true },
 ]
 
 const ROADMAP = [
-  {
-    name: 'Precision Tracking',
-    desc: 'Sub-second position updates on any object — earth surface to deep space.',
-  },
-  {
-    name: 'Smart Custom Alerts',
-    desc: 'ISS overhead, launches 30 min before liftoff, flight landings — you set the rules.',
-  },
-  {
-    name: 'Flight Replay',
-    desc: 'Rewind any flight or launch trajectory, hour by hour, on the live globe.',
-  },
+  { name: 'Precision Tracking',    desc: 'Sub-second position updates on any object — earth to deep space.' },
+  { name: 'Smart Custom Alerts',   desc: 'ISS overhead, launches 30 min before liftoff, flight landings.' },
+  { name: 'Flight Replay',         desc: 'Rewind any flight or launch trajectory, hour by hour, on the live globe.' },
 ]
 
+/* ── Component ───────────────────────────────────────────────────── */
 export default function WaitlistPage({ onClose }) {
   const [email, setEmail]   = useState('')
   const [status, setStatus] = useState('idle')
+
+  const heroId = useMemo(() => HEROES[Math.floor(Math.random() * HEROES.length)], [])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -89,189 +132,137 @@ export default function WaitlistPage({ onClose }) {
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.panelWide} onClick={e => e.stopPropagation()}>
+    <div className={styles.overlay}>
 
-        {/* Header */}
-        <div className={styles.header}>
-          <h2 className={styles.title}>Join the Waitlist</h2>
-          <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+      {/* ── Top bar ─────────────────────────────────────────────── */}
+      <div className={styles.topBar}>
+        <p className={styles.wordmark}>
+          <span className={styles.wordmarkDot}/>
+          ObjectTracer
+        </p>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          ×
+        </button>
+      </div>
+
+      {/* ── Two-column body ─────────────────────────────────────── */}
+      <div className={styles.body}>
+
+        {/* LEFT */}
+        <div className={styles.left}>
+
+          {/* Hero image */}
+          <img
+            className={styles.hero}
+            src={`https://images.unsplash.com/${heroId}?w=900&h=400&fit=crop&q=85&auto=format`}
+            alt="Space"
+          />
+
+          {/* Mission copy */}
+          <div>
+            <p className={styles.eyebrow}>Our Mission</p>
+            <h2 className={styles.headline}>
+              The universe is alive.<br/>Watch it happen live.
+            </h2>
+          </div>
+          <p className={styles.copy}>
+            Right now, planes thread invisible corridors above your head. The ISS races overhead at 28,000 km/h. Asteroids drift silently through the inner solar system.
+            We built ObjectTracer so everyone — not just engineers — can see all of it, in real time, for free.
+          </p>
+
+          {/* Feature grid */}
+          <div className={styles.featSection}>
+            <p className={styles.featLabel}>Available now</p>
+            <div className={styles.grid}>
+              {FEATURES.map((f, i) => (
+                <div
+                  key={f.name}
+                  className={styles.card}
+                  style={{ animationDelay: `${i * 0.04}s` }}
+                >
+                  <div className={styles.icon}>
+                    <f.Icon/>
+                  </div>
+                  <p className={styles.cardName}>
+                    {f.name}
+                    {f.beta && <span className={styles.beta}>BETA</span>}
+                  </p>
+                  <p className={styles.cardDesc}>{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
-        {/* Body */}
-        <div className={styles.body}>
+        {/* RIGHT */}
+        <div className={styles.right}>
 
-          {/* ── A. Orbit glyph + mission copy ──────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 32 }}>
-            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{ marginBottom: 16 }}>
-              <circle cx="26" cy="26" r="22" stroke="rgba(178,255,26,0.1)" strokeWidth="1"/>
-              <circle cx="26" cy="26" r="13" stroke="rgba(178,255,26,0.2)" strokeWidth="1"/>
-              <circle cx="26" cy="26" r="4"  fill="#b2ff1a" opacity=".85"/>
-              <ellipse cx="26" cy="26" rx="22" ry="8"
-                stroke="#b2ff1a" strokeWidth="0.9" opacity=".3"
-                transform="rotate(-35 26 26)"/>
-              <circle cx="41" cy="18" r="2.2" fill="#b2ff1a" opacity=".55"/>
-              <circle cx="14" cy="36" r="1.4" fill="#b2ff1a" opacity=".35"/>
-            </svg>
-
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(178,255,26,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 12px' }}>
-              Our Mission
-            </p>
-
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.02em', margin: '0 0 18px', lineHeight: 1.25 }}>
-              You just joined something we've been dreaming about.
-            </h2>
-
-            <p style={{ fontSize: 14, color: 'rgba(200,210,225,0.65)', lineHeight: 1.75, margin: '0 0 12px', maxWidth: 520 }}>
-              Right now, as you read this, there are planes threading invisible corridors above your head. Satellites painting arcs across the dark. The ISS racing overhead at 28,000 km/h. Asteroids drifting silently through the inner solar system. The universe is not a still image — it is alive, in motion, happening right now.
-            </p>
-            <p style={{ fontSize: 14, color: 'rgba(200,210,225,0.65)', lineHeight: 1.75, margin: 0, maxWidth: 520 }}>
-              We built ObjectTracer because we wanted to see all of it. Not behind a paywall. Not on a dashboard built for engineers. For everyone — the curious, the dreamers, the kid who looks up at a blinking light and wonders where it is going. The universe is happening live. We just want to help you watch.
-            </p>
-          </div>
-
-          {/* ── B. Available now + feature grid ────────────────────────── */}
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(178,255,26,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px' }}>
-            Available to you right now
-          </p>
-          <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.5)', margin: '0 0 14px' }}>
-            Open <span style={{ color: '#b2ff1a' }}>objecttracer.com</span> — live, no account needed.
+          {/* Form section */}
+          <p className={styles.formLabel}>Join the mission</p>
+          <h3 className={styles.formHeadline}>Get notified as new features launch.</h3>
+          <p className={styles.formSub}>
+            You joined early. Your feedback shapes what we build next. Reply to your welcome email anytime — we read everything.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 32 }}>
-            {CURRENT_FEATURES.map((f, i) => (
-              <div key={i} style={{
-                background: 'rgba(200,210,225,0.03)',
-                border: '1px solid rgba(200,210,225,0.07)',
-                borderRadius: 12,
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-              }}>
-                <div style={{
-                  width: 28, height: 28,
-                  background: 'rgba(178,255,26,0.08)',
-                  border: '1px solid rgba(178,255,26,0.2)',
-                  borderRadius: 8,
-                  marginBottom: 6,
-                }}/>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-                  {f.name}
-                  {f.beta && (
-                    <span style={{ marginLeft: 6, fontSize: 9, background: 'rgba(178,255,26,0.12)', color: '#b2ff1a', border: '1px solid rgba(178,255,26,0.25)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.06em', verticalAlign: 'middle' }}>
-                      BETA
-                    </span>
-                  )}
-                </p>
-                <p style={{ fontSize: 11, color: 'rgba(200,210,225,0.5)', margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* ── C. Feature sections with images ────────────────────────── */}
-          {SECTIONS.map((s, i) => (
-            <div key={i} style={{ marginBottom: 28 }}>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(178,255,26,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 10px' }}>
-                {s.label}
-              </p>
-              <img
-                src={`https://images.unsplash.com/${s.photo}?w=500&h=220&fit=crop&q=85`}
-                alt={s.heading}
-                style={{ width: '100%', borderRadius: 10, display: 'block', marginBottom: 12, objectFit: 'cover', height: 160 }}
-              />
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.92)', margin: '0 0 8px' }}>
-                {s.heading}
-              </h3>
-              <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.6)', lineHeight: 1.65, margin: 0 }}>
-                {s.body}
-              </p>
+          {status === 'done' ? (
+            <div className={styles.success}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="#b2ff1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <p className={styles.successText}>You're in. Welcome aboard.</p>
             </div>
-          ))}
+          ) : (
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                className={styles.input}
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                disabled={status === 'loading'}
+                autoComplete="email"
+              />
+              <button className={styles.submitBtn} type="submit" disabled={status === 'loading'}>
+                {status === 'loading'
+                  ? <span className={styles.spinner}/>
+                  : 'Join the mission'}
+              </button>
+              {status === 'error' && (
+                <p className={styles.errorText}>Something went wrong — please try again.</p>
+              )}
+            </form>
+          )}
 
-          {/* ── D. Divider ──────────────────────────────────────────────── */}
-          <div style={{ borderTop: '1px solid rgba(178,255,26,0.08)', margin: '8px 0 28px' }} />
+          {/* Divider */}
+          <div className={styles.divider}>
+            <div className={styles.dividerLine}/>
+            <span className={styles.dividerText}>Coming next</span>
+            <div className={styles.dividerLine}/>
+          </div>
 
-          {/* ── E. Coming next ──────────────────────────────────────────── */}
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(178,255,26,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 14px' }}>
-            Coming next
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-            {ROADMAP.map((r, i) => (
-              <div key={i} style={{
-                background: 'rgba(200,210,225,0.03)',
-                border: '1px solid rgba(200,210,225,0.07)',
-                borderRadius: 12,
-                padding: '14px 16px',
-              }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: '0 0 4px' }}>{r.name}</p>
-                <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.55)', margin: 0, lineHeight: 1.55 }}>{r.desc}</p>
+          {/* Roadmap */}
+          <div className={styles.roadmapList}>
+            {ROADMAP.map(r => (
+              <div key={r.name} className={styles.roadmapItem}>
+                <div className={styles.roadmapDot}/>
+                <div>
+                  <p className={styles.roadmapName}>{r.name}</p>
+                  <p className={styles.roadmapDesc}>{r.desc}</p>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* ── F. Email signup form ────────────────────────────────────── */}
-          <div style={{ background: 'rgba(178,255,26,0.03)', border: '1px solid rgba(178,255,26,0.08)', borderRadius: 14, padding: '24px 20px', marginBottom: 20 }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(178,255,26,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 8px' }}>
-              Join the mission
-            </p>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.92)', margin: '0 0 8px' }}>
-              Get notified as new features launch.
-            </h3>
-            <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.55)', margin: '0 0 18px', lineHeight: 1.55 }}>
-              You joined early. Your feedback shapes what we build next. Reply to your welcome email anytime — we read everything.
-            </p>
-
-            {status === 'done' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(178,255,26,0.06)', border: '1px solid rgba(178,255,26,0.2)', borderRadius: 10 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b2ff1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#b2ff1a', margin: 0 }}>You're in. Welcome aboard.</p>
-              </div>
-            ) : (
-              <form onSubmit={submit} style={{ display: 'flex', gap: 8 }}>
-                <input
-                  className={styles.formInput}
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  disabled={status === 'loading'}
-                  autoComplete="email"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  className={styles.formSubmit}
-                  type="submit"
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? (
-                    <span style={{
-                      display: 'inline-block',
-                      width: 12, height: 12,
-                      border: '2px solid rgba(178,255,26,0.3)',
-                      borderTopColor: '#b2ff1a',
-                      borderRadius: '50%',
-                      animation: 'spin 0.7s linear infinite',
-                    }}/>
-                  ) : 'Join the mission'}
-                </button>
-              </form>
-            )}
-
-            {status === 'error' && (
-              <p style={{ fontSize: 12, color: 'rgba(255,100,100,0.8)', margin: '10px 0 0', fontFamily: 'var(--font-mono)' }}>
-                Something went wrong — please try again.
-              </p>
-            )}
-          </div>
-
-          {/* ── G. Spread the word ──────────────────────────────────────── */}
-          <p style={{ fontSize: 12, color: 'rgba(200,210,225,0.35)', textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
-            Know someone who loves space or aviation? Send them to{' '}
-            <a href="https://objecttracer.com" style={{ color: 'rgba(178,255,26,0.5)', textDecoration: 'none' }}>objecttracer.com</a>
+          {/* Share line */}
+          <p className={styles.share}>
+            Know someone who loves space or aviation?{' '}
+            Send them to{' '}
+            <a href="https://objecttracer.com" className={styles.shareLink}>
+              objecttracer.com
+            </a>
             {' '}— every person who joins makes the platform better.
           </p>
 
