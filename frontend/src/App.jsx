@@ -21,6 +21,7 @@ import BottomBar from './components/BottomBar/BottomBar'
 import TopRightPill from './components/TopRightPill/TopRightPill'
 import PagesPill from './components/PagesPill/PagesPill'
 import AboutPage from './components/StaticPages/AboutPage'
+import WaitlistPage from './components/StaticPages/WaitlistPage'
 import ContactPage from './components/StaticPages/ContactPage'
 import FAQPage from './components/StaticPages/FAQPage'
 import DonatePage from './components/StaticPages/DonatePage'
@@ -646,6 +647,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
       {activePage === 'faq' && <FAQPage onClose={() => setActivePage(null)} />}
       {activePage === 'donate' && <DonatePage onClose={() => setActivePage(null)} />}
+      {activePage === 'waitlist' && <WaitlistPage onClose={() => setActivePage(null)} />}
 
       {/* Audio now integrated into BottomBar */}
       <WaitlistPopup />

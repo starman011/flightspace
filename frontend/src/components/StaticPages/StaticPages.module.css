@@ -235,3 +235,28 @@
     font-size: 18px;
   }
 }
+
+/* ── Wide panel (WaitlistPage) ────────────────────────────────────────────── */
+
+.panelWide {
+  width: 620px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 60px);
+  overflow-y: auto;
+
+  background: rgba(12, 16, 22, 0.97);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 20px;
+
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  padding: 32px;
+
+  animation: slideUp 0.3s var(--ease-panel);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
