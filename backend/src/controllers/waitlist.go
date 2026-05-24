@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -64,9 +65,75 @@ func (c *WaitlistController) Subscribe(w http.ResponseWriter, r *http.Request) {
 
 	if tag.RowsAffected() > 0 {
 		go sendWaitlistEmail(email)
+		go syncToResendAudience(email)
 	}
 
 	utils.JSON(w, http.StatusOK, map[string]string{"status": "subscribed"})
+}
+
+// Export returns all waitlist emails as a CSV download.
+// Protected by ADMIN_SECRET — pass as Authorization: Bearer <secret>.
+func (c *WaitlistController) Export(w http.ResponseWriter, r *http.Request) {
+	secret := os.Getenv("ADMIN_SECRET")
+	if secret == "" || r.Header.Get("Authorization") != "Bearer "+secret {
+		utils.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	rows, err := c.pool.Query(ctx,
+		`SELECT email, source, created_at FROM waitlist_emails ORDER BY created_at DESC`)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", `attachment; filename="waitlist.csv"`)
+
+	enc := csv.NewWriter(w)
+	_ = enc.Write([]string{"email", "source", "joined_at"})
+	for rows.Next() {
+		var email, source string
+		var joinedAt time.Time
+		if err := rows.Scan(&email, &source, &joinedAt); err != nil {
+			continue
+		}
+		_ = enc.Write([]string{email, source, joinedAt.UTC().Format(time.RFC3339)})
+	}
+	enc.Flush()
+}
+
+// syncToResendAudience adds the email to a Resend audience for backup.
+// Requires RESEND_API_KEY and RESEND_AUDIENCE_ID env vars. Silent on failure.
+func syncToResendAudience(email string) {
+	apiKey := os.Getenv("RESEND_API_KEY")
+	audienceID := os.Getenv("RESEND_AUDIENCE_ID")
+	if apiKey == "" || audienceID == "" {
+		return
+	}
+
+	b, _ := json.Marshal(map[string]any{"email": email, "unsubscribed": false})
+	req, err := http.NewRequest(http.MethodPost,
+		"https://api.resend.com/audiences/"+audienceID+"/contacts",
+		bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf(`{"level":"warn","service":"waitlist","msg":"resend audience sync failed","error":%q}`, err)
+		return
+	}
+	defer resp.Body.Close()
+	log.Printf(`{"level":"info","service":"waitlist","msg":"synced to resend audience","email":%q}`, email)
 }
 
 // sendWaitlistEmail fires a confirmation email via Resend in a goroutine.
@@ -133,15 +200,22 @@ func sendWaitlistEmail(to string) {
           </tr>
         </table>
 
-        <h1 style="margin:0 0 14px;font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-.03em;line-height:1.05;">
-          Welcome to the mission.
+        <h1 style="margin:0 0 16px;font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-.03em;line-height:1.05;">
+          You just joined something<br>we have been dreaming about.
         </h1>
-        <p style="margin:0;font-size:15px;line-height:1.8;color:#8a9ab0;">
-          We are building the platform we always wished existed — one place where
-          <strong style="color:#dce8f0;font-weight:600;">anyone</strong> can see
-          what is flying above them, what is orbiting Earth, what is hurtling through
-          the solar system, and what lies in the deep field beyond.
-          No paywalls. No subscriptions. The universe, open to all.
+        <p style="margin:0 0 14px;font-size:15px;line-height:1.85;color:#8a9ab0;">
+          Right now, as you read this, there are planes threading invisible corridors
+          above your head. Satellites painting arcs across the dark.
+          The ISS racing overhead at 28,000 km/h. Asteroids drifting silently
+          through the inner solar system. The universe is not a still image —
+          it is alive, in motion, happening <strong style="color:#dce8f0;font-weight:600;">right now.</strong>
+        </p>
+        <p style="margin:0;font-size:15px;line-height:1.85;color:#8a9ab0;">
+          We built ObjectTracer because we wanted to <em style="color:#c8d8e0;">see</em> all of it.
+          Not behind a paywall. Not on a dashboard built for engineers.
+          For everyone — the curious, the dreamers, the kid who looks up
+          at a blinking light and wonders where it is going.
+          The universe is happening live. We just want to help you watch.
         </p>
       </td>
     </tr>
@@ -153,14 +227,17 @@ func sendWaitlistEmail(to string) {
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td style="background-color:#0c1e0a;border:1px solid #1e3a12;border-radius:14px;padding:22px 24px;">
-              <p style="margin:0 0 4px;font-size:10px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4d8020;">One quick ask — before anything else</p>
-              <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:#8a9ab0;">
-                You joined early and your opinion matters more than you think.
-                <strong style="color:#dce8f0;font-weight:600;">What would make ObjectTracer indispensable to you?</strong>
-                A feature you wish existed? Something confusing? An idea we have not considered yet?
+              <p style="margin:0 0 4px;font-size:10px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4d8020;">One thing before you dive in</p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.85;color:#8a9ab0;">
+                You signed up early — and that genuinely means something to us.
+                People like you are the reason ObjectTracer exists the way it does.
+                We do not have investors telling us what to build.
+                We have <strong style="color:#dce8f0;font-weight:600;">you.</strong>
+                So here is our honest ask: what would make this the first tab you open every morning?
+                A feature you wish existed? Something that felt off? A wild idea?
               </p>
               <p style="margin:0;font-size:13px;font-family:'Courier New',Courier,monospace;font-weight:700;color:#b2ff1a;letter-spacing:.04em;">
-                Just reply to this email — we read every single one.
+                Reply to this email. Not a form — just us. We read everything.
               </p>
             </td>
           </tr>

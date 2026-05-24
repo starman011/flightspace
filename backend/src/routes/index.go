@@ -85,6 +85,7 @@ func Setup(
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
+	mux.Handle("GET /api/v1/admin/waitlist.csv", http.HandlerFunc(waitlist.Export))
 
 	// DESI deep space catalog
 	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))
