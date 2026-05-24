@@ -109,7 +109,17 @@ func sendWaitlistEmail(to string) {
     <!-- ── WORDMARK + HEADLINE ── -->
     <tr>
       <td style="padding:32px 40px 0;">
-        <p style="margin:0 0 20px;font-size:11px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#b2ff1a;">&#9711;&nbsp; OBJECTTRACER</p>
+        <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+          <tr>
+            <td valign="middle" style="padding-right:12px;">
+              <img src="https://objecttracer.com/favicon.svg" width="40" height="40" alt="ObjectTracer logo"
+                   style="display:block;width:40px;height:40px;border-radius:8px;" />
+            </td>
+            <td valign="middle">
+              <p style="margin:0;font-size:11px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#b2ff1a;">OBJECTTRACER</p>
+            </td>
+          </tr>
+        </table>
 
         <!-- Quote -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
