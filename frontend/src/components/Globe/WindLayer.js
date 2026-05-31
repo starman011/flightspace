@@ -4,42 +4,40 @@ import {
 } from 'three'
 
 const WIND_R         = 1.007
-const PARTICLE_COUNT = 5000
-const MAX_AGE        = 180   // ~3s at 60fps
-const SPEED_SCALE    = 0.00007
-const TRAIL_SCALE    = 3.5   // trail tail = TRAIL_SCALE × one-frame displacement
+const PARTICLE_COUNT = 4000
+const SPEED_SCALE    = 0.0009   // faster movement so trail is visible
+const TRAIL_LEN      = 12       // history points per particle
+const TRAIL_SAMPLE   = 4        // record position every N frames
+const SEGMENTS_PER   = TRAIL_LEN - 1
+const MAX_AGE        = TRAIL_LEN * TRAIL_SAMPLE * 4
 
-// Speed → color: calm white-blue → violent red
-// Keep colors bright/light so they're visible on the dark globe
 const SPEED_STOPS = [
-  { t: 0,   c: new Color(0x90caf9) },  // 0  m/s — pale blue
-  { t: 5,   c: new Color(0x4dd0e1) },  // 5  m/s — cyan
-  { t: 10,  c: new Color(0x81c784) },  // 10 m/s — light green
-  { t: 16,  c: new Color(0xfff176) },  // 16 m/s — yellow
-  { t: 22,  c: new Color(0xffb74d) },  // 22 m/s — orange
-  { t: 32,  c: new Color(0xef5350) },  // 32 m/s — red
+  { t: 0,   c: new Color(0x90caf9) },
+  { t: 5,   c: new Color(0x4dd0e1) },
+  { t: 10,  c: new Color(0x81c784) },
+  { t: 16,  c: new Color(0xfff176) },
+  { t: 22,  c: new Color(0xffb74d) },
+  { t: 32,  c: new Color(0xef5350) },
 ]
 
 function speedColor(speed) {
   for (let i = SPEED_STOPS.length - 1; i >= 0; i--) {
     if (speed >= SPEED_STOPS[i].t) {
-      if (i === SPEED_STOPS.length - 1) return SPEED_STOPS[i].c.clone()
+      if (i === SPEED_STOPS.length - 1) return SPEED_STOPS[i].c
       const lo = SPEED_STOPS[i], hi = SPEED_STOPS[i + 1]
       const t = (speed - lo.t) / (hi.t - lo.t)
       return lo.c.clone().lerp(hi.c, t)
     }
   }
-  return SPEED_STOPS[0].c.clone()
+  return SPEED_STOPS[0].c
 }
 
-function ll2v(lat, lon, r) {
+function ll2v(lat, lon, r, out, off) {
   const phi   = (90 - lat) * (Math.PI / 180)
   const theta = (lon + 180) * (Math.PI / 180)
-  return [
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta),
-  ]
+  out[off]     = -r * Math.sin(phi) * Math.cos(theta)
+  out[off + 1] =  r * Math.cos(phi)
+  out[off + 2] =  r * Math.sin(phi) * Math.sin(theta)
 }
 
 function buildWindLookup(pts, gridStep) {
@@ -67,30 +65,40 @@ function buildWindLookup(pts, gridStep) {
 
 export function createWindLayer(scene) {
   const N = PARTICLE_COUNT
-  // Each particle = 1 line segment = 2 vertices (tail, head)
-  const pos  = new Float32Array(N * 6)  // 2 points × 3 coords
-  const col  = new Float32Array(N * 6)  // 2 points × 3 color channels
 
-  const pLat    = new Float32Array(N)
-  const pLon    = new Float32Array(N)
-  const ages    = new Float32Array(N)
-  const maxAges = new Float32Array(N)
-  const pSpeed  = new Float32Array(N)
+  // Position history ring buffer — lat/lon for each particle × TRAIL_LEN slots
+  const histLat   = new Float32Array(N * TRAIL_LEN)
+  const histLon   = new Float32Array(N * TRAIL_LEN)
+  // How many slots filled so far (capped at TRAIL_LEN)
+  const histFill  = new Uint8Array(N)
+  // Frames since last sample recorded
+  const frameTick = new Uint8Array(N)
 
-  for (let i = 0; i < N; i++) {
-    pLat[i]    = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
-    pLon[i]    = Math.random() * 360 - 180
-    ages[i]    = Math.random() * MAX_AGE
-    maxAges[i] = MAX_AGE * (0.5 + Math.random())
-    pSpeed[i]  = 5  // default calm
-    // Both vertices start at same position (invisible zero-length line)
-    const [x, y, z] = ll2v(pLat[i], pLon[i], WIND_R)
-    for (let v = 0; v < 2; v++) {
-      pos[i * 6 + v * 3]     = x
-      pos[i * 6 + v * 3 + 1] = y
-      pos[i * 6 + v * 3 + 2] = z
+  const pLat   = new Float32Array(N)
+  const pLon   = new Float32Array(N)
+  const ages   = new Float32Array(N)
+  const pSpeed = new Float32Array(N)
+
+  // Geometry: (TRAIL_LEN-1) segments × 2 verts × N particles
+  const TOTAL_VERTS = N * SEGMENTS_PER * 2
+  const pos = new Float32Array(TOTAL_VERTS * 3)
+  const col = new Float32Array(TOTAL_VERTS * 3)
+
+  function initParticle(i) {
+    pLat[i]   = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
+    pLon[i]   = Math.random() * 360 - 180
+    ages[i]   = Math.random() * MAX_AGE
+    pSpeed[i] = 5
+    histFill[i]  = 0
+    frameTick[i] = Math.floor(Math.random() * TRAIL_SAMPLE)
+    // Seed all history slots to current position (trail starts as a dot, unfurls over time)
+    for (let t = 0; t < TRAIL_LEN; t++) {
+      histLat[i * TRAIL_LEN + t] = pLat[i]
+      histLon[i * TRAIL_LEN + t] = pLon[i]
     }
   }
+
+  for (let i = 0; i < N; i++) initParticle(i)
 
   const geo = new BufferGeometry()
   geo.setAttribute('position', new BufferAttribute(pos, 3).setUsage(DynamicDrawUsage))
@@ -102,6 +110,7 @@ export function createWindLayer(scene) {
     opacity:      1.0,
     depthWrite:   false,
     blending:     AdditiveBlending,
+    linewidth:    1,
   })
 
   const lines = new LineSegments(geo, mat)
@@ -131,61 +140,70 @@ export function createWindLayer(scene) {
 
       for (let i = 0; i < N; i++) {
         ages[i]++
-
-        if (ages[i] > maxAges[i]) {
-          ages[i]    = 0
-          maxAges[i] = MAX_AGE * (0.5 + Math.random())
-          pLat[i]    = Math.asin(Math.random() * 2 - 1) * (180 / Math.PI)
-          pLon[i]    = Math.random() * 360 - 180
+        if (ages[i] > MAX_AGE) {
+          initParticle(i)
+          ages[i] = 0
         }
 
-        // Advect head position along wind vector
-        let du = 0, dv = 0
+        // Advect particle
         if (windLookup) {
           const w = windLookup(pLat[i], pLon[i])
           if (w) {
             const cosLat = Math.max(Math.cos(pLat[i] * Math.PI / 180), 0.05)
-            const sf = SPEED_SCALE * (1 + w.speed * 0.08)
-            du = w.u * sf / cosLat
-            dv = w.v * sf
-            pLat[i] += dv
-            pLon[i] += du
+            const sf = SPEED_SCALE * (1 + w.speed * 0.06)
+            pLon[i] += w.u * sf / cosLat
+            pLat[i] += w.v * sf
             if (pLon[i] >  180) pLon[i] -= 360
             if (pLon[i] < -180) pLon[i] += 360
-            pLat[i] = Math.max(-85, Math.min(85, pLat[i]))
+            pLat[i]   = Math.max(-85, Math.min(85, pLat[i]))
             pSpeed[i] = w.speed
           }
         }
 
-        // Head = current position
-        const [hx, hy, hz] = ll2v(pLat[i], pLon[i], WIND_R)
-        // Tail = step back along wind direction (longer trail = faster wind)
-        const tailFactor = TRAIL_SCALE * (1 + (pSpeed[i] / 15))
-        const tailLat = Math.max(-85, Math.min(85, pLat[i] - dv * tailFactor))
-        let   tailLon = pLon[i] - du * tailFactor
-        if (tailLon >  180) tailLon -= 360
-        if (tailLon < -180) tailLon += 360
-        const [tx, ty, tz] = ll2v(tailLat, tailLon, WIND_R)
+        // Sample position into history every TRAIL_SAMPLE frames
+        frameTick[i]++
+        if (frameTick[i] >= TRAIL_SAMPLE) {
+          frameTick[i] = 0
+          // Shift history: oldest drops off, newest = current
+          const base = i * TRAIL_LEN
+          for (let t = 0; t < TRAIL_LEN - 1; t++) {
+            histLat[base + t] = histLat[base + t + 1]
+            histLon[base + t] = histLon[base + t + 1]
+          }
+          histLat[base + TRAIL_LEN - 1] = pLat[i]
+          histLon[base + TRAIL_LEN - 1] = pLon[i]
+          if (histFill[i] < TRAIL_LEN) histFill[i]++
+        }
 
-        // Write: index 0 = tail, index 1 = head
-        posAttr.array[i * 6]     = tx; posAttr.array[i * 6 + 1] = ty; posAttr.array[i * 6 + 2] = tz
-        posAttr.array[i * 6 + 3] = hx; posAttr.array[i * 6 + 4] = hy; posAttr.array[i * 6 + 5] = hz
-
-        // Fade alpha by age
-        const life    = ages[i] / maxAges[i]
-        const fadeIn  = Math.min(ages[i] / 25, 1)
-        const fadeOut = life > 0.75 ? Math.max(1 - (life - 0.75) / 0.25, 0) : 1
-        const alpha   = fadeIn * fadeOut
+        // Life fade (fade in first 20%, fade out last 20%)
+        const life    = ages[i] / MAX_AGE
+        const fadeIn  = Math.min(ages[i] / (MAX_AGE * 0.15), 1)
+        const fadeOut = life > 0.8 ? Math.max(1 - (life - 0.8) / 0.2, 0) : 1
+        const baseFade = fadeIn * fadeOut
 
         const c = speedColor(pSpeed[i])
-        // Tail: transparent (alpha = 0, so color = 0,0,0)
-        colAttr.array[i * 6]     = 0
-        colAttr.array[i * 6 + 1] = 0
-        colAttr.array[i * 6 + 2] = 0
-        // Head: full brightness × alpha
-        colAttr.array[i * 6 + 3] = c.r * alpha
-        colAttr.array[i * 6 + 4] = c.g * alpha
-        colAttr.array[i * 6 + 5] = c.b * alpha
+        const base = i * TRAIL_LEN
+
+        // Write each segment (TRAIL_LEN-1 segments per particle)
+        for (let s = 0; s < SEGMENTS_PER; s++) {
+          const vBase = (i * SEGMENTS_PER + s) * 6  // 2 verts × 3 floats
+
+          // Alpha: 0 at tail (s=0), 1 at head (s=SEGMENTS_PER-1)
+          // Tail vertex of segment
+          const alphaTail = (s       / SEGMENTS_PER) * baseFade
+          // Head vertex of segment
+          const alphaHead = ((s + 1) / SEGMENTS_PER) * baseFade
+
+          ll2v(histLat[base + s],     histLon[base + s],     WIND_R, pos, vBase)
+          ll2v(histLat[base + s + 1], histLon[base + s + 1], WIND_R, pos, vBase + 3)
+
+          col[vBase]     = c.r * alphaTail
+          col[vBase + 1] = c.g * alphaTail
+          col[vBase + 2] = c.b * alphaTail
+          col[vBase + 3] = c.r * alphaHead
+          col[vBase + 4] = c.g * alphaHead
+          col[vBase + 5] = c.b * alphaHead
+        }
       }
 
       posAttr.needsUpdate = true

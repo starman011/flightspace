@@ -285,6 +285,24 @@ Tracks all significant changes made during development sessions.
 
 ---
 
+---
+
+## Session — May 31, 2026
+
+### Features Added
+
+| # | What | Detail |
+|---|------|--------|
+| 1 | **Wind trail ring-buffer rewrite** | Replaced single-segment trail approximation with a proper position history ring buffer. Each particle stores 12 lat/lon history points (sampled every 4 frames), rendered as 11 connected line segments. Alpha fades 0→1 from tail→head; life fade in/out at 15%/80% of `MAX_AGE`. SPEED_SCALE tuned to 0.0009 for visible movement. |
+
+### Commits (this session)
+
+```
+(pending)
+```
+
+---
+
 ## Pending / Next Up
 
 - [ ] Flight path dead-reckoning interpolation (smooth movement between 5–10 s ADS-B updates)

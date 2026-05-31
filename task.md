@@ -22,10 +22,10 @@
 - [x] Notification click → opens app at launch
 
 ### 3. Historical Flight Playback
-- [ ] Backend: store flight trail snapshots (last 24h)
-- [ ] Timeline scrubber UI in DetailPanel
-- [ ] Replay trail animation on globe
-- [ ] "Yesterday's path" for any tracked flight
+- [x] Backend: store flight trail snapshots (last 24h)
+- [x] Timeline scrubber UI in DetailPanel
+- [x] Replay trail animation on globe
+- [x] "Yesterday's path" for any tracked flight
 
 ### 4. Weather Overlay on Globe
 - [ ] Fetch live cloud/storm data (OpenWeatherMap or similar)
