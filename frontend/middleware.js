@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*'],
 }
 
 const BOT_RE =
@@ -27,6 +27,9 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'airline' && parts[1]) {
     return renderAirline(parts[1].toLowerCase())
+  }
+  if (parts[0] === 'launch' && parts[1]) {
+    return renderLaunch(parts[1].toLowerCase())
   }
 }
 
@@ -268,6 +271,116 @@ async function renderAirline(slug) {
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── Launch renderer ───────────────────────────────────────────────────────────
+
+function slugify(name) {
+  return (name || '')
+    .toLowerCase()
+    .replace(/[|&]/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 100)
+}
+
+async function renderLaunch(slug) {
+  let launches = []
+  try {
+    const res = await fetch(`${API}/api/v1/launches`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) {
+      const data = await res.json()
+      launches = [...(data.upcoming || []), ...(data.recent || [])]
+    }
+  } catch (_) {}
+
+  // Match slug against all launches
+  const launch = launches.find(l => slugify(l.name) === slug)
+  if (!launch) return // unknown launch → pass to SPA
+
+  const canonical = `${SITE}/launch/${slug}`
+  const isPast    = launch.is_past
+  const net       = launch.net ? new Date(launch.net) : null
+  const dateStr   = net ? net.toUTCString().replace(' GMT', ' UTC') : 'TBD'
+  const status    = launch.status || launch.status_abbr || ''
+  const rocket    = launch.rocket || ''
+  const provider  = launch.provider || ''
+  const mission   = launch.mission_name || launch.name
+  const missionDesc = launch.mission_desc || ''
+  const pad       = launch.pad || ''
+  const orbit     = launch.orbit || ''
+
+  const title = isPast
+    ? `${mission} Launch — ${rocket} | ObjectTracer`
+    : `${mission} Live Launch Tracker — Countdown & Watch | ObjectTracer`
+
+  const descParts = [
+    isPast
+      ? `Watch the ${mission} launch replay on ObjectTracer.`
+      : `Track the ${mission} launch live on ObjectTracer. Real-time countdown, launch pad location, and mission details.`,
+    rocket    && `Rocket: ${rocket}.`,
+    provider  && `Provider: ${provider}.`,
+    orbit     && `Target orbit: ${orbit}.`,
+    !isPast   && net && `Launch window: ${dateStr}.`,
+    pad       && `Launch pad: ${pad}.`,
+  ].filter(Boolean).join(' ')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: mission,
+    url: canonical,
+    description: missionDesc || descParts,
+    eventStatus: isPast
+      ? 'https://schema.org/EventScheduled'
+      : 'https://schema.org/EventScheduled',
+    ...(net ? { startDate: net.toISOString() } : {}),
+    location: pad ? {
+      '@type': 'Place',
+      name: pad,
+      ...(launch.pad_lat && launch.pad_lon ? {
+        geo: { '@type': 'GeoCoordinates', latitude: launch.pad_lat, longitude: launch.pad_lon }
+      } : {}),
+    } : undefined,
+    organizer: provider ? { '@type': 'Organization', name: provider } : undefined,
+  }
+
+  // Countdown or elapsed
+  const now = Date.now()
+  const msUntil = net ? net.getTime() - now : null
+  let countdownHtml = ''
+  if (!isPast && msUntil !== null && msUntil > 0) {
+    const d = Math.floor(msUntil / 86400000)
+    const h = Math.floor((msUntil % 86400000) / 3600000)
+    const m = Math.floor((msUntil % 3600000) / 60000)
+    countdownHtml = `<p style="font-size:1.1rem;color:#b2ff1a;margin:12px 0">
+      T-${d}d ${h}h ${m}m until launch
+    </p>`
+  } else if (isPast) {
+    countdownHtml = `<p style="color:rgba(178,255,26,0.6);margin:12px 0">Launch completed · ${dateStr}</p>`
+  }
+
+  const rows = [
+    rocket   && `<tr><th>Rocket</th><td>${esc(rocket)}</td></tr>`,
+    provider && `<tr><th>Provider</th><td>${esc(provider)}</td></tr>`,
+    orbit    && `<tr><th>Target Orbit</th><td>${esc(orbit)}</td></tr>`,
+    status   && `<tr><th>Status</th><td>${esc(status)}</td></tr>`,
+    net      && `<tr><th>Launch Time</th><td>${esc(dateStr)}</td></tr>`,
+    pad      && `<tr><th>Launch Pad</th><td>${esc(pad)}</td></tr>`,
+  ].filter(Boolean).join('\n')
+
+  const body = `
+    <h1>${esc(mission)}</h1>
+    ${countdownHtml}
+    <a class="cta" href="${canonical}">Track Live on 3D Globe →</a>
+    ${rows ? `<table style="margin-top:20px">${rows}</table>` : ''}
+    ${missionDesc ? `<h2>Mission</h2><p>${esc(missionDesc)}</p>` : ''}
+    <p style="margin-top:32px">
+      ObjectTracer tracks every rocket launch worldwide with real-time 3D globe visualization.
+      View the launch pad location, track the rocket's trajectory live, and explore mission details.
+    </p>`
+
+  return html(canonical, title, descParts, jsonLd, body)
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────

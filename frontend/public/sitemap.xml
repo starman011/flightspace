@@ -990,4 +990,32 @@
   <url><loc>https://www.objecttracer.com/airport/ZTH</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.objecttracer.com/airport/ZTU</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.objecttracer.com/airport/ZYL</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.6</priority></url>
+  <!-- launch event pages -->
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-10-43</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-17-47</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/long-march-6a-unknown-payload</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/long-march-8-unknown-payload</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/south-korean-add-solid-fuel-slv-demo-flight</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-10-35</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/gslv-mk-ii-gisat-1a-eos-05</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/smart-dragon-3-unknown-payload</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/h3-30-h3-30-test-flight</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-17-44</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/electron-the-grain-goddess-provides-iqps-launch-7</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-bluebird-block-2-3-5</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-globalstar-2-r-mission-1-x-9</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/pegasus-xl-swift-rescue-mission</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/spectrum-onward-and-upward</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/ariane-64-block-2-amazon-leo-le-03</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-sda-tranche-1-tracking-layer-a</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-sda-tranche-1-tracking-layer-c</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-sda-tranche-1-tracking-layer-e</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-sda-tranche-1-transport-layer-a</loc><lastmod>2026-06-01</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/long-march-2d-4-x-satnet-test-satellites</loc><lastmod>2026-06-01</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-17-41</loc><lastmod>2026-06-01</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/atlas-v-551-amazon-leo-la-07</loc><lastmod>2026-06-01</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/falcon-9-block-5-starlink-group-10-53</loc><lastmod>2026-06-01</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.objecttracer.com/launch/long-march-7a-tjsw-24</loc><lastmod>2026-06-01</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>
+
+
 </urlset>
