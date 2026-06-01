@@ -134,9 +134,7 @@ export default function App() {
   const [selectedSkyObject, setSelectedSkyObject] = useState(null)
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
-  const [activePage, setActivePage]         = useState(
-    window.location.pathname === '/waitlist' ? 'waitlist' : null
-  )
+  const [activePage, setActivePage]         = useState(init.activePage)
   const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
@@ -169,11 +167,11 @@ export default function App() {
 
   // Sync state → URL + SEO meta tags (replaceState only — no React Router re-renders)
   useEffect(() => {
-    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport)
+    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage)
     updateRouteMeta(path)
     if (window.location.pathname === path) return
     window.history.replaceState(null, '', path)
-  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport])
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage])
 
 // Sync initial scale to Globe on mount (e.g., direct /deep-space URL)
   useEffect(() => {

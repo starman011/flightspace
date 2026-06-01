@@ -49,6 +49,20 @@ describe('parseInitialState', () => {
     expect(parseInitialState('/profile').profilePanelOpen).toBe(true)
   })
 
+  it('parses /waitlist as activePage waitlist', () => {
+    const s = parseInitialState('/waitlist')
+    expect(s.activePage).toBe('waitlist')
+    expect(s.notFound).toBe(false)
+  })
+
+  it('parses /about as activePage about', () => {
+    expect(parseInitialState('/about').activePage).toBe('about')
+  })
+
+  it('parses /faq as activePage faq', () => {
+    expect(parseInitialState('/faq').activePage).toBe('faq')
+  })
+
   it('unknown path sets notFound flag', () => {
     const s = parseInitialState('/unknown-page')
     expect(s.notFound).toBe(true)
@@ -101,6 +115,18 @@ describe('stateToPath', () => {
   it('flight takes priority over scale', () => {
     expect(stateToPath('abc', 'solar', true, null, false, null)).toBe('/flight/abc')
   })
+
+  it('returns /waitlist when activePage is waitlist', () => {
+    expect(stateToPath(null, 'earth', false, null, false, null, 'waitlist')).toBe('/waitlist')
+  })
+
+  it('returns /about when activePage is about', () => {
+    expect(stateToPath(null, 'earth', false, null, false, null, 'about')).toBe('/about')
+  })
+
+  it('activePage takes priority over flight', () => {
+    expect(stateToPath('abc', 'earth', false, null, false, null, 'contact')).toBe('/contact')
+  })
 })
 
 describe('routeKeyFromPath', () => {
@@ -127,7 +153,8 @@ describe('ROUTE_META', () => {
   })
 
   it('every sitemap route has metadata', () => {
-    const sitemapRoutes = ['/', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids']
+    const sitemapRoutes = ['/', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids',
+      '/about', '/contact', '/faq', '/waitlist', '/donate']
     for (const route of sitemapRoutes) {
       expect(ROUTE_META[route], `${route} missing from ROUTE_META`).toBeDefined()
     }

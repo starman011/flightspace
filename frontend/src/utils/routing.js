@@ -18,6 +18,16 @@ export const ROUTE_META = {
                      description: 'Track this flight live on a 3D globe with real-time position, altitude, speed, and route information.' },
   '/airport':      { title: 'Airport — Live Departures & Arrivals | ObjectTracer',
                      description: 'View live departures and arrivals at this airport with real-time flight tracking on a 3D globe.' },
+  '/waitlist':     { title: 'Join the ObjectTracer Waitlist — Early Access',
+                     description: 'Sign up for early access to ObjectTracer — real-time 3D tracking of flights, satellites, rockets, and deep space objects.' },
+  '/about':        { title: 'About ObjectTracer — Real-Time 3D Space & Flight Tracking',
+                     description: 'Learn about ObjectTracer, the real-time 3D globe tracking live flights, ships, ISS, satellites, rocket launches, and deep-space galaxies.' },
+  '/contact':      { title: 'Contact Us | ObjectTracer',
+                     description: 'Get in touch with the ObjectTracer team. Send feedback, report issues, or ask questions.' },
+  '/faq':          { title: 'FAQ — Frequently Asked Questions | ObjectTracer',
+                     description: 'Answers to common questions about ObjectTracer, live flight tracking, satellite data, and more.' },
+  '/donate':       { title: 'Support ObjectTracer — Donate',
+                     description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
 }
 
 export function routeKeyFromPath(path) {
@@ -56,7 +66,12 @@ export function updateRouteMeta(path) {
   if (twDesc)  twDesc.content = meta.description
 }
 
-export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport) {
+export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage) {
+  if (activePage === 'waitlist') return '/waitlist'
+  if (activePage === 'about')    return '/about'
+  if (activePage === 'contact')  return '/contact'
+  if (activePage === 'faq')      return '/faq'
+  if (activePage === 'donate')   return '/donate'
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
   if (profilePanelOpen)             return '/profile'
@@ -77,6 +92,7 @@ export function parseInitialState(pathname) {
     profilePanelOpen: false,
     selectedAirport: null,
     selectedLaunchId: null,
+    activePage: null,
     notFound: false,
   }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
@@ -89,5 +105,10 @@ export function parseInitialState(pathname) {
   if (pathname === '/launches')     return { ...base, launchPanelOpen: true }
   if (pathname === '/asteroids')    return { ...base, activeFilter: 'asteroids' }
   if (pathname === '/')             return base
+  if (pathname === '/waitlist') return { ...base, activePage: 'waitlist' }
+  if (pathname === '/about')    return { ...base, activePage: 'about' }
+  if (pathname === '/contact')  return { ...base, activePage: 'contact' }
+  if (pathname === '/faq')      return { ...base, activePage: 'faq' }
+  if (pathname === '/donate')   return { ...base, activePage: 'donate' }
   return { ...base, notFound: true }
 }
