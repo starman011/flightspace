@@ -114,9 +114,10 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
-  // ISS: auto-enable live immediately (no landing screen for space station)
-  const [liveEnabled, setLiveEnabled] = useState(init.selectedIcao24 === 'ISS')
-  // Show flight landing screen only for regular aircraft from direct URL (not ISS)
+  // Keep LIVE off on direct URL — DetailPanel fetches ISS/aircraft via REST first
+  // WebSocket only connects when user explicitly enables LIVE (prevents session-not-ready lag)
+  const [liveEnabled, setLiveEnabled] = useState(false)
+  // Show flight landing screen only for regular aircraft (not ISS)
   const [showFlightLanding, setShowFlightLanding] = useState(
     !!init.selectedIcao24 && init.selectedIcao24 !== 'ISS'
   )
@@ -128,8 +129,10 @@ export default function App() {
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
-  // Auto-track flight when arriving via direct URL so globe follows and trail loads
-  const [trackingId, setTrackingId]         = useState(init.selectedIcao24 || null)
+  // Only auto-track regular aircraft from URL, not ISS (ISS tracked after live enables)
+  const [trackingId, setTrackingId]         = useState(
+    init.selectedIcao24 && init.selectedIcao24 !== 'ISS' ? init.selectedIcao24 : null
+  )
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
   const [activeScale, setActiveScale]       = useState(init.activeScale)
@@ -683,19 +686,63 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
 
       {liveToast && (
-        <div style={{
-          position: 'fixed', bottom: 96, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 9000, display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(6,12,18,0.92)', backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(178,255,26,0.4)', borderRadius: 10,
-          padding: '10px 18px', boxShadow: '0 0 24px rgba(178,255,26,0.15)',
-          fontFamily: 'var(--font-mono)', fontSize: 12, color: '#e8f4ff',
-          animation: 'fadeIn 0.2s ease',
-        }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#b2ff1a',
-            boxShadow: '0 0 6px #b2ff1a', flexShrink: 0 }} />
-          Live tracking enabled — fetching flight data
-        </div>
+        <>
+          <style>{`
+            @keyframes liveToastIn {
+              0%   { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.9); }
+              60%  { opacity: 1; transform: translateX(-50%) translateY(-4px) scale(1.02); }
+              100% { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
+            }
+            @keyframes liveSpin {
+              to { transform: rotate(360deg); }
+            }
+            @keyframes livePulse {
+              0%, 100% { box-shadow: 0 0 6px #b2ff1a, 0 0 0 0 rgba(178,255,26,0.4); }
+              50%       { box-shadow: 0 0 10px #b2ff1a, 0 0 12px 4px rgba(178,255,26,0.15); }
+            }
+          `}</style>
+          <div style={{
+            position: 'fixed', bottom: 96, left: '50%',
+            zIndex: 9000, display: 'flex', alignItems: 'center', gap: 12,
+            background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(178,255,26,0.35)', borderRadius: 100,
+            padding: '10px 20px 10px 12px',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.5), 0 0 20px rgba(178,255,26,0.1)',
+            animation: 'liveToastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          }}>
+            {/* Spinner ring */}
+            <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: '2px solid rgba(178,255,26,0.12)',
+              }} />
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: '#b2ff1a',
+                animation: 'liveSpin 0.8s linear infinite',
+              }} />
+              {/* Center dot */}
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%',
+                transform: 'translate(-50%,-50%)',
+                width: 6, height: 6, borderRadius: '50%', background: '#b2ff1a',
+                animation: 'livePulse 1.2s ease infinite',
+              }} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
+                color: '#b2ff1a', letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>Live Tracking</span>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'rgba(200,220,240,0.45)', letterSpacing: '0.06em',
+              }}>Connecting to ADS-B feed…</span>
+            </div>
+          </div>
+        </>
       )}
     </ErrorBoundary>
   )
