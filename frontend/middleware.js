@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/sitemap-launches.xml'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/sitemap-launches.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -33,6 +33,9 @@ export default async function middleware(request) {
   }
   if (pathname === '/sitemap-launches.xml') {
     return renderLaunchSitemap()
+  }
+  if (pathname === '/iss') {
+    return renderISS()
   }
 }
 
@@ -410,6 +413,123 @@ async function renderLaunch(slug) {
     </p>`
 
   return html(canonical, title, descParts, jsonLd, body)
+}
+
+// ── ISS renderer ─────────────────────────────────────────────────────────────
+
+async function renderISS() {
+  const canonical = `${SITE}/iss`
+
+  // Fetch position, crew, and stream in parallel
+  const [posRes, crewRes, streamRes] = await Promise.allSettled([
+    fetch(`${API}/api/v1/aircraft/ISS`, { headers: { 'x-render': 'bot' } }),
+    fetch(`${API}/api/v1/iss/crew`,     { headers: { 'x-render': 'bot' } }),
+    fetch(`${API}/api/v1/iss/stream`,   { headers: { 'x-render': 'bot' } }),
+  ])
+
+  let pos = null, crewData = null, stream = null
+  if (posRes.status === 'fulfilled' && posRes.value.ok)    { try { pos      = await posRes.value.json()    } catch (_) {} }
+  if (crewRes.status === 'fulfilled' && crewRes.value.ok)  { try { crewData = await crewRes.value.json()  } catch (_) {} }
+  if (streamRes.status === 'fulfilled' && streamRes.value.ok) { try { stream = await streamRes.value.json() } catch (_) {} }
+
+  const lat    = pos?.current?.latitude
+  const lon    = pos?.current?.longitude
+  const issCrew = (crewData?.people || []).filter(p => p.craft === 'ISS')
+  const allCrew = crewData?.people || []
+  const totalInSpace = crewData?.number || allCrew.length
+
+  // ISS well-known orbital parameters
+  const ALT_KM = 408
+  const SPEED_KMH = 27600
+  const ORBITAL_PERIOD_MIN = 92.68
+
+  const posStr = lat != null && lon != null
+    ? `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`
+    : null
+
+  const title = 'ISS Live Tracker — International Space Station Location, Crew & 4K Stream | ObjectTracer'
+  const desc  = `Track the International Space Station (ISS) live on ObjectTracer's real-time 3D globe. ${issCrew.length} crew members aboard. Currently at ~${ALT_KM} km altitude, traveling at ${SPEED_KMH.toLocaleString()} km/h.${posStr ? ` Now over ${posStr}.` : ''} Watch the 4K NASA live stream.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'ISS Live Tracker — International Space Station',
+    url: canonical,
+    description: desc,
+    about: {
+      '@type': 'Thing',
+      name: 'International Space Station',
+      description: `The ISS orbits Earth at ~${ALT_KM} km altitude every ${ORBITAL_PERIOD_MIN} minutes at ${SPEED_KMH.toLocaleString()} km/h with ${issCrew.length} crew members aboard.`,
+      sameAs: 'https://www.wikidata.org/wiki/Q159036',
+    },
+  }
+
+  const crewRows = issCrew.map(p =>
+    `<tr><td>👨‍🚀 ${esc(p.name)}</td><td>ISS</td></tr>`
+  ).join('\n')
+
+  const otherCraft = [...new Set(allCrew.filter(p => p.craft !== 'ISS').map(p => p.craft))]
+  const otherRows = allCrew.filter(p => p.craft !== 'ISS').map(p =>
+    `<tr><td>👨‍🚀 ${esc(p.name)}</td><td>${esc(p.craft)}</td></tr>`
+  ).join('\n')
+
+  const streamUrl = stream?.embed_url
+    ? stream.embed_url.replace('autoplay=1', 'autoplay=0')
+    : 'https://www.youtube.com/embed/21X5lGlDOfg'
+
+  const body = `
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg"
+      alt="International Space Station"
+      style="width:100%;max-width:720px;border-radius:8px;margin-bottom:20px;display:block" />
+
+    <h1>ISS Live Tracker</h1>
+    <p>Track the International Space Station in real-time — live position on a 3D globe, 4K NASA stream, crew manifest, altitude, and speed.</p>
+
+    <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+
+    <h2>Current Position</h2>
+    <table>
+      ${posStr ? `<tr><th>Location</th><td>${esc(posStr)}</td></tr>` : ''}
+      <tr><th>Altitude</th><td>~${ALT_KM} km (${Math.round(ALT_KM * 0.621)} mi)</td></tr>
+      <tr><th>Speed</th><td>${SPEED_KMH.toLocaleString()} km/h (${Math.round(SPEED_KMH * 0.621).toLocaleString()} mph)</td></tr>
+      <tr><th>Orbital Period</th><td>${ORBITAL_PERIOD_MIN} minutes (~16 orbits/day)</td></tr>
+      <tr><th>Inclination</th><td>51.6°</td></tr>
+    </table>
+
+    <h2>Live 4K NASA Stream</h2>
+    <p>Watch Earth from the ISS in 4K — NASA's High Definition Earth Viewing experiment streams live 24/7.</p>
+    <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-bottom:20px">
+      <iframe src="${esc(streamUrl)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+        title="ISS NASA 4K Live Stream" allowfullscreen loading="lazy"></iframe>
+    </div>
+
+    <h2>ISS Crew (${issCrew.length} aboard)</h2>
+    <table>
+      <tr><th>Astronaut</th><th>Spacecraft</th></tr>
+      ${crewRows}
+    </table>
+
+    ${otherRows ? `
+    <h2>Also in Space (${otherCraft.join(', ')})</h2>
+    <table>
+      <tr><th>Astronaut</th><th>Spacecraft</th></tr>
+      ${otherRows}
+    </table>
+    <p><strong>${totalInSpace} humans are currently in space.</strong></p>
+    ` : ''}
+
+    <h2>About the ISS</h2>
+    <p>The International Space Station (ISS) is a modular space station in low Earth orbit.
+      It is a multinational collaborative project involving NASA, Roscosmos, JAXA, ESA, and CSA.
+      The ISS completes 15.5 orbits per day at approximately ${ALT_KM} km altitude, traveling at
+      ${SPEED_KMH.toLocaleString()} km/h — fast enough to circle Earth in just ${ORBITAL_PERIOD_MIN} minutes.
+    </p>
+    <p style="margin-top:16px">
+      ObjectTracer tracks the ISS live using real-time orbital data.
+      View its exact position on a 3D globe, watch the 4K NASA live stream, and see the full crew manifest.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
 }
 
 // ── Dynamic launch sitemap (auto-refreshes every deploy / request) ────────────

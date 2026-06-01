@@ -28,6 +28,8 @@ export const ROUTE_META = {
                      description: 'Answers to common questions about ObjectTracer, live flight tracking, satellite data, and more.' },
   '/donate':       { title: 'Support ObjectTracer — Donate',
                      description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
+  '/iss':          { title: 'ISS Live Tracker — International Space Station Location, Crew & Stream | ObjectTracer',
+                     description: 'Track the International Space Station live on a real-time 3D globe. Live position, altitude, speed, crew manifest, and NASA 4K live stream.' },
   '/airline':      { title: 'Live Airline Flight Tracker | ObjectTracer',
                      description: 'Track all flights for this airline live on ObjectTracer\'s real-time 3D globe. Live ADS-B position, altitude, speed, and route.' },
 }
@@ -113,6 +115,7 @@ export function parseInitialState(pathname) {
   if (pathname === '/contact')  return { ...base, activePage: 'contact' }
   if (pathname === '/faq')      return { ...base, activePage: 'faq' }
   if (pathname === '/donate')   return { ...base, activePage: 'donate' }
+  if (pathname === '/iss')              return { ...base, selectedIcao24: 'ISS' }  // open ISS panel
   if (pathname.startsWith('/airline/')) return base  // show globe, not 404
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }  // open launch panel
   if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base  // handled above but catch-all safety
