@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*'],
 }
 
 const BOT_RE =
@@ -24,6 +24,9 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'airport' && parts[1]) {
     return renderAirport(parts[1].toUpperCase())
+  }
+  if (parts[0] === 'airline' && parts[1]) {
+    return renderAirline(parts[1].toLowerCase())
   }
 }
 
@@ -154,6 +157,117 @@ async function renderAirport(iata) {
       ObjectTracer tracks live flights at ${esc(iata)} and thousands of airports worldwide using real-time ADS-B data.
       View aircraft on an interactive 3D globe with altitude, speed, and route history.
     </p>`)
+}
+
+// ── Airline renderer ─────────────────────────────────────────────────────────
+
+const AIRLINE_MAP = {
+  // Americas
+  'american-airlines':  { icao: 'AAL', iata: 'AA',  name: 'American Airlines' },
+  'delta':              { icao: 'DAL', iata: 'DL',  name: 'Delta Air Lines' },
+  'united':             { icao: 'UAL', iata: 'UA',  name: 'United Airlines' },
+  'southwest':          { icao: 'SWA', iata: 'WN',  name: 'Southwest Airlines' },
+  'alaska-airlines':    { icao: 'ASA', iata: 'AS',  name: 'Alaska Airlines' },
+  'jetblue':            { icao: 'JBU', iata: 'B6',  name: 'JetBlue Airways' },
+  'spirit':             { icao: 'NKS', iata: 'NK',  name: 'Spirit Airlines' },
+  'frontier':           { icao: 'FFT', iata: 'F9',  name: 'Frontier Airlines' },
+  'air-canada':         { icao: 'ACA', iata: 'AC',  name: 'Air Canada' },
+  'westjet':            { icao: 'WJA', iata: 'WS',  name: 'WestJet' },
+  'latam':              { icao: 'LAN', iata: 'LA',  name: 'LATAM Airlines' },
+  'azul':               { icao: 'AZU', iata: 'AD',  name: 'Azul Brazilian Airlines' },
+  'gol':                { icao: 'GLO', iata: 'G3',  name: 'GOL Linhas Aéreas' },
+  // Europe
+  'british-airways':    { icao: 'BAW', iata: 'BA',  name: 'British Airways' },
+  'lufthansa':          { icao: 'DLH', iata: 'LH',  name: 'Lufthansa' },
+  'air-france':         { icao: 'AFR', iata: 'AF',  name: 'Air France' },
+  'klm':                { icao: 'KLM', iata: 'KL',  name: 'KLM Royal Dutch Airlines' },
+  'ryanair':            { icao: 'RYR', iata: 'FR',  name: 'Ryanair' },
+  'easyjet':            { icao: 'EZY', iata: 'U2',  name: 'easyJet' },
+  'iberia':             { icao: 'IBE', iata: 'IB',  name: 'Iberia' },
+  'swiss':              { icao: 'SWR', iata: 'LX',  name: 'Swiss International Air Lines' },
+  'turkish-airlines':   { icao: 'THY', iata: 'TK',  name: 'Turkish Airlines' },
+  'wizz-air':           { icao: 'WZZ', iata: 'W6',  name: 'Wizz Air' },
+  'norwegian':          { icao: 'NAX', iata: 'DY',  name: 'Norwegian Air Shuttle' },
+  'tap':                { icao: 'TAP', iata: 'TP',  name: 'TAP Air Portugal' },
+  'finnair':            { icao: 'FIN', iata: 'AY',  name: 'Finnair' },
+  // Middle East
+  'emirates':           { icao: 'UAE', iata: 'EK',  name: 'Emirates' },
+  'qatar-airways':      { icao: 'QTR', iata: 'QR',  name: 'Qatar Airways' },
+  'etihad':             { icao: 'ETD', iata: 'EY',  name: 'Etihad Airways' },
+  'flydubai':           { icao: 'FDB', iata: 'FZ',  name: 'flydubai' },
+  'air-arabia':         { icao: 'ABY', iata: 'G9',  name: 'Air Arabia' },
+  // Asia-Pacific
+  'singapore-airlines': { icao: 'SIA', iata: 'SQ',  name: 'Singapore Airlines' },
+  'cathay-pacific':     { icao: 'CPA', iata: 'CX',  name: 'Cathay Pacific' },
+  'japan-airlines':     { icao: 'JAL', iata: 'JL',  name: 'Japan Airlines' },
+  'ana':                { icao: 'ANA', iata: 'NH',  name: 'All Nippon Airways' },
+  'korean-air':         { icao: 'KAL', iata: 'KE',  name: 'Korean Air' },
+  'air-asia':           { icao: 'AXM', iata: 'AK',  name: 'AirAsia' },
+  'qantas':             { icao: 'QFA', iata: 'QF',  name: 'Qantas' },
+  // India
+  'indigo':             { icao: 'IGO', iata: '6E',  name: 'IndiGo' },
+  'air-india':          { icao: 'AIC', iata: 'AI',  name: 'Air India' },
+  'spicejet':           { icao: 'SEJ', iata: 'SG',  name: 'SpiceJet' },
+  'vistara':            { icao: 'VTI', iata: 'UK',  name: 'Vistara' },
+  'akasa-air':          { icao: 'QAL', iata: 'QP',  name: 'Akasa Air' },
+  'air-india-express':  { icao: 'IAX', iata: 'IX',  name: 'Air India Express' },
+}
+
+async function renderAirline(slug) {
+  const airline = AIRLINE_MAP[slug]
+  if (!airline) return // unknown airline → pass to SPA
+
+  const canonical = `${SITE}/airline/${slug}`
+
+  // Search for all currently tracked flights for this airline by ICAO prefix
+  let flights = []
+  try {
+    const res = await fetch(`${API}/api/v1/aircraft/search?q=${airline.icao}&limit=50`, {
+      headers: { 'x-render': 'bot' },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      flights = Array.isArray(data) ? data : (data.results || data.aircraft || [])
+    }
+  } catch (_) {}
+
+  const count = flights.length
+  const title = `${airline.name} Live Flight Tracker — Track ${airline.iata} Flights | ObjectTracer`
+  const desc  = `Track all ${airline.name} (${airline.iata}) flights live on ObjectTracer's real-time 3D globe. ${count > 0 ? `${count} flights currently tracked.` : ''} Real-time ADS-B position, altitude, speed, and route for every ${airline.name} aircraft.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Airline',
+    name: airline.name,
+    iataCode: airline.iata,
+    icaoCode: airline.icao,
+    url: canonical,
+  }
+
+  const flightRows = flights.slice(0, 20).map(f => {
+    const cs   = f.callsign || f.icao24 || ''
+    const link = f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>` : esc(cs)
+    const alt  = f.altitude ? Math.round(f.altitude) + ' ft' : '—'
+    const spd  = f.velocity  ? Math.round(f.velocity)  + ' kts' : '—'
+    return `<tr><td>${link}</td><td>${esc(f.type_description || '—')}</td><td>${esc(alt)}</td><td>${esc(spd)}</td></tr>`
+  }).join('\n')
+
+  const body = `
+    <h1>${esc(airline.name)} Live Flights</h1>
+    <p>${count > 0 ? `${count} ${esc(airline.name)} aircraft currently tracked via ADS-B.` : `No ${esc(airline.name)} flights currently in ADS-B coverage. Check back during peak hours.`}</p>
+    <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+    ${flightRows ? `
+    <h2>Currently Tracked Flights</h2>
+    <table>
+      <tr><th>Flight</th><th>Aircraft</th><th>Altitude</th><th>Speed</th></tr>
+      ${flightRows}
+    </table>` : ''}
+    <p style="margin-top:32px">
+      ObjectTracer tracks all ${esc(airline.name)} flights worldwide in real-time using ADS-B data.
+      Click any flight to see its live position, route history, altitude, speed, and aircraft details on an interactive 3D globe.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
