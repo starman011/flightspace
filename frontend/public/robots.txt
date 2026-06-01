@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /profile
 
-# Sitemap location
+# Sitemap locations
 Sitemap: https://www.objecttracer.com/sitemap.xml
+Sitemap: https://www.objecttracer.com/sitemap-launches.xml

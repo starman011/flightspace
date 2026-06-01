@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/sitemap-launches.xml'],
 }
 
 const BOT_RE =
@@ -30,6 +30,9 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'launch' && parts[1]) {
     return renderLaunch(parts[1].toLowerCase())
+  }
+  if (pathname === '/sitemap-launches.xml') {
+    return renderLaunchSitemap()
   }
 }
 
@@ -255,7 +258,11 @@ async function renderAirline(slug) {
     return `<tr><td>${link}</td><td>${esc(f.type_description || '—')}</td><td>${esc(alt)}</td><td>${esc(spd)}</td></tr>`
   }).join('\n')
 
+  // Airline logo via avs.io CDN (already in CSP allowlist)
+  const logoHtml = `<img src="https://pics.avs.io/200/60/${esc(airline.iata)}.png" alt="${esc(airline.name)} logo" style="height:40px;object-fit:contain;margin-bottom:12px;border-radius:4px" onerror="this.style.display='none'" /><br>`
+
   const body = `
+    ${logoHtml}
     <h1>${esc(airline.name)} Live Flights</h1>
     <p>${count > 0 ? `${count} ${esc(airline.name)} aircraft currently tracked via ADS-B.` : `No ${esc(airline.name)} flights currently in ADS-B coverage. Check back during peak hours.`}</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
@@ -271,6 +278,22 @@ async function renderAirline(slug) {
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── Provider / airline image maps ────────────────────────────────────────────
+
+// Launch provider logos (Wikipedia Commons — stable, free)
+const PROVIDER_LOGOS = {
+  'SpaceX':                    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/SpaceX_logo_black.svg/400px-SpaceX_logo_black.svg.png',
+  'Rocket Lab':                'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Rocket_Lab_Logo.svg/400px-Rocket_Lab_Logo.svg.png',
+  'United Launch Alliance':    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/ULA_logo.svg/400px-ULA_logo.svg.png',
+  'Arianespace':               'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Arianespace_logo.svg/400px-Arianespace_logo.svg.png',
+  'Blue Origin':               'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Blue_Origin_logo.svg/400px-Blue_Origin_logo.svg.png',
+  'ISRO':                      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Indian_Space_Research_Organisation_Logo.svg/300px-Indian_Space_Research_Organisation_Logo.svg.png',
+  'China Aerospace Science and Technology Corporation': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/CASC_logo.png/200px-CASC_logo.png',
+  'China Aerospace Science & Industry Corporation': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/CASC_logo.png/200px-CASC_logo.png',
+  'Northrop Grumman':          'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Northrop_Grumman_Logo.svg/400px-Northrop_Grumman_Logo.svg.png',
+  'Mitsubishi Heavy Industries':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Mitsubishi_logo.svg/200px-Mitsubishi_logo.svg.png',
 }
 
 // ── Launch renderer ───────────────────────────────────────────────────────────
@@ -369,7 +392,13 @@ async function renderLaunch(slug) {
     pad      && `<tr><th>Launch Pad</th><td>${esc(pad)}</td></tr>`,
   ].filter(Boolean).join('\n')
 
+  const providerLogo = PROVIDER_LOGOS[provider] || null
+  const logoHtml = providerLogo
+    ? `<img src="${providerLogo}" alt="${esc(provider)} logo" style="height:36px;object-fit:contain;margin-bottom:16px;filter:brightness(0) invert(1);opacity:0.85" /><br>`
+    : ''
+
   const body = `
+    ${logoHtml}
     <h1>${esc(mission)}</h1>
     ${countdownHtml}
     <a class="cta" href="${canonical}">Track Live on 3D Globe →</a>
@@ -381,6 +410,41 @@ async function renderLaunch(slug) {
     </p>`
 
   return html(canonical, title, descParts, jsonLd, body)
+}
+
+// ── Dynamic launch sitemap (auto-refreshes every deploy / request) ────────────
+
+async function renderLaunchSitemap() {
+  let launches = []
+  try {
+    const res = await fetch(`${API}/api/v1/launches`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) {
+      const data = await res.json()
+      launches = [...(data.upcoming || []), ...(data.recent || [])]
+    }
+  } catch (_) {}
+
+  const seen = new Set()
+  const urls = launches
+    .filter(l => { const s = slugify(l.name); if (seen.has(s)) return false; seen.add(s); return true })
+    .map(l => {
+      const slug = slugify(l.name)
+      const pri  = l.is_past ? '0.6' : '0.9'
+      const freq = l.is_past ? 'weekly' : 'hourly'
+      return `  <url><loc>${SITE}/launch/${slug}</loc><lastmod>${new Date().toISOString().slice(0,10)}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority></url>`
+    }).join('\n')
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`
+
+  return new Response(xml, {
+    headers: {
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': 'public, max-age=3600, stale-while-revalidate=600',
+    },
+  })
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
