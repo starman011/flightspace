@@ -77,6 +77,7 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activePage === 'contact')  return '/contact'
   if (activePage === 'faq')      return '/faq'
   if (activePage === 'donate')   return '/donate'
+  if (selectedIcao24 === 'ISS')     return '/iss'
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
   if (profilePanelOpen)             return '/profile'

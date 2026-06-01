@@ -114,9 +114,12 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
-  const [liveEnabled, setLiveEnabled] = useState(false)
-  // Show flight landing screen when arriving via direct flight URL (e.g. from Google)
-  const [showFlightLanding, setShowFlightLanding] = useState(!!init.selectedIcao24)
+  // ISS: auto-enable live immediately (no landing screen for space station)
+  const [liveEnabled, setLiveEnabled] = useState(init.selectedIcao24 === 'ISS')
+  // Show flight landing screen only for regular aircraft from direct URL (not ISS)
+  const [showFlightLanding, setShowFlightLanding] = useState(
+    !!init.selectedIcao24 && init.selectedIcao24 !== 'ISS'
+  )
   const [showWeather, setShowWeather] = useState(false)
   const { aircraft, filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
