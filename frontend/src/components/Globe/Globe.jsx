@@ -1570,12 +1570,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const _projV = new Vector3()
     const airportLabelEls = AIRPORTS.map(a => {
       const div = document.createElement('div')
-      div.innerHTML = `<span style="font-size:7px;vertical-align:middle;margin-right:2px">✈</span>${a.iata}`
-      div.style.cssText = `position:absolute;color:rgba(178,255,26,0.55);font:700 8px/1 var(--font-mono,monospace);white-space:nowrap;transform:translate(-50%,-100%);padding:2px 5px;display:none;letter-spacing:0.1em;pointer-events:auto;cursor:pointer;border-radius:3px;text-shadow:0 0 4px rgba(0,0,0,0.8)`
+      div.innerHTML = `<span style="font-size:9px;line-height:1;margin-right:3px;opacity:0.9">✈</span><span style="font-size:8px;letter-spacing:0.1em">${a.iata}</span>`
+      div.style.cssText = `position:absolute;display:none;transform:translate(-50%,-100%) translateY(-5px);padding:3px 6px 3px 5px;background:rgba(4,9,14,0.88);border:1px solid rgba(178,255,26,0.45);border-radius:4px;color:rgba(178,255,26,0.85);font:700 8px/1.3 var(--font-mono,monospace);white-space:nowrap;pointer-events:auto;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 1px 8px rgba(0,0,0,0.6),0 0 6px rgba(178,255,26,0.1)`
       div.title = `${a.name} — ${a.city}`
       div.addEventListener('click', () => { int.current.onAirportClick?.(a.iata) })
-      div.addEventListener('mouseenter', () => { div.style.color = '#b2ff1a'; div.style.background = 'rgba(178,255,26,0.08)' })
-      div.addEventListener('mouseleave', () => { div.style.color = 'rgba(178,255,26,0.55)'; div.style.background = 'none' })
+      div.addEventListener('mouseenter', () => { div.style.background = 'rgba(178,255,26,0.12)'; div.style.borderColor = 'rgba(178,255,26,0.9)'; div.style.color = '#b2ff1a'; div.style.boxShadow = '0 2px 12px rgba(0,0,0,0.7),0 0 14px rgba(178,255,26,0.25)' })
+      div.addEventListener('mouseleave', () => { div.style.background = 'rgba(4,9,14,0.88)'; div.style.borderColor = 'rgba(178,255,26,0.45)'; div.style.color = 'rgba(178,255,26,0.85)'; div.style.boxShadow = '0 1px 8px rgba(0,0,0,0.6),0 0 6px rgba(178,255,26,0.1)' })
       labelContainer.appendChild(div)
       return { div, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
     })
