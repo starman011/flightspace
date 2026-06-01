@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/sitemap-launches.xml', '/iss'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/sitemap-launches.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -30,6 +30,9 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'launch' && parts[1]) {
     return renderLaunch(parts[1].toLowerCase())
+  }
+  if (parts[0] === 'route' && parts[1]) {
+    return renderRoute(parts[1].toUpperCase())
   }
   if (pathname === '/sitemap-launches.xml') {
     return renderLaunchSitemap()
@@ -413,6 +416,188 @@ async function renderLaunch(slug) {
     </p>`
 
   return html(canonical, title, descParts, jsonLd, body)
+}
+
+// ── Route renderer ────────────────────────────────────────────────────────────
+
+const AIRPORT_INFO = {
+  // India
+  DEL:{name:'Indira Gandhi International Airport',city:'Delhi',country:'India'},
+  BOM:{name:'Chhatrapati Shivaji Maharaj International Airport',city:'Mumbai',country:'India'},
+  BLR:{name:'Kempegowda International Airport',city:'Bengaluru',country:'India'},
+  MAA:{name:'Chennai International Airport',city:'Chennai',country:'India'},
+  HYD:{name:'Rajiv Gandhi International Airport',city:'Hyderabad',country:'India'},
+  CCU:{name:'Netaji Subhas Chandra Bose International Airport',city:'Kolkata',country:'India'},
+  COK:{name:'Cochin International Airport',city:'Kochi',country:'India'},
+  PNQ:{name:'Pune Airport',city:'Pune',country:'India'},
+  AMD:{name:'Sardar Vallabhbhai Patel International Airport',city:'Ahmedabad',country:'India'},
+  GOI:{name:'Goa International Airport',city:'Goa',country:'India'},
+  TRV:{name:'Trivandrum International Airport',city:'Thiruvananthapuram',country:'India'},
+  JAI:{name:'Jaipur International Airport',city:'Jaipur',country:'India'},
+  IXC:{name:'Shaheed Bhagat Singh International Airport',city:'Chandigarh',country:'India'},
+  ATQ:{name:'Sri Guru Ram Dass Jee International Airport',city:'Amritsar',country:'India'},
+  LKO:{name:'Chaudhary Charan Singh International Airport',city:'Lucknow',country:'India'},
+  PAT:{name:'Lok Nayak Jayaprakash Airport',city:'Patna',country:'India'},
+  SXR:{name:'Sheikh ul-Alam International Airport',city:'Srinagar',country:'India'},
+  IXL:{name:'Kushok Bakula Rimpochee Airport',city:'Leh',country:'India'},
+  NAG:{name:'Dr. Babasaheb Ambedkar International Airport',city:'Nagpur',country:'India'},
+  VTZ:{name:'Visakhapatnam Airport',city:'Visakhapatnam',country:'India'},
+  CJB:{name:'Coimbatore International Airport',city:'Coimbatore',country:'India'},
+  IXM:{name:'Madurai Airport',city:'Madurai',country:'India'},
+  GAU:{name:'Lokpriya Gopinath Bordoloi International Airport',city:'Guwahati',country:'India'},
+  IXB:{name:'Bagdogra Airport',city:'Bagdogra',country:'India'},
+  BBI:{name:'Biju Patnaik International Airport',city:'Bhubaneswar',country:'India'},
+  RPR:{name:'Swami Vivekananda Airport',city:'Raipur',country:'India'},
+  IXR:{name:'Birsa Munda Airport',city:'Ranchi',country:'India'},
+  // USA
+  JFK:{name:'John F. Kennedy International Airport',city:'New York',country:'USA'},
+  LAX:{name:'Los Angeles International Airport',city:'Los Angeles',country:'USA'},
+  ORD:{name:"Chicago O'Hare International Airport",city:'Chicago',country:'USA'},
+  ATL:{name:'Hartsfield-Jackson Atlanta International Airport',city:'Atlanta',country:'USA'},
+  DFW:{name:'Dallas/Fort Worth International Airport',city:'Dallas',country:'USA'},
+  DEN:{name:'Denver International Airport',city:'Denver',country:'USA'},
+  SFO:{name:'San Francisco International Airport',city:'San Francisco',country:'USA'},
+  SEA:{name:'Seattle-Tacoma International Airport',city:'Seattle',country:'USA'},
+  MIA:{name:'Miami International Airport',city:'Miami',country:'USA'},
+  BOS:{name:'Boston Logan International Airport',city:'Boston',country:'USA'},
+  LAS:{name:'Harry Reid International Airport',city:'Las Vegas',country:'USA'},
+  MCO:{name:'Orlando International Airport',city:'Orlando',country:'USA'},
+  EWR:{name:'Newark Liberty International Airport',city:'New York',country:'USA'},
+  CLT:{name:'Charlotte Douglas International Airport',city:'Charlotte',country:'USA'},
+  PHX:{name:'Phoenix Sky Harbor International Airport',city:'Phoenix',country:'USA'},
+  IAH:{name:'George Bush Intercontinental Airport',city:'Houston',country:'USA'},
+  MSP:{name:'Minneapolis-Saint Paul International Airport',city:'Minneapolis',country:'USA'},
+  DTW:{name:'Detroit Metropolitan Airport',city:'Detroit',country:'USA'},
+  PHL:{name:'Philadelphia International Airport',city:'Philadelphia',country:'USA'},
+  LGA:{name:'LaGuardia Airport',city:'New York',country:'USA'},
+  // Europe
+  LHR:{name:'London Heathrow Airport',city:'London',country:'UK'},
+  LGW:{name:'London Gatwick Airport',city:'London',country:'UK'},
+  CDG:{name:'Charles de Gaulle Airport',city:'Paris',country:'France'},
+  AMS:{name:'Amsterdam Schiphol Airport',city:'Amsterdam',country:'Netherlands'},
+  FRA:{name:'Frankfurt Airport',city:'Frankfurt',country:'Germany'},
+  MUC:{name:'Munich Airport',city:'Munich',country:'Germany'},
+  MAD:{name:'Adolfo Suárez Madrid–Barajas Airport',city:'Madrid',country:'Spain'},
+  BCN:{name:'Barcelona–El Prat Airport',city:'Barcelona',country:'Spain'},
+  FCO:{name:'Leonardo da Vinci International Airport',city:'Rome',country:'Italy'},
+  IST:{name:'Istanbul Airport',city:'Istanbul',country:'Turkey'},
+  ZRH:{name:'Zurich Airport',city:'Zurich',country:'Switzerland'},
+  VIE:{name:'Vienna International Airport',city:'Vienna',country:'Austria'},
+  DUB:{name:'Dublin Airport',city:'Dublin',country:'Ireland'},
+  CPH:{name:'Copenhagen Airport',city:'Copenhagen',country:'Denmark'},
+  // Middle East
+  DXB:{name:'Dubai International Airport',city:'Dubai',country:'UAE'},
+  AUH:{name:'Abu Dhabi International Airport',city:'Abu Dhabi',country:'UAE'},
+  DOH:{name:'Hamad International Airport',city:'Doha',country:'Qatar'},
+  RUH:{name:'King Khalid International Airport',city:'Riyadh',country:'Saudi Arabia'},
+  // Asia-Pacific
+  SIN:{name:'Singapore Changi Airport',city:'Singapore',country:'Singapore'},
+  HKG:{name:'Hong Kong International Airport',city:'Hong Kong',country:'China'},
+  NRT:{name:'Narita International Airport',city:'Tokyo',country:'Japan'},
+  HND:{name:'Tokyo Haneda Airport',city:'Tokyo',country:'Japan'},
+  ICN:{name:'Incheon International Airport',city:'Seoul',country:'South Korea'},
+  PVG:{name:'Shanghai Pudong International Airport',city:'Shanghai',country:'China'},
+  PEK:{name:'Beijing Capital International Airport',city:'Beijing',country:'China'},
+  KUL:{name:'Kuala Lumpur International Airport',city:'Kuala Lumpur',country:'Malaysia'},
+  BKK:{name:'Suvarnabhumi Airport',city:'Bangkok',country:'Thailand'},
+  CGK:{name:'Soekarno-Hatta International Airport',city:'Jakarta',country:'Indonesia'},
+  SYD:{name:'Sydney Kingsford Smith Airport',city:'Sydney',country:'Australia'},
+  MEL:{name:'Melbourne Airport',city:'Melbourne',country:'Australia'},
+  // Canada
+  YYZ:{name:'Toronto Pearson International Airport',city:'Toronto',country:'Canada'},
+  YVR:{name:'Vancouver International Airport',city:'Vancouver',country:'Canada'},
+  YUL:{name:'Montréal-Pierre Elliott Trudeau International Airport',city:'Montreal',country:'Canada'},
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2
+  return Math.round(2 * R * Math.asin(Math.sqrt(a)))
+}
+
+// Airport coordinates for distance calc
+const AIRPORT_COORDS = {
+  DEL:[28.57,77.10],BOM:[19.09,72.87],BLR:[13.20,77.71],MAA:[12.99,80.17],HYD:[17.23,78.43],
+  CCU:[22.65,88.45],COK:[10.15,76.39],PNQ:[18.58,73.91],AMD:[23.07,72.63],GOI:[15.38,73.83],
+  TRV:[8.48,76.92],JAI:[26.82,75.81],IXC:[30.67,76.79],ATQ:[31.71,74.80],LKO:[26.76,80.89],
+  PAT:[25.59,85.09],SXR:[33.99,74.77],IXL:[34.14,77.55],NAG:[21.09,79.05],VTZ:[17.72,83.22],
+  JFK:[40.64,-73.78],LAX:[33.94,-118.41],ORD:[41.98,-87.90],ATL:[33.64,-84.43],DFW:[32.90,-97.04],
+  DEN:[39.86,-104.67],SFO:[37.62,-122.38],SEA:[47.45,-122.31],MIA:[25.79,-80.29],BOS:[42.36,-71.01],
+  LAS:[36.08,-115.15],MCO:[28.43,-81.31],EWR:[40.69,-74.17],CLT:[35.21,-80.94],PHX:[33.43,-112.01],
+  IAH:[29.98,-95.34],MSP:[44.88,-93.22],DTW:[42.21,-83.35],PHL:[39.87,-75.24],LGA:[40.78,-73.87],
+  LHR:[51.47,-0.46],LGW:[51.15,-0.19],CDG:[49.01,2.55],AMS:[52.31,4.76],FRA:[50.03,8.57],
+  MUC:[48.35,11.79],MAD:[40.47,-3.56],BCN:[41.30,2.08],FCO:[41.80,12.24],IST:[41.28,28.75],
+  ZRH:[47.46,8.55],VIE:[48.11,16.57],DUB:[53.42,-6.27],CPH:[55.62,12.66],
+  DXB:[25.25,55.36],AUH:[24.43,54.65],DOH:[25.27,51.61],RUH:[24.96,46.70],
+  SIN:[1.35,103.99],HKG:[22.31,113.92],NRT:[35.76,140.39],HND:[35.55,139.78],
+  ICN:[37.47,126.45],PVG:[31.14,121.81],PEK:[40.08,116.59],KUL:[2.74,101.71],
+  BKK:[13.68,100.75],CGK:[-6.13,106.66],SYD:[-33.95,151.18],MEL:[-37.67,144.84],
+  YYZ:[43.68,-79.63],YVR:[49.19,-123.18],YUL:[45.47,-73.74],
+}
+
+async function renderRoute(slug) {
+  // Parse "JFK-LAX" → origin=JFK, dest=LAX
+  const parts = slug.split('-')
+  if (parts.length < 2) return
+  const origin = parts[0].toUpperCase()
+  const dest   = parts[parts.length - 1].toUpperCase()
+  if (origin.length !== 3 || dest.length !== 3 || origin === dest) return
+
+  const originInfo = AIRPORT_INFO[origin]
+  const destInfo   = AIRPORT_INFO[dest]
+  if (!originInfo || !destInfo) return
+
+  const canonical  = `${SITE}/route/${origin.toLowerCase()}-${dest.toLowerCase()}`
+  const oc = AIRPORT_COORDS[origin]
+  const dc = AIRPORT_COORDS[dest]
+  const distKm = oc && dc ? haversineKm(oc[0], oc[1], dc[0], dc[1]) : null
+  const distMi = distKm ? Math.round(distKm * 0.621) : null
+  const flightHr = distKm ? (distKm / 850).toFixed(1) : null
+
+  const title = `${originInfo.city} to ${destInfo.city} Flights — Live Tracker | ObjectTracer`
+  const desc  = `Track live flights from ${originInfo.city} (${origin}) to ${destInfo.city} (${dest}) on ObjectTracer's real-time 3D globe.${distKm ? ` ${distKm.toLocaleString()} km route, ~${flightHr}h flight.` : ''} Real-time ADS-B tracking with position, altitude, and speed.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${originInfo.city} to ${destInfo.city} Flights`,
+    url: canonical,
+    description: desc,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'ObjectTracer', item: SITE },
+        { '@type': 'ListItem', position: 2, name: `${originInfo.city} Airport`, item: `${SITE}/airport/${origin}` },
+        { '@type': 'ListItem', position: 3, name: `${originInfo.city} to ${destInfo.city}`, item: canonical },
+      ],
+    },
+  }
+
+  const body = `
+    <h1>${esc(originInfo.city)} → ${esc(destInfo.city)} Live Flight Tracker</h1>
+    <p>Track all ${esc(origin)} to ${esc(dest)} flights live on ObjectTracer's real-time 3D globe with ADS-B data.</p>
+    <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+
+    <h2>Route Info</h2>
+    <table>
+      <tr><th>Origin</th><td><a href="${SITE}/airport/${origin}">${esc(originInfo.name)}</a><br><span style="font-size:.8rem;opacity:.6">${esc(originInfo.city)}, ${esc(originInfo.country)} (${origin})</span></td></tr>
+      <tr><th>Destination</th><td><a href="${SITE}/airport/${dest}">${esc(destInfo.name)}</a><br><span style="font-size:.8rem;opacity:.6">${esc(destInfo.city)}, ${esc(destInfo.country)} (${dest})</span></td></tr>
+      ${distKm ? `<tr><th>Distance</th><td>${distKm.toLocaleString()} km (${distMi.toLocaleString()} mi)</td></tr>` : ''}
+      ${flightHr ? `<tr><th>Flight time</th><td>~${flightHr} hours</td></tr>` : ''}
+    </table>
+
+    <p style="margin-top:24px">
+      ObjectTracer tracks all ${esc(origin)}–${esc(dest)} flights live using ADS-B data.
+      Click any aircraft on the globe to see its callsign, altitude, speed, aircraft type, and route history.
+    </p>
+    <p>
+      Also track departures from <a href="${SITE}/airport/${origin}">${esc(originInfo.city)} Airport (${origin})</a>
+      and arrivals at <a href="${SITE}/airport/${dest}">${esc(destInfo.city)} Airport (${dest})</a>.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
 }
 
 // ── ISS renderer ─────────────────────────────────────────────────────────────

@@ -115,7 +115,8 @@ export function parseInitialState(pathname) {
   if (pathname === '/contact')  return { ...base, activePage: 'contact' }
   if (pathname === '/faq')      return { ...base, activePage: 'faq' }
   if (pathname === '/donate')   return { ...base, activePage: 'donate' }
-  if (pathname === '/iss')              return { ...base, selectedIcao24: 'ISS' }  // open ISS panel
+  if (pathname === '/iss')              return { ...base, selectedIcao24: 'ISS' }
+  if (pathname.startsWith('/route/'))   return base  // show globe, not 404
   if (pathname.startsWith('/airline/')) return base  // show globe, not 404
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }  // open launch panel
   if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base  // handled above but catch-all safety
