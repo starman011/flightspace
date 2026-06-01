@@ -109,7 +109,8 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
-  const [liveEnabled, setLiveEnabled] = useState(false)
+  // Auto-enable live tracking when arriving via a direct flight URL (e.g. from Google)
+  const [liveEnabled, setLiveEnabled] = useState(!!init.selectedIcao24)
   const [showWeather, setShowWeather] = useState(false)
   const { aircraft, filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
@@ -121,7 +122,8 @@ export default function App() {
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
-  const [trackingId, setTrackingId]         = useState(null)
+  // Auto-track flight when arriving via direct URL so globe follows and trail loads
+  const [trackingId, setTrackingId]         = useState(init.selectedIcao24 || null)
   const [launchPanelOpen, setLaunchPanelOpen] = useState(init.launchPanelOpen)
   const [profilePanelOpen, setProfilePanelOpen] = useState(init.profilePanelOpen)
   const [activeScale, setActiveScale]       = useState(init.activeScale)
