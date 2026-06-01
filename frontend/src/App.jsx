@@ -106,6 +106,10 @@ function PadFocusBadge({ launch, onExit }) {
 
 export default function App() {
   const { sessionToken, isAuthenticated, user, sessionError, login, register, logout, googleLogin } = useSession()
+
+  // Initialise from URL on first render — must be before any useState that reads it
+  const init = parseInitialState(window.location.pathname)
+
   const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
@@ -116,9 +120,6 @@ export default function App() {
   const pwa = usePWAInstall()
   const audio = useAmbientAudio()
   useHaptics()
-
-  // Initialise from URL on first render
-  const init = parseInitialState(window.location.pathname)
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
