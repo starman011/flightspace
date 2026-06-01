@@ -50,6 +50,7 @@ import { usePins } from './hooks/usePins'
 import { usePWAInstall } from './hooks/usePWAInstall'
 import { parseInitialState, stateToPath, updateRouteMeta } from './utils/routing'
 import PWABanner from './components/PWABanner/PWABanner'
+import FlightLanding from './components/FlightLanding/FlightLanding'
 
 // ── Pad Focus Badge ───────────────────────────────────────────────────────────
 function PadFocusBadge({ launch, onExit }) {
@@ -113,8 +114,9 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
-  // Auto-enable live tracking when arriving via a direct flight URL (e.g. from Google)
-  const [liveEnabled, setLiveEnabled] = useState(!!init.selectedIcao24)
+  const [liveEnabled, setLiveEnabled] = useState(false)
+  // Show flight landing screen when arriving via direct flight URL (e.g. from Google)
+  const [showFlightLanding, setShowFlightLanding] = useState(!!init.selectedIcao24)
   const [showWeather, setShowWeather] = useState(false)
   const { aircraft, filteredAircraft, setFilters, connectionStatus, setBounds, solarData, viewerCounts, watchObject } = useAircraft(sessionToken, liveEnabled)
   const pwa = usePWAInstall()
@@ -361,6 +363,17 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       `}</style>
 
       {showLoading && <LoadingScreen duration={2500} onDone={() => setShowLoading(false)} />}
+
+      {showFlightLanding && init.selectedIcao24 && (
+        <FlightLanding
+          icao24={init.selectedIcao24}
+          onEnable={() => {
+            setShowFlightLanding(false)
+            setLiveEnabled(true)
+            setTrackingId(init.selectedIcao24)
+          }}
+        />
+      )}
       <BetaWelcome />
 
       {init.notFound && (
