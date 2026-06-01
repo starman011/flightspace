@@ -159,6 +159,7 @@ export default function App() {
   const [returnMission, setReturnMission]   = useState(init.selectedLaunchId)
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [arActive, setArActive] = useState(false)
+  const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
 
@@ -194,6 +195,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   const handleAircraftClick = useCallback((icao24) => {
     setSelectedIcao24(icao24)
+    setLiveEnabled(prev => {
+      if (!prev) {
+        setLiveToast(true)
+        setTimeout(() => setLiveToast(false), 3000)
+        return true
+      }
+      return prev
+    })
   }, [])
 
   const openedFromProfileRef = useRef(false)
@@ -656,6 +665,22 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <WaitlistPopup />
       <TourGuide />
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
+
+      {liveToast && (
+        <div style={{
+          position: 'fixed', bottom: 96, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9000, display: 'flex', alignItems: 'center', gap: 10,
+          background: 'rgba(6,12,18,0.92)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(178,255,26,0.4)', borderRadius: 10,
+          padding: '10px 18px', boxShadow: '0 0 24px rgba(178,255,26,0.15)',
+          fontFamily: 'var(--font-mono)', fontSize: 12, color: '#e8f4ff',
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#b2ff1a',
+            boxShadow: '0 0 6px #b2ff1a', flexShrink: 0 }} />
+          Live tracking enabled — fetching flight data
+        </div>
+      )}
     </ErrorBoundary>
   )
 }

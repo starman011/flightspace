@@ -1,13 +1,28 @@
 import { useEffect, useState } from 'react'
 import styles from './AirportPanel.module.css'
+import { AIRPORTS } from '../Globe/airportData.js'
 
 const API = import.meta.env.VITE_API_URL || ''
+
+const AIRPORT_LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
 export default function AirportPanel({ iata, onClose, onFlightClick }) {
   const [tab, setTab] = useState('arrivals')
   const [arrivals, setArrivals] = useState([])
   const [departures, setDepartures] = useState([])
   const [loading, setLoading] = useState(true)
+  const [cityImage, setCityImage] = useState(null)
+
+  const airportInfo = AIRPORT_LOOKUP[iata]
+  const cityName = airportInfo?.city || iata
+
+  useEffect(() => {
+    if (!cityName) return
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cityName)}`)
+      .then(r => r.json())
+      .then(data => { if (data.thumbnail?.source) setCityImage(data.thumbnail.source) })
+      .catch(() => {})
+  }, [cityName])
 
   useEffect(() => {
     if (!iata) return
@@ -38,9 +53,28 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
 
   return (
     <div className={styles.panel}>
+      {cityImage && (
+        <div style={{ position: 'relative', height: 110, overflow: 'hidden', borderRadius: '12px 12px 0 0' }}>
+          <img src={cityImage} alt={cityName}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, transparent 30%, rgba(4,9,14,0.95) 100%)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: 10, left: 14,
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(200,220,240,0.7)',
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+          }}>{cityName}</div>
+        </div>
+      )}
       <div className={styles.header}>
         <div className={styles.title}>
           <span className={styles.iata}>{iata}</span>
+          {airportInfo?.name && !cityImage && (
+            <span style={{ fontSize: 10, color: 'rgba(200,220,240,0.5)', marginLeft: 8,
+              fontFamily: 'var(--font-mono)' }}>{airportInfo.city}</span>
+          )}
         </div>
         <button className={styles.share} onClick={() => {
           const url = `${window.location.origin}/airport/${iata}`
