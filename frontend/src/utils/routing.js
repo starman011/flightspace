@@ -28,11 +28,14 @@ export const ROUTE_META = {
                      description: 'Answers to common questions about ObjectTracer, live flight tracking, satellite data, and more.' },
   '/donate':       { title: 'Support ObjectTracer — Donate',
                      description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
+  '/airline':      { title: 'Live Airline Flight Tracker | ObjectTracer',
+                     description: 'Track all flights for this airline live on ObjectTracer\'s real-time 3D globe. Live ADS-B position, altitude, speed, and route.' },
 }
 
 export function routeKeyFromPath(path) {
   if (path.startsWith('/flight/'))  return '/flight'
   if (path.startsWith('/airport/')) return '/airport'
+  if (path.startsWith('/airline/')) return '/airline'
   return path
 }
 
@@ -110,5 +113,7 @@ export function parseInitialState(pathname) {
   if (pathname === '/contact')  return { ...base, activePage: 'contact' }
   if (pathname === '/faq')      return { ...base, activePage: 'faq' }
   if (pathname === '/donate')   return { ...base, activePage: 'donate' }
+  if (pathname.startsWith('/airline/')) return base  // show globe, not 404
+  if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base  // handled above but catch-all safety
   return { ...base, notFound: true }
 }
