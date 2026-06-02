@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/sitemap-launches.xml', '/iss'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/sitemap-launches.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -36,6 +36,15 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'asteroid' && parts[1]) {
     return renderAsteroid(parts[1])
+  }
+  if (parts[0] === 'city' && parts[1]) {
+    return renderCity(parts[1].toLowerCase())
+  }
+  if (parts[0] === 'satellite' && parts[1]) {
+    return renderSatellite(parts[1].toLowerCase())
+  }
+  if (parts[0] === 'flights' && parts[1]) {
+    return renderFlightsOver(parts[1].toLowerCase())
   }
   if (pathname === '/sitemap-launches.xml') {
     return renderLaunchSitemap()
@@ -507,6 +516,230 @@ async function renderAsteroid(slug) {
     <p style="margin-top:16px">
       Track all near-Earth asteroids including PHAs, NEOs, and close approach objects on
       <a href="${SITE}/asteroids">ObjectTracer's Asteroid Tracker</a>.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── City renderer ─────────────────────────────────────────────────────────────
+
+const CITY_AIRPORTS = {
+  'new-york':          { name: 'New York',          country: 'USA',          airports: ['JFK','LGA','EWR'] },
+  'london':            { name: 'London',             country: 'UK',           airports: ['LHR','LGW'] },
+  'paris':             { name: 'Paris',              country: 'France',       airports: ['CDG'] },
+  'chicago':           { name: 'Chicago',            country: 'USA',          airports: ['ORD','MDW'] },
+  'los-angeles':       { name: 'Los Angeles',        country: 'USA',          airports: ['LAX'] },
+  'san-francisco':     { name: 'San Francisco',      country: 'USA',          airports: ['SFO','SJC','OAK'] },
+  'miami':             { name: 'Miami',              country: 'USA',          airports: ['MIA','FLL'] },
+  'dallas':            { name: 'Dallas',             country: 'USA',          airports: ['DFW','DAL'] },
+  'houston':           { name: 'Houston',            country: 'USA',          airports: ['IAH','HOU'] },
+  'washington':        { name: 'Washington DC',      country: 'USA',          airports: ['DCA','IAD','BWI'] },
+  'boston':            { name: 'Boston',             country: 'USA',          airports: ['BOS'] },
+  'seattle':           { name: 'Seattle',            country: 'USA',          airports: ['SEA'] },
+  'dubai':             { name: 'Dubai',              country: 'UAE',          airports: ['DXB','DWC'] },
+  'abu-dhabi':         { name: 'Abu Dhabi',          country: 'UAE',          airports: ['AUH'] },
+  'doha':              { name: 'Doha',               country: 'Qatar',        airports: ['DOH'] },
+  'delhi':             { name: 'Delhi',              country: 'India',        airports: ['DEL'] },
+  'mumbai':            { name: 'Mumbai',             country: 'India',        airports: ['BOM'] },
+  'bengaluru':         { name: 'Bengaluru',          country: 'India',        airports: ['BLR'] },
+  'hyderabad':         { name: 'Hyderabad',          country: 'India',        airports: ['HYD'] },
+  'chennai':           { name: 'Chennai',            country: 'India',        airports: ['MAA'] },
+  'kolkata':           { name: 'Kolkata',            country: 'India',        airports: ['CCU'] },
+  'kochi':             { name: 'Kochi',              country: 'India',        airports: ['COK'] },
+  'ahmedabad':         { name: 'Ahmedabad',          country: 'India',        airports: ['AMD'] },
+  'pune':              { name: 'Pune',               country: 'India',        airports: ['PNQ'] },
+  'goa':               { name: 'Goa',                country: 'India',        airports: ['GOI'] },
+  'jaipur':            { name: 'Jaipur',             country: 'India',        airports: ['JAI'] },
+  'singapore':         { name: 'Singapore',          country: 'Singapore',    airports: ['SIN'] },
+  'hong-kong':         { name: 'Hong Kong',          country: 'China',        airports: ['HKG'] },
+  'tokyo':             { name: 'Tokyo',              country: 'Japan',        airports: ['NRT','HND'] },
+  'seoul':             { name: 'Seoul',              country: 'South Korea',  airports: ['ICN','GMP'] },
+  'beijing':           { name: 'Beijing',            country: 'China',        airports: ['PEK','PKX'] },
+  'shanghai':          { name: 'Shanghai',           country: 'China',        airports: ['PVG','SHA'] },
+  'bangkok':           { name: 'Bangkok',            country: 'Thailand',     airports: ['BKK','DMK'] },
+  'kuala-lumpur':      { name: 'Kuala Lumpur',       country: 'Malaysia',     airports: ['KUL'] },
+  'istanbul':          { name: 'Istanbul',           country: 'Turkey',       airports: ['IST','SAW'] },
+  'amsterdam':         { name: 'Amsterdam',          country: 'Netherlands',  airports: ['AMS'] },
+  'frankfurt':         { name: 'Frankfurt',          country: 'Germany',      airports: ['FRA'] },
+  'munich':            { name: 'Munich',             country: 'Germany',      airports: ['MUC'] },
+  'madrid':            { name: 'Madrid',             country: 'Spain',        airports: ['MAD'] },
+  'rome':              { name: 'Rome',               country: 'Italy',        airports: ['FCO','CIA'] },
+  'zurich':            { name: 'Zurich',             country: 'Switzerland',  airports: ['ZRH'] },
+  'sydney':            { name: 'Sydney',             country: 'Australia',    airports: ['SYD'] },
+  'toronto':           { name: 'Toronto',            country: 'Canada',       airports: ['YYZ'] },
+  'johannesburg':      { name: 'Johannesburg',       country: 'South Africa', airports: ['JNB'] },
+}
+
+async function renderCity(slug) {
+  const city = CITY_AIRPORTS[slug]
+  if (!city) return
+
+  const canonical = `${SITE}/city/${slug}`
+  const iataList  = city.airports
+
+  // Fetch arrivals for the first airport to show live flights
+  let flights = []
+  try {
+    const res = await fetch(`${API}/api/v1/airports/${iataList[0]}/arrivals`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) {
+      const d = await res.json()
+      flights = Array.isArray(d) ? d : (d.arrivals || [])
+    }
+  } catch (_) {}
+
+  const title = `${city.name} Live Flight Tracker — All Airports & Arrivals | ObjectTracer`
+  const desc  = `Track all live flights at ${city.name}, ${city.country} on ObjectTracer's real-time 3D globe. Covers ${iataList.join(', ')} — live arrivals, departures, and real-time ADS-B tracking.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${city.name} Live Flight Tracker`,
+    url: canonical,
+    description: desc,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'ObjectTracer', item: SITE },
+        { '@type': 'ListItem', position: 2, name: `${city.name} Flights`, item: canonical },
+      ],
+    },
+  }
+
+  const airportLinks = iataList.map(iata => {
+    const info = AIRPORT_INFO[iata]
+    const name = info ? info.name : `${iata} Airport`
+    return `<li><a href="${SITE}/airport/${iata}">${esc(name)} (${iata})</a></li>`
+  }).join('\n')
+
+  const flightRows = flights.slice(0, 10).map(f => {
+    const cs = f.callsign || f.icao24 || ''
+    const link = f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>` : esc(cs)
+    return `<tr><td>${link}</td><td>${esc(f.origin || f.departure_iata || '—')}</td><td>${esc(f.alt_ft ? Math.round(f.alt_ft) + ' ft' : '—')}</td></tr>`
+  }).join('\n')
+
+  const body = `
+    <h1>${esc(city.name)} Live Flights</h1>
+    <p>Real-time ADS-B flight tracking for all ${esc(city.name)}, ${esc(city.country)} airports on ObjectTracer's interactive 3D globe.</p>
+    <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+
+    <h2>Airports in ${esc(city.name)}</h2>
+    <ul style="padding-left:20px;line-height:2">${airportLinks}</ul>
+
+    ${flightRows ? `
+    <h2>Live Arrivals at ${esc(iataList[0])}</h2>
+    <table>
+      <tr><th>Flight</th><th>From</th><th>Altitude</th></tr>
+      ${flightRows}
+    </table>` : ''}
+
+    <p style="margin-top:24px">
+      ObjectTracer tracks all flights arriving at and departing from ${esc(city.name)} airports in real-time.
+      View aircraft positions on a 3D globe with altitude, speed, route history, and aircraft details.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── Satellite renderer ────────────────────────────────────────────────────────
+
+const SATELLITE_INFO = {
+  'iss':   { name: 'International Space Station', altKm: 408, periodMin: 92.68, speedKmh: 27600,
+    desc: 'The ISS is a habitable artificial satellite in low Earth orbit, serving as a space research lab.', redirect: '/iss' },
+  'hubble': { name: 'Hubble Space Telescope', altKm: 547, periodMin: 95.4, speedKmh: 27300,
+    desc: 'The Hubble Space Telescope is a large space telescope launched in 1990, orbiting Earth at 547 km.' },
+  'starlink': { name: 'Starlink Satellite Constellation', altKm: 550, periodMin: 95.5, speedKmh: 27000,
+    desc: 'Starlink is a satellite internet constellation operated by SpaceX providing broadband coverage.' },
+  'tiangong': { name: 'Tiangong Space Station', altKm: 390, periodMin: 92, speedKmh: 27600,
+    desc: 'Tiangong is China\'s modular space station in low Earth orbit, housing Chinese taikonauts.' },
+  'james-webb-space-telescope': { name: 'James Webb Space Telescope', altKm: 1500000, periodMin: null, speedKmh: null,
+    desc: 'The JWST orbits the Sun at the L2 Lagrange point, 1.5 million km from Earth.' },
+}
+
+async function renderSatellite(slug) {
+  if (slug === 'iss') return renderISS()
+
+  const sat = SATELLITE_INFO[slug]
+  if (!sat) return
+
+  const canonical = `${SITE}/satellite/${slug}`
+  const title = `${sat.name} Live Tracker — Real-Time Position | ObjectTracer`
+  const desc  = `${sat.desc} Track ${sat.name} live on ObjectTracer's interactive 3D globe.${sat.altKm ? ` Orbits at ~${sat.altKm} km altitude.` : ''}`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${sat.name} Live Tracker`,
+    url: canonical,
+    description: desc,
+  }
+
+  const rows = [
+    sat.altKm && `<tr><th>Altitude</th><td>~${sat.altKm.toLocaleString()} km</td></tr>`,
+    sat.periodMin && `<tr><th>Orbital Period</th><td>${sat.periodMin} minutes</td></tr>`,
+    sat.speedKmh && `<tr><th>Speed</th><td>${sat.speedKmh.toLocaleString()} km/h</td></tr>`,
+  ].filter(Boolean).join('\n')
+
+  const body = `
+    <h1>${esc(sat.name)} Live Tracker</h1>
+    <p>${esc(sat.desc)}</p>
+    <a class="cta" href="${canonical}">Track Live on 3D Globe →</a>
+    ${rows ? `<h2>Orbital Data</h2><table>${rows}</table>` : ''}
+    <p style="margin-top:24px">
+      Track ${esc(sat.name)} in real-time on ObjectTracer's interactive 3D globe with live orbital position and trajectory.
+    </p>
+    <p>Also track the <a href="${SITE}/iss">International Space Station (ISS)</a> and all satellites on ObjectTracer.</p>`
+
+  return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── Flights-over-country renderer ─────────────────────────────────────────────
+
+const REGION_INFO = {
+  'india':        { name: 'India',          desc: 'one of the world\'s fastest-growing aviation markets', airports: ['DEL','BOM','BLR','MAA','HYD','CCU'] },
+  'usa':          { name: 'United States',  desc: 'the world\'s largest aviation market', airports: ['JFK','LAX','ORD','ATL','DFW'] },
+  'europe':       { name: 'Europe',         desc: 'home to some of the world\'s busiest airports', airports: ['LHR','CDG','AMS','FRA','MAD'] },
+  'middle-east':  { name: 'Middle East',    desc: 'a major global aviation hub', airports: ['DXB','DOH','AUH','RUH'] },
+  'asia':         { name: 'Asia',           desc: 'the world\'s fastest-growing aviation region', airports: ['SIN','HKG','NRT','ICN','BKK'] },
+  'australia':    { name: 'Australia',      desc: 'a key aviation hub for the Asia-Pacific region', airports: ['SYD','MEL'] },
+  'uk':           { name: 'United Kingdom', desc: 'a major European aviation hub', airports: ['LHR','LGW','MAN'] },
+  'canada':       { name: 'Canada',         desc: 'a key North American aviation market', airports: ['YYZ','YVR','YUL'] },
+  'uae':          { name: 'United Arab Emirates', desc: 'home to Dubai — one of the world\'s top transit hubs', airports: ['DXB','AUH'] },
+  'singapore':    { name: 'Singapore',      desc: 'home to Changi Airport, consistently voted the world\'s best', airports: ['SIN'] },
+}
+
+async function renderFlightsOver(slug) {
+  const region = REGION_INFO[slug]
+  if (!region) return
+
+  const canonical = `${SITE}/flights/${slug}`
+  const title = `Live Flights Over ${region.name} — Real-Time ADS-B Tracker | ObjectTracer`
+  const desc  = `Track all live flights over ${region.name} in real-time on ObjectTracer's 3D globe. ${region.name} is ${region.desc}. Real-time ADS-B tracking with position, altitude, speed, and route.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `Live Flights Over ${region.name}`,
+    url: canonical,
+    description: desc,
+  }
+
+  const airportLinks = region.airports.map(iata => {
+    const info = AIRPORT_INFO[iata]
+    return `<li><a href="${SITE}/airport/${iata}">${esc(info ? info.name : iata)} (${iata})</a></li>`
+  }).join('\n')
+
+  const body = `
+    <h1>Live Flights Over ${esc(region.name)}</h1>
+    <p>Track all aircraft currently flying over ${esc(region.name)} in real-time on ObjectTracer's interactive 3D globe.</p>
+    <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+
+    <h2>Major Airports in ${esc(region.name)}</h2>
+    <ul style="padding-left:20px;line-height:2">${airportLinks}</ul>
+
+    <p style="margin-top:24px">
+      ObjectTracer uses real-time ADS-B data to track every aircraft flying over ${esc(region.name)}.
+      View live positions, altitudes, speeds, and flight routes on an interactive 3D globe.
+      ${region.name} is ${esc(region.desc)}.
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
