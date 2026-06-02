@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/sitemap-launches.xml', '/iss'],
+  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/sitemap-launches.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -33,6 +33,9 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'route' && parts[1]) {
     return renderRoute(parts[1].toUpperCase())
+  }
+  if (parts[0] === 'asteroid' && parts[1]) {
+    return renderAsteroid(parts[1])
   }
   if (pathname === '/sitemap-launches.xml') {
     return renderLaunchSitemap()
@@ -416,6 +419,97 @@ async function renderLaunch(slug) {
     </p>`
 
   return html(canonical, title, descParts, jsonLd, body)
+}
+
+// ── Asteroid renderer ─────────────────────────────────────────────────────────
+
+function asteroidSlug(name) {
+  return name.replace(/[()]/g, '').trim().toLowerCase().replace(/\s+/g, '-')
+}
+
+async function renderAsteroid(slug) {
+  let asteroids = []
+  try {
+    const res = await fetch(`${API}/api/v1/asteroids`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) {
+      const data = await res.json()
+      asteroids = Array.isArray(data) ? data : (data.asteroids || data.data || [])
+    }
+  } catch (_) {}
+
+  const asteroid = asteroids.find(a => asteroidSlug(a.name) === slug)
+  if (!asteroid) return
+
+  const canonical = `${SITE}/asteroid/${slug}`
+  const isPHA     = asteroid.pha
+  const diamMin   = asteroid.diam_min ? (asteroid.diam_min * 1000).toFixed(1) : null
+  const diamMax   = asteroid.diam_max ? (asteroid.diam_max * 1000).toFixed(1) : null
+  const diamStr   = diamMin && diamMax ? `${diamMin}–${diamMax} m` : null
+  const missKm    = asteroid.miss_km  ? Math.round(asteroid.miss_km).toLocaleString() : null
+  const missLd    = asteroid.miss_ld  ? Number(asteroid.miss_ld).toFixed(3) : null
+  const velKps    = asteroid.vel_kps  ? Number(asteroid.vel_kps).toFixed(2) : null
+  const velKmh    = asteroid.vel_kps  ? Math.round(asteroid.vel_kps * 3600).toLocaleString() : null
+  const approachDate = asteroid.approach_date || null
+
+  const cleanName = asteroid.name.replace(/[()]/g, '').trim()
+
+  const title = isPHA
+    ? `${cleanName} — Potentially Hazardous Asteroid Tracker | ObjectTracer`
+    : `${cleanName} — Near-Earth Asteroid Close Approach | ObjectTracer`
+
+  const desc = [
+    `Track asteroid ${cleanName} on ObjectTracer's real-time 3D globe.`,
+    approachDate && `Close approach: ${approachDate}.`,
+    missKm && `Miss distance: ${missKm} km (${missLd} lunar distances).`,
+    velKmh && `Velocity: ${velKmh} km/h.`,
+    diamStr && `Estimated diameter: ${diamStr}.`,
+    isPHA ? 'Classified as a Potentially Hazardous Asteroid (PHA) by NASA.' : 'Near-Earth Object tracked by NASA NeoWs.',
+  ].filter(Boolean).join(' ')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: `${cleanName} Close Approach`,
+    url: canonical,
+    description: desc,
+    ...(approachDate ? { startDate: approachDate } : {}),
+    location: { '@type': 'Place', name: 'Near Earth' },
+    organizer: { '@type': 'Organization', name: 'NASA Center for Near Earth Object Studies' },
+  }
+
+  const rows = [
+    approachDate && `<tr><th>Close Approach</th><td>${esc(approachDate)} UTC</td></tr>`,
+    missKm       && `<tr><th>Miss Distance</th><td>${missKm} km <span style="opacity:.5">(${missLd} Lunar Distances)</span></td></tr>`,
+    velKmh       && `<tr><th>Velocity</th><td>${velKmh} km/h <span style="opacity:.5">(${velKps} km/s)</span></td></tr>`,
+    diamStr      && `<tr><th>Est. Diameter</th><td>${esc(diamStr)}</td></tr>`,
+    `<tr><th>Hazardous</th><td style="color:${isPHA ? '#ff6b6b' : '#b2ff1a'}">${isPHA ? '⚠ Potentially Hazardous' : '✓ Not Hazardous'}</td></tr>`,
+    `<tr><th>NASA ID</th><td style="opacity:.5">${esc(asteroid.id)}</td></tr>`,
+  ].filter(Boolean).join('\n')
+
+  const body = `
+    <h1>${esc(cleanName)}</h1>
+    ${isPHA ? `<p style="color:#ff6b6b;font-family:var(--font-mono);font-size:.85rem;letter-spacing:.1em;margin:0 0 16px">
+      ⚠ POTENTIALLY HAZARDOUS ASTEROID
+    </p>` : ''}
+    <p>${esc(desc.split('.')[0])}.</p>
+    <a class="cta" href="${canonical}">Track on 3D Globe →</a>
+
+    <h2>Close Approach Data</h2>
+    <table>${rows}</table>
+
+    <h2>What is ${esc(cleanName)}?</h2>
+    <p>
+      ${esc(cleanName)} is a near-Earth asteroid${isPHA ? ' classified as Potentially Hazardous by NASA' : ''}.
+      ${diamStr ? `It has an estimated diameter of ${esc(diamStr)}.` : ''}
+      ${missKm ? `During its closest approach it will pass within ${missKm} km of Earth — ${missLd} times the distance from Earth to the Moon.` : ''}
+      ObjectTracer visualises this asteroid in real-time on an interactive 3D globe using NASA NeoWs data.
+    </p>
+    <p style="margin-top:16px">
+      Track all near-Earth asteroids including PHAs, NEOs, and close approach objects on
+      <a href="${SITE}/asteroids">ObjectTracer's Asteroid Tracker</a>.
+    </p>`
+
+  return html(canonical, title, desc, jsonLd, body)
 }
 
 // ── Route renderer ────────────────────────────────────────────────────────────
