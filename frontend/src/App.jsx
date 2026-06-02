@@ -566,9 +566,24 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         user={user}
         trackedFlights={pins.trackedFlights}
         pinnedLaunches={pins.pinnedLaunches}
-        onSelectFlight={(icao24) => { openedFromProfileRef.current = true; setSelectedIcao24(icao24); setTrackingId(icao24); setProfilePanelOpen(false) }}
+        onSelectFlight={(icao24) => {
+          openedFromProfileRef.current = true
+          setSelectedIcao24(icao24)
+          setTrackingId(icao24)
+          setProfilePanelOpen(false)
+          // Auto-enable live so telemetry appears in the detail panel
+          setLiveEnabled(prev => {
+            if (!prev) { setLiveToast(true); setTimeout(() => setLiveToast(false), 3000) }
+            return true
+          })
+        }}
         onUntrackFlight={(icao24) => pins.untrackFlight(icao24)}
         onUnpinLaunch={(id) => pins.unpinLaunch(id)}
+        onSelectLaunch={(launch) => {
+          setReturnMission(launch.id || launch.launch_id || launch)
+          setLaunchPanelOpen(true)
+          setProfilePanelOpen(false)
+        }}
         liveAircraft={aircraftWithShips}
         onSignOut={logout}
       />

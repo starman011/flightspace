@@ -4,7 +4,7 @@ import styles from './ProfilePanel.module.css'
 export default function ProfilePanel({
   open, onClose, user,
   trackedFlights = [], pinnedLaunches = [],
-  onSelectFlight, onUntrackFlight, onUnpinLaunch,
+  onSelectFlight, onUntrackFlight, onUnpinLaunch, onSelectLaunch,
   liveAircraft, onSignOut,
 }) {
   const [tab, setTab] = useState('flights')
@@ -198,6 +198,7 @@ export default function ProfilePanel({
                   <LaunchCard
                     key={l.launch_id || l.id}
                     launch={l}
+                    onSelect={() => onSelectLaunch?.(l)}
                     onRemove={() => onUnpinLaunch?.(l.id)}
                   />
                 ))}
@@ -266,12 +267,12 @@ function FlightCard({ flight, onSelect, onRemove }) {
   )
 }
 
-function LaunchCard({ launch, onRemove }) {
+function LaunchCard({ launch, onSelect, onRemove }) {
   const net = launch.net ? new Date(launch.net) : null
   const isPast = net && net < Date.now()
 
   return (
-    <div className={styles.card}>
+    <div className={styles.card} onClick={onSelect} style={{ cursor: 'pointer' }}>
       <div className={styles.cardLeft}>
         <div className={`${styles.cardIcon} ${styles.cardIconLaunch}`}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
