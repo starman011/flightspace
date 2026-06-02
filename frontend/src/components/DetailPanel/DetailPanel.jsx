@@ -199,7 +199,9 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const panelRef = useRef(null)
   const photoTriedReg = useRef(false)
 
-  const cat = liveData?.cat || ''
+  // ISS detail can open without live WebSocket data (direct /iss URL).
+  // Derive satellite category from the id so crew/stream/specs always render.
+  const cat = liveData?.cat || (icao24 === 'ISS' ? 'satellite' : '')
   const isFlight = cat === 'plane' || cat === 'helicopter'
 
   const routeRef = useRef(null)
@@ -240,13 +242,16 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     touchStartY.current = null
   }, [])
 
+  // ISS fetches the same detail endpoint so position loads without WebSocket
+  const fetchesDetail = isFlight || icao24 === 'ISS'
+
   const refreshLive = useCallback(() => {
-    if (!icao24 || !isFlight) return
+    if (!icao24 || !fetchesDetail) return
     fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(data => { if (mountedRef.current) setDetail(data) })
       .catch(() => {})
-  }, [icao24, isFlight])
+  }, [icao24, fetchesDetail])
 
   useEffect(() => {
     if (!icao24) return
@@ -257,7 +262,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     photoTriedReg.current = false
     let cancelled = false
 
-    if (isFlight) {
+    if (fetchesDetail) {
       setLoading(true)
       fetch(`${API}/api/v1/aircraft/${icao24}`, { credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
@@ -265,13 +270,16 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
         .catch(e => { if (!cancelled) setError(e.message) })
         .finally(() => { if (!cancelled) setLoading(false) })
 
-      fetch(`${API}/api/v1/aircraft/${icao24}/route`, { credentials: 'include' })
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d && !cancelled) setRoute(d) })
-        .catch(() => {})
+      // Aircraft-only: route + photo (ISS has neither)
+      if (isFlight) {
+        fetch(`${API}/api/v1/aircraft/${icao24}/route`, { credentials: 'include' })
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d && !cancelled) setRoute(d) })
+          .catch(() => {})
 
-      fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`)
-        .then(p => { if (!cancelled) setPhoto(p) })
+        fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`)
+          .then(p => { if (!cancelled) setPhoto(p) })
+      }
 
       const iv = setInterval(refreshLive, 5000)
       return () => { cancelled = true; clearInterval(iv) }
