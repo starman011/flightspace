@@ -1081,7 +1081,17 @@ ${urls}
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
-function html(canonical, title, desc, jsonLd, body) {
+function ogImageUrl(title, subtitle, badge) {
+  const p = new URLSearchParams()
+  // Strip the "| ObjectTracer" suffix for a cleaner image title
+  p.set('title', String(title).replace(/\s*[|—-]\s*ObjectTracer.*$/, '').slice(0, 80))
+  if (subtitle) p.set('subtitle', String(subtitle).slice(0, 120))
+  if (badge)    p.set('badge', badge)
+  return `${SITE}/api/og?${p.toString()}`
+}
+
+function html(canonical, title, desc, jsonLd, body, ogBadge) {
+  const ogImg = ogImageUrl(title, desc, ogBadge)
   return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1095,12 +1105,14 @@ function html(canonical, title, desc, jsonLd, body) {
   <meta property="og:url"         content="${canonical}" />
   <meta property="og:title"       content="${esc(title)}" />
   <meta property="og:description" content="${esc(desc)}" />
-  <meta property="og:image"       content="${SITE}/og-image.png" />
+  <meta property="og:image"       content="${esc(ogImg)}" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:site_name"   content="ObjectTracer" />
   <meta name="twitter:card"       content="summary_large_image" />
   <meta name="twitter:title"      content="${esc(title)}" />
   <meta name="twitter:description" content="${esc(desc)}" />
-  <meta name="twitter:image"      content="${SITE}/og-image.png" />
+  <meta name="twitter:image"      content="${esc(ogImg)}" />
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>
     body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:24px 16px;background:#050a0f;color:#e8f4ff}
