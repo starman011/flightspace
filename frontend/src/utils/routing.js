@@ -89,6 +89,58 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   return '/'
 }
 
+// ── Landing-page lookup tables (mirror middleware.js for SPA behavior) ────────
+
+// Airline slug → { callsign ICAO prefix, display name }
+export const AIRLINE_ICAO = {
+  'american-airlines':{p:'AAL',n:'American Airlines'}, 'delta':{p:'DAL',n:'Delta Air Lines'},
+  'united':{p:'UAL',n:'United Airlines'}, 'southwest':{p:'SWA',n:'Southwest Airlines'},
+  'alaska-airlines':{p:'ASA',n:'Alaska Airlines'}, 'jetblue':{p:'JBU',n:'JetBlue Airways'},
+  'spirit':{p:'NKS',n:'Spirit Airlines'}, 'frontier':{p:'FFT',n:'Frontier Airlines'},
+  'air-canada':{p:'ACA',n:'Air Canada'}, 'westjet':{p:'WJA',n:'WestJet'},
+  'latam':{p:'LAN',n:'LATAM Airlines'}, 'azul':{p:'AZU',n:'Azul'}, 'gol':{p:'GLO',n:'GOL'},
+  'british-airways':{p:'BAW',n:'British Airways'}, 'lufthansa':{p:'DLH',n:'Lufthansa'},
+  'air-france':{p:'AFR',n:'Air France'}, 'klm':{p:'KLM',n:'KLM'}, 'ryanair':{p:'RYR',n:'Ryanair'},
+  'easyjet':{p:'EZY',n:'easyJet'}, 'iberia':{p:'IBE',n:'Iberia'}, 'swiss':{p:'SWR',n:'Swiss'},
+  'turkish-airlines':{p:'THY',n:'Turkish Airlines'}, 'wizz-air':{p:'WZZ',n:'Wizz Air'},
+  'norwegian':{p:'NAX',n:'Norwegian'}, 'tap':{p:'TAP',n:'TAP Air Portugal'}, 'finnair':{p:'FIN',n:'Finnair'},
+  'emirates':{p:'UAE',n:'Emirates'}, 'qatar-airways':{p:'QTR',n:'Qatar Airways'},
+  'etihad':{p:'ETD',n:'Etihad Airways'}, 'flydubai':{p:'FDB',n:'flydubai'}, 'air-arabia':{p:'ABY',n:'Air Arabia'},
+  'singapore-airlines':{p:'SIA',n:'Singapore Airlines'}, 'cathay-pacific':{p:'CPA',n:'Cathay Pacific'},
+  'japan-airlines':{p:'JAL',n:'Japan Airlines'}, 'ana':{p:'ANA',n:'All Nippon Airways'},
+  'korean-air':{p:'KAL',n:'Korean Air'}, 'air-asia':{p:'AXM',n:'AirAsia'}, 'qantas':{p:'QFA',n:'Qantas'},
+  'indigo':{p:'IGO',n:'IndiGo'}, 'air-india':{p:'AIC',n:'Air India'}, 'spicejet':{p:'SEJ',n:'SpiceJet'},
+  'vistara':{p:'VTI',n:'Vistara'}, 'akasa-air':{p:'QAL',n:'Akasa Air'}, 'air-india-express':{p:'IAX',n:'Air India Express'},
+}
+
+// City slug → { primary IATA, display name }
+export const CITY_IATA = {
+  'new-york':{iata:'JFK',n:'New York'}, 'london':{iata:'LHR',n:'London'}, 'paris':{iata:'CDG',n:'Paris'},
+  'chicago':{iata:'ORD',n:'Chicago'}, 'los-angeles':{iata:'LAX',n:'Los Angeles'}, 'san-francisco':{iata:'SFO',n:'San Francisco'},
+  'miami':{iata:'MIA',n:'Miami'}, 'dallas':{iata:'DFW',n:'Dallas'}, 'houston':{iata:'IAH',n:'Houston'},
+  'washington':{iata:'IAD',n:'Washington DC'}, 'boston':{iata:'BOS',n:'Boston'}, 'seattle':{iata:'SEA',n:'Seattle'},
+  'dubai':{iata:'DXB',n:'Dubai'}, 'abu-dhabi':{iata:'AUH',n:'Abu Dhabi'}, 'doha':{iata:'DOH',n:'Doha'},
+  'delhi':{iata:'DEL',n:'Delhi'}, 'mumbai':{iata:'BOM',n:'Mumbai'}, 'bengaluru':{iata:'BLR',n:'Bengaluru'},
+  'hyderabad':{iata:'HYD',n:'Hyderabad'}, 'chennai':{iata:'MAA',n:'Chennai'}, 'kolkata':{iata:'CCU',n:'Kolkata'},
+  'kochi':{iata:'COK',n:'Kochi'}, 'ahmedabad':{iata:'AMD',n:'Ahmedabad'}, 'pune':{iata:'PNQ',n:'Pune'},
+  'goa':{iata:'GOI',n:'Goa'}, 'jaipur':{iata:'JAI',n:'Jaipur'}, 'singapore':{iata:'SIN',n:'Singapore'},
+  'hong-kong':{iata:'HKG',n:'Hong Kong'}, 'tokyo':{iata:'HND',n:'Tokyo'}, 'seoul':{iata:'ICN',n:'Seoul'},
+  'beijing':{iata:'PEK',n:'Beijing'}, 'shanghai':{iata:'PVG',n:'Shanghai'}, 'bangkok':{iata:'BKK',n:'Bangkok'},
+  'kuala-lumpur':{iata:'KUL',n:'Kuala Lumpur'}, 'istanbul':{iata:'IST',n:'Istanbul'}, 'amsterdam':{iata:'AMS',n:'Amsterdam'},
+  'frankfurt':{iata:'FRA',n:'Frankfurt'}, 'munich':{iata:'MUC',n:'Munich'}, 'madrid':{iata:'MAD',n:'Madrid'},
+  'rome':{iata:'FCO',n:'Rome'}, 'zurich':{iata:'ZRH',n:'Zurich'}, 'sydney':{iata:'SYD',n:'Sydney'},
+  'toronto':{iata:'YYZ',n:'Toronto'}, 'johannesburg':{iata:'JNB',n:'Johannesburg'},
+}
+
+// Region slug → { center lat/lon, display name }
+export const REGION_FOCUS = {
+  'india':{lat:22.0,lon:79.0,n:'India'}, 'usa':{lat:39.0,lon:-98.0,n:'United States'},
+  'europe':{lat:50.0,lon:10.0,n:'Europe'}, 'middle-east':{lat:25.0,lon:50.0,n:'Middle East'},
+  'asia':{lat:30.0,lon:110.0,n:'Asia'}, 'australia':{lat:-25.0,lon:134.0,n:'Australia'},
+  'uk':{lat:54.0,lon:-2.0,n:'United Kingdom'}, 'canada':{lat:56.0,lon:-106.0,n:'Canada'},
+  'uae':{lat:24.0,lon:54.0,n:'United Arab Emirates'}, 'singapore':{lat:1.35,lon:103.8,n:'Singapore'},
+}
+
 export function parseInitialState(pathname) {
   const base = {
     selectedIcao24: null,
@@ -99,6 +151,12 @@ export function parseInitialState(pathname) {
     selectedAirport: null,
     selectedLaunchId: null,
     activePage: null,
+    // Landing-page intent (drives live tracking + camera + context banner)
+    airlineFilter: null,   // { prefix, name }
+    routeFocus: null,      // { origin, dest }
+    cityFocus: null,       // { iata, name }
+    regionFocus: null,     // { lat, lon, name }
+    issMode: false,
     notFound: false,
   }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
@@ -116,14 +174,46 @@ export function parseInitialState(pathname) {
   if (pathname === '/contact')  return { ...base, activePage: 'contact' }
   if (pathname === '/faq')      return { ...base, activePage: 'faq' }
   if (pathname === '/donate')   return { ...base, activePage: 'donate' }
-  if (pathname === '/iss')              return { ...base, selectedIcao24: 'ISS' }
-  if (pathname.startsWith('/route/'))     return base
+  if (pathname === '/iss')              return { ...base, selectedIcao24: 'ISS', issMode: true }
   if (pathname.startsWith('/asteroid/')) return { ...base, activeFilter: 'asteroids' }
-  if (pathname.startsWith('/city/'))     return base
-  if (pathname.startsWith('/satellite/')) return { ...base, selectedIcao24: pathname === '/satellite/iss' ? 'ISS' : null }
-  if (pathname.startsWith('/flights/'))  return base
-  if (pathname.startsWith('/airline/')) return base  // show globe, not 404
-  if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }  // open launch panel
-  if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base  // handled above but catch-all safety
+
+  // Airline landing: /airline/indigo → filter live flights to IndiGo
+  if (pathname.startsWith('/airline/')) {
+    const slug = pathname.replace('/airline/', '').toLowerCase()
+    const a = AIRLINE_ICAO[slug]
+    return a ? { ...base, airlineFilter: { prefix: a.p, name: a.n } } : base
+  }
+
+  // Route landing: /route/del-bom → fit camera + draw corridor between airports
+  if (pathname.startsWith('/route/')) {
+    const slug = pathname.replace('/route/', '').toLowerCase()
+    const parts = slug.split('-')
+    if (parts.length >= 2) {
+      const origin = parts[0].toUpperCase()
+      const dest   = parts[parts.length - 1].toUpperCase()
+      if (origin.length === 3 && dest.length === 3 && origin !== dest) {
+        return { ...base, routeFocus: { origin, dest } }
+      }
+    }
+    return base
+  }
+
+  // City landing: /city/mumbai → fly to airport + open arrivals
+  if (pathname.startsWith('/city/')) {
+    const slug = pathname.replace('/city/', '').toLowerCase()
+    const c = CITY_IATA[slug]
+    return c ? { ...base, cityFocus: { iata: c.iata, name: c.n }, selectedAirport: c.iata } : base
+  }
+
+  // Region landing: /flights/india → fly to region
+  if (pathname.startsWith('/flights/')) {
+    const slug = pathname.replace('/flights/', '').toLowerCase()
+    const r = REGION_FOCUS[slug]
+    return r ? { ...base, regionFocus: { lat: r.lat, lon: r.lon, name: r.n } } : base
+  }
+
+  if (pathname.startsWith('/satellite/')) return { ...base, selectedIcao24: pathname === '/satellite/iss' ? 'ISS' : null, issMode: pathname === '/satellite/iss' }
+  if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }
+  if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base
   return { ...base, notFound: true }
 }

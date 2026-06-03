@@ -79,11 +79,18 @@ export function useAircraft(sessionToken, enabled = true) {
   }, [aircraft.size]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredAircraft = useMemo(() => {
-    if (filters.type === 'all' && filters.altitude === 'all') return aircraft
+    if (filters.type === 'all' && filters.altitude === 'all' && !filters.airline) return aircraft
 
+    const airlinePrefix = filters.airline ? filters.airline.toUpperCase() : null
     const result = new Map()
     for (const [id, a] of aircraft) {
       const cat = a.cat || 'plane'
+
+      // --- Airline filter (callsign ICAO prefix, e.g. IGO for IndiGo) ---
+      if (airlinePrefix) {
+        const cs = (a.cs || '').toUpperCase()
+        if (!cs.startsWith(airlinePrefix)) continue
+      }
 
       // --- Type filter ---
       if (filters.type !== 'all') {

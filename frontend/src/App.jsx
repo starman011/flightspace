@@ -51,6 +51,32 @@ import { usePWAInstall } from './hooks/usePWAInstall'
 import { parseInitialState, stateToPath, updateRouteMeta } from './utils/routing'
 import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
+import ContextBanner from './components/ContextBanner/ContextBanner'
+import { AIRPORTS } from './components/Globe/airportData'
+
+const AIRPORT_BY_IATA = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
+
+// Predict the ISS ground track forward ~95 min (≈1 orbit) from its current
+// position. Circular orbit, inclination 51.64°, period 92.68 min, minus Earth
+// rotation. Approximate (assumes ascending/prograde) but visually accurate.
+function issGroundTrack(lat0, lon0, minutes = 95, stepMin = 1.5) {
+  const inc = 51.64 * Math.PI / 180
+  const T = 92.68
+  const we = 360 / (23.9345 * 60) // Earth rotation, deg/min
+  const sinLat0 = Math.sin(lat0 * Math.PI / 180)
+  const u0 = Math.asin(Math.max(-1, Math.min(1, sinLat0 / Math.sin(inc))))
+  const dLon0 = Math.atan2(Math.cos(inc) * Math.sin(u0), Math.cos(u0)) * 180 / Math.PI
+  const lonNode = lon0 - dLon0
+  const pts = []
+  for (let t = 0; t <= minutes; t += stepMin) {
+    const u = u0 + 2 * Math.PI * (t / T)
+    const lat = Math.asin(Math.sin(inc) * Math.sin(u)) * 180 / Math.PI
+    let lon = lonNode + Math.atan2(Math.cos(inc) * Math.sin(u), Math.cos(u)) * 180 / Math.PI - we * t
+    lon = ((lon + 180) % 360 + 360) % 360 - 180
+    pts.push({ latitude: lat, longitude: lon, altitude: 0 })
+  }
+  return pts
+}
 
 // ── Pad Focus Badge ───────────────────────────────────────────────────────────
 function PadFocusBadge({ launch, onExit }) {
@@ -165,11 +191,22 @@ export default function App() {
     else if (pinnedLaunch) pins.unpinLaunch(pinnedLaunch.id)
   }, [pins, pinnedLaunch])
   const [returnMission, setReturnMission]   = useState(init.selectedLaunchId)
+  // Landing-page context (airline / route / city / region) from the deep-link URL
+  const [landing, setLanding] = useState(() => {
+    if (init.airlineFilter) return { kind: 'airline', ...init.airlineFilter }
+    if (init.routeFocus)    return { kind: 'route', ...init.routeFocus }
+    if (init.cityFocus)     return { kind: 'city', ...init.cityFocus }
+    if (init.regionFocus)   return { kind: 'region', ...init.regionFocus }
+    return null
+  })
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [arActive, setArActive] = useState(false)
   const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
+  // Always-fresh aircraft map for use inside one-shot effects (avoids stale closure)
+  const aircraftRef = useRef(aircraft)
+  useEffect(() => { aircraftRef.current = aircraft }, [aircraft])
 
   const handleGlobeInteract = useCallback(() => {
     setStreamCollapsed(true)
@@ -177,8 +214,12 @@ export default function App() {
     collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
   }, [])
 
-  // Sync state → URL + SEO meta tags (replaceState only — no React Router re-renders)
+  // Sync state → URL + SEO meta tags (replaceState only — no React Router re-renders).
+  // Skip the FIRST run so deep-link landing URLs (/airline/indigo, /route/del-bom,
+  // /city/mumbai, /flights/india) are preserved until the user navigates.
+  const skipFirstUrlSync = useRef(!!landing)
   useEffect(() => {
+    if (skipFirstUrlSync.current) { skipFirstUrlSync.current = false; return }
     const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage)
     updateRouteMeta(path)
     if (window.location.pathname === path) return
@@ -190,6 +231,66 @@ export default function App() {
     if (init.activeScale !== 'earth') {
       globeRef.current?.setCameraScale?.(init.activeScale)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Landing-page behaviors: make SEO deep-links actually DO something ──────
+  // Runs once after the globe mounts. Enables live tracking, flies the camera,
+  // applies filters, and draws routes so the page is never a blank homepage.
+  useEffect(() => {
+    if (!landing && !init.issMode) return
+    let tries = 0
+    const run = () => {
+      const g = globeRef.current
+      if (!g && tries++ < 40) { setTimeout(run, 150); return } // wait for globe
+
+      // ISS deep-link: enable live, select + track, fly to it, draw orbit track
+      if (init.issMode) {
+        setLiveEnabled(true)
+        setSelectedIcao24('ISS')
+        setTrackingId('ISS')
+        let posTries = 0
+        const flyToISS = () => {
+          const iss = aircraftRef.current.get('ISS')
+          if (iss?.lat != null) {
+            g?.flyTo?.(iss.lat, iss.lon)
+            g?.drawTrail?.(issGroundTrack(iss.lat, iss.lon))
+          } else if (posTries++ < 40) {
+            setTimeout(flyToISS, 250)
+          }
+        }
+        flyToISS()
+        return
+      }
+
+      if (landing?.kind === 'airline') {
+        setLiveEnabled(true)
+        setFilters(prev => ({ ...prev, airline: landing.prefix }))
+        return
+      }
+      if (landing?.kind === 'route') {
+        setLiveEnabled(true)
+        const o = AIRPORT_BY_IATA[landing.origin]
+        const d = AIRPORT_BY_IATA[landing.dest]
+        if (o && d) {
+          g?.fitRoute?.({ dep_lat: o.lat, dep_lon: o.lon, arr_lat: d.lat, arr_lon: d.lon })
+          g?.drawTrail?.([], { dep_lat: o.lat, dep_lon: o.lon, arr_lat: d.lat, arr_lon: d.lon })
+        }
+        return
+      }
+      if (landing?.kind === 'city') {
+        setLiveEnabled(true)
+        const ap = AIRPORT_BY_IATA[landing.iata]
+        if (ap) g?.flyTo?.(ap.lat, ap.lon)
+        return
+      }
+      if (landing?.kind === 'region') {
+        setLiveEnabled(true)
+        g?.flyTo?.(landing.lat, landing.lon)
+        return
+      }
+    }
+    run()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -377,6 +478,31 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             setShowFlightLanding(false)
             setLiveEnabled(true)
             setTrackingId(init.selectedIcao24)
+          }}
+        />
+      )}
+
+      {landing && (
+        <ContextBanner
+          icon={landing.kind === 'region' ? '🌍' : landing.kind === 'city' ? '🛫' : '✈'}
+          label={
+            landing.kind === 'airline' ? `${landing.name} — Live Flights`
+            : landing.kind === 'route' ? `${landing.origin} → ${landing.dest}`
+            : landing.kind === 'city'  ? `${landing.name} — Live Air Traffic`
+            : `Flights over ${landing.name}`
+          }
+          sublabel={
+            landing.kind === 'airline' ? `Filtering ${landing.prefix}··· callsigns`
+            : landing.kind === 'route' ? 'Flight corridor on the 3D globe'
+            : landing.kind === 'city'  ? 'Live arrivals & departures'
+            : 'Real-time ADS-B tracking'
+          }
+          count={landing.kind === 'airline' ? aircraftWithShips.size : undefined}
+          onClear={() => {
+            setLanding(null)
+            setFilters(prev => ({ ...prev, airline: null }))
+            globeRef.current?.drawTrail?.([])
+            setSelectedAirport(null)
           }}
         />
       )}
