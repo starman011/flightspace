@@ -77,6 +77,11 @@ func Setup(
 	mux.Handle("GET /api/v1/launches", rateLimit(http.HandlerFunc(launch.GetLaunches)))
 	mux.Handle("GET /api/v1/asteroids", rateLimit(http.HandlerFunc(asteroid.GetAsteroids)))
 	mux.Handle("GET /api/v1/apod", rateLimit(http.HandlerFunc(apod.GetAPOD)))
+
+	// Space Journal blog
+	blog := controllers.NewBlogController(pool)
+	mux.Handle("GET /api/v1/blog", rateLimit(http.HandlerFunc(blog.GetBlogList)))
+	mux.Handle("GET /api/v1/blog/{slug}", rateLimit(http.HandlerFunc(blog.GetBlogPost)))
 	mux.Handle("GET /api/v1/lunar/orbiters", rateLimit(http.HandlerFunc(lunar.GetOrbiters)))
 
 	// Airports
