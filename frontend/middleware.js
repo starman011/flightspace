@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/sitemap-launches.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/sitemap-launches.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -51,6 +51,9 @@ export default async function middleware(request) {
   }
   if (pathname === '/iss') {
     return renderISS()
+  }
+  if (pathname === '/') {
+    return renderHome()
   }
 }
 
@@ -925,6 +928,140 @@ async function renderRoute(slug) {
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
+}
+
+// ── Homepage renderer (bots only) ─────────────────────────────────────────────
+// Rich, link-dense HTML so Google can build SITELINKS (the sub-links under the
+// main result). Sitelinks are algorithmic — they need a clear section structure
+// + strong internal links + brand authority. This provides the structure.
+function renderHome() {
+  const canonical = `${SITE}/`
+  const title = 'ObjectTracer — Live Flight Tracker, ISS, Satellites & Deep Space on a 3D Globe'
+  const desc  = 'Track live flights, ships, the ISS, satellites, rocket launches, asteroids, and deep-space galaxies on a real-time interactive 3D globe. Free, no signup.'
+
+  // Primary sections — the sitelink candidates Google chooses from
+  const sections = [
+    ['/iss',        'ISS Live Tracker',        'Track the International Space Station live with 4K NASA stream and crew'],
+    ['/launches',   'Rocket Launch Tracker',   'Live countdowns and mission details for upcoming rocket launches'],
+    ['/asteroids',  'Asteroid Tracker',        'Near-Earth asteroids and close approaches from NASA NeoWs data'],
+    ['/solar-system','Solar System',           'Real-time planet positions in an interactive 3D solar system'],
+    ['/deep-space', 'Deep Space',              'Explore the DESI galaxy catalog and the cosmic web'],
+    ['/moon',       'Moon Tracker',            'Lunar surface and orbital visualization'],
+    ['/about',      'About ObjectTracer',      'What ObjectTracer is and how it works'],
+    ['/faq',        'FAQ',                     'Frequently asked questions about live tracking'],
+    ['/contact',    'Contact',                 'Get in touch with the ObjectTracer team'],
+  ]
+
+  const popularAirlines = ['american-airlines','delta','united','emirates','british-airways','lufthansa','indigo','air-india','qatar-airways','singapore-airlines']
+  const popularAirports = ['JFK','LAX','LHR','DXB','SIN','DEL','BOM','CDG','FRA','HKG']
+
+  const sectionCards = sections.map(([href, name, blurb]) =>
+    `<li><a href="${SITE}${href}"><strong>${esc(name)}</strong><span>${esc(blurb)}</span></a></li>`
+  ).join('\n')
+
+  const airlineLinks = popularAirlines.map(s =>
+    `<a href="${SITE}/airline/${s}">${esc(s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</a>`
+  ).join(' · ')
+
+  const airportLinks = popularAirports.map(i =>
+    `<a href="${SITE}/airport/${i}">${i}</a>`
+  ).join(' · ')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${SITE}/#org`,
+        name: 'ObjectTracer',
+        url: canonical,
+        logo: `${SITE}/favicon.svg`,
+        description: desc,
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE}/#website`,
+        name: 'ObjectTracer',
+        url: canonical,
+        publisher: { '@id': `${SITE}/#org` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${SITE}/?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'SiteNavigationElement',
+        name: sections.map(s => s[1]),
+        url: sections.map(s => `${SITE}${s[0]}`),
+      },
+    ],
+  }
+
+  const body = `
+    <h1>ObjectTracer — Live Flight &amp; Space Tracker</h1>
+    <p>Track everything moving above you on one real-time 3D globe: live flights (ADS-B),
+       ships (AIS), the ISS, satellites, rocket launches, near-Earth asteroids, and
+       deep-space galaxies. Free, no signup, runs in your browser.</p>
+    <a class="cta" href="${canonical}">Open the Live 3D Globe →</a>
+
+    <h2>Explore ObjectTracer</h2>
+    <ul class="cards">
+      ${sectionCards}
+    </ul>
+
+    <h2>Popular Airlines</h2>
+    <p class="links">${airlineLinks}</p>
+
+    <h2>Popular Airports</h2>
+    <p class="links">${airportLinks}</p>
+
+    <p style="margin-top:32px">
+      ObjectTracer is a real-time 3D globe for tracking flights, ships, the ISS,
+      satellites, rocket launches, asteroids, and galaxies — all in one place.
+    </p>`
+
+  // Custom homepage HTML (richer than the html() helper — adds card styling)
+  return new Response(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(desc)}" />
+  <link rel="canonical" href="${canonical}" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:title" content="${esc(title)}" />
+  <meta property="og:description" content="${esc(desc)}" />
+  <meta property="og:image" content="${ogImageUrl(title, desc, 'REAL-TIME 3D GLOBE')}" />
+  <meta property="og:site_name" content="ObjectTracer" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="${ogImageUrl(title, desc, 'REAL-TIME 3D GLOBE')}" />
+  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:32px 20px;background:#050a0f;color:#e8f4ff}
+    a{color:#b2ff1a;text-decoration:none}h1{font-size:1.9rem;margin:0 0 12px}h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
+    p{color:rgba(200,220,240,.72);line-height:1.6}
+    .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#b2ff1a;color:#050a0f;font-weight:700;border-radius:8px}
+    ul.cards{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    ul.cards li a{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.02)}
+    ul.cards li a strong{color:#fff;font-size:.98rem}
+    ul.cards li a span{color:rgba(200,220,240,.55);font-size:.82rem;line-height:1.4}
+    p.links{line-height:2.2}
+  </style>
+</head>
+<body>
+  <main>${body}</main>
+</body>
+</html>`, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=600',
+      'x-robots-tag': 'index, follow',
+    },
+  })
 }
 
 // ── ISS renderer ─────────────────────────────────────────────────────────────
