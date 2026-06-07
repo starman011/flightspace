@@ -30,6 +30,8 @@ export const ROUTE_META = {
                      description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
   '/iss':          { title: 'ISS Live Tracker — International Space Station Location, Crew & Stream | ObjectTracer',
                      description: 'Track the International Space Station live on a real-time 3D globe. Live position, altitude, speed, crew manifest, and NASA 4K live stream.' },
+  '/blog':         { title: 'Space Journal — Daily Astronomy & Space Imagery | ObjectTracer',
+                     description: 'A daily space journal featuring NASA\'s Astronomy Picture of the Day — stunning cosmic imagery with the science behind each one.' },
   '/airline':      { title: 'Live Airline Flight Tracker | ObjectTracer',
                      description: 'Track all flights for this airline live on ObjectTracer\'s real-time 3D globe. Live ADS-B position, altitude, speed, and route.' },
 }
@@ -38,6 +40,7 @@ export function routeKeyFromPath(path) {
   if (path.startsWith('/flight/'))  return '/flight'
   if (path.startsWith('/airport/')) return '/airport'
   if (path.startsWith('/airline/')) return '/airline'
+  if (path.startsWith('/blog/')) return '/blog'
   return path
 }
 
@@ -77,6 +80,7 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activePage === 'contact')  return '/contact'
   if (activePage === 'faq')      return '/faq'
   if (activePage === 'donate')   return '/donate'
+  if (activePage === 'blog')     return '/blog'
   if (selectedIcao24 === 'ISS')     return '/iss'
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
@@ -151,6 +155,7 @@ export function parseInitialState(pathname) {
     selectedAirport: null,
     selectedLaunchId: null,
     activePage: null,
+    blogSlug: null,
     // Landing-page intent (drives live tracking + camera + context banner)
     airlineFilter: null,   // { prefix, name }
     routeFocus: null,      // { origin, dest }
@@ -215,5 +220,7 @@ export function parseInitialState(pathname) {
   if (pathname.startsWith('/satellite/')) return { ...base, selectedIcao24: pathname === '/satellite/iss' ? 'ISS' : null, issMode: pathname === '/satellite/iss' }
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }
   if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base
+  if (pathname === '/blog')             return { ...base, activePage: 'blog' }
+  if (pathname.startsWith('/blog/'))    return { ...base, activePage: 'blog', blogSlug: pathname.replace('/blog/', '') }
   return { ...base, notFound: true }
 }
