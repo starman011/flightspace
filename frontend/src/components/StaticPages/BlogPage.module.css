@@ -39,4 +39,13 @@
 .credit { margin-top: 20px; font-size: 0.8rem; color: rgba(200,220,240,0.5); }
 .source { margin-top: 6px; font-size: 0.8rem; }
 .source a, .credit a { color: #b2ff1a; }
+.loadMore {
+  display: block; margin: 28px auto 0; padding: 11px 28px;
+  background: rgba(178,255,26,0.1); border: 1px solid rgba(178,255,26,0.4);
+  border-radius: 100px; color: #b2ff1a; cursor: pointer;
+  font-family: var(--font-mono, monospace); font-size: 0.85rem; letter-spacing: 0.04em;
+  transition: background .2s;
+}
+.loadMore:hover:not(:disabled) { background: rgba(178,255,26,0.18); }
+.loadMore:disabled { opacity: 0.5; cursor: default; }
 @media (max-width: 600px) { .feedTitle { font-size: 1.5rem; } .title { font-size: 1.4rem; } }

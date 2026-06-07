@@ -3,18 +3,30 @@ import styles from './BlogPage.module.css'
 
 const API = import.meta.env.VITE_API_URL || ''
 
+const PAGE_SIZE = 30
+
 export default function BlogPage({ onClose, initialSlug }) {
   const [posts, setPosts] = useState([])
   const [active, setActive] = useState(null)   // full post object
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [total, setTotal] = useState(0)
 
-  // Load feed
+  // Load first page
   useEffect(() => {
-    fetch(`${API}/api/v1/blog?limit=40`)
-      .then(r => r.ok ? r.json() : { posts: [] })
-      .then(d => { setPosts(d.posts || []); setLoading(false) })
+    fetch(`${API}/api/v1/blog?limit=${PAGE_SIZE}&offset=0`)
+      .then(r => r.ok ? r.json() : { posts: [], total: 0 })
+      .then(d => { setPosts(d.posts || []); setTotal(d.total || 0); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    fetch(`${API}/api/v1/blog?limit=${PAGE_SIZE}&offset=${posts.length}`)
+      .then(r => r.ok ? r.json() : { posts: [] })
+      .then(d => { setPosts(prev => [...prev, ...(d.posts || [])]); setLoadingMore(false) })
+      .catch(() => setLoadingMore(false))
+  }
 
   // Deep-link to a specific article
   useEffect(() => {
@@ -77,6 +89,11 @@ export default function BlogPage({ onClose, initialSlug }) {
               </button>
             ))}
           </div>
+          {!loading && posts.length < total && (
+            <button className={styles.loadMore} onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? 'Loading…' : `Load more (${posts.length} of ${total})`}
+            </button>
+          )}
         </div>
       )}
     </div>
