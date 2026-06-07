@@ -598,6 +598,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onActiveFilterChange={setActiveFilter}
         onFiltersChange={setFilters}
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        onPageOpen={setActivePage}
         hidden={focusedPad}
       />
 
