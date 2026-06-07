@@ -23,7 +23,7 @@ type BlogPoller struct {
 }
 
 func NewBlogPoller(db *pgxpool.Pool, apiKey string) *BlogPoller {
-	return &BlogPoller{db: db, apiKey: apiKey, client: &http.Client{Timeout: 30 * time.Second}}
+	return &BlogPoller{db: db, apiKey: apiKey, client: &http.Client{Timeout: 60 * time.Second}}
 }
 
 // apodEntry is one item from the NASA APOD API.
@@ -127,21 +127,32 @@ func (p *BlogPoller) Start(ctx context.Context) {
 	}
 }
 
+// backfill walks ~365 days in 30-day chunks. A single 365-day APOD request
+// returns ~435KB and takes >30s (times out); chunking keeps each request fast
+// (~3s) and lets partial failures not lose the whole backfill.
 func (p *BlogPoller) backfill(ctx context.Context) {
 	end := time.Now().UTC()
-	start := end.AddDate(0, 0, -365)
-	entries, err := p.fetchRange(ctx, start.Format("2006-01-02"), end.Format("2006-01-02"))
-	if err != nil {
-		log.Printf(`{"level":"warn","service":"blog_poller","msg":"backfill failed","error":%q}`, err)
-		return
-	}
-	n := 0
-	for _, e := range entries {
-		if err := p.upsert(ctx, e); err == nil {
-			n++
+	earliest := end.AddDate(0, 0, -365)
+	total := 0
+	for cursor := end; cursor.After(earliest); cursor = cursor.AddDate(0, 0, -30) {
+		chunkEnd := cursor
+		chunkStart := cursor.AddDate(0, 0, -29)
+		if chunkStart.Before(earliest) {
+			chunkStart = earliest
+		}
+		entries, err := p.fetchRange(ctx, chunkStart.Format("2006-01-02"), chunkEnd.Format("2006-01-02"))
+		if err != nil {
+			log.Printf(`{"level":"warn","service":"blog_poller","msg":"backfill chunk failed","start":%q,"error":%q}`,
+				chunkStart.Format("2006-01-02"), err)
+			continue
+		}
+		for _, e := range entries {
+			if err := p.upsert(ctx, e); err == nil {
+				total++
+			}
 		}
 	}
-	log.Printf(`{"level":"info","service":"blog_poller","msg":"backfill done","entries":%d}`, n)
+	log.Printf(`{"level":"info","service":"blog_poller","msg":"backfill done","entries":%d}`, total)
 }
 
 func (p *BlogPoller) daily(ctx context.Context) {
