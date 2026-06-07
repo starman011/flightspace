@@ -13,11 +13,20 @@ const API  = 'https://api.objecttracer.com'
 const SITE = 'https://www.objecttracer.com'
 
 export default async function middleware(request) {
-  const ua = request.headers.get('user-agent') || ''
-  if (!BOT_RE.test(ua)) return // pass through → vercel.json rewrite → SPA
-
   const { pathname } = new URL(request.url)
   const parts = pathname.split('/').filter(Boolean)
+
+  // Sitemaps are public XML — serve to ALL user agents (not just bots),
+  // so plain fetches and Google's sitemap fetcher both receive valid XML.
+  if (pathname === '/sitemap-launches.xml') {
+    return renderLaunchSitemap()
+  }
+  if (pathname === '/sitemap-blog.xml') {
+    return renderBlogSitemap()
+  }
+
+  const ua = request.headers.get('user-agent') || ''
+  if (!BOT_RE.test(ua)) return // pass through → vercel.json rewrite → SPA
 
   if (parts[0] === 'flight' && parts[1]) {
     return renderFlight(parts[1])
@@ -46,9 +55,6 @@ export default async function middleware(request) {
   if (parts[0] === 'flights' && parts[1]) {
     return renderFlightsOver(parts[1].toLowerCase())
   }
-  if (pathname === '/sitemap-launches.xml') {
-    return renderLaunchSitemap()
-  }
   if (pathname === '/iss') {
     return renderISS()
   }
@@ -57,9 +63,6 @@ export default async function middleware(request) {
   }
   if (parts[0] === 'blog' && parts[1]) {
     return renderBlogPost(parts.slice(1).join('/'))
-  }
-  if (pathname === '/sitemap-blog.xml') {
-    return renderBlogSitemap()
   }
   if (pathname === '/') {
     return renderHome()
