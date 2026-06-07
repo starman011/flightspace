@@ -168,9 +168,14 @@ async function renderAirport(iata) {
   }
 
   const canonical = `${SITE}/airport/${iata}`
-  const title = `${iata} Airport — Live Arrivals & Departures | ObjectTracer`
-  const desc  = `Live flight tracker for ${iata} Airport. ${arrivals.length} arrivals and ${departures.length} departures currently tracked on ObjectTracer's real-time 3D globe.`
-  const jsonLd = { '@context': 'https://schema.org', '@type': 'Airport', iataCode: iata, name: `${iata} Airport`, url: canonical }
+  const info     = AIRPORT_INFO[iata]
+  const fullName = info ? info.name : `${iata} Airport`
+  const cityName = info ? info.city : iata
+  const apLabel  = info ? `${cityName} ${iata} Airport` : `${iata} Airport`
+  const title = `${iata} ${cityName} Airport — Live Arrivals, Departures & Flight Status | ObjectTracer`
+  const desc  = `Live ${cityName} (${iata}) airport flight tracker: real-time arrivals, departures and flight status at ${fullName}. ${arrivals.length} arrivals and ${departures.length} departures tracked now on ObjectTracer's 3D globe.`
+  const jsonLd = { '@context': 'https://schema.org', '@type': 'Airport', iataCode: iata, name: fullName,
+    ...(info ? { address: { '@type': 'PostalAddress', addressLocality: cityName, addressCountry: info.country } } : {}), url: canonical }
 
   const row = (f, dir) => {
     const cs   = f.callsign || f.icao24 || ''
@@ -187,14 +192,17 @@ async function renderAirport(iata) {
   const depRows = departures.slice(0, 15).map(f => row(f, 'dep')).join('\n')
 
   return html(canonical, title, desc, jsonLd, `
-    <h1>${esc(iata)} Airport — Live Flights</h1>
-    <p>${arrivals.length} arrivals and ${departures.length} departures currently tracked via ADS-B.</p>
+    <h1>${esc(fullName)} (${esc(iata)}) — Live Flight Tracker</h1>
+    <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
+       ${arrivals.length} arrivals and ${departures.length} departures are currently tracked via ADS-B.</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
-    ${arrRows ? `<h2>Arrivals</h2><table>${thead}${arrRows}</table>` : ''}
-    ${depRows ? `<h2>Departures</h2><table>${thead}${depRows}</table>` : ''}
-    <p style="margin-top:32px">
-      ObjectTracer tracks live flights at ${esc(iata)} and thousands of airports worldwide using real-time ADS-B data.
-      View aircraft on an interactive 3D globe with altitude, speed, and route history.
+    ${arrRows ? `<h2>${esc(iata)} Arrivals — Live</h2><table>${thead}${arrRows}</table>` : ''}
+    ${depRows ? `<h2>${esc(iata)} Departures — Live</h2><table>${thead}${depRows}</table>` : ''}
+    <h2>About ${esc(apLabel)}</h2>
+    <p>
+      Track every flight arriving at and departing from ${esc(fullName)} (${esc(iata)}) in real time.
+      ObjectTracer shows live aircraft positions, altitude, speed, callsigns and routes on an interactive 3D globe —
+      a live flight status board for ${esc(cityName)} and thousands of airports worldwide, updated continuously from ADS-B data.
     </p>`)
 }
 
