@@ -93,7 +93,7 @@ const vertexShader = `
     vColor = color;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = aSize * (300.0 / -mv.z);
-    gl_PointSize = clamp(gl_PointSize, 1.5, 18.0);
+    gl_PointSize = clamp(gl_PointSize, 1.0, 10.0);
     gl_Position = projectionMatrix * mv;
   }
 `
@@ -232,8 +232,9 @@ export function createDESILayer() {
       colors[i * 3 + 1] = col.g
       colors[i * 3 + 2] = col.b
 
-      // Quasars slightly larger (they're brighter + rarer)
-      sizes[i] = g.s === 'QSO' ? 8.0 : 5.5
+      // Quasars slightly larger (brighter + rarer). Kept small so dense clusters
+      // read as fine structure instead of blown-out additive blobs.
+      sizes[i] = g.s === 'QSO' ? 5.0 : 3.4
     }
 
     const geom = new BufferGeometry()

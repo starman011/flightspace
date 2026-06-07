@@ -291,7 +291,7 @@ export function createNightSkyScene(scene) {
   // ── Milky Way sky dome ─────────────────────────────────────────────────────
   // Start with procedural texture, then upgrade to real Mellinger survey image
   const skyMat = new MeshBasicMaterial({ map: buildMilkyWayTexture(), side: BackSide, depthWrite: false })
-  const skyMesh = new Mesh(new SphereGeometry(SKY_R, 64, 32), skyMat)
+  const skyMesh = new Mesh(new SphereGeometry(SKY_R, 96, 48), skyMat)
   skyMesh.rotation.y = Math.PI / 2   // align RA=0 with +X axis
   skyMesh.renderOrder = -1
   skyGroup.add(skyMesh)
@@ -300,7 +300,7 @@ export function createNightSkyScene(scene) {
   // 1. CDS hips2fits (4096x2048 equirectangular) — best quality but service can be down
   // 2. DSS HiPS Allsky tile (Norder3) — always available, lower res
   const MELLINGER_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
-    + '?hips=CDS/P/Mellinger/color&width=4096&height=2048'
+    + '?hips=CDS/P/Mellinger/color&width=8192&height=4096'
     + '&ra=180&dec=0&fov=360&projection=CAR&coordsys=icrs&format=jpg'
   const DSS_ALLSKY_URL = 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits'
     + '?hips=CDS/P/DSS2/color&width=4096&height=2048'
@@ -309,18 +309,16 @@ export function createNightSkyScene(scene) {
   // Direct load — no HEAD check (avoids CORS/timeout failures that silently
   // leave the low-quality procedural texture). Mellinger first, DSS fallback.
   const skyLoader = new TextureLoader()
-  skyLoader.load(MELLINGER_URL, (tex) => {
+  const applySky = (tex) => {
     tex.colorSpace = 'srgb'
+    tex.anisotropy = 8          // crisp at grazing angles (kills the blur)
+    tex.generateMipmaps = true
     skyMat.map.dispose()
     skyMat.map = tex
     skyMat.needsUpdate = true
-  }, undefined, () => {
-    skyLoader.load(DSS_ALLSKY_URL, (tex) => {
-      tex.colorSpace = 'srgb'
-      skyMat.map.dispose()
-      skyMat.map = tex
-      skyMat.needsUpdate = true
-    })
+  }
+  skyLoader.load(MELLINGER_URL, applySky, undefined, () => {
+    skyLoader.load(DSS_ALLSKY_URL, applySky)
   })
 
   // ── DESI survey boundary — approximate DR1 footprint in red ─────────────────

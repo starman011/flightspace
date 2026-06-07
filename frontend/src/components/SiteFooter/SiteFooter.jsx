@@ -63,28 +63,15 @@ export default function SiteFooter({ active = true }) {
       if (gestures.current >= 2) { setVisible(true); gestures.current = 0 }
     }
 
+    // Desktop only: scroll-wheel down reveals. Touch swipe is NOT used — it
+    // fought globe rotation on mobile. Mobile reveals via the pull handle tap.
     const onWheel = (e) => {
       if (e.deltaY > 25) bump()           // scroll down → toward footer
       else if (e.deltaY < -25 && visible) setVisible(false) // scroll up → hide
     }
-
-    let touchStartY = null
-    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY }
-    const onTouchEnd = (e) => {
-      if (touchStartY == null) return
-      const dy = touchStartY - e.changedTouches[0].clientY
-      if (dy > 55) bump()                 // swipe up → toward footer
-      else if (dy < -55 && visible) setVisible(false)
-      touchStartY = null
-    }
-
     window.addEventListener('wheel', onWheel, { passive: true })
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchend', onTouchEnd, { passive: true })
     return () => {
       window.removeEventListener('wheel', onWheel)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchend', onTouchEnd)
       clearTimeout(resetTimer.current)
     }
   }, [active, visible])
