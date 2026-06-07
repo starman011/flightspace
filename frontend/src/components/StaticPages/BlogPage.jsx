@@ -76,15 +76,22 @@ export default function BlogPage({ onClose, initialSlug }) {
             <p className={styles.feedSub}>Daily cosmic imagery, powered by NASA APOD</p>
           </header>
           {loading && <p className={styles.loading}>Loading the cosmos…</p>}
-          <div className={styles.grid}>
-            {posts.map(p => (
-              <button key={p.slug} className={styles.card} onClick={() => openPost(p.slug)}>
+          <div className={styles.bento}>
+            {posts.map((p, i) => (
+              <button
+                key={p.slug}
+                className={`${styles.tile} ${styles[bentoSize(i)]}`}
+                style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}
+                onClick={() => openPost(p.slug)}
+              >
                 {p.media_type === 'image'
-                  ? <img className={styles.thumb} src={p.image_url} alt={p.title} loading="lazy" />
-                  : <div className={styles.thumbVideo}>▶</div>}
-                <div className={styles.cardBody}>
-                  <span className={styles.cardDate}>{formatDate(p.date)}</span>
-                  <span className={styles.cardTitle}>{p.title}</span>
+                  ? <img className={styles.tileImg} src={p.image_url} alt={p.title} loading="lazy" />
+                  : <div className={styles.tileVideo}>▶</div>}
+                <div className={styles.scrim} />
+                {i === 0 && <span className={styles.featuredTag}>Latest</span>}
+                <div className={styles.tileBody}>
+                  <span className={styles.tileDate}>{formatDate(p.date)}</span>
+                  <span className={styles.tileTitle}>{p.title}</span>
                 </div>
               </button>
             ))}
@@ -105,4 +112,14 @@ function formatDate(d) {
     return new Date(d + 'T00:00:00Z').toLocaleDateString(undefined,
       { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
   } catch { return d }
+}
+
+// Deterministic bento rhythm: newest is the hero, then a repeating pattern of
+// wide / tall / standard tiles. grid-auto-flow:dense packs the gaps.
+function bentoSize(i) {
+  if (i === 0) return 'hero'
+  const r = i % 6
+  if (r === 2) return 'wide'
+  if (r === 5) return 'tall'
+  return 'std'
 }
