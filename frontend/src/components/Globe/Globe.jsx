@@ -11,7 +11,7 @@ import {
   AmbientLight, DirectionalLight,
   TextureLoader, CanvasTexture,
   Raycaster, WebGLRenderTarget,
-  FrontSide, DoubleSide, AdditiveBlending,
+  FrontSide, BackSide, DoubleSide, AdditiveBlending,
   InstancedBufferAttribute,
   LinearMipmapLinearFilter, LinearFilter,
 } from 'three'
@@ -637,7 +637,10 @@ function buildPadMarkerTex() {
 // Atmosphere rim-glow shader
 function makeAtmosphere() {
   const mat = new ShaderMaterial({
-    side: FrontSide,
+    // BackSide: render the far shell so the glow forms a rim halo AROUND the
+    // earth's silhouette instead of washing blue over the whole front disc
+    // (that wash was the "blue earth top layer" glitch on fitRoute zoom-outs).
+    side: BackSide,
     blending: AdditiveBlending,
     transparent: true,
     depthWrite: false,
@@ -652,7 +655,7 @@ function makeAtmosphere() {
       varying vec3 vNormal;
       void main() {
         float rim  = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
-        float glow = pow(rim, 2.8) * 1.6;
+        float glow = pow(rim, 3.4) * 1.5;
         gl_FragColor = vec4(0.18, 0.52, 1.0, glow);
       }
     `,
@@ -966,18 +969,40 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       remainingPath.push({ latitude: routeData.arr_lat, longitude: routeData.arr_lon })
     }
 
-    // Trail tube = 1/4 of plane size, always proportional.
-    const ps = int.current.planeScale || 0.005
-    const tubeRadius   = ps * 0.25
-    const markerRadius = ps * 0.5
+    // Fixed world-radius (zoom-independent) so the route tube never rebuilds on
+    // zoom — thin, like the pill outline. Coloured with the exact pill gradient.
+    const tubeRadius   = 0.0016
+    const markerRadius = 0.0038
+    // Pill gradient stops (BottomBar/PagesPill scalePill): indigo→violet→blue
+    const TRAIL_STOPS = [
+      new Color(0x6366f1), new Color(0x8b5cf6), new Color(0x3b82f6),
+      new Color(0xa78bfa), new Color(0x6366f1),
+    ]
+    const sampleStops = (t, out) => {
+      const span = TRAIL_STOPS.length - 1
+      const f = Math.min(Math.max(t, 0), 1) * span
+      const i = Math.min(Math.floor(f), span - 1)
+      return out.copy(TRAIL_STOPS[i]).lerp(TRAIL_STOPS[i + 1], f - i)
+    }
 
-    const makeTube = (path, color, opacity, radiusMul, order) => {
+    const makeGradientTube = (path, opacity, order) => {
       const gc = greatCirclePoints(path, TRAIL_R_API)
       if (gc.length < 2) return
       const c = new CatmullRomCurve3(gc, false, 'centripetal')
-      const geo = new TubeGeometry(c, Math.min(gc.length, 300), tubeRadius * radiusMul, 6, false)
+      const tubularSeg = Math.min(gc.length, 300)
+      const radialSeg = 6
+      const geo = new TubeGeometry(c, tubularSeg, tubeRadius, radialSeg, false)
+      const vCount = geo.attributes.position.count
+      const ringSize = radialSeg + 1
+      const colors = new Float32Array(vCount * 3)
+      const tmp = new Color()
+      for (let i = 0; i < vCount; i++) {
+        sampleStops(Math.floor(i / ringSize) / tubularSeg, tmp)
+        colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b
+      }
+      geo.setAttribute('color', new BufferAttribute(colors, 3))
       const mat = new MeshBasicMaterial({
-        color, depthTest: false, depthWrite: false,
+        vertexColors: true, depthTest: false, depthWrite: false,
         transparent: true, opacity, side: DoubleSide,
       })
       const mesh = new Mesh(geo, mat)
@@ -986,14 +1011,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(mesh)
     }
 
-    // Traveled portion — solid bright green (already flown)
-    if (traveledPath.length >= 2) {
-      makeTube(traveledPath, 0x00e676, 0.85, 1.0, 20)
-    }
-    // Remaining portion — dim orange (yet to fly)
-    if (remainingPath.length >= 2) {
-      makeTube(remainingPath, 0xff9800, 0.3, 0.75, 19)
-    }
+    // Whole dep→arr route on one lime→cyan gradient; flown part brighter.
+    if (traveledPath.length >= 2) makeGradientTube(traveledPath, 0.95, 20)
+    if (remainingPath.length >= 2) makeGradientTube(remainingPath, 0.5, 19)
 
     // ── Airport markers: dots at route API coords, scaled with zoom ──
     const addMarker = (lat, lon, color) => {
@@ -1010,15 +1030,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(sMesh)
     }
 
-    // Departure (green dot)
+    // Departure marker — pill gradient start (indigo)
     const depLat = routeData?.dep_lat ?? fullPath[0].latitude
     const depLon = routeData?.dep_lon ?? fullPath[0].longitude
-    addMarker(depLat, depLon, 0x22ff88)
+    addMarker(depLat, depLon, 0x6366f1)
 
-    // Arrival (orange dot)
+    // Arrival marker — pill gradient mid (light violet)
     const arrLat = routeData?.arr_lat ?? fullPath[fullPath.length - 1].latitude
     const arrLon = routeData?.arr_lon ?? fullPath[fullPath.length - 1].longitude
-    addMarker(arrLat, arrLon, 0xff6622)
+    addMarker(arrLat, arrLon, 0xa78bfa)
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = {
@@ -2566,11 +2586,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (scaleRatio > 0.05) {
         int.current.planeScale = newScale
         int.current.needsInstanceRebuild = true
-        // Redraw the clicked-flight trail (green/orange tube) at the new scale
-        if (lastTrailArgs.current && int.current._drawTrail) {
-          const { points, routeData } = lastTrailArgs.current
-          queueMicrotask(() => int.current._drawTrail?.(points, routeData))
-        }
+        // Route tube/markers now use a fixed world radius — no rebuild on zoom
+        // (removes the laggy readjust the old ps-scaled tube caused).
       }
 
       // Rebuild instance matrices when planeScale changes (separate from data updates)
