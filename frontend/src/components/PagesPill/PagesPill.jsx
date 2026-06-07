@@ -8,6 +8,7 @@ const PAGES = [
   { id: 'galaxy',    scale: 'galaxy', label: 'Deep Space' },
   { id: 'rockets',   filter: true,    label: 'Launches' },
   { id: 'asteroids', filter: true,    label: 'NEO' },
+  { id: 'journal',   page: 'blog',    label: 'Journal' },
 ]
 
 function PageIcon({ id, size = 16 }) {
@@ -40,6 +41,12 @@ function PageIcon({ id, size = 16 }) {
     case 'rockets':
     case 'asteroids':
       return <FilterIcon id={id} size={size} />
+    case 'journal': return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+    )
     default: return null
   }
 }
@@ -47,11 +54,15 @@ function PageIcon({ id, size = 16 }) {
 export default function PagesPill({
   activeScale, activeFilter,
   onScaleChange, onActiveFilterChange, onFiltersChange,
-  onLaunchPanelToggle, hidden,
+  onLaunchPanelToggle, onPageOpen, hidden,
 }) {
   if (hidden) return null
 
   const handleClick = (page) => {
+    if (page.page) {
+      onPageOpen?.(page.page)
+      return
+    }
     if (page.id === 'rockets') {
       onLaunchPanelToggle?.()
       return
@@ -68,6 +79,7 @@ export default function PagesPill({
   }
 
   const isActive = (page) => {
+    if (page.page) return false
     if (page.filter) return activeFilter === page.id
     return activeScale === page.scale && !activeFilter
   }

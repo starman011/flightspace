@@ -5,3 +5,4 @@ Disallow: /profile
 # Sitemap locations
 Sitemap: https://www.objecttracer.com/sitemap.xml
 Sitemap: https://www.objecttracer.com/sitemap-launches.xml
+Sitemap: https://www.objecttracer.com/sitemap-blog.xml

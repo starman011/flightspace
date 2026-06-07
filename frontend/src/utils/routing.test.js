@@ -63,6 +63,18 @@ describe('parseInitialState', () => {
     expect(parseInitialState('/faq').activePage).toBe('faq')
   })
 
+  it('parses /blog as activePage blog', () => {
+    const s = parseInitialState('/blog')
+    expect(s.activePage).toBe('blog')
+    expect(s.notFound).toBe(false)
+  })
+
+  it('parses /blog/:slug with blogSlug', () => {
+    const s = parseInitialState('/blog/2026-06-06-cosmic-cliffs')
+    expect(s.activePage).toBe('blog')
+    expect(s.blogSlug).toBe('2026-06-06-cosmic-cliffs')
+  })
+
   it('unknown path sets notFound flag', () => {
     const s = parseInitialState('/unknown-page')
     expect(s.notFound).toBe(true)
@@ -150,6 +162,10 @@ describe('ROUTE_META', () => {
       expect(meta.title, `${route} missing title`).toBeTruthy()
       expect(meta.description, `${route} missing description`).toBeTruthy()
     }
+  })
+
+  it('has /blog metadata', () => {
+    expect(ROUTE_META['/blog'], '/blog missing from ROUTE_META').toBeDefined()
   })
 
   it('every sitemap route has metadata', () => {

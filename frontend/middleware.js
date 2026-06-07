@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/sitemap-launches.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -51,6 +51,15 @@ export default async function middleware(request) {
   }
   if (pathname === '/iss') {
     return renderISS()
+  }
+  if (pathname === '/blog') {
+    return renderBlogFeed()
+  }
+  if (parts[0] === 'blog' && parts[1]) {
+    return renderBlogPost(parts.slice(1).join('/'))
+  }
+  if (pathname === '/sitemap-blog.xml') {
+    return renderBlogSitemap()
   }
   if (pathname === '/') {
     return renderHome()
@@ -1216,6 +1225,77 @@ ${urls}
   })
 }
 
+// ── Space Journal blog ────────────────────────────────────────────────────────
+async function renderBlogFeed() {
+  let posts = []
+  try {
+    const res = await fetch(`${API}/api/v1/blog?limit=30`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) { const d = await res.json(); posts = d.posts || [] }
+  } catch (_) {}
+
+  const canonical = `${SITE}/blog`
+  const title = 'Space Journal — Daily Astronomy & Space Imagery | ObjectTracer'
+  const desc  = 'A daily space journal featuring NASA’s Astronomy Picture of the Day — stunning cosmic imagery with the science behind each image.'
+  const items = posts.map(p =>
+    `<li><a href="${SITE}/blog/${esc(p.slug)}"><strong>${esc(p.title)}</strong><span>${esc(p.date)}</span></a></li>`
+  ).join('\n')
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Blog', name: 'ObjectTracer Space Journal',
+    url: canonical, description: desc,
+  }
+  const body = `
+    <h1>Space Journal</h1>
+    <p>Daily cosmic imagery powered by NASA's Astronomy Picture of the Day, with the science behind each image.</p>
+    <ul class="cards">${items}</ul>`
+  return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL')
+}
+
+async function renderBlogPost(slug) {
+  let p = null
+  try {
+    const res = await fetch(`${API}/api/v1/blog/${encodeURIComponent(slug)}`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) p = await res.json()
+  } catch (_) {}
+  if (!p) return // unknown slug → SPA
+
+  const canonical = `${SITE}/blog/${slug}`
+  const title = `${p.title} — Space Journal | ObjectTracer`
+  const desc  = (p.explanation || p.intro || '').slice(0, 200)
+  const img = p.image_url || `${SITE}/og-image.png`
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Article',
+    headline: p.title, image: img, datePublished: p.date,
+    author: { '@type': 'Organization', name: 'NASA APOD' },
+    publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
+    url: canonical,
+  }
+  const imgTag = p.media_type === 'image'
+    ? `<img src="${esc(img)}" alt="${esc(p.title)}" style="width:100%;border-radius:10px;margin:16px 0" />` : ''
+  const body = `
+    <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)}</p>
+    <h1>${esc(p.title)}</h1>
+    ${imgTag}
+    <p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>
+    <p>${esc(p.explanation)}</p>
+    ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)}</p>` : ''}
+    <p><a href="${SITE}/blog">← All Space Journal entries</a></p>`
+  // Article OG image is the actual APOD image (passed as ogImageOverride)
+  return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL', img)
+}
+
+async function renderBlogSitemap() {
+  let posts = []
+  try {
+    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) { const d = await res.json(); posts = d.posts || [] }
+  } catch (_) {}
+  const urls = posts.map(p =>
+    `  <url><loc>${SITE}/blog/${p.slug}</loc><lastmod>${p.date}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`
+  ).join('\n')
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/blog</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n${urls}\n</urlset>`
+  return new Response(xml, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } })
+}
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 function ogImageUrl(title, subtitle, badge) {
@@ -1227,8 +1307,8 @@ function ogImageUrl(title, subtitle, badge) {
   return `${SITE}/api/og?${p.toString()}`
 }
 
-function html(canonical, title, desc, jsonLd, body, ogBadge) {
-  const ogImg = ogImageUrl(title, desc, ogBadge)
+function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
+  const ogImg = ogImageOverride || ogImageUrl(title, desc, ogBadge)
   return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>

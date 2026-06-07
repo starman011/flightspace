@@ -108,6 +108,10 @@ func (a *App) Start() error {
 	weatherCtrl := controllers.NewWeatherController(a.redis)
 	go weatherCtrl.StartPoller(ctx)
 
+	// Start Space Journal blog poller (NASA APOD — daily, backfills 1 year on boot)
+	blogPoller := controllers.NewBlogPoller(a.db, a.cfg.NASAAPIKey)
+	go blogPoller.Start(ctx)
+
 	// Start push notification scheduler (optional — needs VAPID keys)
 	var pushCtrl *controllers.PushController
 	if a.cfg.VAPIDPublicKey != "" && a.cfg.VAPIDPrivateKey != "" {
