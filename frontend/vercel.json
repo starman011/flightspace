@@ -3,7 +3,7 @@
   "rewrites": [
     { "source": "/robots.txt",  "destination": "/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/favicon.ico", "destination": "/favicon.svg" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
