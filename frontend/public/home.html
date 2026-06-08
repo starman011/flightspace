@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About ObjectTracer — Track Everything Above the Horizon, Live</title>
+<meta name="description" content="ObjectTracer tracks everything above the horizon in real time — flights, ships, the ISS, satellites, rocket launches, near-Earth asteroids and deep-space galaxies, on one interactive 3D globe. Free, no signup." />
+<link rel="canonical" href="https://www.objecttracer.com/home" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.objecttracer.com/home" />
+<meta property="og:title" content="ObjectTracer — Track Everything Above the Horizon, Live" />
+<meta property="og:description" content="Flights, ships, the ISS, satellites, rockets, asteroids and galaxies — all on one real-time 3D globe." />
+<meta property="og:image" content="https://www.objecttracer.com/og-image.png" />
+<meta property="og:site_name" content="ObjectTracer" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ObjectTracer — Track Everything Above the Horizon, Live" />
+<meta name="twitter:image" content="https://www.objecttracer.com/og-image.png" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"AboutPage","name":"About ObjectTracer","url":"https://www.objecttracer.com/home","description":"ObjectTracer is a real-time 3D globe tracking flights, ships, the ISS, satellites, rocket launches, asteroids and deep-space galaxies.","publisher":{"@type":"Organization","name":"ObjectTracer","url":"https://www.objecttracer.com/","logo":"https://www.objecttracer.com/favicon.svg"}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Manrope:wght@300;400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root{
+    --lime:#b2ff1a; --ink:#050a0f; --fg:#eef5ff;
+    --muted:rgba(210,225,245,.6); --line:rgba(255,255,255,.10);
+    --display:'Fraunces',Georgia,serif; --body:'Manrope',system-ui,sans-serif; --mono:'Space Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%; overflow:hidden}
+  body{ background:var(--ink); color:var(--fg); font-family:var(--body); -webkit-font-smoothing:antialiased; }
+
+  .stage{ position:fixed; inset:14px; border-radius:30px; overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.07); }
+  .wall{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity 1.8s ease; filter:saturate(1.06); transform:scale(1.04); }
+  .wall.on{ opacity:1; }
+  .stage::after{ content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(105deg, rgba(5,10,15,.88) 0%, rgba(5,10,15,.55) 44%, rgba(5,10,15,.28) 72%, rgba(5,10,15,.5) 100%); }
+  .grain{ position:absolute; inset:0; opacity:.045; pointer-events:none; mix-blend-mode:overlay; z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* ── Nav ── */
+  .nav{ position:fixed; top:30px; left:0; right:0; z-index:50; display:flex; align-items:center; gap:8px; padding:0 46px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:19px; letter-spacing:.01em; margin-right:34px; }
+  .brand .dot{ width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime); }
+  .navlink{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(238,245,255,.72); text-decoration:none; padding:8px 14px; border-radius:100px; transition:color .2s, background .2s; }
+  .navlink:hover{ color:var(--lime); background:rgba(255,255,255,.04); }
+  .spacer{ flex:1; }
+  .account{ width:38px;height:38px; border-radius:50%; display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(178,255,26,.3); background:rgba(8,14,20,.55); backdrop-filter:blur(12px); color:var(--lime); text-decoration:none; transition:background .2s, transform .2s; }
+  .account:hover{ background:rgba(178,255,26,.12); transform:translateY(-1px); }
+
+  /* Explore dropdown */
+  .explore{ position:relative; }
+  .explore > button{ display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:rgba(238,245,255,.82); background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:100px; padding:9px 16px; cursor:pointer; transition:border-color .2s, color .2s; }
+  .explore:hover > button{ color:var(--lime); border-color:rgba(178,255,26,.4); }
+  .explore > button .chev{ transition:transform .3s; }
+  .explore:hover > button .chev{ transform:rotate(180deg); }
+  .mega{ position:absolute; top:calc(100% + 14px); left:0; width:600px; background:rgba(6,10,16,.94); backdrop-filter:blur(26px);
+    border:1px solid rgba(178,255,26,.2); border-radius:22px; padding:10px; display:flex; gap:10px; overflow:hidden;
+    opacity:0; visibility:hidden; transform:translateY(-8px) scale(.99); pointer-events:none;
+    transition:opacity .3s, transform .3s cubic-bezier(.22,1,.36,1), visibility .3s; box-shadow:0 30px 70px rgba(0,0,0,.6); }
+  .explore:hover .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+  /* left: name list */
+  .mega-list{ width:230px; flex:none; display:flex; flex-direction:column; gap:1px; }
+  .mega-list a{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 14px; border-radius:12px;
+    font-family:var(--display); font-weight:500; font-size:15px; color:rgba(238,245,255,.78); text-decoration:none;
+    transition:background .18s, color .18s; }
+  .mega-list a .ar{ opacity:0; transform:translateX(-4px); transition:opacity .18s, transform .18s; font-family:var(--mono); font-size:12px; }
+  .mega-list a:hover{ background:rgba(178,255,26,.09); color:var(--lime); }
+  .mega-list a:hover .ar{ opacity:1; transform:translateX(0); }
+  /* right: image preview that swaps on hover */
+  .mega-prev{ flex:1; position:relative; border-radius:14px; overflow:hidden; background:#000; min-height:230px; }
+  .mega-prev .img{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity .4s ease, transform 4s ease; transform:scale(1.05); }
+  .mega-prev .img.show{ opacity:1; transform:scale(1); }
+  .mega-prev .meta{ position:absolute; left:0; right:0; bottom:0; padding:16px; background:linear-gradient(transparent, rgba(0,0,0,.9)); }
+  .mega-prev .meta h4{ font-family:var(--display); font-weight:600; font-size:17px; color:#fff; margin-bottom:4px; }
+  .mega-prev .meta p{ font-size:12px; color:rgba(255,255,255,.7); line-height:1.45; font-weight:300; }
+
+  /* ── Hero ── */
+  .hero{ position:relative; z-index:5; height:100vh; display:flex; flex-direction:column; justify-content:center; padding:0 7vw; max-width:1220px; }
+  h1{ font-family:var(--display); font-weight:400; font-size:clamp(44px,7.2vw,100px); line-height:.98; letter-spacing:-.018em; margin-bottom:28px; }
+  /* word cycler */
+  .cycler{ display:inline-flex; align-items:baseline; }
+  .cyc-word{ color:var(--lime); font-style:italic; font-weight:600; display:inline-block; will-change:transform,opacity; }
+  .lede{ font-size:clamp(15px,1.55vw,20px); color:var(--muted); max-width:600px; line-height:1.65; margin-bottom:38px; font-weight:300; }
+  .cta{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:56px; }
+  .btn{ font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; padding:15px 28px; border-radius:100px; text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s; }
+  .btn-primary{ background:var(--lime); color:#04240a; }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(178,255,26,.3); }
+  .btn-ghost{ background:rgba(255,255,255,.05); color:var(--fg); border:1px solid var(--line); }
+  .btn-ghost:hover{ border-color:rgba(178,255,26,.5); transform:translateY(-2px); }
+  .pillars{ display:flex; gap:46px; flex-wrap:wrap; max-width:850px; }
+  .pillar{ max-width:240px; }
+  .pillar .n{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--lime); margin-bottom:8px; }
+  .pillar h3{ font-family:var(--display); font-weight:600; font-size:16px; margin-bottom:6px; }
+  .pillar p{ font-size:12.5px; color:var(--muted); line-height:1.5; font-weight:300; }
+
+  .credit{ position:fixed; bottom:30px; right:36px; z-index:6; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase; }
+  .credit b{ color:rgba(178,255,26,.7); }
+  @media(max-width:860px){ .nav{padding:0 18px; gap:4px; flex-wrap:wrap} .navlink{padding:6px 9px} .mega{width:90vw; grid-template-columns:1fr} .pillars{gap:22px} }
+</style>
+</head>
+<body>
+  <div class="stage"><div class="wall on" id="wallA"></div><div class="wall" id="wallB"></div><div class="grain"></div></div>
+  <div class="credit">Backdrop · <b id="credit">NASA APOD</b></div>
+
+  <nav class="nav">
+    <span class="brand"><span class="dot"></span>ObjectTracer</span>
+
+    <div class="explore">
+      <button>Explore <svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="mega">
+        <div class="mega-list">
+          <a href="/"             data-k="earth">Flights & Ships <span class="ar">→</span></a>
+          <a href="/iss"          data-k="iss">ISS Tracker <span class="ar">→</span></a>
+          <a href="/launches"     data-k="launch">Rocket Launches <span class="ar">→</span></a>
+          <a href="/asteroids"    data-k="asteroid">Asteroids <span class="ar">→</span></a>
+          <a href="/solar-system" data-k="solar">Solar System <span class="ar">→</span></a>
+          <a href="/deep-space"   data-k="galaxy">Deep Space <span class="ar">→</span></a>
+          <a href="/moon"         data-k="moon">Moon <span class="ar">→</span></a>
+          <a href="/blog"         data-k="journal">Space Journal <span class="ar">→</span></a>
+        </div>
+        <div class="mega-prev" id="megaPrev"><div class="meta" id="megaMeta"></div></div>
+      </div>
+    </div>
+
+    <a class="navlink" href="/blog">Journal</a>
+    <a class="navlink" href="/about">About</a>
+    <a class="navlink" href="/contact">Contact</a>
+    <a class="navlink" href="/waitlist">Waitlist</a>
+
+    <span class="spacer"></span>
+    <a class="account" href="/" title="Sign in" aria-label="Account">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </a>
+  </nav>
+
+  <div class="hero">
+    <h1 data-rise>
+      We track <span class="cycler"><span class="cyc-word" id="cyc">flights</span></span><br>
+      everything above the horizon.
+    </h1>
+    <p class="lede" data-rise>From the plane passing overhead to galaxies billions of light-years away — ships, the ISS, satellites, rockets and asteroids — all on one live, interactive 3D globe. No signup. Just look up.</p>
+    <div class="cta" data-rise>
+      <a class="btn btn-primary" href="/">Launch the globe →</a>
+      <a class="btn btn-ghost" href="/blog">Read the journal</a>
+    </div>
+    <div class="pillars" data-rise>
+      <div class="pillar"><div class="n">01 / MISSION</div><h3>Make the sky open</h3><p>One free real-time globe — aviation, maritime and space, no paywalls.</p></div>
+      <div class="pillar"><div class="n">02 / DATA</div><h3>Real signals only</h3><p>Live ADS-B, AIS, NASA and orbital data — never simulated.</p></div>
+      <div class="pillar"><div class="n">03 / WONDER</div><h3>Built to inspire</h3><p>A flight overhead or a galaxy far away — the same sense of awe.</p></div>
+    </div>
+  </div>
+
+<script>
+  // Explore dropdown — text list (left) + image preview (right) that swaps on hover
+  const MEGA = {
+    earth:    {t:'Flights & Ships', d:'Live aircraft and vessels on a real-time 3D Earth.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/800px-The_Earth_seen_from_Apollo_17.jpg'},
+    iss:      {t:'ISS Tracker', d:'Live position, crew manifest and the 4K NASA stream.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg'},
+    launch:   {t:'Rocket Launches', d:'Upcoming launches with live countdowns and trajectories.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Ariane_5ES_with_ATV_4_on_its_way_to_ELA-3.jpg/800px-Ariane_5ES_with_ATV_4_on_its_way_to_ELA-3.jpg'},
+    asteroid: {t:'Near-Earth Asteroids', d:'Close approaches and hazardous objects from NASA NeoWs.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Asteroid_Vesta.jpg/800px-Asteroid_Vesta.jpg'},
+    solar:    {t:'Solar System', d:'Real-time positions of the planets in 3D.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Solar_sys8.jpg/800px-Solar_sys8.jpg'},
+    galaxy:   {t:'Deep Space', d:'The DESI galaxy catalog and the cosmic web.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/NGC_4414_%28NASA-med%29.jpg/800px-NGC_4414_%28NASA-med%29.jpg'},
+    moon:     {t:'Moon', d:'Lunar surface and orbital view.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/800px-FullMoon2010.jpg'},
+    journal:  {t:'Space Journal', d:"A new astronomy image every day, from NASA's APOD.", s:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Pillars_of_Creation_%282014%29.jpg/800px-Pillars_of_Creation_%282014%29.jpg'},
+  };
+  const megaPrev = document.getElementById('megaPrev'), megaMeta = document.getElementById('megaMeta'), megaLayers = {};
+  Object.keys(MEGA).forEach(k => { const d = document.createElement('div'); d.className='img'; d.style.backgroundImage=`url('${MEGA[k].s}')`; megaPrev.insertBefore(d, megaMeta); megaLayers[k]=d; });
+  const showMega = (k) => { Object.entries(megaLayers).forEach(([kk,l])=>l.classList.toggle('show', kk===k)); megaMeta.innerHTML = `<h4>${MEGA[k].t}</h4><p>${MEGA[k].d}</p>`; };
+  document.querySelectorAll('.mega-list a').forEach(a => a.addEventListener('mouseenter', () => showMega(a.dataset.k)));
+  showMega('earth');
+
+  // ── Creative word-cycler: shows the breadth of what we track ──
+  const WORDS = ['flights','ships','the ISS','satellites','rockets','asteroids','galaxies'];
+  let wi = 0; const cyc = document.getElementById('cyc');
+  setInterval(() => {
+    wi = (wi+1) % WORDS.length;
+    gsap.to(cyc, { y:-18, opacity:0, duration:.32, ease:'power2.in', onComplete:()=>{
+      cyc.textContent = WORDS[wi];
+      gsap.fromTo(cyc, { y:20, opacity:0 }, { y:0, opacity:1, duration:.45, ease:'power3.out' });
+    }});
+  }, 2000);
+
+  // ── Wallpaper cycle (fallbacks now; live featured set in-app) ──
+  const FALLBACK = [
+    {u:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Pillars_of_Creation_%282014%29.jpg/1280px-Pillars_of_Creation_%282014%29.jpg',t:'Pillars of Creation'},
+    {u:'https://upload.wikimedia.org/wikipedia/commons/6/6d/NGC4414_%28NASA-med%29.jpg',t:'Galaxy NGC 4414'},
+    {u:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Carina_Nebula.jpg/1280px-Carina_Nebula.jpg',t:'Carina Nebula'},
+    {u:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/1280px-The_Earth_seen_from_Apollo_17.jpg',t:'Earth · Apollo 17'},
+  ];
+  let imgs=FALLBACK, idx=0, showA=true;
+  const A=document.getElementById('wallA'),B=document.getElementById('wallB'),credit=document.getElementById('credit');
+  const first=p=>{A.style.backgroundImage=`url('${p.u||p.hd_image_url||p.image_url}')`;A.classList.add('on');credit.textContent=p.t||p.title||'NASA APOD';};
+  const cross=p=>{const url=p.u||p.hd_image_url||p.image_url,next=showA?B:A,cur=showA?A:B,im=new Image();im.onload=()=>{next.style.backgroundImage=`url('${url}')`;next.classList.add('on');cur.classList.remove('on');showA=!showA;};im.src=url;credit.textContent=p.t||p.title||'NASA APOD';};
+  first(imgs[0]); setInterval(()=>{idx=(idx+1)%imgs.length;cross(imgs[idx]);},7000);
+  fetch('https://api.objecttracer.com/api/v1/blog/featured').then(r=>r.ok?r.json():null).then(d=>{const ps=(d&&d.posts||[]).filter(p=>p.media_type==='image'&&(p.hd_image_url||p.image_url));if(ps.length){imgs=ps;idx=0;first(ps[0]);}}).catch(()=>{});
+
+  gsap.set('[data-rise]',{y:24,opacity:0});
+  window.addEventListener('load',()=>gsap.to('[data-rise]',{y:0,opacity:1,duration:.95,ease:'power3.out',stagger:.12,delay:.15}));
+</script>
+</body>
+</html>
