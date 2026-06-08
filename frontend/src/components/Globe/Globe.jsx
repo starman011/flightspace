@@ -967,24 +967,63 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
 
     // Fixed world-radius (zoom-independent) so the route tube never rebuilds on
-    // zoom — thin, like the pill outline. Coloured with the exact pill gradient.
+    // zoom — thin, like the pill outline.
     const tubeRadius   = 0.0016
     const markerRadius = 0.0038
-    // Pill gradient stops (BottomBar/PagesPill scalePill): indigo→violet→blue
-    const TRAIL_STOPS = [
-      new Color(0x6366f1), new Color(0x8b5cf6), new Color(0x3b82f6),
-      new Color(0xa78bfa), new Color(0x6366f1),
+
+    // Altitude colour ramp: violet (low) → blue (high), normalised over 0–40k ft.
+    const ALT_STOPS = [
+      { a: 0,     c: new Color(0x7c3aed) }, // ground/low — deep violet
+      { a: 15000, c: new Color(0x6366f1) }, // climbing — indigo
+      { a: 30000, c: new Color(0x3b82f6) }, // cruise — blue
+      { a: 42000, c: new Color(0x38bdf8) }, // high cruise — sky blue
     ]
-    const sampleStops = (t, out) => {
-      const span = TRAIL_STOPS.length - 1
-      const f = Math.min(Math.max(t, 0), 1) * span
-      const i = Math.min(Math.floor(f), span - 1)
-      return out.copy(TRAIL_STOPS[i]).lerp(TRAIL_STOPS[i + 1], f - i)
+    const altColor = (alt, out) => {
+      const a = Math.max(0, alt || 0)
+      for (let i = ALT_STOPS.length - 1; i >= 0; i--) {
+        if (a >= ALT_STOPS[i].a) {
+          if (i === ALT_STOPS.length - 1) return out.copy(ALT_STOPS[i].c)
+          const lo = ALT_STOPS[i], hi = ALT_STOPS[i + 1]
+          return out.copy(lo.c).lerp(hi.c, (a - lo.a) / (hi.a - lo.a))
+        }
+      }
+      return out.copy(ALT_STOPS[0].c)
+    }
+
+    // Altitude profile keyed by normalised cumulative distance along the path,
+    // so tube colour tracks real altitude (carrying forward where a point lacks it).
+    const buildAltProfile = (path) => {
+      const clean = sanitizePath(path)
+      if (clean.length < 2) return null
+      let lastAlt = 30000
+      const altAt = (p) => { if (p.altitude != null) lastAlt = p.altitude; return lastAlt }
+      const dist = (p, q) => Math.hypot(q.latitude - p.latitude, q.longitude - p.longitude)
+      let total = 0
+      for (let i = 0; i < clean.length - 1; i++) total += dist(clean[i], clean[i + 1]) || 1e-6
+      const prof = [{ f: 0, alt: altAt(clean[0]) }]
+      let acc = 0
+      for (let i = 0; i < clean.length - 1; i++) {
+        acc += dist(clean[i], clean[i + 1]) || 1e-6
+        prof.push({ f: acc / total, alt: altAt(clean[i + 1]) })
+      }
+      return prof
+    }
+    const sampleAlt = (prof, t) => {
+      if (!prof) return 30000
+      for (let i = 0; i < prof.length - 1; i++) {
+        if (t <= prof[i + 1].f) {
+          const lo = prof[i], hi = prof[i + 1]
+          const span = (hi.f - lo.f) || 1e-6
+          return lo.alt + (hi.alt - lo.alt) * ((t - lo.f) / span)
+        }
+      }
+      return prof[prof.length - 1].alt
     }
 
     const makeGradientTube = (path, opacity, order) => {
       const gc = greatCirclePoints(path, TRAIL_R_API)
       if (gc.length < 2) return
+      const prof = buildAltProfile(path)
       const c = new CatmullRomCurve3(gc, false, 'centripetal')
       const tubularSeg = Math.min(gc.length, 300)
       const radialSeg = 6
@@ -994,7 +1033,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const colors = new Float32Array(vCount * 3)
       const tmp = new Color()
       for (let i = 0; i < vCount; i++) {
-        sampleStops(Math.floor(i / ringSize) / tubularSeg, tmp)
+        const t = Math.floor(i / ringSize) / tubularSeg
+        altColor(sampleAlt(prof, t), tmp)
         colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b
       }
       geo.setAttribute('color', new BufferAttribute(colors, 3))
@@ -1027,15 +1067,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       objects.push(sMesh)
     }
 
-    // Departure marker — pill gradient start (indigo)
+    // Airport markers — ground level → low-altitude violet (matches ramp).
     const depLat = routeData?.dep_lat ?? fullPath[0].latitude
     const depLon = routeData?.dep_lon ?? fullPath[0].longitude
-    addMarker(depLat, depLon, 0x6366f1)
+    addMarker(depLat, depLon, 0x7c3aed)
 
-    // Arrival marker — pill gradient mid (light violet)
     const arrLat = routeData?.arr_lat ?? fullPath[fullPath.length - 1].latitude
     const arrLon = routeData?.arr_lon ?? fullPath[fullPath.length - 1].longitude
-    addMarker(arrLat, arrLon, 0xa78bfa)
+    addMarker(arrLat, arrLon, 0x7c3aed)
 
     apiTrailRef.current = objects
     int.current.trailEndpoints = {
@@ -1653,7 +1692,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           polygonOffset: true,
           polygonOffsetFactor: item.isParent ? -1 : -2,
           polygonOffsetUnits:  item.isParent ? -1 : -2,
-          color: new Color(0.55, 0.55, 0.58),  // darkened tiles — easy on the eyes
+          // Parent (low-zoom) tiles fill the disc when viewed from distance —
+          // keep them near full-bright so they don't read as a grey haze.
+          // Detail (street) tiles stay slightly toned (easy on the eyes up close).
+          color: item.isParent ? new Color(0.92, 0.92, 0.94) : new Color(0.62, 0.62, 0.66),
         })
         // Boost saturation for richer street-view colors
         mat.onBeforeCompile = shader => {

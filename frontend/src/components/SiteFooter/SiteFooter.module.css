@@ -1,18 +1,16 @@
-/* Bottom-right toggle button (sits above the Street/Satellite + ALT controls) */
+/* Bottom-left icon toggle — down chevron, opens the footer */
 .fab {
-  position: fixed; right: 16px; bottom: 150px; z-index: 690;
-  display: flex; align-items: center; gap: 7px;
-  padding: 8px 14px; border-radius: 100px; cursor: pointer;
+  position: fixed; left: 16px; bottom: 20px; z-index: 690;
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
   background: rgba(6, 12, 18, 0.82); backdrop-filter: blur(14px);
   border: 1px solid rgba(178, 255, 26, 0.28);
   color: rgba(178, 255, 26, 0.9);
-  font-family: var(--font-mono, monospace); font-size: 0.72rem;
-  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
   transition: background 0.18s, border-color 0.18s, transform 0.18s;
 }
 .fab:hover { background: rgba(178, 255, 26, 0.12); border-color: rgba(178, 255, 26, 0.6); transform: translateY(-1px); }
-@media (max-width: 720px) { .fab { bottom: 120px; right: 12px; padding: 7px 12px; } }
+@media (max-width: 720px) { .fab { left: 12px; bottom: 14px; } }
 
 .footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 700;

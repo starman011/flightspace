@@ -521,7 +521,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             <div className={styles.identitySub}>
               {operator && <span>{operator}</span>}
               {typeDesc && <span>{typeDesc}</span>}
-              {detail?.registration && <span>{detail.registration}</span>}
+              {detail?.registration && detail.registration !== typeDesc && <span>{detail.registration}</span>}
             </div>
             {viewerCount > 1 && (
               <div className={styles.viewerCount}>
