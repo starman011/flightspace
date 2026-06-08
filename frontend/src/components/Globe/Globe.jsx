@@ -1612,6 +1612,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const failedTiles = new Set()   // tileKeys that failed network load — skip re-queuing
     let tileQueue    = []           // [{tx, ty, z, priority, isParent}]
     let tileLoading  = 0            // count of in-flight XHR loads
+    const tileLoader = new TextureLoader()  // shared — one allocation, not one/tile
+    // Cap anisotropy at 8: street tiles look identical to 16x but sample ~2x
+    // cheaper per fragment — a real win when dozens of tiles are on screen.
+    const TILE_ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy())
     let lastTileZ    = -1
     let lastTileCX   = -1
     let lastTileCY   = -1
@@ -1669,12 +1673,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         mesh.renderOrder   = item.isParent ? 0 : 1
         mesh.frustumCulled = false
 
-        new TextureLoader().load(
+        tileLoader.load(
           getTileUrl(item.tx, item.ty, item.z, mapStyleRef.current),
           tex => {
             tileLoading--
             if (mapDestroyed) { geo.dispose(); mat.dispose(); processQueue(); return }
-            tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
+            tex.anisotropy = TILE_ANISO
             mat.map     = tex
             mat.opacity = 0   // fade in gradually (see updateTiles loop)
             mat.needsUpdate = true
