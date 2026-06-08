@@ -846,6 +846,44 @@
   50% { opacity: 0.3; }
 }
 
+/* Stream expand controls (top-right of the inline player) */
+.streamControls {
+  position: absolute; top: 8px; right: 8px; display: flex; gap: 6px;
+}
+.streamControls button, .streamControls a {
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  background: rgba(8,12,20,0.82); backdrop-filter: blur(8px);
+  border: 1px solid rgba(58,154,255,0.25); border-radius: 6px;
+  color: rgba(195,245,255,0.85); font-size: 12px; cursor: pointer; text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.streamControls button:hover, .streamControls a:hover {
+  background: rgba(58,154,255,0.18); border-color: rgba(58,154,255,0.6);
+}
+
+/* Theater / half-screen overlay (globe stays visible behind the dim) */
+.theaterOverlay {
+  position: fixed; inset: 0; z-index: 4000;
+  background: rgba(2,6,12,0.6); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-start; justify-content: center; padding: 3vh 2vw;
+}
+.theaterPanel {
+  width: min(1100px, 96vw); background: #060c14;
+  border: 1px solid rgba(58,154,255,0.3); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+.theaterPanel .issIframe { height: min(56vh, 620px); }
+.theaterBar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: rgba(8,12,20,0.9); border-top: 1px solid rgba(58,154,255,0.12);
+}
+.theaterBar button, .theaterBar a {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: rgba(58,154,255,0.08); border: 1px solid rgba(58,154,255,0.25);
+  border-radius: 7px; color: rgba(195,245,255,0.9); font-size: 14px; cursor: pointer; text-decoration: none;
+}
+.theaterBar button:hover, .theaterBar a:hover { background: rgba(58,154,255,0.2); }
+
 .issStreamLink {
   display: flex;
   align-items: center;

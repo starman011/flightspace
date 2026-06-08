@@ -297,6 +297,33 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Draw the ISS orbit ground-track whenever ISS is selected (any entry path),
+  // so users see which locations it's passing over. Cleared on deselect.
+  useEffect(() => {
+    if (selectedIcao24 !== 'ISS') return
+    const API = import.meta.env.VITE_API_URL || ''
+    let cancelled = false, tries = 0
+    const draw = () => {
+      if (cancelled) return
+      const live = aircraftRef.current.get('ISS')
+      if (live?.lat != null) {
+        globeRef.current?.drawTrail?.(issGroundTrack(live.lat, live.lon))
+        return
+      }
+      fetch(`${API}/api/v1/aircraft/ISS`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (cancelled) return
+          const lat = d?.current?.latitude, lon = d?.current?.longitude
+          if (lat != null) globeRef.current?.drawTrail?.(issGroundTrack(lat, lon))
+          else if (tries++ < 8) setTimeout(draw, 600)
+        })
+        .catch(() => { if (tries++ < 8) setTimeout(draw, 600) })
+    }
+    draw()
+    return () => { cancelled = true }
+  }, [selectedIcao24])
+
 const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAircraft])
 
   // In pad-focus mode pass an empty map so the globe is clean

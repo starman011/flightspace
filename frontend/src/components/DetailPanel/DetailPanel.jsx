@@ -74,36 +74,67 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 // ── ISS live stream + crew + missions ─────────────────────────────────────
 // NASA TV official channel live embed — always-on, no scraping needed
 // NASA TV persistent live stream — fallback when RSS finds nothing
-const NASA_TV_FALLBACK = 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&enablejsapi=1'
+// Channel-based live embed auto-resolves to whatever is CURRENTLY live on the
+// official NASA ISS channel — robust against video-ID changes (the cause of
+// recurring "stream not available" errors from scraped fixed IDs).
+const NASA_ISS_CHANNEL = 'UCLA_DiR1FfKNvjuUpBHmylQ'
+const NASA_TV_FALLBACK = `https://www.youtube.com/embed/live_stream?channel=${NASA_ISS_CHANNEL}&autoplay=1&mute=1`
+const NASA_ISS_WATCH = `https://www.youtube.com/channel/${NASA_ISS_CHANNEL}/live`
 
 function ISSStream() {
-  const [src, setSrc] = useState(null)
+  // Use the reliable channel-based NASA ISS live embed directly. (The scraped
+  // backend video ID kept resolving to ended/non-live videos.)
+  const src = NASA_TV_FALLBACK
+  const [theater, setTheater] = useState(false)
+  const wrapRef = useRef(null)
 
-  useEffect(() => {
-    fetch(`${API}/api/v1/iss/stream`)
-      .then(r => r.json())
-      .then(d => setSrc(d.embed_url
-        ? d.embed_url.replace('&enablejsapi=1', '') + '&enablejsapi=1'
-        : NASA_TV_FALLBACK))
-      .catch(() => setSrc(NASA_TV_FALLBACK))
-  }, [])
+  const goFullscreen = () => {
+    const el = wrapRef.current
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {})
+  }
 
-  if (!src) return null
+  const iframe = (
+    <iframe
+      src={src}
+      className={styles.issIframe}
+      allow="autoplay; encrypted-media; fullscreen"
+      allowFullScreen
+      title="NASA ISS Live"
+    />
+  )
 
   return (
-    <div className={styles.issStream}>
-      <iframe
-        src={src}
-        className={styles.issIframe}
-        allow="autoplay; encrypted-media"
-        allowFullScreen
-        title="NASA ISS Live"
-      />
-      <div className={styles.streamBadge}>
-        <span className={styles.liveDot} />
-        LIVE · NASA TV
+    <>
+      <div className={styles.issStream} ref={wrapRef}>
+        {iframe}
+        <div className={styles.streamBadge}>
+          <span className={styles.liveDot} />
+          LIVE · NASA TV
+        </div>
+        <div className={styles.streamControls}>
+          <button onClick={() => setTheater(true)} title="Theater / half-screen" aria-label="Theater mode">⤢</button>
+          <button onClick={goFullscreen} title="Fullscreen" aria-label="Fullscreen">⛶</button>
+          <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
+        </div>
       </div>
-    </div>
+
+      {theater && (
+        <div className={styles.theaterOverlay} onClick={() => setTheater(false)}>
+          <div className={styles.theaterPanel} ref={wrapRef} onClick={e => e.stopPropagation()}>
+            {iframe}
+            <div className={styles.theaterBar}>
+              <span className={styles.streamBadge} style={{ position: 'static' }}>
+                <span className={styles.liveDot} /> ISS · LIVE
+              </span>
+              <span style={{ flex: 1 }} />
+              <button onClick={goFullscreen} title="Fullscreen">⛶</button>
+              <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube">↗</a>
+              <button onClick={() => setTheater(false)} title="Close">✕</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
