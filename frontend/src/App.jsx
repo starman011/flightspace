@@ -54,6 +54,7 @@ import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
 import ContextBanner from './components/ContextBanner/ContextBanner'
 import SiteFooter from './components/SiteFooter/SiteFooter'
+import WindLegend from './components/WindLegend/WindLegend'
 import { AIRPORTS } from './components/Globe/airportData'
 
 const AIRPORT_BY_IATA = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
@@ -831,6 +832,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
 
       <SiteFooter active={!activePage && !selectedIcao24 && !selectedAirport && !launchPanelOpen && !profilePanelOpen && !focusedPad && !searchOpen} />
+
+      {showWeather && activeScale === 'earth' && <WindLegend />}
 
       {liveToast && (
         <>

@@ -2782,6 +2782,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   useEffect(() => {
     if (!int.current?.windLayer) return
     int.current._showWeather = !!showWeather
+    // Boost cloud cover when the weather layer is on; subtle ambient when off.
+    if (int.current.cloudsMesh) {
+      int.current.cloudsMesh.material.opacity = showWeather ? 0.5 : 0.18
+      int.current.cloudsMesh.material.needsUpdate = true
+    }
     if (showWeather) {
       int.current.windLayer.show()
       // Fetch wind data; retry every 30s if backend not ready yet
