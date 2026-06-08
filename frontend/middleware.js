@@ -389,24 +389,30 @@ async function renderLaunch(slug) {
     pad       && `Launch pad: ${pad}.`,
   ].filter(Boolean).join(' ')
 
+  // Launch window end: NET + 1h (most launch windows). Satisfies Event.endDate.
+  const endISO = net ? new Date(net.getTime() + 60 * 60 * 1000).toISOString() : null
+  const padCountry = pad && pad.includes(',') ? pad.split(',').pop().trim() : (pad || 'Earth')
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: mission,
     url: canonical,
     description: missionDesc || descParts,
-    eventStatus: isPast
-      ? 'https://schema.org/EventScheduled'
-      : 'https://schema.org/EventScheduled',
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    image: [PROVIDER_LOGOS[provider] || `${SITE}/og-image.png`],
     ...(net ? { startDate: net.toISOString() } : {}),
-    location: pad ? {
+    ...(endISO ? { endDate: endISO } : {}),
+    location: {
       '@type': 'Place',
-      name: pad,
+      name: pad || 'Launch Pad',
+      address: { '@type': 'PostalAddress', addressCountry: padCountry, name: pad || 'Launch Pad' },
       ...(launch.pad_lat && launch.pad_lon ? {
         geo: { '@type': 'GeoCoordinates', latitude: launch.pad_lat, longitude: launch.pad_lon }
       } : {}),
-    } : undefined,
-    organizer: provider ? { '@type': 'Organization', name: provider } : undefined,
+    },
+    performer: { '@type': 'Organization', name: provider || rocket || 'Launch Provider' },
+    organizer: { '@type': 'Organization', name: provider || 'Launch Provider', url: canonical },
   }
 
   // Countdown or elapsed
@@ -498,15 +504,27 @@ async function renderAsteroid(slug) {
     isPHA ? 'Classified as a Potentially Hazardous Asteroid (PHA) by NASA.' : 'Near-Earth Object tracked by NASA NeoWs.',
   ].filter(Boolean).join(' ')
 
+  // approachDate like "2026-Apr-23 16:31" → ISO; endDate +1h.
+  const apIso = approachDate ? (() => { const d = new Date(approachDate.replace(' ', 'T') + 'Z'); return isNaN(d) ? null : d } )() : null
+  const apEnd = apIso ? new Date(apIso.getTime() + 60 * 60 * 1000) : null
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: `${cleanName} Close Approach`,
     url: canonical,
     description: desc,
-    ...(approachDate ? { startDate: approachDate } : {}),
-    location: { '@type': 'Place', name: 'Near Earth' },
-    organizer: { '@type': 'Organization', name: 'NASA Center for Near Earth Object Studies' },
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    image: [`${SITE}/og-image.png`],
+    ...(apIso ? { startDate: apIso.toISOString() } : {}),
+    ...(apEnd ? { endDate: apEnd.toISOString() } : {}),
+    location: {
+      '@type': 'Place',
+      name: 'Near-Earth space',
+      address: { '@type': 'PostalAddress', addressCountry: 'Earth orbit', name: 'Near-Earth space' },
+    },
+    performer: { '@type': 'Organization', name: 'NASA CNEOS' },
+    organizer: { '@type': 'Organization', name: 'NASA Center for Near Earth Object Studies', url: 'https://cneos.jpl.nasa.gov/' },
   }
 
   const rows = [
