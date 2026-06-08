@@ -191,12 +191,12 @@ export default function WaitlistPage({ onClose }) {
           <div>
             <p className={styles.eyebrow}>Our Mission</p>
             <h2 className={styles.headline}>
-              The universe is alive.<br/>Watch it happen live.
+              The sky is alive.<br/>Come watch it move.
             </h2>
           </div>
           <p className={styles.copy}>
-            Right now, planes thread invisible corridors above your head. The ISS races overhead at 28,000 km/h. Asteroids drift silently through the inner solar system.
-            We built ObjectTracer so everyone — not just engineers — can see all of it, in real time, for free.
+            Right now, planes are threading invisible corridors overhead. The ISS is racing past at 28,000&nbsp;km/h. Asteroids drift silently through the inner solar system — and almost no one ever gets to see it.
+            We're building ObjectTracer to change that: one living 3D globe where anyone, anywhere, can watch everything above the horizon in real time. Free, forever — join us early.
           </p>
 
           {/* Feature grid */}

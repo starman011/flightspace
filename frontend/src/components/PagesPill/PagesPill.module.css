@@ -117,15 +117,25 @@
 
 /* Mobile — smaller, centered at top */
 @media (max-width: 767px) {
+  /* Left-anchored (not centered) + capped width so the 7-tile pill never
+     collides with the top-right account/hamburger. Scrolls if it would. */
   .pill {
     top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 10px;
+    transform: none;
+    gap: 1px;
+    padding: 4px 5px;
+    max-width: calc(100vw - 118px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
   }
+  .pill::-webkit-scrollbar { display: none; }
 
   .btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
   }
 
   .activeLabel {
@@ -134,6 +144,6 @@
 
   .btn.active {
     width: auto;
-    padding: 0 8px;
+    padding: 0 7px;
   }
 }
