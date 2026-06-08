@@ -81,6 +81,7 @@ func Setup(
 	// Space Journal blog
 	blog := controllers.NewBlogController(pool)
 	mux.Handle("GET /api/v1/blog", rateLimit(http.HandlerFunc(blog.GetBlogList)))
+	mux.Handle("GET /api/v1/blog/featured", rateLimit(http.HandlerFunc(blog.GetFeatured)))
 	mux.Handle("GET /api/v1/blog/{slug}", rateLimit(http.HandlerFunc(blog.GetBlogPost)))
 	mux.Handle("GET /api/v1/lunar/orbiters", rateLimit(http.HandlerFunc(lunar.GetOrbiters)))
 
