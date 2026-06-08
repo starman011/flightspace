@@ -637,10 +637,7 @@ function buildPadMarkerTex() {
 // Atmosphere rim-glow shader
 function makeAtmosphere() {
   const mat = new ShaderMaterial({
-    // BackSide: render the far shell so the glow forms a rim halo AROUND the
-    // earth's silhouette instead of washing blue over the whole front disc
-    // (that wash was the "blue earth top layer" glitch on fitRoute zoom-outs).
-    side: BackSide,
+    side: FrontSide,
     blending: AdditiveBlending,
     transparent: true,
     depthWrite: false,
@@ -655,7 +652,7 @@ function makeAtmosphere() {
       varying vec3 vNormal;
       void main() {
         float rim  = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
-        float glow = pow(rim, 3.4) * 1.5;
+        float glow = pow(rim, 2.8) * 1.6;
         gl_FragColor = vec4(0.18, 0.52, 1.0, glow);
       }
     `,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import styles from './SiteFooter.module.css'
 
 // Crawlable internal-link footer. Hidden by default to preserve the immersive
@@ -50,37 +50,26 @@ const COLUMNS = [
 
 export default function SiteFooter({ active = true }) {
   const [visible, setVisible] = useState(false)
-  const gestures = useRef(0)
-  const resetTimer = useRef(null)
 
-  useEffect(() => {
-    if (!active) { setVisible(false); return }
-
-    const bump = () => {
-      gestures.current += 1
-      clearTimeout(resetTimer.current)
-      resetTimer.current = setTimeout(() => { gestures.current = 0 }, 1500)
-      if (gestures.current >= 2) { setVisible(true); gestures.current = 0 }
-    }
-
-    // Desktop only: scroll-wheel down reveals. Touch swipe is NOT used — it
-    // fought globe rotation on mobile. Mobile reveals via the pull handle tap.
-    const onWheel = (e) => {
-      if (e.deltaY > 25) bump()           // scroll down → toward footer
-      else if (e.deltaY < -25 && visible) setVisible(false) // scroll up → hide
-    }
-    window.addEventListener('wheel', onWheel, { passive: true })
-    return () => {
-      window.removeEventListener('wheel', onWheel)
-      clearTimeout(resetTimer.current)
-    }
-  }, [active, visible])
+  // No scroll/swipe trigger — it fought globe gestures on both desktop and
+  // mobile. The footer opens only via the explicit Links button.
+  useEffect(() => { if (!active) setVisible(false) }, [active])
 
   return (
-    <footer className={`${styles.footer} ${visible ? styles.visible : ''}`} aria-hidden={!visible}>
-      <button className={styles.handle} onClick={() => setVisible(v => !v)} aria-label="Toggle footer">
-        <span className={styles.handleBar} />
-      </button>
+    <>
+      {active && !visible && (
+        <button className={styles.fab} onClick={() => setVisible(true)} aria-label="Show links & sitemap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Links
+        </button>
+      )}
+      <footer className={`${styles.footer} ${visible ? styles.visible : ''}`} aria-hidden={!visible}>
+        <button className={styles.handle} onClick={() => setVisible(v => !v)} aria-label="Toggle footer">
+          <span className={styles.handleBar} />
+        </button>
       <div className={styles.inner}>
         {COLUMNS.map(col => (
           <nav key={col.title} className={styles.col} aria-label={col.title}>
@@ -91,12 +80,13 @@ export default function SiteFooter({ active = true }) {
           </nav>
         ))}
       </div>
-      <div className={styles.bottom}>
-        <span>© {new Date().getFullYear()} ObjectTracer — real-time 3D flight &amp; space tracker</span>
-        <span className={styles.bottomLinks}>
-          <a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a><a href="/donate">Donate</a>
-        </span>
-      </div>
-    </footer>
+        <div className={styles.bottom}>
+          <span>© {new Date().getFullYear()} ObjectTracer — real-time 3D flight &amp; space tracker</span>
+          <span className={styles.bottomLinks}>
+            <a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a><a href="/donate">Donate</a>
+          </span>
+        </div>
+      </footer>
+    </>
   )
 }
