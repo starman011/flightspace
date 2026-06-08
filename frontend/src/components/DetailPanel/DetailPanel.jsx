@@ -227,6 +227,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const playbackTimer = useRef(null)
   // Mobile sheet: 'peek' (default ~38dvh) or 'mini' (collapsed strip ~80px)
   const [sheet, setSheet]     = useState('peek')
+  const [closing, setClosing] = useState(false)
   const panelRef = useRef(null)
   const photoTriedReg = useRef(false)
 
@@ -241,8 +242,15 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const mountedRef = useRef(true)
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
-  // Reset sheet to peek when a new flight is selected
-  useEffect(() => { setSheet('peek') }, [icao24])
+  // Controlled close: play an exit animation, then unmount — prevents the
+  // panel from flashing its base (desktop) layout for a frame on mobile.
+  const requestClose = useCallback(() => {
+    setClosing(true)
+    setTimeout(() => onClose?.(), 240)
+  }, [onClose])
+
+  // Reset sheet + closing when a new flight is selected
+  useEffect(() => { setSheet('peek'); setClosing(false) }, [icao24])
 
   // Social presence: tell server we're watching this object
   useEffect(() => {
@@ -405,21 +413,21 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   }, [photo, detail?.registration])
 
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose?.() }
+    const handler = e => { if (e.key === 'Escape') requestClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
+  }, [requestClose])
 
   useEffect(() => {
     const handler = e => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         if (e.target?.tagName === 'CANVAS') return
-        onClose?.()
+        requestClose()
       }
     }
     const t = setTimeout(() => document.addEventListener('pointerdown', handler), 200)
     return () => { clearTimeout(t); document.removeEventListener('pointerdown', handler) }
-  }, [onClose])
+  }, [requestClose])
 
   if (!icao24) return null
 
@@ -463,7 +471,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const statusLabel = displayGrnd ? 'ON GROUND' : cat === 'satellite' ? 'IN ORBIT' : cat === 'ship' ? 'AT SEA' : 'AIRBORNE'
 
   const isMini = sheet === 'mini'
-  const panelCls = `${styles.panel} ${isMini ? styles.panelMini : ''}`
+  const panelCls = `${styles.panel} ${isMini ? styles.panelMini : ''} ${closing ? styles.closing : ''}`
 
   return (
     <aside ref={panelRef} className={panelCls}>
@@ -477,7 +485,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       </div>
 
       {/* ── Close button (always visible) ── */}
-      <button className={styles.closeBtn} onClick={onClose} aria-label="close">×</button>
+      <button className={styles.closeBtn} onClick={requestClose} aria-label="close">×</button>
 
       {/* ── Mini collapsed strip (mobile only) ── */}
       {isMini && (

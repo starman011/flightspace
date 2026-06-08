@@ -1,5 +1,9 @@
 /* ── DetailPanel — Flight-focused card ───────────────────────────────────── */
 
+/* Controlled exit (desktop: slide right) */
+.panel.closing { animation: slideOutRight 0.22s ease forwards; }
+@keyframes slideOutRight { to { transform: translateX(105%); opacity: 0; } }
+
 .panel {
   position: fixed;
   top: 0;
@@ -623,6 +627,13 @@
     transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
                nudgeHint 1.4s 1.2s ease-in-out 2;
+  }
+
+  /* Mobile exit: slide the sheet straight down (overrides slideOutRight) */
+  .panel.closing { animation: sheetDown 0.24s cubic-bezier(0.4, 0, 1, 1) forwards; }
+  @keyframes sheetDown {
+    from { transform: translateY(0);    opacity: 1; }
+    to   { transform: translateY(100%); opacity: 0; }
   }
 
   @keyframes sheetUp {
