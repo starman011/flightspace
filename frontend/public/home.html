@@ -49,12 +49,12 @@
 
   .explore{ position:relative; }
   .explore > button{ display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(238,245,255,.82); background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:100px; padding:9px 16px; cursor:pointer; transition:border-color .2s, color .2s; }
-  .explore:hover > button{ color:var(--lime); border-color:rgba(178,255,26,.4); }
+  .explore:hover > button, .explore.open > button{ color:var(--lime); border-color:rgba(178,255,26,.4); }
   .explore > button .chev{ transition:transform .3s; }
-  .explore:hover > button .chev{ transform:rotate(180deg); }
+  .explore:hover > button .chev, .explore.open > button .chev{ transform:rotate(180deg); }
   .mega{ position:absolute; top:calc(100% + 14px); left:0; width:600px; background:rgba(6,10,16,.94); backdrop-filter:blur(26px); border:1px solid rgba(178,255,26,.2); border-radius:22px; padding:10px; display:flex; gap:10px; overflow:hidden; opacity:0; visibility:hidden; transform:translateY(-8px) scale(.99); pointer-events:none; transition:opacity .3s, transform .3s cubic-bezier(.22,1,.36,1), visibility .3s; box-shadow:0 30px 70px rgba(0,0,0,.6); }
   .mega::before{ content:''; position:absolute; top:-16px; left:0; right:0; height:18px; }
-  .explore:hover .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+  .explore:hover .mega, .explore.open .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
   .mega-list{ width:230px; flex:none; display:flex; flex-direction:column; gap:1px; }
   .mega-list a{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 14px; border-radius:12px; font-family:var(--display); font-weight:500; font-size:15px; color:rgba(238,245,255,.78); text-decoration:none; transition:background .18s, color .18s; }
   .mega-list a .ar{ opacity:0; transform:translateX(-4px); transition:opacity .18s, transform .18s; font-family:var(--mono); font-size:12px; }
@@ -90,7 +90,27 @@
 
   .credit{ position:fixed; bottom:30px; right:36px; z-index:6; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase; }
   .credit b{ color:rgba(178,255,26,.7); }
-  @media(max-width:860px){ .nav{padding:0 18px; gap:4px; flex-wrap:wrap} .navlink{padding:6px 9px} .mega{width:90vw; flex-direction:column} .mega-list{width:100%} .mega-prev{min-height:150px} .pillars{gap:22px} }
+  @media(max-width:860px){
+    /* let the page scroll on mobile so nothing overlaps/clips */
+    html,body{ overflow-x:hidden; overflow-y:auto; }
+    .stage{ inset:8px; border-radius:22px; }
+    .nav{ padding:0 14px; gap:8px; }
+    .navlink{ display:none; }                 /* declutter — in Explore + footer */
+    .spacer{ flex:1; }
+    .account{ width:34px; height:34px; }
+    .explore > button{ padding:8px 13px; }
+    .mega{ left:0; width:min(90vw,420px); flex-direction:column; }
+    .mega-list{ width:100%; }
+    .mega-prev{ min-height:130px; }
+    .hero{ height:auto; min-height:100dvh; padding:120px 24px 64px; }
+    h1{ font-size:clamp(34px,9vw,56px); margin-bottom:20px; }
+    .lede{ font-size:15px; margin-bottom:28px; }
+    .cta{ margin-bottom:40px; }
+    .btn{ padding:13px 22px; }
+    .pillars{ flex-direction:column; gap:22px; }
+    .pillar{ max-width:100%; }
+    .credit{ bottom:14px; right:16px; }
+  }
 </style>
 </head>
 <body>

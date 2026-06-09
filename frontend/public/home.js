@@ -30,6 +30,17 @@ document.querySelectorAll('.mega-list a').forEach(function (a) {
 });
 showMega('earth');
 
+// JS-controlled open/close with a grace delay — robust against the hover gap
+// (moving from the button down into the panel no longer closes it).
+var explore = document.querySelector('.explore'), exTimer;
+if (explore) {
+  explore.addEventListener('mouseenter', function () { clearTimeout(exTimer); explore.classList.add('open'); });
+  explore.addEventListener('mouseleave', function () { exTimer = setTimeout(function () { explore.classList.remove('open'); }, 260); });
+  var exBtn = explore.querySelector('button');
+  if (exBtn) exBtn.addEventListener('click', function (e) { e.preventDefault(); explore.classList.toggle('open'); });
+  document.addEventListener('click', function (e) { if (!explore.contains(e.target)) explore.classList.remove('open'); });
+}
+
 // ── Headline word-cycler: shows the breadth of what we track
 var WORDS = ['flights', 'ships', 'the ISS', 'satellites', 'rockets', 'asteroids', 'galaxies'];
 var wi = 0, cyc = document.getElementById('cyc');
