@@ -64,9 +64,13 @@ export default function SiteFooter({ active = true }) {
           </svg>
         </button>
       )}
-      <footer className={`${styles.footer} ${visible ? styles.visible : ''}`} aria-hidden={!visible}>
-        <button className={styles.handle} onClick={() => setVisible(v => !v)} aria-label="Toggle footer">
-          <span className={styles.handleBar} />
+      <footer
+        className={`${styles.footer} ${visible ? styles.visible : ''}`}
+        aria-hidden={!visible}
+        onMouseLeave={() => setVisible(false)}
+      >
+        <button className={styles.handle} onClick={() => setVisible(false)} aria-label="Collapse footer" title="Collapse">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
       <div className={styles.inner}>
         {COLUMNS.map(col => (

@@ -653,6 +653,11 @@
     overflow: hidden;
   }
 
+  /* ── Full expanded state (swipe up / tap the handle) ── */
+  .panelFull {
+    max-height: 88dvh;
+  }
+
   /* ── Drag zone visible on mobile ── */
   .dragZone {
     display: flex;

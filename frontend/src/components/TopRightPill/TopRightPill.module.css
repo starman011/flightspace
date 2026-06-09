@@ -202,22 +202,22 @@
   }
 
   .avatar {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     font-size: 9px;
   }
 
   .profileSide {
-    padding: 6px 8px;
+    padding: 6px 7px;
     gap: 0;
   }
 
   .divider {
-    height: 18px;
+    height: 16px;
   }
 
   .menuSide {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
 }

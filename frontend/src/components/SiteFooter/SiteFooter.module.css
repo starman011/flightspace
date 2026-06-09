@@ -32,7 +32,9 @@
   background: rgba(4, 9, 14, 0.96); border-radius: 8px 8px 0 0;
   border: 1px solid rgba(178, 255, 26, 0.22); border-bottom: none;
   display: flex; align-items: center; justify-content: center;
+  color: rgba(178, 255, 26, 0.75); transition: color .18s, background .18s;
 }
+.handle:hover { color: #b2ff1a; background: rgba(178, 255, 26, 0.08); }
 .handleBar { width: 26px; height: 3px; border-radius: 2px; background: rgba(178, 255, 26, 0.55); }
 
 .inner {

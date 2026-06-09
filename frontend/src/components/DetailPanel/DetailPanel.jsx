@@ -271,12 +271,18 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     if (touchStartY.current == null) return
     const dy = e.changedTouches[0].clientY - touchStartY.current
     const threshold = 50
+    const from = touchStartSheet.current
     if (dy > threshold) {
-      // Swipe down → collapse
-      if (touchStartSheet.current === 'peek') setSheet('mini')
+      // Swipe down → collapse one step: full → peek → mini
+      if (from === 'full') setSheet('peek')
+      else if (from === 'peek') setSheet('mini')
     } else if (dy < -threshold) {
-      // Swipe up → expand
-      if (touchStartSheet.current === 'mini') setSheet('peek')
+      // Swipe up → expand one step: mini → peek → full
+      if (from === 'mini') setSheet('peek')
+      else if (from === 'peek') setSheet('full')
+    } else {
+      // Tap the handle → expand (mini→peek, peek→full, full→peek)
+      setSheet(from === 'mini' ? 'peek' : from === 'full' ? 'peek' : 'full')
     }
     touchStartY.current = null
   }, [])
@@ -471,7 +477,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const statusLabel = displayGrnd ? 'ON GROUND' : cat === 'satellite' ? 'IN ORBIT' : cat === 'ship' ? 'AT SEA' : 'AIRBORNE'
 
   const isMini = sheet === 'mini'
-  const panelCls = `${styles.panel} ${isMini ? styles.panelMini : ''} ${closing ? styles.closing : ''}`
+  const panelCls = `${styles.panel} ${isMini ? styles.panelMini : ''} ${sheet === 'full' ? styles.panelFull : ''} ${closing ? styles.closing : ''}`
 
   return (
     <aside ref={panelRef} className={panelCls}>
