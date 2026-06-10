@@ -77,9 +77,12 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 // Channel-based live embed auto-resolves to whatever is CURRENTLY live on the
 // official NASA ISS channel — robust against video-ID changes (the cause of
 // recurring "stream not available" errors from scraped fixed IDs).
-const NASA_ISS_CHANNEL = 'UCLA_DiR1FfKNvjuUpBHmylQ'
-const NASA_TV_FALLBACK = `https://www.youtube.com/embed/live_stream?channel=${NASA_ISS_CHANNEL}&autoplay=1&mute=1`
-const NASA_ISS_WATCH = `https://www.youtube.com/channel/${NASA_ISS_CHANNEL}/live`
+// Perpetual 24/7 ISS live stream (verified embeddable). The channel-based
+// live_stream embed showed "unavailable" whenever the channel wasn't live;
+// a continuous 24/7 stream video stays up reliably.
+const NASA_ISS_VIDEO = 'vytmBNhc9ig'
+const NASA_TV_FALLBACK = `https://www.youtube.com/embed/${NASA_ISS_VIDEO}?autoplay=1&mute=1&rel=0&modestbranding=1`
+const NASA_ISS_WATCH = `https://www.youtube.com/watch?v=${NASA_ISS_VIDEO}`
 
 function ISSStream() {
   // Use the reliable channel-based NASA ISS live embed directly. (The scraped
@@ -214,6 +217,14 @@ const ISS_SPECS = [
   { label: 'Wingspan',       value: '109 m' },
   { label: 'Volume',         value: '916 m³' },
   { label: 'In orbit since', value: 'Nov 1998' },
+]
+
+// Public-domain ISS imagery (NASA via Wikimedia) — gives the card visuals
+// beyond the numbers.
+const ISS_IMAGES = [
+  { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg', alt: 'The International Space Station in orbit above Earth' },
+  { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/800px-The_Earth_seen_from_Apollo_17.jpg', alt: 'Earth as seen from space' },
+  { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Carina_Nebula.jpg/1024px-Carina_Nebula.jpg', alt: 'The Carina Nebula in deep space' },
 ]
 
 export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject }) {
@@ -686,6 +697,11 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {/* ── ISS details: crew, specs, upcoming missions ── */}
           {cat === 'satellite' && icao24 === 'ISS' && (
             <>
+              <div className={styles.issGallery}>
+                {ISS_IMAGES.map((g, i) => (
+                  <img key={i} src={g.src} alt={g.alt} loading="lazy" className={styles.issGalleryImg} />
+                ))}
+              </div>
               <ISSCrew />
               <div className={styles.issSpecs}>
                 <div className={styles.issLabel}>
