@@ -224,7 +224,7 @@ const ISS_SPECS = [
 const ISS_IMAGES = [
   { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg', alt: 'The International Space Station in orbit above Earth' },
   { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/800px-The_Earth_seen_from_Apollo_17.jpg', alt: 'Earth as seen from space' },
-  { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Carina_Nebula.jpg/1024px-Carina_Nebula.jpg', alt: 'The Carina Nebula in deep space' },
+  { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/NGC_4414_%28NASA-med%29.jpg/800px-NGC_4414_%28NASA-med%29.jpg', alt: 'A spiral galaxy in deep space' },
 ]
 
 export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject }) {
@@ -699,7 +699,9 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             <>
               <div className={styles.issGallery}>
                 {ISS_IMAGES.map((g, i) => (
-                  <img key={i} src={g.src} alt={g.alt} loading="lazy" className={styles.issGalleryImg} />
+                  <img key={i} src={g.src} alt={g.alt} loading="lazy" className={styles.issGalleryImg}
+                    referrerPolicy="no-referrer"
+                    onError={e => { e.currentTarget.style.display = 'none' }} />
                 ))}
               </div>
               <ISSCrew />

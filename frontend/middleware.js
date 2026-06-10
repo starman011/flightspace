@@ -9,8 +9,16 @@ export const config = {
 const BOT_RE =
   /googlebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefsbot|mj12bot|dotbot/i
 
+import { AIRPORTS } from './src/components/Globe/airportData.js'
+
 const API  = 'https://api.objecttracer.com'
 const SITE = 'https://www.objecttracer.com'
+
+// Full 930-airport lookup (name, city, lat/lon, tier) for content on every page
+const AIRPORT_FULL = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
+// A few always-valid airports/airlines to cross-link (builds the link graph)
+const XLINK_AIRPORTS = ['JFK', 'LHR', 'DXB', 'DEL', 'LAX', 'SIN']
+const XLINK_AIRLINES = [['emirates', 'Emirates'], ['indigo', 'IndiGo'], ['american-airlines', 'American'], ['british-airways', 'British Airways']]
 
 export default async function middleware(request) {
   const { pathname } = new URL(request.url)
@@ -169,13 +177,40 @@ async function renderAirport(iata) {
 
   const canonical = `${SITE}/airport/${iata}`
   const info     = AIRPORT_INFO[iata]
-  const fullName = info ? info.name : `${iata} Airport`
-  const cityName = info ? info.city : iata
-  const apLabel  = info ? `${cityName} ${iata} Airport` : `${iata} Airport`
+  const full     = AIRPORT_FULL[iata]
+  const fullName = info ? info.name : (full ? `${full.name} Airport` : `${iata} Airport`)
+  const cityName = info ? info.city : (full ? full.city : iata)
+  const country  = info ? info.country : ''
+  const apLabel  = `${cityName} ${iata} Airport`
+  const where    = country ? `${cityName}, ${country}` : cityName
   const title = `${iata} ${cityName} Airport — Live Arrivals, Departures & Flight Status | ObjectTracer`
   const desc  = `Live ${cityName} (${iata}) airport flight tracker: real-time arrivals, departures and flight status at ${fullName}. ${arrivals.length} arrivals and ${departures.length} departures tracked now on ObjectTracer's 3D globe.`
-  const jsonLd = { '@context': 'https://schema.org', '@type': 'Airport', iataCode: iata, name: fullName,
-    ...(info ? { address: { '@type': 'PostalAddress', addressLocality: cityName, addressCountry: info.country } } : {}), url: canonical }
+
+  // Varied "about" opener (rotates by IATA hash) so 930 pages aren't identical
+  let h = 0; for (let i = 0; i < iata.length; i++) h = (h * 31 + iata.charCodeAt(i)) >>> 0
+  const abouts = [
+    `${fullName} (${iata}) sits in ${where}. ObjectTracer plots every aircraft heading to and from it on a real-time 3D globe, so you can watch ${cityName}'s skies live instead of reading a static table.`,
+    `Want to know what's flying over ${cityName} right now? ${fullName} (${iata}) is one of thousands of airports ObjectTracer follows live — each inbound and outbound flight is drawn on the globe with its altitude, speed and route.`,
+    `${fullName} (${iata}) serves ${where}. This page tracks its arrivals and departures in real time from open ADS-B data, then maps each flight in 3D — click any aircraft for its full route, speed and altitude.`,
+    `Every plane approaching or leaving ${fullName} (${iata}) in ${where} is shown here live. ObjectTracer turns raw ADS-B signals into a moving map of ${cityName}'s air traffic, updated continuously.`,
+  ]
+  const about = abouts[h % abouts.length]
+
+  const faqs = [
+    [`How many flights are at ${iata} right now?`, `ObjectTracer is currently tracking ${arrivals.length} arrivals and ${departures.length} departures around ${fullName} (${iata}), updated live from ADS-B data.`],
+    [`Can I track ${iata} flights live for free?`, `Yes. ObjectTracer shows live arrivals, departures and aircraft positions for ${cityName} (${iata}) on a free interactive 3D globe — no signup required.`],
+    [`What is the airport code ${iata}?`, `${iata} is the IATA code for ${fullName}${where ? `, located in ${where}` : ''}.`],
+  ]
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'Airport', iataCode: iata, name: fullName, url: canonical,
+        ...(country ? { address: { '@type': 'PostalAddress', addressLocality: cityName, addressCountry: country } } : {}),
+        ...(full ? { geo: { '@type': 'GeoCoordinates', latitude: full.lat, longitude: full.lon } } : {}) },
+      { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    ],
+  }
 
   const row = (f, dir) => {
     const cs   = f.callsign || f.icao24 || ''
@@ -199,10 +234,15 @@ async function renderAirport(iata) {
     ${arrRows ? `<h2>${esc(iata)} Arrivals — Live</h2><table>${thead}${arrRows}</table>` : ''}
     ${depRows ? `<h2>${esc(iata)} Departures — Live</h2><table>${thead}${depRows}</table>` : ''}
     <h2>About ${esc(apLabel)}</h2>
+    <p>${esc(about)}</p>
+    <h2>${esc(iata)} — Frequently Asked Questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+    <h2>Track more on ObjectTracer</h2>
     <p>
-      Track every flight arriving at and departing from ${esc(fullName)} (${esc(iata)}) in real time.
-      ObjectTracer shows live aircraft positions, altitude, speed, callsigns and routes on an interactive 3D globe —
-      a live flight status board for ${esc(cityName)} and thousands of airports worldwide, updated continuously from ADS-B data.
+      Other busy airports:
+      ${XLINK_AIRPORTS.filter(x => x !== iata).map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
+      Airlines: ${XLINK_AIRLINES.map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      Or open the <a href="${SITE}/">live 3D globe</a> to watch ${esc(cityName)}'s traffic alongside the ISS, satellites and rocket launches.
     </p>`)
 }
 
