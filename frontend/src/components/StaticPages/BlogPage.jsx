@@ -65,9 +65,15 @@ export default function BlogPage({ onClose, initialSlug }) {
           <p className={styles.date}>{formatDate(active.date)}</p>
           <h1 className={styles.title}>{active.title}</h1>
           <p className={styles.intro}>{active.intro}</p>
+          <h2 className={styles.sectionH}>The science — from NASA's Astronomy Picture of the Day</h2>
           <p className={styles.body}>{active.explanation}</p>
           {active.copyright && <p className={styles.credit}>Image credit: {active.copyright}</p>}
           <p className={styles.source}>Source: <a href={`https://apod.nasa.gov/apod/ap${active.date.replace(/-/g,'').slice(2)}.html`} target="_blank" rel="noopener noreferrer">NASA APOD</a></p>
+          <h2 className={styles.sectionH}>See it live on ObjectTracer</h2>
+          <p className={styles.explore}>
+            Explore what's moving above you in real time:{' '}
+            <a href="/deep-space">Deep Space</a> · <a href="/iss">ISS</a> · <a href="/asteroids">Asteroids</a> · <a href="/launches">Launches</a> · <a href="/">the live globe →</a>
+          </p>
         </article>
       ) : (
         <div className={styles.feed}>

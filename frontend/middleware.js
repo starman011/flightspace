@@ -1279,6 +1279,45 @@ async function renderBlogFeed() {
   return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL')
 }
 
+// Original, topic-aware framing around each APOD post — gives substantial
+// unique content (varied per post) so the page isn't just verbatim NASA text.
+function blogFraming(p) {
+  const text = `${p.title} ${p.explanation || ''}`.toLowerCase()
+  const has = (...ws) => ws.some(w => text.includes(w))
+  const topics = []
+  if (has('nebula','galaxy','cluster','cosmic','quasar','supernova','interstellar')) topics.push({ k: 'deep-space objects', href: '/deep-space', label: 'Deep Space galaxy map' })
+  if (has('moon','lunar')) topics.push({ k: 'the Moon', href: '/moon', label: 'Moon tracker' })
+  if (has('aurora','eclipse','corona','sunspot','solar flare')) topics.push({ k: 'solar activity', href: '/solar-system', label: 'Solar System view' })
+  if (has('mars','jupiter','saturn','venus','mercury','neptune','uranus','planet')) topics.push({ k: 'the planets', href: '/solar-system', label: 'Solar System view' })
+  if (has('comet','asteroid','meteor','near-earth',' neo ')) topics.push({ k: 'near-Earth objects', href: '/asteroids', label: 'Asteroid tracker' })
+  if (has('space station','astronaut','cosmonaut',' iss ','crew')) topics.push({ k: 'the ISS', href: '/iss', label: 'ISS live tracker' })
+  if (has('rocket','launch','spacex','falcon','starship','booster')) topics.push({ k: 'rocket launches', href: '/launches', label: 'Launch tracker' })
+  if (has('star','milky way','constellation','sun')) topics.push({ k: 'the night sky', href: '/deep-space', label: 'Deep Space' })
+  if (topics.length === 0) topics.push({ k: 'the cosmos', href: '/deep-space', label: 'Deep Space' })
+
+  const seen = new Set()
+  const picks = topics.filter(x => !seen.has(x.href) && seen.add(x.href)).slice(0, 3)
+  const subjects = [...new Set(picks.map(x => x.k))].join(', ')
+
+  let h = 0
+  for (let i = 0; i < p.date.length; i++) h = (h * 31 + p.date.charCodeAt(i)) >>> 0
+  const openers = [
+    `Today's view is a window onto ${subjects}. Images like this aren't just beautiful — they're how astronomers measure distance, motion and the deep history of the universe, turning faint light into hard data.`,
+    `What you're looking at ties directly to ${subjects}. Every frame the world's observatories capture adds another data point to humanity's slowly-assembling map of everything beyond our planet.`,
+    `This scene highlights ${subjects}. The same physics that lets us photograph it also lets us predict where objects will be tomorrow — which is exactly what real-time tracking is built on.`,
+    `Behind the picture is ${subjects}. Light that left these objects long ago is only reaching us now, which is why a single image can double as a snapshot of the distant past.`,
+    `Today's highlight centers on ${subjects}. Understanding how these objects form and move is the bridge between a pretty photo and the live, data-driven sky we render on the globe.`,
+  ]
+  const why = openers[h % openers.length]
+  const links = picks.map(x => `<a href="${SITE}${x.href}">${x.label}</a>`).join(' · ')
+
+  return `
+    <h2>Why this matters</h2>
+    <p>${why}</p>
+    <h2>See it live on ObjectTracer</h2>
+    <p>This connects to what you can track in real time on our 3D globe — explore ${links}. Or open the <a href="${SITE}/">live globe</a> to watch flights, satellites, the ISS and spacecraft move right now.</p>`
+}
+
 async function renderBlogPost(slug) {
   let p = null
   try {
@@ -1305,8 +1344,10 @@ async function renderBlogPost(slug) {
     <h1>${esc(p.title)}</h1>
     ${imgTag}
     <p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>
+    ${blogFraming(p)}
+    <h2>The science — from NASA's Astronomy Picture of the Day</h2>
     <p>${esc(p.explanation)}</p>
-    ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)}</p>` : ''}
+    ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)} · Source: NASA APOD</p>` : `<p style="font-size:.8rem;opacity:.6">Source: NASA Astronomy Picture of the Day (public domain)</p>`}
     <p><a href="${SITE}/blog">← All Space Journal entries</a></p>`
   // Article OG image is the actual APOD image (passed as ogImageOverride)
   return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL', img)
