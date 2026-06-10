@@ -2195,6 +2195,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     let lastSunUpdate = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
+      // ── Satellite pulsing glow ──────────────────────────────────────
+      // Satellites sit very high up and read as tiny dots; pulse their
+      // opacity so users can spot where they are (esp. the Starlink filter).
+      if (satMesh.count > 0) {
+        satMesh.material.opacity = 0.6 + 0.4 * Math.abs(Math.sin(Date.now() * 0.0028))
+      }
       // ── FlyTo tween (works both when tracking and not) ──────────────
       const _flyStart = int.current.flyToTarget ? int.current.flyToStart : null
       if (_flyStart != null) {

@@ -79,9 +79,10 @@ export function useAircraft(sessionToken, enabled = true) {
   }, [aircraft.size]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredAircraft = useMemo(() => {
-    if (filters.type === 'all' && filters.altitude === 'all' && !filters.airline) return aircraft
+    if (filters.type === 'all' && filters.altitude === 'all' && !filters.airline && !filters.satName) return aircraft
 
     const airlinePrefix = filters.airline ? filters.airline.toUpperCase() : null
+    const satPrefix = filters.satName ? filters.satName.toUpperCase() : null
     const result = new Map()
     for (const [id, a] of aircraft) {
       const cat = a.cat || 'plane'
@@ -90,6 +91,12 @@ export function useAircraft(sessionToken, enabled = true) {
       if (airlinePrefix) {
         const cs = (a.cs || '').toUpperCase()
         if (!cs.startsWith(airlinePrefix)) continue
+      }
+
+      // --- Satellite-name filter (e.g. STARLINK) — match name or callsign ---
+      if (satPrefix) {
+        const nm = (a.name || a.cs || id || '').toUpperCase()
+        if (cat !== 'satellite' || !nm.includes(satPrefix)) continue
       }
 
       // --- Type filter ---

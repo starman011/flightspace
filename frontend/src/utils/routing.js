@@ -1,7 +1,7 @@
 /* Per-route SEO metadata */
 export const ROUTE_META = {
-  '/':             { title: 'ObjectTracer — Live Flight Tracker, ISS, Satellites & Deep Space on 3D Globe',
-                     description: 'Track live flights, ships, ISS, satellites, rocket launches, asteroids, and DESI galaxies on a real-time interactive 3D globe.' },
+  '/':             { title: 'ObjectTracer — Live Flight & Space Tracker',
+                     description: 'Track live flights, ships, the ISS (with 4K stream), satellites, rocket launches, near-Earth asteroids and deep-space galaxies — all on one real-time, interactive 3D globe. Free, no signup.' },
   '/launches':     { title: 'Rocket Launch Tracker — Live Countdown & Mission Manifest | ObjectTracer',
                      description: 'Track upcoming rocket launches with live countdowns, mission details, and launch pad locations on a 3D globe.' },
   '/solar-system': { title: 'Solar System Explorer — Live Planet Positions | ObjectTracer',
@@ -161,6 +161,7 @@ export function parseInitialState(pathname) {
     routeFocus: null,      // { origin, dest }
     cityFocus: null,       // { iata, name }
     regionFocus: null,     // { lat, lon, name }
+    satFilter: null,       // { name, label } — e.g. Starlink
     issMode: false,
     notFound: false,
   }
@@ -217,7 +218,12 @@ export function parseInitialState(pathname) {
     return r ? { ...base, regionFocus: { lat: r.lat, lon: r.lon, name: r.n } } : base
   }
 
-  if (pathname.startsWith('/satellite/')) return { ...base, selectedIcao24: pathname === '/satellite/iss' ? 'ISS' : null, issMode: pathname === '/satellite/iss' }
+  if (pathname.startsWith('/satellite/')) {
+    const sat = pathname.replace('/satellite/', '').toLowerCase()
+    if (sat === 'iss') return { ...base, selectedIcao24: 'ISS', issMode: true }
+    if (sat === 'starlink') return { ...base, satFilter: { name: 'STARLINK', label: 'Starlink' } }
+    return base
+  }
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }
   if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base
   if (pathname === '/blog')             return { ...base, activePage: 'blog' }

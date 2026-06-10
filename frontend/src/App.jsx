@@ -141,6 +141,8 @@ export default function App() {
   const init = parseInitialState(window.location.pathname)
 
   const [showLoading, setShowLoading] = useState(true)
+  const showLoadingRef = useRef(true)
+  useEffect(() => { showLoadingRef.current = showLoading }, [showLoading])
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [errorDismissed, setErrorDismissed] = useState(false)
   // Keep LIVE off on direct URL — DetailPanel fetches ISS/aircraft via REST first
@@ -200,6 +202,7 @@ export default function App() {
     if (init.routeFocus)    return { kind: 'route', ...init.routeFocus }
     if (init.cityFocus)     return { kind: 'city', ...init.cityFocus }
     if (init.regionFocus)   return { kind: 'region', ...init.regionFocus }
+    if (init.satFilter)     return { kind: 'satellite', ...init.satFilter }
     return null
   })
   const [streamCollapsed, setStreamCollapsed] = useState(false)
@@ -245,7 +248,10 @@ export default function App() {
     let tries = 0
     const run = () => {
       const g = globeRef.current
-      if (!g && tries++ < 40) { setTimeout(run, 150); return } // wait for globe
+      // Wait for BOTH the globe AND the loading screen to finish before
+      // enabling live — otherwise the initial WebSocket snapshot jams the main
+      // thread while the loader is still up (page appears frozen / unclickable).
+      if ((!g || showLoadingRef.current) && tries++ < 80) { setTimeout(run, 150); return }
 
       // ISS deep-link: enable live, select + track, fly to it, draw orbit track
       if (init.issMode) {
@@ -290,6 +296,11 @@ export default function App() {
       if (landing?.kind === 'region') {
         setLiveEnabled(true)
         g?.flyTo?.(landing.lat, landing.lon)
+        return
+      }
+      if (landing?.kind === 'satellite') {
+        setLiveEnabled(true)
+        setFilters(prev => ({ ...prev, type: 'satellites', satName: landing.name }))
         return
       }
     }
@@ -514,23 +525,25 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {landing && (
         <ContextBanner
-          icon={landing.kind === 'region' ? '🌍' : landing.kind === 'city' ? '🛫' : '✈'}
+          icon={landing.kind === 'region' ? '🌍' : landing.kind === 'city' ? '🛫' : landing.kind === 'satellite' ? '🛰' : '✈'}
           label={
             landing.kind === 'airline' ? `${landing.name} — Live Flights`
             : landing.kind === 'route' ? `${landing.origin} → ${landing.dest}`
             : landing.kind === 'city'  ? `${landing.name} — Live Air Traffic`
+            : landing.kind === 'satellite' ? `${landing.label} — Live Satellites`
             : `Flights over ${landing.name}`
           }
           sublabel={
             landing.kind === 'airline' ? `Filtering ${landing.prefix}··· callsigns`
             : landing.kind === 'route' ? 'Flight corridor on the 3D globe'
             : landing.kind === 'city'  ? 'Live arrivals & departures'
+            : landing.kind === 'satellite' ? 'Pulsing markers · pinch to zoom out to see orbits'
             : 'Real-time ADS-B tracking'
           }
-          count={landing.kind === 'airline' ? aircraftWithShips.size : undefined}
+          count={landing.kind === 'airline' || landing.kind === 'satellite' ? aircraftWithShips.size : undefined}
           onClear={() => {
             setLanding(null)
-            setFilters(prev => ({ ...prev, airline: null }))
+            setFilters(prev => ({ ...prev, airline: null, satName: null, type: 'all' }))
             globeRef.current?.drawTrail?.([])
             setSelectedAirport(null)
           }}

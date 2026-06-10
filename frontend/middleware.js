@@ -279,7 +279,7 @@ async function renderAirline(slug) {
   } catch (_) {}
 
   const count = flights.length
-  const title = `${airline.name} Live Flight Tracker — Track ${airline.iata} Flights | ObjectTracer`
+  const title = `${airline.name} Flight Tracker — Live Map & Status (${airline.iata}) | ObjectTracer`
   const desc  = `Track all ${airline.name} (${airline.iata}) flights live on ObjectTracer's real-time 3D globe. ${count > 0 ? `${count} flights currently tracked.` : ''} Real-time ADS-B position, altitude, speed, and route for every ${airline.name} aircraft.`
 
   const jsonLd = {
