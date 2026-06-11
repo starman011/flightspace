@@ -1,5 +1,5 @@
 {
-  "name": "ObjectTracer — Live Flight, Ship & Satellite Tracker",
+  "name": "ObjectTracer \u2014 Live Flight, Ship & Satellite Tracker",
   "short_name": "ObjectTracer",
   "description": "Track real-time flights, ships, ISS, and deep-space objects on an interactive 3D globe.",
   "start_url": "/",
@@ -9,10 +9,21 @@
   "orientation": "any",
   "icons": [
     {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
     }
   ]
 }
