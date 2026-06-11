@@ -1,8 +1,10 @@
 // Google Analytics 4 — activates only when VITE_GA_ID is set (Vercel env var).
 // GA4 Measurement IDs are public (visible in page source), so env is just for
 // convenience/flexibility, not secrecy.
+const DEFAULT_GA_ID = 'G-WKM9W2VDVT'
+
 export function initGA() {
-  const id = import.meta.env.VITE_GA_ID
+  const id = import.meta.env.VITE_GA_ID || DEFAULT_GA_ID
   if (!id) return
   const s = document.createElement('script')
   s.async = true

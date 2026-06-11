@@ -1,5 +1,18 @@
 // ObjectTracer /home — vanilla JS (CSP-safe: no inline, no external CDN).
 
+// Google Analytics 4 (gtag.js) — loaded externally (CSP allows googletagmanager)
+(function () {
+  var GA_ID = 'G-WKM9W2VDVT';
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', GA_ID);
+})();
+
 // ── Explore dropdown: text list (left) + image preview (right) that swaps on hover
 var MEGA = {
   earth:    {t:'Flights & Ships', d:'Live aircraft and vessels on a real-time 3D Earth.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/800px-The_Earth_seen_from_Apollo_17.jpg'},
