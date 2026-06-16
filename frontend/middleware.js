@@ -593,8 +593,18 @@ async function renderAsteroid(slug) {
   // approachDate like "2026-Apr-23 16:31" → ISO; endDate +1h.
   const apIso = approachDate ? (() => { const d = new Date(approachDate.replace(' ', 'T') + 'Z'); return isNaN(d) ? null : d } )() : null
   const apEnd = apIso ? new Date(apIso.getTime() + 60 * 60 * 1000) : null
-  const jsonLd = {
-    '@context': 'https://schema.org',
+  const faqs = [
+    [`Will asteroid ${cleanName} hit Earth?`, missKm
+      ? `No. ${cleanName} passes Earth at a safe distance of about ${missKm} km — ${missLd} times the Earth–Moon distance. ${isPHA ? 'NASA lists it as a Potentially Hazardous Asteroid because of its size and orbit, but this approach poses no impact risk.' : 'NASA does not classify it as hazardous.'}`
+      : `${cleanName} is a tracked near-Earth object; NASA's CNEOS monitors its orbit. ${isPHA ? 'It is flagged Potentially Hazardous by size and orbit class, not because of an imminent impact.' : 'It is not classified as hazardous.'}`],
+    [`How big is asteroid ${cleanName}?`, diamStr
+      ? `${cleanName} has an estimated diameter of ${diamStr}, based on its brightness as measured by NASA.`
+      : `${cleanName}'s exact size is uncertain; NASA estimates it from the asteroid's brightness and distance.`],
+    [`When is ${cleanName}'s closest approach to Earth?`, approachDate
+      ? `${cleanName} makes its close approach on ${approachDate} UTC${velKmh ? `, travelling at about ${velKmh} km/h relative to Earth` : ''}.`
+      : `ObjectTracer shows ${cleanName}'s approach geometry on the 3D globe using NASA NeoWs data.`],
+  ]
+  const eventLd = {
     '@type': 'Event',
     name: `${cleanName} Close Approach`,
     url: canonical,
@@ -611,6 +621,10 @@ async function renderAsteroid(slug) {
     },
     performer: { '@type': 'Organization', name: 'NASA CNEOS' },
     organizer: { '@type': 'Organization', name: 'NASA Center for Near Earth Object Studies', url: 'https://cneos.jpl.nasa.gov/' },
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }],
   }
 
   const rows = [
@@ -643,6 +657,23 @@ async function renderAsteroid(slug) {
     <p style="margin-top:16px">
       Track all near-Earth asteroids including PHAs, NEOs, and close approach objects on
       <a href="${SITE}/asteroids">ObjectTracer's Asteroid Tracker</a>.
+    </p>
+
+    <h2>${isPHA ? 'What is a Potentially Hazardous Asteroid?' : 'What is a Near-Earth Object?'}</h2>
+    <p>
+      ${isPHA
+        ? `A Potentially Hazardous Asteroid (PHA) is a near-Earth object larger than ~140 m that can pass within 0.05 AU (about 19.5 lunar distances) of Earth's orbit. The label reflects size and orbit geometry — it does not mean an impact is expected. NASA's CNEOS continuously refines each PHA's trajectory.`
+        : `A Near-Earth Object (NEO) is an asteroid or comet whose orbit brings it close to Earth's. NASA tracks thousands of them via the NeoWs program, measuring miss distance in lunar distances (LD) — one LD is the average Earth–Moon distance, about 384,400 km.`}
+    </p>
+
+    <h2>Frequently asked questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+
+    <p style="margin-top:32px;font-size:14px;opacity:.8">
+      Explore more: <a href="${SITE}/asteroids">all near-Earth asteroids</a> ·
+      <a href="${SITE}/iss">ISS tracker</a> ·
+      <a href="${SITE}/launches">rocket launches</a> ·
+      <a href="${SITE}/">live 3D globe</a>.
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
@@ -792,12 +823,21 @@ async function renderSatellite(slug) {
   const title = `${sat.name} Live Tracker — Real-Time Position | ObjectTracer`
   const desc  = `${sat.desc} Track ${sat.name} live on ObjectTracer's interactive 3D globe.${sat.altKm ? ` Orbits at ~${sat.altKm} km altitude.` : ''}`
 
+  const faqs = [
+    [`How can I track ${sat.name} live?`, `Open ObjectTracer's 3D globe — ${sat.name} is plotted at its real-time orbital position, and you can follow its ground track as it circles Earth. No signup required.`],
+    sat.altKm
+      ? [`How high does ${sat.name} orbit?`, `${sat.name} orbits at roughly ${sat.altKm.toLocaleString()} km altitude${sat.periodMin ? `, completing one orbit about every ${sat.periodMin} minutes` : ''}.`]
+      : [`What is ${sat.name}?`, `${sat.desc} ObjectTracer plots its live orbital position on an interactive 3D globe.`],
+    sat.speedKmh
+      ? [`How fast does ${sat.name} travel?`, `${sat.name} moves at about ${sat.speedKmh.toLocaleString()} km/h relative to the ground — fast enough to cross a continent in minutes.`]
+      : [`Is ${sat.name} tracking free?`, `Yes — ObjectTracer tracks ${sat.name} and other satellites live and free on a 3D globe.`],
+  ]
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: `${sat.name} Live Tracker`,
-    url: canonical,
-    description: desc,
+    '@graph': [
+      { '@type': 'WebPage', name: `${sat.name} Live Tracker`, url: canonical, description: desc },
+      { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    ],
   }
 
   const rows = [
@@ -814,7 +854,23 @@ async function renderSatellite(slug) {
     <p style="margin-top:24px">
       Track ${esc(sat.name)} in real-time on ObjectTracer's interactive 3D globe with live orbital position and trajectory.
     </p>
-    <p>Also track the <a href="${SITE}/iss">International Space Station (ISS)</a> and all satellites on ObjectTracer.</p>`
+
+    <h2>How to track ${esc(sat.name)}</h2>
+    <ol>
+      <li>Open the live 3D globe — ${esc(sat.name)} appears at its current orbital position.</li>
+      <li>Follow its ground track as it sweeps across Earth in real time.</li>
+      <li>Compare its orbit with the ISS and other satellites on the same globe.</li>
+    </ol>
+
+    <h2>Frequently asked questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+
+    <p style="margin-top:32px;font-size:14px;opacity:.8">
+      Also track the <a href="${SITE}/iss">International Space Station (ISS)</a> ·
+      <a href="${SITE}/launches">rocket launches</a> ·
+      <a href="${SITE}/asteroids">near-Earth asteroids</a> ·
+      <a href="${SITE}/">live 3D globe</a>.
+    </p>`
 
   return html(canonical, title, desc, jsonLd, body)
 }
