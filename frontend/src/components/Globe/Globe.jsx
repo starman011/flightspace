@@ -936,6 +936,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       })
       apiTrailRef.current = null
     }
+    int.current.routeThickUniforms = []   // drop stale thickness uniforms
     if (!points?.length && !routeData) return
 
     // ── Build full path: departure airport → DB trail → arrival airport ──
@@ -952,6 +953,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (fullPath.length < 2) return
 
     const objects = []
+    const routeThickUniforms = []   // route-line thickness uniforms (zoom-scaled in tick)
+    int.current.routeThickUniforms = routeThickUniforms
     const TRAIL_R_API = AC_R  // match the plane placement layer exactly
 
     // ── Split path into "traveled" (dep → last trail point) and "remaining" (→ arr) ──
@@ -1044,14 +1047,35 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b
       }
       geo.setAttribute('color', new BufferAttribute(colors, 3))
+      // Radial direction per vertex (copy of the tube's surface normals) so a
+      // shader can grow/shrink the cross-section without rebuilding geometry.
+      geo.setAttribute('aDir', new BufferAttribute(geo.attributes.normal.array.slice(), 3))
       const mat = new MeshBasicMaterial({
         vertexColors: true, depthTest: false, depthWrite: false,
         transparent: true, opacity, side: DoubleSide,
       })
+      // Variable line thickness: offset each surface vertex along its radial dir
+      // so the effective tube radius = tubeRadius * uThick. uThick is updated per
+      // frame from camera distance (see tick) — keeps the route line a roughly
+      // constant on-screen width, so it shrinks as you zoom in. No geometry
+      // rebuild → instant, never laggy.
+      const _cd0 = int.current.camera ? int.current.camera.position.length() : 3.5
+      const thick = { value: MathUtils.clamp((_cd0 - AC_R) / 3.5, 0.12, 2.4) }
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uThick = thick
+        shader.uniforms.uBaseR = { value: tubeRadius }
+        shader.vertexShader =
+          'attribute vec3 aDir;\nuniform float uThick;\nuniform float uBaseR;\n' +
+          shader.vertexShader.replace(
+            '#include <begin_vertex>',
+            '#include <begin_vertex>\n  transformed += aDir * (uBaseR * (uThick - 1.0));',
+          )
+      }
       const mesh = new Mesh(geo, mat)
       mesh.renderOrder = order
       scene.add(mesh)
       objects.push(mesh)
+      routeThickUniforms.push(thick)
     }
 
     // Whole dep→arr route on one lime→cyan gradient; flown part brighter.
@@ -2684,6 +2708,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         int.current.needsInstanceRebuild = true
         // Route tube/markers now use a fixed world radius — no rebuild on zoom
         // (removes the laggy readjust the old ps-scaled tube caused).
+      }
+
+      // ── Route line thickness ∝ zoom (constant-ish on-screen width) ──────
+      // The dep→arr connection line keeps a fixed world radius, which looks far
+      // too thick when zoomed in. Scale its effective radius with camera distance
+      // via a shader uniform (no geometry rebuild). Reference dist = 3.5 (full
+      // globe) → factor ≈ 1; closer in → thinner. Eased so it never pops.
+      const _rtu = int.current.routeThickUniforms
+      if (_rtu && _rtu.length) {
+        const _camDist = camera.position.length()
+        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.12, 2.4)
+        for (let i = 0; i < _rtu.length; i++) {
+          _rtu[i].value += (_target - _rtu[i].value) * 0.35
+        }
       }
 
       // Rebuild instance matrices when planeScale changes (separate from data updates)
