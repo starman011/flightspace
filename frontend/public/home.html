@@ -101,7 +101,10 @@
     .spacer{ flex:1; }
     .account{ width:34px; height:34px; }
     .explore > button{ padding:8px 13px; }
-    .mega{ left:0; width:min(90vw,420px); flex-direction:column; }
+    /* Break out of the .explore anchor and span the viewport with safe insets
+       so the panel can never run off the right edge. */
+    .mega{ position:fixed; top:72px; left:10px; right:10px; width:auto; flex-direction:column;
+           max-height:calc(100dvh - 92px); overflow-y:auto; overflow-x:hidden; }
     .mega-list{ width:100%; }
     .mega-prev{ min-height:130px; }
     .hero{ height:auto; min-height:100dvh; padding:120px 24px 64px; }
