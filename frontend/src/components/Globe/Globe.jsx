@@ -14,7 +14,13 @@ import {
   FrontSide, BackSide, DoubleSide, AdditiveBlending,
   InstancedBufferAttribute,
   LinearMipmapLinearFilter, LinearFilter,
+  Cache as ThreeCache,
 } from 'three'
+
+// Keep decoded tile images in memory so re-requesting a tile (e.g. panning back
+// over ground you already viewed) reuses the cached image instead of hitting the
+// network again — three's ImageLoader checks this before fetching.
+ThreeCache.enabled = true
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
@@ -1656,6 +1662,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     let lastTileCX   = -1
     let lastTileCY   = -1
 
+    // Retained-texture LRU: when a tile mesh is evicted (panned out of view) we
+    // keep its decoded GPU texture here keyed by style+z+x+y. Panning back reuses
+    // the texture instantly — no network round-trip, no re-decode, no fade flash.
+    // This is what stops the "tiles reload every time I move" churn, especially on
+    // ESRI satellite tiles which come from a single (slow) host.
+    const TEX_CACHE_MAX = 400
+    const texCache = new Map()  // `${style}/${z}/${tx}/${ty}` → THREE.Texture
+    const texCacheKey = (tx, ty, z) => `${mapStyleRef.current}/${z}/${tx}/${ty}`
+    const retainTex = (k, tex) => {
+      if (texCache.has(k)) texCache.delete(k)   // move-to-front (LRU)
+      texCache.set(k, tex)
+      while (texCache.size > TEX_CACHE_MAX) {
+        const oldest = texCache.keys().next().value
+        const old = texCache.get(oldest); texCache.delete(oldest)
+        old?.dispose()
+      }
+    }
+
     const tileKey = (tx, ty, z) => `${z}/${tx}/${ty}`
 
     const clearTiles = () => {
@@ -1667,6 +1691,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
       tileCache.clear()
       failedTiles.clear()
+      // Style switch (street↔satellite) invalidates every cached texture.
+      for (const [, tex] of texCache) tex?.dispose()
+      texCache.clear()
       tileQueue    = []
       tileLoading  = 0
       lastTileZ = lastTileCX = lastTileCY = -1
@@ -1711,13 +1738,33 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const mesh = new Mesh(geo, mat)
         mesh.renderOrder   = item.isParent ? 0 : 1
         mesh.frustumCulled = false
+        const target = item.isParent ? 0.88 : 1.0
+        const tkey   = texCacheKey(item.tx, item.ty, item.z)
+
+        // Fast path: this tile's texture is still in the LRU (we viewed it before).
+        // Reuse it immediately — no network, no decode, full opacity (no fade flash).
+        const cachedTex = texCache.get(tkey)
+        if (cachedTex) {
+          tileLoading--
+          retainTex(tkey, cachedTex)   // move-to-front
+          mat.map = cachedTex
+          mat.opacity = target
+          mat.needsUpdate = true
+          scene.add(mesh)
+          tileCache.set(key, {
+            mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z,
+            isParent: item.isParent, isStale: false, targetOpacity: target,
+          })
+          continue
+        }
 
         tileLoader.load(
           getTileUrl(item.tx, item.ty, item.z, mapStyleRef.current),
           tex => {
             tileLoading--
-            if (mapDestroyed) { geo.dispose(); mat.dispose(); processQueue(); return }
+            if (mapDestroyed) { geo.dispose(); mat.dispose(); tex.dispose(); processQueue(); return }
             tex.anisotropy = TILE_ANISO
+            retainTex(tkey, tex)          // keep texture for pan-back reuse
             mat.map     = tex
             mat.opacity = 0   // fade in gradually (see updateTiles loop)
             mat.needsUpdate = true
@@ -1727,7 +1774,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             tileCache.set(key, {
               mesh, mat, geo, tx: item.tx, ty: item.ty, z: item.z,
               isParent: item.isParent, isStale: false,
-              targetOpacity: item.isParent ? 0.88 : 1.0,
+              targetOpacity: target,
             })
             processQueue()
           },
