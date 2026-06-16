@@ -322,13 +322,17 @@ async function renderAirline(slug) {
   const title = `${airline.name} Flight Tracker — Live Map & Status (${airline.iata}) | ObjectTracer`
   const desc  = `Track all ${airline.name} (${airline.iata}) flights live on ObjectTracer's real-time 3D globe. ${count > 0 ? `${count} flights currently tracked.` : ''} Real-time ADS-B position, altitude, speed, and route for every ${airline.name} aircraft.`
 
+  const faqs = [
+    [`How can I track ${airline.name} flights live?`, `Open ObjectTracer's 3D globe — every ${airline.name} (${airline.iata}) aircraft currently broadcasting ADS-B is plotted in real time with its position, altitude, speed and route. Click any flight for full details.`],
+    [`What are ${airline.name}'s airline codes?`, `${airline.name} uses IATA code ${airline.iata} and ICAO code ${airline.icao}. Its flights use callsigns beginning with ${airline.icao}.`],
+    [`Is ${airline.name} flight tracking free?`, `Yes — ObjectTracer tracks all ${airline.name} flights worldwide for free on an interactive 3D globe, with no signup required.`],
+  ]
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Airline',
-    name: airline.name,
-    iataCode: airline.iata,
-    icaoCode: airline.icao,
-    url: canonical,
+    '@graph': [
+      { '@type': 'Airline', name: airline.name, iataCode: airline.iata, icaoCode: airline.icao, url: canonical },
+      { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    ],
   }
 
   const flightRows = flights.slice(0, 20).map(f => {
@@ -356,6 +360,21 @@ async function renderAirline(slug) {
     <p style="margin-top:32px">
       ObjectTracer tracks all ${esc(airline.name)} flights worldwide in real-time using ADS-B data.
       Click any flight to see its live position, route history, altitude, speed, and aircraft details on an interactive 3D globe.
+      ${esc(airline.name)} aircraft broadcast their position on the 1090&nbsp;MHz ADS-B frequency; ObjectTracer decodes that feed and plots each ${esc(airline.icao)}-prefixed callsign on the globe as it moves.
+    </p>
+    <h2>How to track ${esc(airline.name)} flights</h2>
+    <ol>
+      <li>Open the live 3D globe and search the ${esc(airline.name)} callsign (e.g. <strong>${esc(airline.icao)}123</strong>) or flight number.</li>
+      <li>Click the aircraft to open its panel — live altitude, ground speed, heading, origin and destination.</li>
+      <li>Follow the full route line from departure to arrival, colour-coded by altitude.</li>
+    </ol>
+    <h2>Frequently asked questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+    <p style="margin-top:32px;font-size:14px;opacity:.8">
+      Track more: Airports
+      ${XLINK_AIRPORTS.map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
+      Airlines: ${XLINK_AIRLINES.filter(([s]) => s !== slug).map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      Or open the <a href="${SITE}/">live 3D tracker</a>.
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
@@ -432,8 +451,14 @@ async function renderLaunch(slug) {
   // Launch window end: NET + 1h (most launch windows). Satisfies Event.endDate.
   const endISO = net ? new Date(net.getTime() + 60 * 60 * 1000).toISOString() : null
   const padCountry = pad && pad.includes(',') ? pad.split(',').pop().trim() : (pad || 'Earth')
-  const jsonLd = {
-    '@context': 'https://schema.org',
+  const faqs = [
+    [`When does ${mission} launch?`, isPast
+      ? `${mission} launched on ${dateStr}${pad ? ` from ${pad}` : ''}.`
+      : `The ${mission} launch window opens ${dateStr}${pad ? ` from ${pad}` : ''}. ObjectTracer shows a live countdown to lift-off.`],
+    [`What rocket is launching ${mission}?`, `${mission} ${isPast ? 'flew' : 'is set to fly'} on a ${rocket || 'launch vehicle'}${provider ? ` operated by ${provider}` : ''}${orbit ? `, targeting ${orbit}` : ''}.`],
+    [`How can I ${isPast ? 'watch the replay of' : 'track'} ${mission} live?`, `Open ObjectTracer's 3D globe to see the launch pad location${isPast ? '' : ', a real-time countdown'} and the rocket's trajectory. ${isPast ? 'The mission is marked complete.' : 'Tracking begins automatically near lift-off.'}`],
+  ]
+  const eventLd = {
     '@type': 'Event',
     name: mission,
     url: canonical,
@@ -453,6 +478,10 @@ async function renderLaunch(slug) {
     },
     performer: { '@type': 'Organization', name: provider || rocket || 'Launch Provider' },
     organizer: { '@type': 'Organization', name: provider || 'Launch Provider', url: canonical },
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }],
   }
 
   // Countdown or elapsed
@@ -494,6 +523,23 @@ async function renderLaunch(slug) {
     <p style="margin-top:32px">
       ObjectTracer tracks every rocket launch worldwide with real-time 3D globe visualization.
       View the launch pad location, track the rocket's trajectory live, and explore mission details.
+    </p>
+
+    <h2>How to ${isPast ? 'view' : 'track'} ${esc(mission)}</h2>
+    <ol>
+      <li>Open the live 3D globe — the launch pad${pad ? ` (${esc(pad)})` : ''} is pinned at its real coordinates.</li>
+      <li>${isPast ? 'Review the mission timeline and trajectory.' : 'Watch the live countdown to lift-off and the planned ascent path.'}</li>
+      <li>Explore ${esc(provider || 'the provider')}'s other missions and the global launch schedule.</li>
+    </ol>
+
+    <h2>Frequently asked questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+
+    <p style="margin-top:32px;font-size:14px;opacity:.8">
+      Explore more: <a href="${SITE}/launches">all rocket launches</a> ·
+      <a href="${SITE}/iss">ISS tracker</a> ·
+      <a href="${SITE}/asteroids">near-Earth asteroids</a> ·
+      <a href="${SITE}/">live 3D globe</a>.
     </p>`
 
   return html(canonical, title, descParts, jsonLd, body)
@@ -967,20 +1013,32 @@ async function renderRoute(slug) {
   const title = `${originInfo.city} to ${destInfo.city} Flights — Live Tracker | ObjectTracer`
   const desc  = `Track live flights from ${originInfo.city} (${origin}) to ${destInfo.city} (${dest}) on ObjectTracer's real-time 3D globe.${distKm ? ` ${distKm.toLocaleString()} km route, ~${flightHr}h flight.` : ''} Real-time ADS-B tracking with position, altitude, and speed.`
 
+  const faqs = [
+    distKm
+      ? [`How long is the flight from ${originInfo.city} to ${destInfo.city}?`, `The ${origin}–${dest} route covers about ${distKm.toLocaleString()} km (${distMi.toLocaleString()} mi), a flight of roughly ${flightHr} hours non-stop depending on aircraft type and winds.`]
+      : [`How far is ${originInfo.city} from ${destInfo.city}?`, `ObjectTracer plots the great-circle path between ${originInfo.name} (${origin}) and ${destInfo.name} (${dest}) so you can see the distance and route on the 3D globe.`],
+    [`How can I track ${originInfo.city} to ${destInfo.city} flights live?`, `Open ObjectTracer's 3D globe — every aircraft flying the ${origin}–${dest} route that is broadcasting ADS-B is shown live with its position, altitude and speed. Click any flight for full details.`],
+    [`Which airports serve the ${originInfo.city}–${destInfo.city} route?`, `Flights depart from ${originInfo.name} (${origin}) in ${originInfo.city}, ${originInfo.country} and arrive at ${destInfo.name} (${dest}) in ${destInfo.city}, ${destInfo.country}.`],
+  ]
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: `${originInfo.city} to ${destInfo.city} Flights`,
-    url: canonical,
-    description: desc,
-    breadcrumb: {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'ObjectTracer', item: SITE },
-        { '@type': 'ListItem', position: 2, name: `${originInfo.city} Airport`, item: `${SITE}/airport/${origin}` },
-        { '@type': 'ListItem', position: 3, name: `${originInfo.city} to ${destInfo.city}`, item: canonical },
-      ],
-    },
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        name: `${originInfo.city} to ${destInfo.city} Flights`,
+        url: canonical,
+        description: desc,
+        breadcrumb: {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'ObjectTracer', item: SITE },
+            { '@type': 'ListItem', position: 2, name: `${originInfo.city} Airport`, item: `${SITE}/airport/${origin}` },
+            { '@type': 'ListItem', position: 3, name: `${originInfo.city} to ${destInfo.city}`, item: canonical },
+          ],
+        },
+      },
+      { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    ],
   }
 
   const body = `
@@ -1003,6 +1061,23 @@ async function renderRoute(slug) {
     <p>
       Also track departures from <a href="${SITE}/airport/${origin}">${esc(originInfo.city)} Airport (${origin})</a>
       and arrivals at <a href="${SITE}/airport/${dest}">${esc(destInfo.city)} Airport (${dest})</a>.
+    </p>
+
+    <h2>How to track the ${esc(originInfo.city)} → ${esc(destInfo.city)} route</h2>
+    <ol>
+      <li>Open the live 3D globe — the great-circle path between ${esc(origin)} and ${esc(dest)} is drawn from departure to arrival.</li>
+      <li>Any aircraft currently flying the route appears on the line with live altitude, speed and heading.</li>
+      <li>Click a flight to open its panel — callsign, aircraft type, origin, destination and route history.</li>
+    </ol>
+
+    <h2>Frequently asked questions</h2>
+    ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+
+    <p style="margin-top:32px;font-size:14px;opacity:.8">
+      Track more: Airports
+      ${XLINK_AIRPORTS.filter(x => x !== origin && x !== dest).map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
+      Airlines: ${XLINK_AIRLINES.map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      Or open the <a href="${SITE}/">live 3D tracker</a>.
     </p>`
 
   return html(canonical, title, desc, jsonLd, body)
