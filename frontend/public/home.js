@@ -14,15 +14,18 @@
 })();
 
 // ── Explore dropdown: text list (left) + image preview (right) that swaps on hover
+// Preview images served from images.unsplash.com (allowed in our CSP). The old
+// Wikimedia thumbnail URLs return 400 (hotlink-blocked) so the preview was blank.
+var UQ = '?w=900&q=80&auto=format&fit=crop';
 var MEGA = {
-  earth:    {t:'Flights & Ships', d:'Live aircraft and vessels on a real-time 3D Earth.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/800px-The_Earth_seen_from_Apollo_17.jpg'},
-  iss:      {t:'ISS Tracker', d:'Live position, crew manifest and the 4K NASA stream.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg'},
-  launch:   {t:'Rocket Launches', d:'Upcoming launches with live countdowns and trajectories.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Ariane_5ES_with_ATV_4_on_its_way_to_ELA-3.jpg/800px-Ariane_5ES_with_ATV_4_on_its_way_to_ELA-3.jpg'},
-  asteroid: {t:'Near-Earth Asteroids', d:'Close approaches and hazardous objects from NASA NeoWs.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Asteroid_Vesta.jpg/800px-Asteroid_Vesta.jpg'},
-  solar:    {t:'Solar System', d:'Real-time positions of the planets in 3D.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Solar_sys8.jpg/800px-Solar_sys8.jpg'},
-  galaxy:   {t:'Deep Space', d:'The DESI galaxy catalog and the cosmic web.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/NGC_4414_%28NASA-med%29.jpg/800px-NGC_4414_%28NASA-med%29.jpg'},
-  moon:     {t:'Moon', d:'Lunar surface and orbital view.', s:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/800px-FullMoon2010.jpg'},
-  journal:  {t:'Space Journal', d:"A new astronomy image every day, from NASA's APOD.", s:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Pillars_of_Creation_%282014%29.jpg/800px-Pillars_of_Creation_%282014%29.jpg'},
+  earth:    {t:'Flights & Ships', d:'Live aircraft and vessels on a real-time 3D Earth.', s:'https://images.unsplash.com/photo-1436491865332-7a61a109cc05' + UQ},
+  iss:      {t:'ISS Tracker', d:'Live position, crew manifest and the 4K NASA stream.', s:'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa' + UQ},
+  launch:   {t:'Rocket Launches', d:'Upcoming launches with live countdowns and trajectories.', s:'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2' + UQ},
+  asteroid: {t:'Near-Earth Asteroids', d:'Close approaches and hazardous objects from NASA NeoWs.', s:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78' + UQ},
+  solar:    {t:'Solar System', d:'Real-time positions of the planets in 3D.', s:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5' + UQ},
+  galaxy:   {t:'Deep Space', d:'The DESI galaxy catalog and the cosmic web.', s:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564' + UQ},
+  moon:     {t:'Moon', d:'Lunar surface and orbital view.', s:'https://images.unsplash.com/photo-1522030299830-16b8d3d049fe' + UQ},
+  journal:  {t:'Space Journal', d:"A new astronomy image every day, from NASA's APOD.", s:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a' + UQ},
 };
 var megaPrev = document.getElementById('megaPrev');
 var megaMeta = document.getElementById('megaMeta');
@@ -72,10 +75,13 @@ setInterval(function () {
 }, 2000);
 
 // ── Cycling wallpaper — fast: small image_url first, preload next, crossfade
+// Wallpaper shown until the live APOD set loads. Unsplash (CSP-allowed) — the
+// old Wikimedia URLs 400'd, leaving the hero black on first paint.
+var WQ = '?w=1920&q=80&auto=format&fit=crop';
 var FALLBACK = [
-  { u: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Pillars_of_Creation_%282014%29.jpg/1024px-Pillars_of_Creation_%282014%29.jpg', t: 'Pillars of Creation' },
-  { u: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Carina_Nebula.jpg/1024px-Carina_Nebula.jpg', t: 'Carina Nebula' },
-  { u: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/1024px-The_Earth_seen_from_Apollo_17.jpg', t: 'Earth · Apollo 17' },
+  { u: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564' + WQ, t: 'The Milky Way' },
+  { u: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a' + WQ, t: 'A field of stars' },
+  { u: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa' + WQ, t: 'Earth from orbit' },
 ];
 var imgs = FALLBACK, idx = 0, showA = true;
 var A = document.getElementById('wallA'), B = document.getElementById('wallB'), credit = document.getElementById('credit');
