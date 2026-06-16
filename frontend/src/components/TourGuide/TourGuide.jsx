@@ -1,90 +1,63 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import styles from './TourGuide.module.css'
 
-const STORAGE_KEY = 'fs_tour_done_v1'
-const PAD = 8   // padding around spotlight rect
+// Bumped to v2: the old spotlight tour pointed at elements that no longer exist
+// (status-bar / filter-bar) and rendered broken on both breakpoints. Bumping the
+// key lets everyone see the fixed guide once.
+const STORAGE_KEY = 'fs_tour_done_v2'
 
-// Steps reference elements via data-tour="..." attributes.
-// Each step provides separate copy for desktop vs mobile.
+// A centered, fully-responsive card carousel — no element measurement, so it
+// renders identically and correctly on desktop and mobile. Copy adapts the
+// interaction verb (click vs tap) per device.
 const STEPS = [
   {
-    target:  'status-bar',
-    title:   'Enable live tracking',
-    body:    'Click here to expand — then hit LIVE to stream real-time positions of aircraft, satellites and ships.',
-    mTitle:  'Enable live tracking',
-    mBody:   'Tap this notch to expand it, then press LIVE to start real-time tracking.',
-    icon:    'wifi_tethering',
+    icon:  'public',
+    title: 'Welcome to ObjectTracer',
+    body:  'A live 3D globe for everything above the horizon — aircraft, ships, the ISS, satellites, rockets and asteroids. Here are the four things worth knowing.',
+    mBody: 'A live 3D globe for everything above the horizon — flights, ships, the ISS, satellites, rockets and asteroids. Four quick things to know.',
   },
   {
-    target:  'status-bar',
-    title:   'Search anything',
-    body:    'Expand the notch and hit Search to look up any flight by callsign, aircraft type or ICAO code.',
-    mTitle:  'Search anything',
-    mBody:   'Tap the notch and use Search to find any flight or aircraft instantly.',
-    icon:    'search',
+    icon:  'wifi_tethering',
+    title: 'Turn on live tracking',
+    body:  'Find the LIVE toggle in the bottom bar and click it to stream real-time positions of aircraft, ships and satellites.',
+    mBody: 'Open the bottom bar and tap LIVE to start streaming real-time aircraft, ships and satellites.',
   },
   {
-    target:  'signal-stream',
-    title:   'Explore the data stream',
-    body:    'Live space data — solar activity, APOD, launches and more. Click the tab to collapse, or expand for full detail and globe filters.',
-    mTitle:  'Swipe up for space data',
-    mBody:   'Swipe up from the bottom bar to reveal the Signal Stream — solar data, news, APOD and more. Swipe left/right to cycle panels, swipe higher for full detail.',
-    icon:    'database',
+    icon:  'search',
+    title: 'Search anything',
+    body:  'Use Search to look up any flight by callsign, aircraft type or ICAO code — the globe flies straight to it.',
+    mBody: 'Tap Search to find any flight by callsign, aircraft type or ICAO code — the globe flies right to it.',
   },
   {
-    target:  'filter-bar',
-    title:   'Filter by category',
-    body:    'Use the bottom dock to filter by satellites, flights, launches, asteroids or ships.',
-    mTitle:  'Filter the globe',
-    mBody:   'Tap a chip here to filter the globe by satellites, flights, launches, asteroids or ships.',
-    icon:    'filter_list',
+    icon:  'tune',
+    title: 'Filter & explore',
+    body:  'Use the bottom dock to filter by satellites, flights, launches, asteroids or ships — and switch scale from Earth out to deep space.',
+    mBody: 'Swipe up the bottom bar for filters (satellites, flights, launches, asteroids, ships) plus live space data, and switch scale from Earth to deep space.',
   },
 ]
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth <= 767)
+  const [mobile, setMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth <= 640)
   useEffect(() => {
-    const fn = () => setMobile(window.innerWidth <= 767)
+    const fn = () => setMobile(window.innerWidth <= 640)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])
   return mobile
 }
 
-function getRect(selector) {
-  const el = document.querySelector(`[data-tour="${selector}"]`)
-  if (!el) return null
-  const r = el.getBoundingClientRect()
-  return { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 }
-}
-
 export default function TourGuide() {
-  const [active, setActive]   = useState(false)
-  const [step,   setStep]     = useState(0)
-  const [rect,   setRect]     = useState(null)
-  const isMobile              = useIsMobile()
-  const animFrameRef          = useRef(null)
+  const [active, setActive] = useState(false)
+  const [step,   setStep]   = useState(0)
+  const isMobile            = useIsMobile()
 
-  // Start tour for first-time visitors only
+  // First-time visitors only, after the app has rendered.
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return
-    // Short delay so the app fully renders before we measure elements
-    const t = setTimeout(() => setActive(true), 1200)
+    const t = setTimeout(() => setActive(true), 1000)
     return () => clearTimeout(t)
   }, [])
-
-  // Keep spotlight rect in sync with the target element (handles layout shifts)
-  const measureRect = useCallback(() => {
-    if (!active) return
-    const r = getRect(STEPS[step].target)
-    setRect(r)
-    animFrameRef.current = requestAnimationFrame(measureRect)
-  }, [active, step])
-
-  useLayoutEffect(() => {
-    animFrameRef.current = requestAnimationFrame(measureRect)
-    return () => cancelAnimationFrame(animFrameRef.current)
-  }, [measureRect])
 
   const finish = useCallback(() => {
     setActive(false)
@@ -92,62 +65,78 @@ export default function TourGuide() {
   }, [])
 
   const next = useCallback(() => {
-    if (step < STEPS.length - 1) setStep(s => s + 1)
-    else finish()
-  }, [step, finish])
+    setStep(s => {
+      if (s < STEPS.length - 1) return s + 1
+      finish()
+      return s
+    })
+  }, [finish])
+
+  const back = useCallback(() => setStep(s => Math.max(0, s - 1)), [])
+
+  // Keyboard: Esc skips, ←/→ navigate, Enter advances
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') finish()
+      else if (e.key === 'ArrowRight' || e.key === 'Enter') next()
+      else if (e.key === 'ArrowLeft') back()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [active, finish, next, back])
 
   if (!active) return null
 
-  const s          = STEPS[step]
-  const title      = isMobile ? s.mTitle : s.title
-  const body       = isMobile ? s.mBody  : s.body
-  const isLast     = step === STEPS.length - 1
-
-  // Decide tooltip position: below spotlight if there's room, else above
-  let tooltipStyle = {}
-  if (rect) {
-    const below = rect.top + rect.height + 16
-    const above = rect.top - 16
-    if (below + 160 < window.innerHeight) {
-      tooltipStyle = { top: below, left: Math.max(12, Math.min(rect.left, window.innerWidth - 312)) }
-    } else {
-      tooltipStyle = { bottom: window.innerHeight - above, left: Math.max(12, Math.min(rect.left, window.innerWidth - 312)) }
-    }
-  }
+  const s      = STEPS[step]
+  const body   = isMobile ? s.mBody : s.body
+  const isLast = step === STEPS.length - 1
+  const isFirst = step === 0
 
   return (
-    <div className={styles.root} onClick={(e) => { if (e.target === e.currentTarget) finish() }}>
-      {/* Dark backdrop with spotlight cutout via box-shadow */}
-      {rect && (
-        <div
-          className={styles.spotlight}
-          style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
-        />
-      )}
+    <div
+      className={styles.root}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Getting started"
+      onClick={(e) => { if (e.target === e.currentTarget) finish() }}
+    >
+      <div className={styles.card} key={step}>
+        <button className={styles.close} onClick={finish} aria-label="Close guide">
+          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+        </button>
 
-      {/* Tooltip card */}
-      <div className={styles.tooltip} style={tooltipStyle}>
-        <div className={styles.tooltipHeader}>
-          <span className={styles.stepIcon}>
-            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{s.icon}</span>
-          </span>
-          <span className={styles.stepCount}>{step + 1} / {STEPS.length}</span>
+        <div className={styles.iconBadge}>
+          <span className="material-symbols-outlined" style={{ fontSize: 26 }}>{s.icon}</span>
         </div>
 
-        <p className={styles.tooltipTitle}>{title}</p>
-        <p className={styles.tooltipBody}>{body}</p>
+        <span className={styles.stepCount}>Step {step + 1} of {STEPS.length}</span>
+        <h2 className={styles.title}>{s.title}</h2>
+        <p className={styles.body}>{body}</p>
 
-        <div className={styles.tooltipFooter}>
-          <div className={styles.dots}>
-            {STEPS.map((_, i) => (
-              <span key={i} className={`${styles.dot} ${i === step ? styles.dotActive : ''}`} />
-            ))}
-          </div>
-          <div className={styles.btns}>
-            <button className={styles.skipBtn} onClick={finish}>Skip</button>
+        <div className={styles.dots}>
+          {STEPS.map((_, i) => (
+            <span
+              key={i}
+              className={`${styles.dot} ${i === step ? styles.dotActive : ''}`}
+              onClick={() => setStep(i)}
+            />
+          ))}
+        </div>
+
+        <div className={styles.footer}>
+          <button className={styles.skipBtn} onClick={finish}>
+            {isLast ? '' : 'Skip'}
+          </button>
+          <div className={styles.navBtns}>
+            {!isFirst && (
+              <button className={styles.backBtn} onClick={back}>Back</button>
+            )}
             <button className={styles.nextBtn} onClick={next}>
-              {isLast ? 'Done' : 'Next'}
-              {!isLast && <span className="material-symbols-outlined" style={{ fontSize: 13 }}>arrow_forward</span>}
+              {isLast ? 'Start exploring' : 'Next'}
+              {!isLast && (
+                <span className="material-symbols-outlined" style={{ fontSize: 15 }}>arrow_forward</span>
+              )}
             </button>
           </div>
         </div>
