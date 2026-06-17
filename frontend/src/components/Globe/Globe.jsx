@@ -937,6 +937,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       apiTrailRef.current = null
     }
     int.current.routeThickUniforms = []   // drop stale thickness uniforms
+    int.current.routeMarkers = []
+    int.current._routeScale = null
     if (!points?.length && !routeData) return
 
     // ── Build full path: departure airport → DB trail → arrival airport ──
@@ -954,7 +956,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const objects = []
     const routeThickUniforms = []   // route-line thickness uniforms (zoom-scaled in tick)
+    const routeMarkers = []         // dep/arr airport dot meshes (zoom-scaled in tick)
     int.current.routeThickUniforms = routeThickUniforms
+    int.current.routeMarkers = routeMarkers
     const TRAIL_R_API = AC_R  // match the plane placement layer exactly
 
     // ── Split path into "traveled" (dep → last trail point) and "remaining" (→ arr) ──
@@ -1093,8 +1097,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const sMesh = new Mesh(sg, sm)
       sMesh.position.copy(pos)
       sMesh.renderOrder = 22
+      // Initial scale matches current zoom so the dot isn't huge for one frame.
+      const _cd = int.current.camera ? int.current.camera.position.length() : 3.5
+      sMesh.scale.setScalar(MathUtils.clamp((_cd - AC_R) / 3.5, 0.14, 2.4))
       scene.add(sMesh)
       objects.push(sMesh)
+      routeMarkers.push(sMesh)
     }
 
     // Airport markers — ground level → low-altitude violet (matches ramp).
@@ -2710,18 +2718,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // (removes the laggy readjust the old ps-scaled tube caused).
       }
 
-      // ── Route line thickness ∝ zoom (constant-ish on-screen width) ──────
-      // The dep→arr connection line keeps a fixed world radius, which looks far
-      // too thick when zoomed in. Scale its effective radius with camera distance
-      // via a shader uniform (no geometry rebuild). Reference dist = 3.5 (full
-      // globe) → factor ≈ 1; closer in → thinner. Eased so it never pops.
+      // ── Route line + airport dots scale with zoom (constant-ish on screen) ──
+      // The dep→arr line and the departure/arrival dots keep a fixed world size,
+      // which looks far too big when zoomed in. Scale both with camera distance:
+      // the line via a shader uniform (no geometry rebuild), the dots via
+      // mesh.scale. Reference dist = 3.5 (full globe) → factor ≈ 1; closer → smaller.
+      // One shared, eased scalar drives both so they stay visually consistent.
       const _rtu = int.current.routeThickUniforms
-      if (_rtu && _rtu.length) {
+      const _rmk = int.current.routeMarkers
+      if ((_rtu && _rtu.length) || (_rmk && _rmk.length)) {
         const _camDist = camera.position.length()
-        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.12, 2.4)
-        for (let i = 0; i < _rtu.length; i++) {
-          _rtu[i].value += (_target - _rtu[i].value) * 0.35
-        }
+        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.14, 2.4)
+        let _cur = int.current._routeScale
+        _cur = (_cur == null) ? _target : _cur + (_target - _cur) * 0.35
+        int.current._routeScale = _cur
+        if (_rtu) for (let i = 0; i < _rtu.length; i++) _rtu[i].value = _cur
+        if (_rmk) for (let i = 0; i < _rmk.length; i++) _rmk[i].scale.setScalar(_cur)
       }
 
       // Rebuild instance matrices when planeScale changes (separate from data updates)
