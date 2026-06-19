@@ -1925,6 +1925,26 @@
     margin-bottom: 6px;
   }
 
+  /* Peek state: gradient grab bar + pull-up hint — mobile equivalent of the
+     desktop pull-tab, so it's obvious the feed can be pulled up. */
+  .streamClosed .grabBar {
+    width: 46px;
+    height: 5px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #a78bfa, #6366f1);
+    background-size: 300% 300%;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.45);
+    animation: grabFlow 8s ease-in-out infinite, grabPull 1.8s ease-in-out infinite;
+  }
+  @keyframes grabFlow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes grabPull {
+    0%, 100% { transform: translateY(0);    opacity: 0.75; }
+    50%      { transform: translateY(-3px); opacity: 1; }
+  }
+
   /* peekPreview removed — filter chips serve as the peek layer */
 
   /* Mobile intro overlay — fades in then out, revealing globe */
