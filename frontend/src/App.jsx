@@ -53,6 +53,7 @@ import { parseInitialState, stateToPath, updateRouteMeta } from './utils/routing
 import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
 import ContextBanner from './components/ContextBanner/ContextBanner'
+import LiveNudge from './components/LiveNudge/LiveNudge'
 import SiteFooter from './components/SiteFooter/SiteFooter'
 import WindLegend from './components/WindLegend/WindLegend'
 import { AIRPORTS } from './components/Globe/airportData'
@@ -550,6 +551,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         />
       )}
       <BetaWelcome />
+
+      {/* Nudge first-time visitors to turn Live on so the Earth view fills with data */}
+      <LiveNudge
+        visible={activeScale === 'earth' && !liveEnabled && !showLoading && !showFlightLanding && !selectedIcao24 && !focusedPad && !landing}
+        onGoLive={() => setLiveEnabled(true)}
+      />
 
       {init.notFound && (
         <div style={{
