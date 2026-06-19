@@ -1568,6 +1568,18 @@ export default function CommandCenterOverlay({
   const [sheetState, setSheetState] = useState('peek')
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
+  const userToggledFeedRef = useRef(false)
+
+  // Desktop: auto-collapse the feed after 10s so it gets out of the way. The
+  // collapsed pull-tab then shows a gradient border + pull animation hinting it
+  // can be reopened. Skipped if the user opens/collapses it manually first.
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth < 768) return
+    const t = setTimeout(() => {
+      if (!userToggledFeedRef.current) setDesktopOpen('collapsed')
+    }, 10000)
+    return () => clearTimeout(t)
+  }, [])
   const heroSeenRef = useRef(false)
   const [heroCollapsed, setHeroCollapsed] = useState(() => {
     if (sessionStorage.getItem('fs.hero.seen')) { heroSeenRef.current = true; return true }
@@ -1741,10 +1753,10 @@ export default function CommandCenterOverlay({
         {/* Desktop: vertical tab — always visible, even when panel collapsed */}
         <div
           className={styles.desktopTab}
-          onClick={() => setDesktopOpen(d => d === 'collapsed' ? 'open' : 'collapsed')}
+          onClick={() => { userToggledFeedRef.current = true; setDesktopOpen(d => d === 'collapsed' ? 'open' : 'collapsed') }}
           title={desktopOpen === 'collapsed' ? 'Open Feed' : 'Collapse Feed'}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(178,255,26,0.5)' }}>
+          <span className={`material-symbols-outlined ${styles.desktopTabChev}`} style={{ fontSize: 14, color: 'rgba(178,255,26,0.5)' }}>
             {desktopOpen === 'collapsed' ? 'chevron_left' : 'chevron_right'}
           </span>
           <span className={styles.desktopTabLabel}>Feed</span>

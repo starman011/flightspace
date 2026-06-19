@@ -1621,6 +1621,47 @@
   .streamDesktopWide {
     width: 440px;
   }
+
+  /* ── Collapsed pull-tab: pill gradient border + "pull me" animation ─────── */
+  .streamDesktopCollapsed .desktopTab {
+    background: rgba(10, 14, 20, 0.94);
+    animation: feedTabPull 2.2s ease-in-out infinite;
+  }
+  /* Animated gradient ring (same palette as the scale pill) drawn via mask */
+  .streamDesktopCollapsed .desktopTab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px 0 0 16px;
+    padding: 1.5px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #a78bfa, #6366f1);
+    background-size: 300% 300%;
+    animation: feedTabFlow 10s ease-in-out infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.95;
+    pointer-events: none;
+  }
+  /* Chevron drifts left to say "pull" */
+  .streamDesktopCollapsed .desktopTabChev {
+    animation: feedTabChev 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes feedTabFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes feedTabPull {
+  0%, 100% { transform: translateX(0);    box-shadow: -2px 0 10px -6px rgba(139, 92, 246, 0); }
+  50%      { transform: translateX(-4px); box-shadow: -7px 0 20px -4px rgba(139, 92, 246, 0.55); }
+}
+@keyframes feedTabChev {
+  0%, 100% { transform: translateX(0);    opacity: 0.55; }
+  50%      { transform: translateX(-4px); opacity: 1; }
 }
 
 /* ── Desktop filter section visible in wide mode ─────────────────────────── */
