@@ -1,5 +1,17 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import styles from './MoonPanel.module.css'
+
+// The mini/peek sheet is a mobile-only pattern. On desktop the panel must always
+// show full content (otherwise the card renders empty).
+function useIsMobile() {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
+  useEffect(() => {
+    const fn = () => setM(window.innerWidth <= 767)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return m
+}
 
 const FILTERS = [
   { id: 'iron',     label: 'Iron',      formula: 'FeO',  color: '#ff7a3d' },
@@ -80,7 +92,8 @@ export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilt
     touchStartY.current = null
   }, [])
 
-  const isMini = sheet === 'mini'
+  const isMobile = useIsMobile()
+  const isMini = isMobile && sheet === 'mini'   // desktop always shows full content
   const panelCls = `${styles.panel} ${isMini ? styles.panelMini : ''}`
 
   // ── No site selected: Moon overview ──────────────────────────────────────
