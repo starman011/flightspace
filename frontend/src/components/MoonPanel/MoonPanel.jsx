@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import styles from './MoonPanel.module.css'
 
 // The mini/peek sheet is a mobile-only pattern. On desktop the panel must always
@@ -60,10 +60,78 @@ function StatRow({ label, value }) {
 
 const FLAGS = { USA: '🇺🇸', USSR: '🇷🇺', China: '🇨🇳', India: '🇮🇳', Japan: '🇯🇵' }
 
+/* ── Current Moon phase (client-side, no API) ─────────────────────────────── */
+// Synodic month from a known new moon (2000-01-06 18:14 UTC).
+function getMoonPhase(date = new Date()) {
+  const SYNODIC = 29.530588853
+  const knownNew = Date.UTC(2000, 0, 6, 18, 14, 0)
+  const days = (date.getTime() - knownNew) / 86400000
+  let p = (days % SYNODIC) / SYNODIC
+  if (p < 0) p += 1                                   // phase fraction: 0=new, .5=full
+  const age = p * SYNODIC                             // days since new moon
+  const illumination = (1 - Math.cos(2 * Math.PI * p)) / 2
+  const waxing = p < 0.5
+  let name
+  if      (age < 1.84566)  name = 'New Moon'
+  else if (age < 5.53699)  name = 'Waxing Crescent'
+  else if (age < 9.22831)  name = 'First Quarter'
+  else if (age < 12.91963) name = 'Waxing Gibbous'
+  else if (age < 16.61096) name = 'Full Moon'
+  else if (age < 20.30228) name = 'Waning Gibbous'
+  else if (age < 23.99361) name = 'Last Quarter'
+  else if (age < 27.68493) name = 'Waning Crescent'
+  else                     name = 'New Moon'
+  return { p, age, illumination, waxing, name }
+}
+
+// Renders the lit/dark disc exactly as it appears from Earth for phase fraction p.
+// Method: dark base, a lit semicircle on the sunward side, and a terminator
+// ellipse (rx = R·|cos 2πp|) that either adds (gibbous) or subtracts (crescent).
+function MoonPhaseGlyph({ p, size = 112 }) {
+  const R = 50
+  const cos = Math.cos(2 * Math.PI * p)
+  const waxing = p < 0.5
+  const gibbous = cos < 0
+  const rx = Math.abs(R * cos)
+  const DARK = 'rgba(150, 165, 195, 0.10)'
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} className={styles.phaseSvg} aria-hidden="true">
+      <defs>
+        <clipPath id="moonPhaseClip"><circle cx="50" cy="50" r="50" /></clipPath>
+        <radialGradient id="moonLitGrad" cx="40" cy="36" r="64" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#fbf8f0" />
+          <stop offset="62%"  stopColor="#dad3c3" />
+          <stop offset="100%" stopColor="#a59c88" />
+        </radialGradient>
+      </defs>
+      <g clipPath="url(#moonPhaseClip)">
+        <rect x="0" y="0" width="100" height="100" fill={DARK} />
+        <rect x={waxing ? 50 : 0} y="0" width="50" height="100" fill="url(#moonLitGrad)" />
+        <ellipse cx="50" cy="50" rx={rx} ry="50" fill={gibbous ? 'url(#moonLitGrad)' : DARK} />
+        {/* faint maria so the lit face reads as the Moon, not a flat disc */}
+        <g fill="rgba(70,72,80,0.18)" clipPath="url(#moonPhaseClip)">
+          <circle cx="38" cy="40" r="7" />
+          <circle cx="58" cy="34" r="4.5" />
+          <circle cx="62" cy="58" r="6" />
+          <circle cx="42" cy="62" r="3.5" />
+        </g>
+      </g>
+      <circle cx="50" cy="50" r="49" fill="none" stroke="rgba(200,210,225,0.18)" strokeWidth="1" />
+    </svg>
+  )
+}
+
 export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilterChange }) {
   const [activeFilter, setActiveFilter] = useState(null)
   // Mobile sheet: 'mini' (collapsed dock, default) or 'peek' (expanded ~38dvh)
   const [sheet, setSheet] = useState('mini')
+  const [showPhase, setShowPhase] = useState(true)   // "Tonight's Moon" phase card
+  const moon = useMemo(() => getMoonPhase(), [])
+  const phasePct = Math.round(moon.illumination * 100)
+  const todayStr = useMemo(
+    () => new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+    [],
+  )
 
   const handleFilter = (id) => {
     const next = activeFilter === id ? null : id
@@ -145,6 +213,39 @@ export default function MoonPanel({ site, onClose, onReturnHome, onFlyTo, onFilt
             </header>
 
             <div className={styles.divider} />
+
+            {/* ── Tonight's Moon: live phase from Earth ── */}
+            <div className={styles.phaseToggleRow}>
+              <span className={styles.phaseToggleLabel}>Tonight&apos;s Moon · From Earth</span>
+              <button
+                className={styles.phaseToggle}
+                data-on={showPhase}
+                onClick={() => setShowPhase(v => !v)}
+                aria-pressed={showPhase}
+                aria-label="Toggle tonight's moon phase"
+              >
+                <span className={styles.phaseToggleKnob} />
+              </button>
+            </div>
+
+            {showPhase && (
+              <div className={styles.phaseCard}>
+                <MoonPhaseGlyph p={moon.p} />
+                <div className={styles.phaseInfo}>
+                  <p className={styles.phaseName}>{moon.name}</p>
+                  <p className={styles.phasePct}>{phasePct}% illuminated</p>
+                  <div className={styles.phaseMeta}>
+                    <span className={styles.phaseTag}>
+                      {moon.name === 'Full Moon' || moon.name === 'New Moon'
+                        ? '● ' + moon.name
+                        : (moon.waxing ? '↑ Waxing' : '↓ Waning')}
+                    </span>
+                    <span className={styles.phaseTag}>Day {Math.round(moon.age)} / 29.5</span>
+                  </div>
+                  <p className={styles.phaseDate}>{todayStr}</p>
+                </div>
+              </div>
+            )}
 
             <p className={styles.desc}>
               Born 4.5 billion years ago from a world-shattering collision, the Moon
