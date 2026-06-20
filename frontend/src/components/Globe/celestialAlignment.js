@@ -39,3 +39,21 @@ export function raDecToAltAz(raDeg, decDeg, latDeg, lstDegVal) {
   let az = Math.atan2(y, x) / D
   return { alt: alt / D, az: norm360(az) }
 }
+
+// Unit vector (East, North, Up) for an equatorial (ra,dec) at this site/time.
+function raDecToENU(raDeg, decDeg, latDeg, lstDegVal) {
+  const { alt, az } = raDecToAltAz(raDeg, decDeg, latDeg, lstDegVal)
+  const a = alt * D, A = az * D
+  return { e: Math.cos(a) * Math.sin(A), n: Math.cos(a) * Math.cos(A), u: Math.sin(a) }
+}
+
+// Returns the ENU directions of key equatorial reference points, enough for the
+// renderer to construct a rotation aligning the equatorial group to the local
+// horizontal (ENU) world the device orientation drives.
+export function equatorialBasisInHorizontal(latDeg, lstDegVal) {
+  return {
+    poleDir:   raDecToENU(0, 90, latDeg, lstDegVal),                      // North Celestial Pole
+    originDir: raDecToENU(lstDegVal, 0, latDeg, lstDegVal),               // RA=LST, Dec=0
+    eastDir:   raDecToENU(((lstDegVal - 90) % 360 + 360) % 360, 0, latDeg, lstDegVal),
+  }
+}

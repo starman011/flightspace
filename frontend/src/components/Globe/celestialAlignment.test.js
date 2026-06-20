@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { julianDate, gmstDeg, lstDeg, altAzToRaDec, raDecToAltAz } from './celestialAlignment.js'
+import { equatorialBasisInHorizontal } from './celestialAlignment.js'
 
 describe('celestial alignment', () => {
   it('julianDate of 2000-01-01 12:00 UTC ≈ 2451545.0', () => {
@@ -21,5 +22,17 @@ describe('celestial alignment', () => {
     const back = raDecToAltAz(ra, dec, lat, lst)
     expect(back.alt).toBeCloseTo(42, 4)
     expect(back.az).toBeCloseTo(137, 4)
+  })
+})
+
+describe('equatorialBasisInHorizontal', () => {
+  it('maps the NCP direction to the expected horizontal vector', () => {
+    const lat = 30, lst = 0
+    const { poleDir } = equatorialBasisInHorizontal(lat, lst)
+    // Pole altitude = lat → unit vector in ENU: E=0, N=cos(lat), Up=sin(lat)
+    const r = 30 * Math.PI / 180
+    expect(poleDir.e).toBeCloseTo(0, 5)
+    expect(poleDir.n).toBeCloseTo(Math.cos(r), 5)
+    expect(poleDir.u).toBeCloseTo(Math.sin(r), 5)
   })
 })
