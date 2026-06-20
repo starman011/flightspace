@@ -2432,9 +2432,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             camera.fov = CAM_GALAXY.fov
             camera.updateProjectionMatrix()
           }
-          // Reset FOV when leaving galaxy mode
-          if (!isGalaxy && camera.fov !== 60) {
-            camera.fov = 60
+          // Reset FOV when leaving galaxy mode (camera's normal FOV is 40)
+          if (!isGalaxy && camera.fov !== 40) {
+            camera.fov = 40
             camera.updateProjectionMatrix()
           }
           int.current._scaleReadyFired = targetScale
