@@ -1287,7 +1287,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (int.current.targetCameraScale !== 'galaxy') return
       e.preventDefault()
       const delta = e.deltaY > 0 ? 2 : -2
-      camera.fov = Math.max(10, Math.min(75, camera.fov + delta))
+      camera.fov = MathUtils.clamp(camera.fov + delta, CAM_GALAXY.fovMin, CAM_GALAXY.fovMax)
       camera.updateProjectionMatrix()
     }
     renderer.domElement.addEventListener('wheel', galaxyWheel, { passive: false })
@@ -1306,7 +1306,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const dy = e.touches[0].clientY - e.touches[1].clientY
       const dist = Math.sqrt(dx * dx + dy * dy)
       const delta = (_pinchDist - dist) * 0.12
-      camera.fov = Math.max(10, Math.min(75, camera.fov + delta))
+      camera.fov = MathUtils.clamp(camera.fov + delta, CAM_GALAXY.fovMin, CAM_GALAXY.fovMax)
       camera.updateProjectionMatrix()
       _pinchDist = dist
     }
@@ -2427,9 +2427,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           int.current.cloudsMesh.visible = _earthVisible
           int.current.placeDotsMesh.visible = _earthVisible
           _setEarthEntitiesVisible(_earthVisible)
+          // Open deep space zoomed in so the point cloud isn't clustered.
+          if (isGalaxy && camera.fov !== CAM_GALAXY.fov) {
+            camera.fov = CAM_GALAXY.fov
+            camera.updateProjectionMatrix()
+          }
           // Reset FOV when leaving galaxy mode
-          if (!isGalaxy && camera.fov !== 40) {
-            camera.fov = 40
+          if (!isGalaxy && camera.fov !== 60) {
+            camera.fov = 60
             camera.updateProjectionMatrix()
           }
           int.current._scaleReadyFired = targetScale

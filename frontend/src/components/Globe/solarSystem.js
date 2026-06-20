@@ -96,6 +96,11 @@ export const CAM_GALAXY = {
   position: [0, 0, 0.01],
   minDist:  0.01,
   maxDist:  400,
+  // Deep space opens "zoomed in" (telephoto) so the DESI cloud reads as
+  // structure instead of a dense blob. Pinch/wheel still adjusts within range.
+  fov:      38,   // default field of view in degrees (was the camera default 60)
+  fovMin:   14,   // most zoomed-in
+  fovMax:   65,   // most zoomed-out
 }
 
 export const CAM_EARTH = {
