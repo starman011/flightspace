@@ -131,7 +131,7 @@ export default function GalaxyPanel({ galaxy, onClose }) {
     <div className={styles.panel} onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={styles.header}>
-        <span className={styles.symbol}>{isQSO ? '◈' : '⊛'}</span>
+        <span className={`${styles.symbol} ${isQSO ? styles.symbolQso : ''}`}>{isQSO ? '◈' : '⊛'}</span>
         <div className={styles.titles}>
           <h3 className={styles.name}>
             {enrich?.known_name || `DESI ${isQSO ? 'Quasar' : 'Galaxy'}`}
@@ -149,7 +149,7 @@ export default function GalaxyPanel({ galaxy, onClose }) {
       <div className={styles.imageWrap}>
         <img
           className={styles.image}
-          src={`https://www.legacysurvey.org/viewer/cutout.jpg?ra=${galaxy.ra}&dec=${galaxy.dec}&size=120&layer=ls-dr10&pixscale=0.5`}
+          src={`https://www.legacysurvey.org/viewer/cutout.jpg?ra=${galaxy.ra}&dec=${galaxy.dec}&size=256&layer=ls-dr10&pixscale=0.25`}
           alt={`Sky cutout at RA ${galaxy.ra.toFixed(2)}, Dec ${galaxy.dec.toFixed(2)}`}
           loading="eager"
         />

@@ -33,15 +33,30 @@
 
 .header {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 13px;
 }
 
 .symbol {
-  font-size: 24px;
-  line-height: 1;
   flex-shrink: 0;
-  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  line-height: 1;
+  color: #c9b3ff;
+  border-radius: 13px;
+  background: radial-gradient(120% 120% at 35% 25%, rgba(180, 130, 255, 0.24), rgba(180, 130, 255, 0.05));
+  border: 1px solid rgba(180, 130, 255, 0.30);
+  box-shadow: 0 0 22px rgba(150, 110, 255, 0.18), inset 0 0 12px rgba(180, 130, 255, 0.10);
+}
+.symbolQso {
+  color: #fbd24a;
+  background: radial-gradient(120% 120% at 35% 25%, rgba(251, 191, 36, 0.22), rgba(251, 191, 36, 0.05));
+  border-color: rgba(251, 191, 36, 0.32);
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.16), inset 0 0 12px rgba(251, 191, 36, 0.10);
 }
 
 .titles {
@@ -53,35 +68,38 @@
 
 .name {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: #F3F2EC;
+  color: #eff1fb;
   margin: 0;
   letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 .typeBadge {
   display: inline-block;
+  width: fit-content;
+  max-width: 100%;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  line-height: 1.35;
 }
 
 .galaxy {
-  color: rgba(129, 140, 248, 0.9);
-  background: rgba(129, 140, 248, 0.1);
-  border: 1px solid rgba(129, 140, 248, 0.22);
+  color: #c9b3ff;
+  background: rgba(180, 130, 255, 0.12);
+  border: 1px solid rgba(180, 130, 255, 0.28);
 }
 
 .qso {
-  color: rgba(251, 191, 36, 0.9);
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.22);
+  color: #fbd24a;
+  background: rgba(251, 191, 36, 0.10);
+  border: 1px solid rgba(251, 191, 36, 0.28);
 }
 
 .close {
@@ -104,70 +122,84 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid rgba(200, 210, 225, 0.07);
-  border-radius: 10px;
+  border: 1px solid rgba(180, 130, 255, 0.12);
+  border-radius: 12px;
   overflow: hidden;
+  background: rgba(150, 110, 255, 0.03);
 }
 
 .statRow {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 8px 12px;
-  gap: 8px;
+  padding: 9px 13px;
+  gap: 10px;
+  border-bottom: 1px solid rgba(200, 210, 225, 0.05);
 }
-
-.statRow:nth-child(odd) {
-  background: rgba(44, 57, 71, 0.3);
-}
+.statRow:last-child { border-bottom: none; }
 
 .statLabel {
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(168, 178, 208, 0.5);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .statValue {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(220, 220, 220, 0.85);
+  font-size: 11.5px;
+  color: rgba(226, 229, 242, 0.9);
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
 }
 
 .statHighlight {
-  color: rgba(129, 140, 248, 0.95);
-  font-weight: 600;
+  color: #c9b3ff;
+  font-weight: 700;
+  font-size: 13px;
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
 
 .sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 9.5px;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(129, 140, 248, 0.45);
-  margin: 4px 0 0;
+  letter-spacing: 0.16em;
+  color: rgba(180, 130, 255, 0.72);
+  margin: 6px 0 8px;
+}
+.sectionTitle::before {
+  content: '';
+  width: 14px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(180, 130, 255, 0.85), rgba(180, 130, 255, 0));
 }
 
 .description {
   font-size: 12px;
-  line-height: 1.6;
-  color: rgba(200, 210, 225, 0.55);
+  line-height: 1.65;
+  color: rgba(205, 212, 235, 0.6);
   margin: 0;
 }
 
 /* ── Telescope image ───────────────────────────────────────────────────── */
 
 .imageWrap {
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(200, 210, 225, 0.08);
   position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(180, 130, 255, 0.18);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  background: #05070e;
 }
 
 .image {
@@ -175,68 +207,100 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: rgba(8, 12, 20, 0.8);
+  background: #05070e;
+}
+
+.imageWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 60px rgba(5, 7, 14, 0.65);
+  pointer-events: none;
 }
 
 .imageLabel {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 5px 8px;
-  background: rgba(8, 12, 20, 0.85);
+  bottom: 9px;
+  left: 9px;
+  padding: 4px 9px;
+  background: rgba(5, 8, 14, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(180, 130, 255, 0.20);
+  border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 8px;
-  color: rgba(160, 170, 185, 0.35);
+  font-size: 8.5px;
+  color: rgba(205, 210, 235, 0.62);
   letter-spacing: 0.06em;
+  z-index: 1;
 }
 
 /* ── Explainer blocks ─────────────────────────────────────────────────────── */
 
 .explainer {
   font-size: 11px;
-  line-height: 1.65;
-  color: rgba(200, 210, 225, 0.48);
-  margin-bottom: 8px;
+  line-height: 1.6;
+  color: rgba(202, 210, 232, 0.55);
+  margin-bottom: 9px;
+  padding: 8px 0 8px 12px;
+  border-left: 1.5px solid rgba(180, 130, 255, 0.22);
 }
+.explainer:last-child { margin-bottom: 0; }
 .explainer strong {
-  color: rgba(220, 220, 220, 0.78);
+  color: rgba(228, 231, 244, 0.86);
   font-weight: 600;
 }
 
 .loading {
-  text-align: center;
-  color: rgba(160, 170, 185, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(180, 130, 255, 0.6);
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 8px;
+  letter-spacing: 0.12em;
+  padding: 10px;
+}
+.loading::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b482ff;
+  box-shadow: 0 0 8px rgba(180, 130, 255, 0.7);
+  animation: loadPulse 1.1s ease-in-out infinite;
+}
+@keyframes loadPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1.1); }
 }
 
 /* ── Redshift bar ─────────────────────────────────────────────────────────── */
 
 .zBar {
-  height: 6px;
-  border-radius: 3px;
+  height: 7px;
+  border-radius: 4px;
   background: linear-gradient(90deg,
     hsl(187, 80%, 58%) 0%,
     hsl(223, 75%, 55%) 25%,
-    hsl(260, 70%, 50%) 50%,
-    hsl(290, 65%, 45%) 75%,
-    hsl(320, 60%, 42%) 100%
+    hsl(260, 70%, 52%) 50%,
+    hsl(290, 65%, 48%) 75%,
+    hsl(320, 62%, 45%) 100%
   );
   position: relative;
+  box-shadow: 0 0 16px rgba(150, 110, 255, 0.28);
 }
 
 .zMarker {
   position: absolute;
-  top: -3px;
+  top: -3.5px;
   width: 3px;
-  height: 12px;
-  background: #F3F2EC;
+  height: 14px;
+  background: #fff;
   border-radius: 2px;
-  box-shadow: 0 0 6px rgba(243, 242, 236, 0.5);
+  box-shadow: 0 0 9px rgba(255, 255, 255, 0.8);
   transform: translateX(-50%);
 }
 
