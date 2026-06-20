@@ -54,7 +54,7 @@ function PageIcon({ id, size = 16 }) {
 export default function PagesPill({
   activeScale, activeFilter,
   onScaleChange, onActiveFilterChange, onFiltersChange,
-  onLaunchPanelToggle, onPageOpen, hidden,
+  onLaunchPanelToggle, onPageOpen, hidden, overPage,
 }) {
   if (hidden) return null
 
@@ -85,7 +85,7 @@ export default function PagesPill({
   }
 
   return (
-    <nav className={styles.pill} aria-label="Pages">
+    <nav className={`${styles.pill} ${overPage ? styles.overPage : ''}`} aria-label="Pages">
       {PAGES.map(page => (
         <button
           key={page.id}

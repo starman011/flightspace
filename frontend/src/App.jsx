@@ -643,11 +643,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <PagesPill
         activeScale={activeScale}
         activeFilter={activeFilter}
-        onScaleChange={handleCameraScale}
-        onActiveFilterChange={setActiveFilter}
+        onScaleChange={(s) => { setActivePage(null); handleCameraScale(s) }}
+        onActiveFilterChange={(f) => { setActivePage(null); setActiveFilter(f) }}
         onFiltersChange={setFilters}
-        onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        onLaunchPanelToggle={() => { setActivePage(null); setLaunchPanelOpen(o => !o) }}
         onPageOpen={setActivePage}
+        overPage={!!activePage}
         hidden={focusedPad}
       />
 

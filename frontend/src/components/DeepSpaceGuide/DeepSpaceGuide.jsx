@@ -4,6 +4,9 @@ export default function DeepSpaceGuide({ onClose }) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
+        <span className={styles.symbol}>
+          <span className="material-symbols-outlined">scatter_plot</span>
+        </span>
         <div className={styles.titles}>
           <h3 className={styles.name}>Deep Space</h3>
           <span className={styles.subtitle}>DESI DR1 Galaxy Map</span>

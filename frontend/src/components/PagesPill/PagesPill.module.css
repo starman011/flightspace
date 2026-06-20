@@ -21,6 +21,12 @@
     0 1px 0 rgba(200, 210, 225, 0.03) inset;
 }
 
+/* Stay above full-screen pages (Journal/About/…) so the nav notch is always
+   reachable. Pages top out at z-index 4000 (BlogPage). */
+.overPage {
+  z-index: 4100;
+}
+
 /* Animated gradient border */
 .pill::before {
   content: '';
