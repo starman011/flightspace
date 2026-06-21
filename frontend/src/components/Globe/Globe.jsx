@@ -1186,11 +1186,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       int.current.flyToFrom   = camera.position.clone()
     },
     enableAR: async () => {
-      try { await arController.enable(); return true }
-      catch (e) { console.warn('[AR] enable failed:', e?.message || e); return false }
+      try { await arController.enable(); return 'ok' }
+      catch (e) {
+        const m = (e && e.message) || String(e)
+        console.warn('[AR] enable failed:', m)
+        return /permission|denied/i.test(m) ? 'denied' : 'error'
+      }
     },
     disableAR: () => arController.disable(),
     isARSupported: () => arController.isMobile(),
+    isMobileAR: () => arController.isMobile(),
+    hadMotionEvents: () => (arController.hadMotion ? arController.hadMotion() : false),
     // Live RA/Dec the camera points at in deep space (for the sky readout).
     getGalaxyHeading: () => galaxyHeadingRef.current,
     // Lock the on-screen sky to the real sky (needs an observer location first).

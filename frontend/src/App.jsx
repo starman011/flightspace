@@ -211,6 +211,7 @@ export default function App() {
   const [arActive, setArActive] = useState(false)
   const [skyHeading, setSkyHeading] = useState(null)   // { raHms, decDms } live readout
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
+  const [arMsg, setArMsg] = useState(null)             // status/diagnostic toast for sky view
   const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
@@ -471,21 +472,41 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       setArActive(false)
       setSkyHeading(null)
       setSkyLocated(false)
-    } else {
-      const ok = await globeRef.current?.enableAR?.()
-      if (ok) {
-        setArActive(true)
-        // On mobile, also ask for location and lock the on-screen sky to the
-        // real sky (best-effort — ignores denial).
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-        if (isMobile) {
-          const loc = await globeRef.current?.requestLocation?.()
-          if (loc) globeRef.current?.enableSkyAlign?.()
-          setSkyLocated(!!loc)
+      setArMsg(null)
+      return
+    }
+    const res = await globeRef.current?.enableAR?.()
+    if (res !== 'ok') {
+      setArMsg(res === 'denied'
+        ? 'Motion access is blocked. iOS: Settings → Safari → Motion & Orientation Access (on), then tap again.'
+        : 'Could not start sky view on this device/browser.')
+      return
+    }
+    setArActive(true)
+    const deviceMode = !!globeRef.current?.isMobileAR?.()
+    if (deviceMode) {
+      setArMsg('Move your phone to look around the sky')
+      // Location → lock the on-screen sky to your real sky (best-effort).
+      const loc = await globeRef.current?.requestLocation?.()
+      if (loc) globeRef.current?.enableSkyAlign?.()
+      setSkyLocated(!!loc)
+      // If no orientation events arrive, the browser is blocking the sensor.
+      setTimeout(() => {
+        if (globeRef.current?.hadMotionEvents?.() === false) {
+          setArMsg('No motion detected — open the site in Safari/Chrome directly (in-app browsers block motion sensors).')
         }
-      }
+      }, 1800)
+    } else {
+      setArMsg('Drag to look around the sky')
     }
   }, [arActive])
+
+  // Auto-dismiss the sky-view status message.
+  useEffect(() => {
+    if (!arMsg) return
+    const t = setTimeout(() => setArMsg(null), 5200)
+    return () => clearTimeout(t)
+  }, [arMsg])
 
   // Poll the live RA/Dec the camera points at while exploring deep space.
   useEffect(() => {
@@ -906,6 +927,20 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {activeScale === 'galaxy' && (
         <SkyReticle active={arActive} heading={skyHeading} located={skyLocated} />
+      )}
+
+      {activeScale === 'galaxy' && arMsg && (
+        <div style={{
+          position: 'fixed', bottom: 140, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 201, maxWidth: 'min(86vw, 420px)', textAlign: 'center',
+          background: 'rgba(6,12,18,0.92)', backdropFilter: 'blur(14px)',
+          border: '1px solid rgba(178,255,26,0.25)', borderRadius: 12,
+          padding: '10px 16px', color: 'rgba(215,225,240,0.92)',
+          fontFamily: 'var(--font-body)', fontSize: 12.5, lineHeight: 1.5,
+          boxShadow: '0 10px 36px rgba(0,0,0,0.5)',
+        }}>
+          {arMsg}
+        </div>
       )}
 
       {/* ── Static pages ── */}

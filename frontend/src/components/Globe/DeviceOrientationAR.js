@@ -29,6 +29,8 @@ export function createDeviceOrientationAR(camera, controls) {
   let beta = 90
   let gamma = 0
 
+  let gotEvent = false   // did any deviceorientation event actually fire?
+
   // Smoothed orientation (low-pass) to kill sensor jitter.
   let sAlpha = 0, sBeta = 90, sGamma = 0, primed = false
   const SMOOTH = 0.18   // 0..1, higher = snappier
@@ -55,6 +57,7 @@ export function createDeviceOrientationAR(camera, controls) {
   // ── Device orientation handler ─────────────────────────────────────────────
   function onDeviceOrientation(e) {
     if (!active || mode !== 'device') return
+    gotEvent = true
     const rawHeading = e.webkitCompassHeading ?? ((360 - (e.alpha || 0)) % 360)
     if (!primed) { sAlpha = rawHeading; sBeta = e.beta || 90; sGamma = e.gamma || 0; primed = true }
     sAlpha = lerpAngle(sAlpha, rawHeading, SMOOTH)
@@ -91,6 +94,7 @@ export function createDeviceOrientationAR(camera, controls) {
     controls.enabled = false
 
     if (_mobile) {
+      gotEvent = false
       await requestPermission()
       window.addEventListener('deviceorientation', onDeviceOrientation, true)
       mode = 'device'
@@ -149,5 +153,7 @@ export function createDeviceOrientationAR(camera, controls) {
   function isActive() { return active }
   function isMobile() { return _mobile }
 
-  return { enable, disable, update, isActive, isMobile }
+  function hadMotion() { return gotEvent }
+
+  return { enable, disable, update, isActive, isMobile, hadMotion }
 }
