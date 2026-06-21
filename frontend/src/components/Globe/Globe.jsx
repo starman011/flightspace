@@ -1199,6 +1199,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     isARSupported: () => !!int.current.arController?.isMobile(),
     isMobileAR: () => !!int.current.arController?.isMobile(),
     hadMotionEvents: () => (int.current.arController?.hadMotion ? int.current.arController.hadMotion() : false),
+    getSkyTilt: () => (int.current.arController?.getBeta ? int.current.arController.getBeta() : null),
     // Live RA/Dec the camera points at in deep space (for the sky readout).
     getGalaxyHeading: () => galaxyHeadingRef.current,
     // Lock the on-screen sky to the real sky (needs an observer location first).
@@ -2613,13 +2614,23 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           return { name: L.name, x, y, depth: _skyProj.z, priority: L.priority, _el: L.div, onScreen }
         })
         // ── "Looking at": name the object nearest screen centre (the reticle) ──
+        // Hysteresis stops the label flickering: acquire within 90px, hold until
+        // 140px, and only switch if a rival is clearly (>22px) closer.
         const cx = w / 2, cy = h / 2
-        let bestName = null, bestD = 90   // px capture radius around centre
+        let nearName = null, nearD = Infinity
         for (const c of cands) {
           if (!c.onScreen || c.depth >= 1) continue
           const d = Math.hypot(c.x - cx, c.y - cy)
-          if (d < bestD) { bestD = d; bestName = c.name }
+          if (d < nearD) { nearD = d; nearName = c.name }
         }
+        const prev = int.current._lookTarget
+        const prevCand = prev && cands.find(c => c.name === prev && c.onScreen && c.depth < 1)
+        const prevD = prevCand ? Math.hypot(prevCand.x - cx, prevCand.y - cy) : Infinity
+        let bestName
+        if (prev && prevD < 140 && !(nearName && nearD < prevD - 22)) bestName = prev   // keep current
+        else if (nearName && nearD < 90) bestName = nearName                            // acquire new
+        else bestName = null
+        int.current._lookTarget = bestName
         if (galaxyHeadingRef.current) galaxyHeadingRef.current.target = bestName
         const keep = new Set(pickVisibleLabels(cands, { maxLabels: 14, minGapPx: 46 }).map(c => c.name))
         if (bestName) keep.add(bestName)   // always show what you're pointing at

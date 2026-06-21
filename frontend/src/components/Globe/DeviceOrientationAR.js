@@ -33,7 +33,7 @@ export function createDeviceOrientationAR(camera, controls) {
 
   // Smoothed orientation (low-pass) to kill sensor jitter.
   let sAlpha = 0, sBeta = 90, sGamma = 0, primed = false
-  const SMOOTH = 0.18   // 0..1, higher = snappier
+  const SMOOTH = 0.10   // 0..1, lower = steadier (compass is noisy)
   const lerpAngle = (a, b, t) => {
     const d = ((b - a + 540) % 360) - 180
     return a + d * t
@@ -154,6 +154,9 @@ export function createDeviceOrientationAR(camera, controls) {
   function isMobile() { return _mobile }
 
   function hadMotion() { return gotEvent }
+  // Smoothed front-back tilt (beta). ~0 = phone lying flat (on a desk / face up),
+  // ~90 = held upright, >100 = tilted up toward the sky. null until primed.
+  function getBeta() { return (mode === 'device' && primed) ? sBeta : null }
 
-  return { enable, disable, update, isActive, isMobile, hadMotion }
+  return { enable, disable, update, isActive, isMobile, hadMotion, getBeta }
 }

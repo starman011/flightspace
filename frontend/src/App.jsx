@@ -212,6 +212,7 @@ export default function App() {
   const [skyHeading, setSkyHeading] = useState(null)   // { raHms, decDms } live readout
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
   const [arMsg, setArMsg] = useState(null)             // status/diagnostic toast for sky view
+  const [skyFlat, setSkyFlat] = useState(false)        // phone lying flat → prompt to lift it
   const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
@@ -473,6 +474,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       setSkyHeading(null)
       setSkyLocated(false)
       setArMsg(null)
+      setSkyFlat(false)
       return
     }
     const res = await globeRef.current?.enableAR?.()
@@ -523,6 +525,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     const id = setInterval(() => {
       const hd = globeRef.current?.getGalaxyHeading?.()
       if (hd && typeof hd.ra === 'number') setSkyHeading({ raHms: fmtRA(hd.ra), decDms: fmtDec(hd.dec), target: hd.target || null })
+      const tilt = globeRef.current?.getSkyTilt?.()      // null on desktop (mouse mode)
+      setSkyFlat(typeof tilt === 'number' && tilt < 30)  // ~flat = on a desk / pointing down
     }, 250)
     return () => clearInterval(id)
   }, [arActive, activeScale])
@@ -927,7 +931,22 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       )}
 
       {activeScale === 'galaxy' && (
-        <SkyReticle active={arActive} heading={skyHeading} located={skyLocated} />
+        <SkyReticle active={arActive && !skyFlat} heading={skyHeading} located={skyLocated} />
+      )}
+
+      {activeScale === 'galaxy' && arActive && skyFlat && (
+        <div style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+          zIndex: 201, maxWidth: 'min(80vw, 320px)', textAlign: 'center',
+          background: 'rgba(6,12,18,0.9)', backdropFilter: 'blur(14px)',
+          border: '1px solid rgba(178,255,26,0.3)', borderRadius: 14,
+          padding: '16px 20px', color: 'rgba(220,230,245,0.95)',
+          fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5,
+          boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+        }}>
+          <div style={{ fontSize: 26, marginBottom: 6 }}>📱↑</div>
+          Lift your phone toward the sky to look around
+        </div>
       )}
 
       {activeScale === 'galaxy' && arMsg && (
