@@ -2614,24 +2614,46 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           return { name: L.name, x, y, depth: _skyProj.z, priority: L.priority, _el: L.div, onScreen }
         })
         // ── "Looking at": name the object nearest screen centre (the reticle) ──
-        // Hysteresis stops the label flickering: acquire within 90px, hold until
-        // 140px, and only switch if a rival is clearly (>22px) closer.
         const cx = w / 2, cy = h / 2
+
+        // Throttled: project the night-sky targets (all 89 constellations + any
+        // planet/Moon currently up) and cache their screen positions — too many
+        // to project every frame.
+        const _now = performance.now()
+        if (_now - (int.current._skyScrAt || 0) > 120 && galaxySystem.getSkyTargets) {
+          int.current._skyScrAt = _now
+          const arr = []
+          for (const t of galaxySystem.getSkyTargets()) {
+            _skyProj.set(t.x, t.y, t.z).project(camera)
+            if (_skyProj.z >= 1) continue
+            const x = (_skyProj.x * 0.5 + 0.5) * w
+            const y = (-_skyProj.y * 0.5 + 0.5) * h
+            if (x < 0 || x > w || y < 0 || y > h) continue
+            arr.push({ name: t.name, x, y })
+          }
+          int.current._skyScreen = arr
+        }
+
+        // Combined name candidates: my silver labels (stars/DSOs) + the cached
+        // constellations/planets. Hysteresis stops the name flickering.
+        const nameCands = int.current._skyScreen ? int.current._skyScreen.slice() : []
+        for (const c of cands) if (c.onScreen && c.depth < 1) nameCands.push({ name: c.name, x: c.x, y: c.y })
+
         let nearName = null, nearD = Infinity
-        for (const c of cands) {
-          if (!c.onScreen || c.depth >= 1) continue
+        for (const c of nameCands) {
           const d = Math.hypot(c.x - cx, c.y - cy)
           if (d < nearD) { nearD = d; nearName = c.name }
         }
         const prev = int.current._lookTarget
-        const prevCand = prev && cands.find(c => c.name === prev && c.onScreen && c.depth < 1)
-        const prevD = prevCand ? Math.hypot(prevCand.x - cx, prevCand.y - cy) : Infinity
+        const prevC = prev && nameCands.find(c => c.name === prev)
+        const prevD = prevC ? Math.hypot(prevC.x - cx, prevC.y - cy) : Infinity
         let bestName
         if (prev && prevD < 140 && !(nearName && nearD < prevD - 22)) bestName = prev   // keep current
         else if (nearName && nearD < 90) bestName = nearName                            // acquire new
         else bestName = null
         int.current._lookTarget = bestName
         if (galaxyHeadingRef.current) galaxyHeadingRef.current.target = bestName
+
         const keep = new Set(pickVisibleLabels(cands, { maxLabels: 14, minGapPx: 46 }).map(c => c.name))
         if (bestName) keep.add(bestName)   // always show what you're pointing at
         for (const c of cands) {

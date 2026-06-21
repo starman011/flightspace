@@ -17,7 +17,7 @@ import {
   LineSegments, LineBasicMaterial,
   Mesh, SphereGeometry, PlaneGeometry, MeshBasicMaterial,
   BackSide, FrontSide, CanvasTexture, Color, Sprite, SpriteMaterial,
-  TextureLoader,
+  TextureLoader, Vector3,
 } from 'three'
 import * as Astronomy from 'astronomy-engine'
 import { BSC5_STARS } from './starData.js'
@@ -598,12 +598,33 @@ export function createNightSkyScene(scene) {
     scene.remove(skyGroup)
   }
 
+  // Live world-space directions + names of nameable sky objects (all 89
+  // constellations + any planet/Moon currently above the horizon). Used by the
+  // "looking at" reticle. Honors the real-sky alignment (skyGroup.quaternion).
+  const _stWorld = new Vector3()
+  function getSkyTargets() {
+    const out = []
+    for (const cm of constMeta) {
+      const len = Math.sqrt(cm.cx * cm.cx + cm.cy * cm.cy + cm.cz * cm.cz)
+      if (!len) continue
+      _stWorld.set(cm.cx / len, cm.cy / len, cm.cz / len)
+        .multiplyScalar(LABEL_R).applyQuaternion(skyGroup.quaternion)
+      out.push({ name: cm.name, x: _stWorld.x, y: _stWorld.y, z: _stWorld.z })
+    }
+    for (const pm of planetMarkers) {
+      if (!pm.label.visible) continue   // only objects currently up
+      pm.dot.getWorldPosition(_stWorld)
+      out.push({ name: pm.key, x: _stWorld.x, y: _stWorld.y, z: _stWorld.z })
+    }
+    return out
+  }
+
   return {
     skyGroup,
     starData: STAR_NAMES,
     constellationData: constMeta,
     planetMarkers,
-    show, showSkyOnly, hide, update, dispose,
+    show, showSkyOnly, hide, update, dispose, getSkyTargets,
   }
 }
 
