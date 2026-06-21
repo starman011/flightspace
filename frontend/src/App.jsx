@@ -522,7 +522,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     }
     const id = setInterval(() => {
       const hd = globeRef.current?.getGalaxyHeading?.()
-      if (hd && typeof hd.ra === 'number') setSkyHeading({ raHms: fmtRA(hd.ra), decDms: fmtDec(hd.dec) })
+      if (hd && typeof hd.ra === 'number') setSkyHeading({ raHms: fmtRA(hd.ra), decDms: fmtDec(hd.dec), target: hd.target || null })
     }, 250)
     return () => clearInterval(id)
   }, [arActive, activeScale])

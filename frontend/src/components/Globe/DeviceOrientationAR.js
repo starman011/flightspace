@@ -139,7 +139,7 @@ export function createDeviceOrientationAR(camera, controls) {
       const alt = (beta - 90) * DEG
       const roll = gamma * DEG + screenAngle()   // compensate portrait/landscape
       camera.rotation.order = 'ZXY'
-      camera.rotation.x = alt
+      camera.rotation.x = -alt                    // tilt up → look up (was inverted)
       camera.rotation.y = -az
       camera.rotation.z = -roll
     } else if (mode === 'mouse') {

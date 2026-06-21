@@ -2612,13 +2612,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const onScreen = x >= -40 && x <= w + 40 && y >= -20 && y <= h + 20
           return { name: L.name, x, y, depth: _skyProj.z, priority: L.priority, _el: L.div, onScreen }
         })
+        // ── "Looking at": name the object nearest screen centre (the reticle) ──
+        const cx = w / 2, cy = h / 2
+        let bestName = null, bestD = 90   // px capture radius around centre
+        for (const c of cands) {
+          if (!c.onScreen || c.depth >= 1) continue
+          const d = Math.hypot(c.x - cx, c.y - cy)
+          if (d < bestD) { bestD = d; bestName = c.name }
+        }
+        if (galaxyHeadingRef.current) galaxyHeadingRef.current.target = bestName
         const keep = new Set(pickVisibleLabels(cands, { maxLabels: 14, minGapPx: 46 }).map(c => c.name))
+        if (bestName) keep.add(bestName)   // always show what you're pointing at
         for (const c of cands) {
           if (keep.has(c.name)) {
             c._el.style.display = 'block'
             c._el.style.transform = `translate(-50%, -50%) translate(${c.x}px, ${c.y}px)`
+            c._el.classList.toggle(styles.skyLabelActive, c.name === bestName)
           } else {
             c._el.style.display = 'none'
+            c._el.classList.remove(styles.skyLabelActive)
           }
         }
       } else if (skyLabelEls[0] && skyLabelEls[0].div.style.display !== 'none') {
