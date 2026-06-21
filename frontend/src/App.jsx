@@ -477,9 +477,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     }
     const res = await globeRef.current?.enableAR?.()
     if (res !== 'ok') {
-      setArMsg(res === 'denied'
+      const m = (typeof res === 'string' && res.startsWith('err:')) ? res.slice(4).trim() : 'unknown'
+      setArMsg(/denied|permission|notallowed/i.test(m)
         ? 'Motion access is blocked. iOS: Settings → Safari → Motion & Orientation Access (on), then tap again.'
-        : 'Could not start sky view on this device/browser.')
+        : 'Sky view couldn’t start: ' + m)
       return
     }
     setArActive(true)
