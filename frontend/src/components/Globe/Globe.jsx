@@ -1190,6 +1190,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     },
     disableAR: () => arController.disable(),
     isARSupported: () => arController.isMobile() && arController.isSupported(),
+    // Live RA/Dec the camera points at in deep space (for the sky readout).
+    getGalaxyHeading: () => galaxyHeadingRef.current,
+    // Ask for the user's location (used to align the on-screen sky to the real
+    // sky). Best-effort: resolves to {lat,lon} or null if denied/unavailable.
+    requestLocation: () => new Promise((resolve) => {
+      if (!navigator.geolocation) { resolve(null); return }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { const o = { lat: pos.coords.latitude, lon: pos.coords.longitude }; int.current.observer = o; resolve(o) },
+        () => resolve(null),
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+      )
+    }),
     flyToPlanet: (name) => {
       const { camera, solarSystem } = int.current
       if (!camera || !solarSystem) return

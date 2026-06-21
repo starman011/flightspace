@@ -54,6 +54,7 @@ import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
 import ContextBanner from './components/ContextBanner/ContextBanner'
 import LiveNudge from './components/LiveNudge/LiveNudge'
+import SkyReticle from './components/SkyReticle/SkyReticle'
 import SiteFooter from './components/SiteFooter/SiteFooter'
 import WindLegend from './components/WindLegend/WindLegend'
 import { AIRPORTS } from './components/Globe/airportData'
@@ -208,6 +209,8 @@ export default function App() {
   })
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [arActive, setArActive] = useState(false)
+  const [skyHeading, setSkyHeading] = useState(null)   // { raHms, decDms } live readout
+  const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
   const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
@@ -465,11 +468,40 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     if (arActive) {
       globeRef.current?.disableAR?.()
       setArActive(false)
+      setSkyHeading(null)
+      setSkyLocated(false)
     } else {
       const ok = await globeRef.current?.enableAR?.()
-      if (ok) setArActive(true)
+      if (ok) {
+        setArActive(true)
+        // On mobile, also ask for location so we can tell where in the real sky
+        // the phone is pointing (best-effort — ignores denial).
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+        if (isMobile) {
+          const loc = await globeRef.current?.requestLocation?.()
+          setSkyLocated(!!loc)
+        }
+      }
     }
   }, [arActive])
+
+  // Poll the live RA/Dec the camera points at while exploring deep space.
+  useEffect(() => {
+    if (!arActive || activeScale !== 'galaxy') return
+    const fmtRA = (deg) => {
+      const h = deg / 15, hh = Math.floor(h), mm = Math.floor((h - hh) * 60)
+      return `${String(hh).padStart(2, '0')}h ${String(mm).padStart(2, '0')}m`
+    }
+    const fmtDec = (deg) => {
+      const s = deg < 0 ? '-' : '+', a = Math.abs(deg), dd = Math.floor(a), mm = Math.floor((a - dd) * 60)
+      return `${s}${String(dd).padStart(2, '0')}° ${String(mm).padStart(2, '0')}'`
+    }
+    const id = setInterval(() => {
+      const hd = globeRef.current?.getGalaxyHeading?.()
+      if (hd && typeof hd.ra === 'number') setSkyHeading({ raHms: fmtRA(hd.ra), decDms: fmtDec(hd.dec) })
+    }, 250)
+    return () => clearInterval(id)
+  }, [arActive, activeScale])
 
   // Central reset: clears filter + returns camera to earth (used by DeepSpacePanel close)
   const handleClearFilter = useCallback(() => {
@@ -862,8 +894,16 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             transition: 'all 0.2s ease',
           }}
         >
-          {arActive ? 'Exit Free Look' : 'Free Look'}
+          {(() => {
+            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+            if (isMobile) return arActive ? 'Exit Sky View' : 'Point at the Sky'
+            return arActive ? 'Exit Free Look' : 'Free Look'
+          })()}
         </button>
+      )}
+
+      {activeScale === 'galaxy' && (
+        <SkyReticle active={arActive} heading={skyHeading} located={skyLocated} />
       )}
 
       {/* ── Static pages ── */}
