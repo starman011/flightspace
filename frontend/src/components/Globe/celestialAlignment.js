@@ -41,7 +41,7 @@ export function raDecToAltAz(raDeg, decDeg, latDeg, lstDegVal) {
 }
 
 // Unit vector (East, North, Up) for an equatorial (ra,dec) at this site/time.
-function raDecToENU(raDeg, decDeg, latDeg, lstDegVal) {
+export function raDecToENU(raDeg, decDeg, latDeg, lstDegVal) {
   const { alt, az } = raDecToAltAz(raDeg, decDeg, latDeg, lstDegVal)
   const a = alt * D, A = az * D
   return { e: Math.cos(a) * Math.sin(A), n: Math.cos(a) * Math.cos(A), u: Math.sin(a) }

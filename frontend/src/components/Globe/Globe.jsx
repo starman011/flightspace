@@ -34,6 +34,7 @@ import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
 import { SKY_OBJECTS } from './skyObjects.js'
 import { pickVisibleLabels } from './skyLabelLayout.js'
+import { lstDeg, raDecToENU } from './celestialAlignment.js'
 import CompassBar from './CompassBar.jsx'
 import styles from './Globe.module.css'
 
@@ -1186,12 +1187,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     },
     enableAR: async () => {
       try { await arController.enable(); return true }
-      catch { return false }
+      catch (e) { console.warn('[AR] enable failed:', e?.message || e); return false }
     },
     disableAR: () => arController.disable(),
-    isARSupported: () => arController.isMobile() && arController.isSupported(),
+    isARSupported: () => arController.isMobile(),
     // Live RA/Dec the camera points at in deep space (for the sky readout).
     getGalaxyHeading: () => galaxyHeadingRef.current,
+    // Lock the on-screen sky to the real sky (needs an observer location first).
+    enableSkyAlign: () => { if (int.current.observer) { int.current.skyAligned = true; int.current._skyAlignAt = 0; return true } return false },
+    disableSkyAlign: () => {
+      int.current.skyAligned = false
+      int.current.desiLayer?.group.quaternion.identity()
+      // galaxySystem.skyGroup reset happens in the tick guard below
+      int.current._skyResetPending = true
+    },
     // Ask for the user's location (used to align the on-screen sky to the real
     // sky). Best-effort: resolves to {lat,lon} or null if denied/unavailable.
     requestLocation: () => new Promise((resolve) => {
@@ -1562,6 +1571,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const desiLayer = createDESILayer()
     int.current.desiLayer = desiLayer
     scene.add(desiLayer.group)
+    // Real-sky alignment state (opt-in "Point at the Sky" mode). When false the
+    // celestial groups keep identity rotation = the normal free-look behaviour.
+    int.current.skyAligned = false
+    int.current.observer = int.current.observer || null   // {lat,lon} from geolocation
+    int.current._skyAlignAt = 0
+    const _alignMat = new Matrix4()
 
     // Hidden by default; shown when cameraScale transitions to 'moon'.
     const moonScene = createMoonScene(scene)
@@ -2535,9 +2550,41 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       if (galaxySystem.skyGroup.visible) {
         galaxySystem.update()
         if (arController.isActive()) arController.update()
-        // Compute camera heading for compass bar
+
+        // ── Real-sky alignment (opt-in). Rotate the celestial groups so RA/Dec
+        // content lines up with the real sky for this observer + time. ────────
+        // AXIS CONVENTION (the on-device tuning knob): the scene places objects
+        // by raDecToXYZ → equatorial basis +X=(ra0,dec0), +Y=NCP, +Z=(ra270,dec0).
+        // The device horizontal frame maps to world as East=+X, Up=+Y, North=-Z,
+        // so an ENU vector {e,n,u} → world (e, u, -n). If alignment is off on a
+        // real phone, flip a sign / swap an axis here.
+        if (int.current.skyAligned && int.current.observer) {
+          const now = Date.now()
+          if (now - int.current._skyAlignAt > 1000) {
+            int.current._skyAlignAt = now
+            const { lat, lon } = int.current.observer
+            const lst = lstDeg(new Date(), lon)
+            const ex = raDecToENU(0,   0,  lat, lst)   // content +X image (ENU)
+            const ey = raDecToENU(0,   90, lat, lst)   // content +Y (NCP) image
+            const ez = raDecToENU(270, 0,  lat, lst)   // content +Z image
+            _alignMat.makeBasis(
+              new Vector3(ex.e, ex.u, -ex.n),
+              new Vector3(ey.e, ey.u, -ey.n),
+              new Vector3(ez.e, ez.u, -ez.n),
+            )
+            desiLayer.group.quaternion.setFromRotationMatrix(_alignMat)
+            galaxySystem.skyGroup.quaternion.copy(desiLayer.group.quaternion)
+          }
+        } else if (int.current._skyResetPending) {
+          int.current._skyResetPending = false
+          galaxySystem.skyGroup.quaternion.identity()
+        }
+
+        // Compute camera heading. When sky-aligned, the equatorial direction is
+        // the camera direction un-rotated by the alignment quaternion.
         const _dir = new Vector3()
         camera.getWorldDirection(_dir)
+        if (int.current.skyAligned) _dir.applyQuaternion(desiLayer.group.quaternion.clone().invert())
         const _ra = ((Math.atan2(-_dir.z, _dir.x) * 180 / Math.PI) + 360) % 360
         const _dec = Math.asin(Math.min(1, Math.max(-1, _dir.y / _dir.length()))) * 180 / Math.PI
         galaxyHeadingRef.current = { ra: _ra, dec: _dec }
@@ -2546,8 +2593,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Sky-object silver labels (galaxy scale)
       if (int.current.targetCameraScale === 'galaxy') {
         const w = el.clientWidth, h = el.clientHeight
+        const _aligned = int.current.skyAligned
         const cands = skyLabelEls.map(L => {
-          _skyProj.copy(L.world).project(camera)
+          _skyProj.copy(L.world)
+          if (_aligned) _skyProj.applyQuaternion(desiLayer.group.quaternion)
+          _skyProj.project(camera)
           const x = (_skyProj.x * 0.5 + 0.5) * w
           const y = (-_skyProj.y * 0.5 + 0.5) * h
           const onScreen = x >= -40 && x <= w + 40 && y >= -20 && y <= h + 20

@@ -467,6 +467,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handleARToggle = useCallback(async () => {
     if (arActive) {
       globeRef.current?.disableAR?.()
+      globeRef.current?.disableSkyAlign?.()
       setArActive(false)
       setSkyHeading(null)
       setSkyLocated(false)
@@ -474,11 +475,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       const ok = await globeRef.current?.enableAR?.()
       if (ok) {
         setArActive(true)
-        // On mobile, also ask for location so we can tell where in the real sky
-        // the phone is pointing (best-effort — ignores denial).
+        // On mobile, also ask for location and lock the on-screen sky to the
+        // real sky (best-effort — ignores denial).
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
         if (isMobile) {
           const loc = await globeRef.current?.requestLocation?.()
+          if (loc) globeRef.current?.enableSkyAlign?.()
           setSkyLocated(!!loc)
         }
       }
