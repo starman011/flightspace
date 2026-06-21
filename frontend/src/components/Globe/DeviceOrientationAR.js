@@ -29,6 +29,18 @@ export function createDeviceOrientationAR(camera, controls) {
   let beta = 90
   let gamma = 0
 
+  // Smoothed orientation (low-pass) to kill sensor jitter.
+  let sAlpha = 0, sBeta = 90, sGamma = 0, primed = false
+  const SMOOTH = 0.18   // 0..1, higher = snappier
+  const lerpAngle = (a, b, t) => {
+    const d = ((b - a + 540) % 360) - 180
+    return a + d * t
+  }
+  function screenAngle() {
+    const o = (screen.orientation && screen.orientation.angle)
+    return (o != null ? o : (window.orientation || 0)) * DEG
+  }
+
   // Mouse free-look state
   let yaw = 0
   let pitch = 0
@@ -43,9 +55,12 @@ export function createDeviceOrientationAR(camera, controls) {
   // ── Device orientation handler ─────────────────────────────────────────────
   function onDeviceOrientation(e) {
     if (!active || mode !== 'device') return
-    compassHeading = e.webkitCompassHeading ?? ((360 - (e.alpha || 0)) % 360)
-    beta = e.beta || 0
-    gamma = e.gamma || 0
+    const rawHeading = e.webkitCompassHeading ?? ((360 - (e.alpha || 0)) % 360)
+    if (!primed) { sAlpha = rawHeading; sBeta = e.beta || 90; sGamma = e.gamma || 0; primed = true }
+    sAlpha = lerpAngle(sAlpha, rawHeading, SMOOTH)
+    sBeta  = sBeta  + ((e.beta  || 0) - sBeta)  * SMOOTH
+    sGamma = sGamma + ((e.gamma || 0) - sGamma) * SMOOTH
+    compassHeading = sAlpha; beta = sBeta; gamma = sGamma
   }
 
   // ── Mouse handlers for desktop free-look ───────────────────────────────────
@@ -96,6 +111,7 @@ export function createDeviceOrientationAR(camera, controls) {
 
   function disable() {
     active = false
+    primed = false
 
     if (mode === 'device') {
       window.removeEventListener('deviceorientation', onDeviceOrientation, true)
@@ -117,7 +133,7 @@ export function createDeviceOrientationAR(camera, controls) {
     if (mode === 'device') {
       const az = compassHeading * DEG
       const alt = (beta - 90) * DEG
-      const roll = gamma * DEG
+      const roll = gamma * DEG + screenAngle()   // compensate portrait/landscape
       camera.rotation.order = 'ZXY'
       camera.rotation.x = alt
       camera.rotation.y = -az
