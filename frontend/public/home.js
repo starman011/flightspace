@@ -10,7 +10,8 @@
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
   window.gtag('js', new Date());
-  window.gtag('config', GA_ID);
+  // Disable Google Signals / ad-personalization (avoids CSP-blocked ad beacons).
+  window.gtag('config', GA_ID, { allow_google_signals: false, allow_ad_personalization_signals: false });
 })();
 
 // ── Explore dropdown: text list (left) + image preview (right) that swaps on hover

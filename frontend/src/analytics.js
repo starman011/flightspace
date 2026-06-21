@@ -14,5 +14,7 @@ export function initGA() {
   function gtag() { window.dataLayer.push(arguments) }
   window.gtag = gtag
   gtag('js', new Date())
-  gtag('config', id)
+  // Disable Google Signals / ad-personalization so GA doesn't fire ad-audience
+  // beacons to google.com / google.<cc> domains (they tripped CSP and add noise).
+  gtag('config', id, { allow_google_signals: false, allow_ad_personalization_signals: false })
 }
