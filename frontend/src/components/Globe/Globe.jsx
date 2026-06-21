@@ -32,6 +32,8 @@ import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
+import { SKY_OBJECTS } from './skyObjects.js'
+import { pickVisibleLabels } from './skyLabelLayout.js'
 import CompassBar from './CompassBar.jsx'
 import styles from './Globe.module.css'
 
@@ -1674,6 +1676,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       return { div, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
     })
 
+    // ── Silver labels for familiar sky objects (galaxy scale only) ──
+    const SKY_LABEL_RADIUS = zToRadius(0.0001) * 0.98   // just inside the near shell
+    const skyLabelEls = SKY_OBJECTS.map(o => {
+      const div = document.createElement('div')
+      div.className = styles.skyLabel
+      div.dataset.kind = o.kind
+      div.textContent = o.name
+      div.style.display = 'none'
+      labelContainer.appendChild(div)
+      const pos = raDecToXYZ(o.ra, o.dec, SKY_LABEL_RADIUS)  // returns [x, y, z]
+      return { ...o, div, world: new Vector3(pos[0], pos[1], pos[2]) }
+    })
+    const _skyProj = new Vector3()
+
     let mapDestroyed = false
 
     // ── Tile system: priority-queue quadtree loader ───────────────────
@@ -2515,6 +2531,30 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         galaxyHeadingRef.current = { ra: _ra, dec: _dec }
       }
 
+      // Sky-object silver labels (galaxy scale)
+      if (int.current.targetCameraScale === 'galaxy') {
+        const w = el.clientWidth, h = el.clientHeight
+        const cands = skyLabelEls.map(L => {
+          _skyProj.copy(L.world).project(camera)
+          const x = (_skyProj.x * 0.5 + 0.5) * w
+          const y = (-_skyProj.y * 0.5 + 0.5) * h
+          const onScreen = x >= -40 && x <= w + 40 && y >= -20 && y <= h + 20
+          return { name: L.name, x, y, depth: _skyProj.z, priority: L.priority, _el: L.div, onScreen }
+        })
+        const keep = new Set(pickVisibleLabels(cands, { maxLabels: 14, minGapPx: 46 }).map(c => c.name))
+        for (const c of cands) {
+          if (keep.has(c.name)) {
+            c._el.style.display = 'block'
+            c._el.style.transform = `translate(-50%, -50%) translate(${c.x}px, ${c.y}px)`
+          } else {
+            c._el.style.display = 'none'
+          }
+        }
+      } else if (skyLabelEls[0] && skyLabelEls[0].div.style.display !== 'none') {
+        // Hide all labels when not in galaxy scale
+        for (const L of skyLabelEls) L.div.style.display = 'none'
+      }
+
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
       // At low altitude (street/airport zoom), the globe must feel stiff and
       // precise — a tiny drag should move slowly, not fling across continents.
@@ -2920,6 +2960,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       clearTimeout(int.current?._windRetry)
       windLayer.dispose()
       if (arController.isActive()) arController.disable()
+      for (const L of skyLabelEls) L.div.remove()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
