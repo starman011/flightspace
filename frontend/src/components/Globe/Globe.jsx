@@ -24,6 +24,7 @@ ThreeCache.enabled = true
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { createSolarSystem } from './SolarSystemScene.js'
 import { createNightSkyScene } from './NightSkyScene.js'
+import { createSkyDetailLayer } from './SkyDetailLayer.js'
 import { createDESILayer, raDecToXYZ, zToRadius } from './DESILayer.js'
 import { createDeviceOrientationAR } from './DeviceOrientationAR.js'
 import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEEN_MS, SOLAR_FAR } from './solarSystem.js'
@@ -1200,6 +1201,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     isMobileAR: () => !!int.current.arController?.isMobile(),
     hadMotionEvents: () => (int.current.arController?.hadMotion ? int.current.arController.hadMotion() : false),
     getSkyTilt: () => (int.current.arController?.getBeta ? int.current.arController.getBeta() : null),
+    getSkyImgLoading: () => !!int.current._skyImgLoading,
     // Camera passthrough: make the canvas transparent + show only the overlay
     // (stars/constellations/planets) so the live camera feed shows through.
     enableSkyCamera: (video) => {
@@ -1615,7 +1617,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // Hidden by default; shown when cameraScale transitions to 'galaxy'.
     const galaxySystem = createNightSkyScene(scene)
-    int.current.galaxySystem = galaxySystem   // for imperative sky-camera + Moon calibration
+    int.current.galaxySystem = galaxySystem
+
+    // Adaptive high-res sky imagery: zoom into a region → real DSS2 image of that
+    // field, mapped in place. Child of skyGroup so it inherits the sky alignment.
+    const skyDetail = createSkyDetailLayer()
+    galaxySystem.skyGroup.add(skyDetail.group)
+    skyDetail.onLoading((b) => { int.current._skyImgLoading = b })
+    int.current.skyDetail = skyDetail
+    let _skyDetailSettle = 0
+    const _camQPrev = new Quaternion()   // for imperative sky-camera + Moon calibration
 
     // DESI galaxy layer — 100K real galaxies/quasars, shown in galaxy mode.
     const desiLayer = createDESILayer()
@@ -2717,6 +2728,24 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         for (const L of skyLabelEls) L.div.style.display = 'none'
       }
 
+      // ── Adaptive high-res sky imagery: zoom into a region (and hold still) →
+      // fetch a real DSS2 image of that field and map it in place. ──────────
+      if (int.current.targetCameraScale === 'galaxy') {
+        const angDelta = camera.quaternion.angleTo(_camQPrev)
+        _camQPrev.copy(camera.quaternion)
+        const fov = camera.fov || 40
+        const hd = galaxyHeadingRef.current
+        if (fov < 20 && angDelta < 0.004 && hd && typeof hd.ra === 'number') {
+          _skyDetailSettle += 16   // ≈ ms per frame
+          if (_skyDetailSettle > 550) skyDetail.update(hd.ra, hd.dec, Math.min(fov * 1.1, 18))
+        } else {
+          _skyDetailSettle = 0
+          if (fov >= 22) skyDetail.clear()   // zoomed back out → drop the patch, show the dome
+        }
+      } else {
+        skyDetail.clear()
+      }
+
       // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
       // At low altitude (street/airport zoom), the globe must feel stiff and
       // precise — a tiny drag should move slowly, not fling across continents.
@@ -3123,6 +3152,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       windLayer.dispose()
       if (arController.isActive()) arController.disable()
       for (const L of skyLabelEls) L.div.remove()
+      skyDetail.dispose()
       controls.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)

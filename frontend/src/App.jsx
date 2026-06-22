@@ -213,6 +213,7 @@ export default function App() {
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
   const [arMsg, setArMsg] = useState(null)             // status/diagnostic toast for sky view
   const [skyFlat, setSkyFlat] = useState(false)        // phone lying flat → prompt to lift it
+  const [skyImgLoading, setSkyImgLoading] = useState(false)  // fetching high-res sky cutout
   const [skyCamOn, setSkyCamOn] = useState(false)      // camera passthrough active
   const skyVideoRef = useRef(null)
   const skyStreamRef = useRef(null)
@@ -540,7 +541,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   // Poll the live RA/Dec the camera points at while exploring deep space.
   useEffect(() => {
-    if (!arActive || activeScale !== 'galaxy') return
+    if (activeScale !== 'galaxy') return   // poll in galaxy mode (AR and free-look zoom)
     const fmtRA = (deg) => {
       const h = deg / 15, hh = Math.floor(h), mm = Math.floor((h - hh) * 60)
       return `${String(hh).padStart(2, '0')}h ${String(mm).padStart(2, '0')}m`
@@ -554,6 +555,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       if (hd && typeof hd.ra === 'number') setSkyHeading({ raHms: fmtRA(hd.ra), decDms: fmtDec(hd.dec), target: hd.target || null })
       const tilt = globeRef.current?.getSkyTilt?.()      // null on desktop (mouse mode)
       setSkyFlat(typeof tilt === 'number' && tilt < 30)  // ~flat = on a desk / pointing down
+      setSkyImgLoading(!!globeRef.current?.getSkyImgLoading?.())
     }, 250)
     return () => clearInterval(id)
   }, [arActive, activeScale])
@@ -970,6 +972,17 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {activeScale === 'galaxy' && (
         <SkyReticle active={arActive && !skyFlat} heading={skyHeading} located={skyLocated} />
+      )}
+
+      {activeScale === 'galaxy' && skyImgLoading && (
+        <div style={{
+          position: 'fixed', top: 'calc(50% + 44px)', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 201, fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.1em',
+          color: 'rgba(178,255,26,0.85)', background: 'rgba(6,12,18,0.7)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(178,255,26,0.2)', borderRadius: 999, padding: '5px 12px', pointerEvents: 'none',
+        }}>
+          ◌ loading sky imagery…
+        </div>
       )}
 
       {activeScale === 'galaxy' && arActive && skyFlat && (

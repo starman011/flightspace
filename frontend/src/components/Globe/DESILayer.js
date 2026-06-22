@@ -156,8 +156,11 @@ export function createDESILayer() {
       loading = false
     }
 
-    // Background: try live data from backend (DESI TAP via proxy)
-    refreshFromAPI()
+    // Background refresh from backend ONLY if the static set didn't load. The
+    // live path parses a large binary (per-point BigInt) + rebuilds the cloud
+    // synchronously on the main thread, which froze deep space on entry. The
+    // static 50k galaxies are plenty.
+    if (!loaded) refreshFromAPI()
   }
 
   // Parse compact binary: [uint32 count][per point: uint64 targetid, float32 ra, float32 dec, float32 z, uint8 spectype]
