@@ -573,6 +573,21 @@ export function createNightSkyScene(scene) {
     })
   }
 
+  function showCameraAR() {
+    // Camera-passthrough AR: no opaque dome — the live camera shows through the
+    // transparent canvas. Only draw the discrete overlay "hints": bright stars,
+    // constellation stick-figures + names, and planet/Moon markers.
+    skyGroup.visible = true
+    skyMesh.visible = false      // hide the Mellinger background sphere
+    horizonMesh.visible = false
+    boundaryLines.visible = false
+    starPoints.visible = true
+    constLines.visible = true
+    skyGroup.children.forEach(c => { if (c instanceof Sprite) c.visible = true })
+    _startTime = _startTime || Date.now()
+    try { updatePlanets() } catch (e) { console.warn('NightSky: planet update failed', e) }
+  }
+
   function hide() { skyGroup.visible = false }
 
   function update() {
@@ -624,7 +639,7 @@ export function createNightSkyScene(scene) {
     starData: STAR_NAMES,
     constellationData: constMeta,
     planetMarkers,
-    show, showSkyOnly, hide, update, dispose, getSkyTargets,
+    show, showSkyOnly, showCameraAR, hide, update, dispose, getSkyTargets,
   }
 }
 

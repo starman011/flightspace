@@ -213,6 +213,9 @@ export default function App() {
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
   const [arMsg, setArMsg] = useState(null)             // status/diagnostic toast for sky view
   const [skyFlat, setSkyFlat] = useState(false)        // phone lying flat → prompt to lift it
+  const [skyCamOn, setSkyCamOn] = useState(false)      // camera passthrough active
+  const skyVideoRef = useRef(null)
+  const skyStreamRef = useRef(null)
   const [liveToast, setLiveToast] = useState(false)
   const collapseTimerRef = useRef(null)
   const globeRef = useRef(null)
@@ -466,10 +469,32 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     globeRef.current?.flyToMoonSite?.(siteId)
   }, [])
 
+  const startSkyCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      skyStreamRef.current = stream
+      if (skyVideoRef.current) { skyVideoRef.current.srcObject = stream; skyVideoRef.current.play().catch(() => {}) }
+      globeRef.current?.enableSkyCamera?.()
+      setSkyCamOn(true)
+      return true
+    } catch (e) {
+      console.warn('[sky camera] unavailable:', e?.message || e)
+      return false   // fall back to the starfield background
+    }
+  }, [])
+
+  const stopSkyCamera = useCallback(() => {
+    globeRef.current?.disableSkyCamera?.()
+    if (skyStreamRef.current) { skyStreamRef.current.getTracks().forEach(t => t.stop()); skyStreamRef.current = null }
+    if (skyVideoRef.current) skyVideoRef.current.srcObject = null
+    setSkyCamOn(false)
+  }, [])
+
   const handleARToggle = useCallback(async () => {
     if (arActive) {
       globeRef.current?.disableAR?.()
       globeRef.current?.disableSkyAlign?.()
+      stopSkyCamera()
       setArActive(false)
       setSkyHeading(null)
       setSkyLocated(false)
@@ -493,6 +518,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       const loc = await globeRef.current?.requestLocation?.()
       if (loc) globeRef.current?.enableSkyAlign?.()
       setSkyLocated(!!loc)
+      // Live camera passthrough behind the overlay (best-effort).
+      await startSkyCamera()
       // If no orientation events arrive, the browser is blocking the sensor.
       setTimeout(() => {
         if (globeRef.current?.hadMotionEvents?.() === false) {
@@ -502,7 +529,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     } else {
       setArMsg('Drag to look around the sky')
     }
-  }, [arActive])
+  }, [arActive, startSkyCamera, stopSkyCamera])
 
   // Auto-dismiss the sky-view status message.
   useEffect(() => {
@@ -572,6 +599,19 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       `}</style>
 
       {showLoading && <LoadingScreen duration={2500} onDone={() => setShowLoading(false)} />}
+
+      {/* Camera passthrough for Point-at-the-Sky AR — sits behind the transparent globe canvas */}
+      <video
+        ref={skyVideoRef}
+        playsInline
+        muted
+        autoPlay
+        style={{
+          position: 'fixed', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', zIndex: 0, background: '#000',
+          display: skyCamOn ? 'block' : 'none',
+        }}
+      />
 
       {showFlightLanding && init.selectedIcao24 && (
         <FlightLanding
@@ -947,6 +987,26 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           <div style={{ fontSize: 26, marginBottom: 6 }}>📱↑</div>
           Lift your phone toward the sky to look around
         </div>
+      )}
+
+      {activeScale === 'galaxy' && arActive && skyLocated && (
+        <button
+          onClick={() => {
+            const ok = globeRef.current?.calibrateOnMoon?.()
+            setArMsg(ok ? 'Aligned to the Moon ✓' : 'Point the centre at the Moon (it must be up), then tap Align')
+          }}
+          style={{
+            position: 'fixed', bottom: 90, right: 14, zIndex: 201,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(6,12,18,0.85)', backdropFilter: 'blur(14px)',
+            border: '1px solid rgba(178,255,26,0.3)', borderRadius: 11,
+            padding: '9px 13px', cursor: 'pointer', color: '#b2ff1a',
+            fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}
+        >
+          ◐ Align on Moon
+        </button>
       )}
 
       {activeScale === 'galaxy' && arMsg && (

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Vector3, Vector2, Matrix4, Color, MathUtils,
+  Vector3, Vector2, Matrix4, Quaternion, Color, MathUtils,
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
   PlaneGeometry, SphereGeometry, TubeGeometry, CatmullRomCurve3,
@@ -1200,6 +1200,42 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     isMobileAR: () => !!int.current.arController?.isMobile(),
     hadMotionEvents: () => (int.current.arController?.hadMotion ? int.current.arController.hadMotion() : false),
     getSkyTilt: () => (int.current.arController?.getBeta ? int.current.arController.getBeta() : null),
+    // Camera passthrough: make the canvas transparent + show only the overlay
+    // (stars/constellations/planets) so the live camera feed shows through.
+    enableSkyCamera: () => {
+      const r = int.current.renderer
+      if (r) {
+        int.current._savedClear = r.getClearColor(new Color())
+        int.current._savedClearA = r.getClearAlpha()
+        r.setClearColor(0x000000, 0)
+      }
+      int.current.desiLayer?.hide?.()
+      int.current.galaxySystem?.showCameraAR?.()
+    },
+    disableSkyCamera: () => {
+      const r = int.current.renderer
+      if (r) r.setClearColor(int.current._savedClear || new Color(0x0f1419), int.current._savedClearA ?? 1)
+      int.current.desiLayer?.show?.()
+      int.current.galaxySystem?.showSkyOnly?.()
+    },
+    // Manual calibration: point the phone at the real Moon and call this — it
+    // corrects compass drift by snapping the predicted Moon to the view centre.
+    calibrateOnMoon: () => {
+      const gs = int.current.galaxySystem, cam = int.current.camera
+      if (!gs || !cam || !gs.planetMarkers) return false
+      const moon = gs.planetMarkers.find(p => p.key === 'Moon')
+      if (!moon || !moon.label.visible) return false   // Moon not currently up
+      const moonW = new Vector3()
+      moon.dot.getWorldPosition(moonW)
+      if (moonW.lengthSq() === 0) return false
+      moonW.normalize()
+      const look = new Vector3()
+      cam.getWorldDirection(look)
+      const delta = new Quaternion().setFromUnitVectors(moonW, look)
+      int.current.skyCalib = int.current.skyCalib ? delta.multiply(int.current.skyCalib) : delta
+      int.current._skyAlignAt = 0   // force immediate re-apply
+      return true
+    },
     // Live RA/Dec the camera points at in deep space (for the sky readout).
     getGalaxyHeading: () => galaxyHeadingRef.current,
     // Lock the on-screen sky to the real sky (needs an observer location first).
@@ -1284,10 +1320,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const el = mountRef.current
     if (!el) return
 
-    const renderer = new WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
+    const renderer = new WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(el.clientWidth, el.clientHeight)
     renderer.setClearColor(0x0f1419)
+    int.current.renderer = renderer   // for imperative sky-camera transparency
     el.appendChild(renderer.domElement)
 
     const scene  = new Scene()
@@ -1575,6 +1612,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // Hidden by default; shown when cameraScale transitions to 'galaxy'.
     const galaxySystem = createNightSkyScene(scene)
+    int.current.galaxySystem = galaxySystem   // for imperative sky-camera + Moon calibration
 
     // DESI galaxy layer — 100K real galaxies/quasars, shown in galaxy mode.
     const desiLayer = createDESILayer()
@@ -1585,7 +1623,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     int.current.skyAligned = false
     int.current.observer = int.current.observer || null   // {lat,lon} from geolocation
     int.current._skyAlignAt = 0
+    int.current.skyCalib = null   // Quaternion: manual "align on the Moon" correction
     const _alignMat = new Matrix4()
+    const _alignQ = new Quaternion()
 
     // Hidden by default; shown when cameraScale transitions to 'moon'.
     const moonScene = createMoonScene(scene)
@@ -2582,7 +2622,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
               new Vector3(ey.e, ey.u, -ey.n),
               new Vector3(ez.e, ez.u, -ez.n),
             )
-            desiLayer.group.quaternion.setFromRotationMatrix(_alignMat)
+            _alignQ.setFromRotationMatrix(_alignMat)
+            // Apply the manual "align on the Moon" correction on top, if set.
+            if (int.current.skyCalib) desiLayer.group.quaternion.copy(int.current.skyCalib).multiply(_alignQ)
+            else desiLayer.group.quaternion.copy(_alignQ)
             galaxySystem.skyGroup.quaternion.copy(desiLayer.group.quaternion)
           }
         } else if (int.current._skyResetPending) {
