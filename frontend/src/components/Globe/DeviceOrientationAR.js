@@ -136,7 +136,12 @@ export function createDeviceOrientationAR(camera, controls) {
 
     if (mode === 'device') {
       const az = compassHeading * DEG
-      const alt = (beta - 90) * DEG
+      // Clamp pitch just shy of the zenith/nadir: ZXY euler gimbal-locks at ±90°,
+      // which made the view spin/blank when pointing straight up quickly.
+      const LIM = 88 * DEG
+      let alt = (beta - 90) * DEG
+      if (alt > LIM) alt = LIM
+      else if (alt < -LIM) alt = -LIM
       const roll = gamma * DEG + screenAngle()   // compensate portrait/landscape
       camera.rotation.order = 'ZXY'
       camera.rotation.x = -alt                    // tilt up → look up (was inverted)

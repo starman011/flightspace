@@ -473,8 +473,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
       skyStreamRef.current = stream
-      if (skyVideoRef.current) { skyVideoRef.current.srcObject = stream; skyVideoRef.current.play().catch(() => {}) }
-      globeRef.current?.enableSkyCamera?.()
+      if (skyVideoRef.current) { skyVideoRef.current.srcObject = stream; await skyVideoRef.current.play().catch(() => {}) }
+      globeRef.current?.enableSkyCamera?.(skyVideoRef.current)
       setSkyCamOn(true)
       return true
     } catch (e) {
@@ -600,17 +600,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {showLoading && <LoadingScreen duration={2500} onDone={() => setShowLoading(false)} />}
 
-      {/* Camera passthrough for Point-at-the-Sky AR — sits behind the transparent globe canvas */}
+      {/* Camera passthrough source for Point-at-the-Sky AR. Rendered tiny/hidden —
+          the frames are drawn by the WebGL renderer as the scene background
+          (VideoTexture), so there's no DOM layering to break. */}
       <video
         ref={skyVideoRef}
         playsInline
         muted
         autoPlay
-        style={{
-          position: 'fixed', inset: 0, width: '100%', height: '100%',
-          objectFit: 'cover', zIndex: 0, background: '#000',
-          display: skyCamOn ? 'block' : 'none',
-        }}
+        style={{ position: 'fixed', bottom: 0, left: 0, width: 2, height: 2, opacity: 0.01, pointerEvents: 'none', zIndex: -1 }}
       />
 
       {showFlightLanding && init.selectedIcao24 && (

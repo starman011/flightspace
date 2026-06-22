@@ -9,7 +9,7 @@ import {
   MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
-  TextureLoader, CanvasTexture,
+  TextureLoader, CanvasTexture, VideoTexture, SRGBColorSpace,
   Raycaster, WebGLRenderTarget,
   FrontSide, BackSide, DoubleSide, AdditiveBlending,
   InstancedBufferAttribute,
@@ -1202,19 +1202,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     getSkyTilt: () => (int.current.arController?.getBeta ? int.current.arController.getBeta() : null),
     // Camera passthrough: make the canvas transparent + show only the overlay
     // (stars/constellations/planets) so the live camera feed shows through.
-    enableSkyCamera: () => {
-      const r = int.current.renderer
-      if (r) {
-        int.current._savedClear = r.getClearColor(new Color())
-        int.current._savedClearA = r.getClearAlpha()
-        r.setClearColor(0x000000, 0)
+    enableSkyCamera: (video) => {
+      const sc = int.current.scene
+      if (sc && video) {
+        const vt = new VideoTexture(video)
+        vt.colorSpace = SRGBColorSpace
+        int.current._skyBgPrev = sc.background || null
+        int.current._skyVideoTex = vt
+        sc.background = vt   // renderer draws the live camera as the backdrop
       }
       int.current.desiLayer?.hide?.()
       int.current.galaxySystem?.showCameraAR?.()
     },
     disableSkyCamera: () => {
-      const r = int.current.renderer
-      if (r) r.setClearColor(int.current._savedClear || new Color(0x0f1419), int.current._savedClearA ?? 1)
+      const sc = int.current.scene
+      if (sc) sc.background = int.current._skyBgPrev || null
+      if (int.current._skyVideoTex) { int.current._skyVideoTex.dispose(); int.current._skyVideoTex = null }
       int.current.desiLayer?.show?.()
       int.current.galaxySystem?.showSkyOnly?.()
     },

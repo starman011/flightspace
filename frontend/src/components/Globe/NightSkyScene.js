@@ -441,13 +441,13 @@ export function createNightSkyScene(scene) {
   for (const cm of constMeta) {
     if (cm.rank > 2) continue
     const label = makeTextSprite(cm.name, {
-      fontSize: 48, color: 'rgba(100,140,200,0.50)',
+      fontSize: 64, color: 'rgba(150,180,230,0.62)', weight: 500, spacing: 1.3,
     })
     const len = Math.sqrt(cm.cx * cm.cx + cm.cy * cm.cy + cm.cz * cm.cz)
     const scale = LABEL_R / (len || 1)
     label.position.set(cm.cx * scale, cm.cy * scale, cm.cz * scale)
-    const sz = 50
-    label.scale.set(sz, sz * 0.5, 1)
+    const baseH = 12   // world height; aspect keeps it from stretching
+    label.scale.set(baseH * (label.userData.aspect || 3), baseH, 1)
     label.renderOrder = 3
     skyGroup.add(label)
     constLabels.push(label)
@@ -489,10 +489,10 @@ export function createNightSkyScene(scene) {
     skyGroup.add(dot)
 
     const label = makeTextSprite(p.name, {
-      fontSize: 40, color: '#' + new Color(p.color).getHexString(),
+      fontSize: 64, color: '#' + new Color(p.color).getHexString(), weight: 600,
     })
-    const sz = 35
-    label.scale.set(sz, sz * 0.4, 1)
+    const baseH = 13
+    label.scale.set(baseH * (label.userData.aspect || 3), baseH, 1)
     label.renderOrder = 5
     skyGroup.add(label)
 
@@ -644,24 +644,35 @@ export function createNightSkyScene(scene) {
 }
 
 // ── Text sprite helper ───────────────────────────────────────────────────────
-function makeTextSprite(text, { fontSize = 32, color = '#ffffff' } = {}) {
+function makeTextSprite(text, { fontSize = 64, color = 'rgba(170,195,235,0.9)', weight = 600, spacing = 1 } = {}) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const cv = document.createElement('canvas')
   const ctx = cv.getContext('2d')
-  const font = `${fontSize}px "SF Mono", "Fira Code", monospace`
+  const font = `${weight} ${fontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`
   ctx.font = font
-  const metrics = ctx.measureText(text)
-  const w = Math.ceil(metrics.width) + 20
-  const h = fontSize + 20
-  cv.width = w; cv.height = h
+  // crude letter-spacing for an airy, map-like label
+  const spaced = spacing > 1 ? text.split('').join(' ') : text
+  ctx.font = font
+  const metrics = ctx.measureText(spaced)
+  const padX = fontSize * 0.45, padY = fontSize * 0.35
+  const w = Math.ceil(metrics.width + padX * 2)
+  const h = Math.ceil(fontSize + padY * 2)
+  cv.width = Math.ceil(w * dpr); cv.height = Math.ceil(h * dpr)
+  ctx.scale(dpr, dpr)
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
+  ctx.shadowColor = 'rgba(0,0,0,0.92)'
+  ctx.shadowBlur = fontSize * 0.18
   ctx.fillStyle = color
-  ctx.fillText(text, w / 2, h / 2)
+  ctx.fillText(spaced, w / 2, h / 2)
 
   const tex = new CanvasTexture(cv)
+  tex.anisotropy = 4
   const mat = new SpriteMaterial({
-    map: tex, transparent: true, depthWrite: false, sizeAttenuation: true,
+    map: tex, transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: true,
   })
-  return new Sprite(mat)
+  const sprite = new Sprite(mat)
+  sprite.userData.aspect = w / h    // real aspect so callers don't stretch it
+  return sprite
 }
