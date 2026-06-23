@@ -212,27 +212,29 @@ async function renderAirport(iata) {
     ],
   }
 
-  const row = (f, dir) => {
-    const cs   = f.callsign || f.icao24 || ''
-    const peer = dir === 'arr'
-      ? (f.origin || f.departure_iata || '')
-      : (f.destination || f.arrival_iata || '')
-    const link = f.icao24
-      ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>`
-      : esc(cs)
-    return `<tr><td>${link}</td><td>${esc(peer) || '—'}</td><td>${esc(f.altitude ? Math.round(f.altitude) + ' ft' : '—')}</td></tr>`
+  const flLink = (f) => {
+    const cs = f.callsign || f.icao24 || ''
+    return f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>` : esc(cs)
   }
-  const thead = '<tr><th>Flight</th><th>Route</th><th>Altitude</th></tr>'
-  const arrRows = arrivals.slice(0, 15).map(f => row(f, 'arr')).join('\n')
-  const depRows = departures.slice(0, 15).map(f => row(f, 'dep')).join('\n')
+  const fmtAlt = (f) => (f.alt_ft ? Math.round(f.alt_ft).toLocaleString() + ' ft' : '—')
+  const fmtDist = (f) => (f.dist_km != null ? Math.round(f.dist_km).toLocaleString() + ' km' : '—')
+  const arrRow = (f) => {
+    const eta = (f.eta_min != null && f.eta_min > 0) ? `in ${Math.round(f.eta_min)} min` : 'on approach'
+    return `<tr><td>${flLink(f)}</td><td>${eta}</td><td>${fmtAlt(f)}</td><td>${fmtDist(f)}</td></tr>`
+  }
+  const depRow = (f) => `<tr><td>${flLink(f)}</td><td>climbing out</td><td>${fmtAlt(f)}</td><td>${fmtDist(f)}</td></tr>`
+  const arrThead = '<tr><th>Flight</th><th>ETA</th><th>Altitude</th><th>Distance</th></tr>'
+  const depThead = '<tr><th>Flight</th><th>Status</th><th>Altitude</th><th>Distance</th></tr>'
+  const arrRows = arrivals.slice(0, 18).map(arrRow).join('\n')
+  const depRows = departures.slice(0, 18).map(depRow).join('\n')
 
   return html(canonical, title, desc, jsonLd, `
     <h1>${esc(fullName)} (${esc(iata)}) — Live Flight Tracker</h1>
     <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
        ${arrivals.length} arrivals and ${departures.length} departures are currently tracked via ADS-B.</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
-    ${arrRows ? `<h2>${esc(iata)} Arrivals — Live</h2><table>${thead}${arrRows}</table>` : ''}
-    ${depRows ? `<h2>${esc(iata)} Departures — Live</h2><table>${thead}${depRows}</table>` : ''}
+    ${arrRows ? `<h2>Live Arrivals at ${esc(cityName)} ${esc(iata)} Airport</h2><table>${arrThead}${arrRows}</table>` : ''}
+    ${depRows ? `<h2>Live Departures from ${esc(cityName)} ${esc(iata)} Airport</h2><table>${depThead}${depRows}</table>` : ''}
     <h2>About ${esc(apLabel)}</h2>
     <p>${esc(about)}</p>
     <h2>${esc(iata)} — Frequently Asked Questions</h2>
