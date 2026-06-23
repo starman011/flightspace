@@ -28,6 +28,7 @@ var airports = map[string][2]float64{
 type ArrivalEntry struct {
 	ICAO24   string  `json:"icao24"`
 	Callsign string  `json:"callsign,omitempty"`
+	Type     string  `json:"type,omitempty"` // ICAO aircraft type code (e.g. B738)
 	DistKm   float64 `json:"dist_km"`
 	ETAMin   float64 `json:"eta_min"`
 	AltFt    float64 `json:"alt_ft,omitempty"`
@@ -44,6 +45,13 @@ func NewAirportController(rdb *redis.Client) *AirportController {
 }
 
 // Haversine distance in km
+func strDeref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func haversineKm(lat1, lon1, lat2, lon2 float64) float64 {
 	const R = 6371.0
 	dLat := (lat2 - lat1) * math.Pi / 180
@@ -130,6 +138,7 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 		arrivals = append(arrivals, ArrivalEntry{
 			ICAO24:   a.ID,
 			Callsign: cs,
+			Type:     strDeref(a.T),
 			DistKm:   math.Round(dist*10) / 10,
 			ETAMin:   math.Round(etaMin*10) / 10,
 			AltFt:    altFt,
@@ -158,6 +167,7 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 type DepartureEntry struct {
 	ICAO24   string  `json:"icao24"`
 	Callsign string  `json:"callsign,omitempty"`
+	Type     string  `json:"type,omitempty"` // ICAO aircraft type code (e.g. B738)
 	DistKm   float64 `json:"dist_km"`
 	AltFt    float64 `json:"alt_ft,omitempty"`
 	SpeedKts float64 `json:"speed_kts,omitempty"`
@@ -224,6 +234,7 @@ func (ac *AirportController) GetDepartures(w http.ResponseWriter, r *http.Reques
 		departures = append(departures, DepartureEntry{
 			ICAO24:   a.ID,
 			Callsign: cs,
+			Type:     strDeref(a.T),
 			DistKm:   math.Round(dist*10) / 10,
 			AltFt:    altFt,
 			SpeedKts: *a.Vel,

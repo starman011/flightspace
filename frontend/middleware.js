@@ -158,6 +158,51 @@ async function renderFlight(raw) {
 
 // ── Airport renderer ─────────────────────────────────────────────────────────
 
+// ICAO callsign prefix → airline name (US carriers first, then global majors
+// that show up in our search impressions). Used to humanise the live boards.
+const AIRLINE_BY_ICAO = {
+  UAL: 'United', AAL: 'American', DAL: 'Delta', SWA: 'Southwest', JBU: 'JetBlue',
+  ASA: 'Alaska', NKS: 'Spirit', FFT: 'Frontier', HAL: 'Hawaiian', SKW: 'SkyWest',
+  ENY: 'Envoy Air', RPA: 'Republic', AAY: 'Allegiant', JIA: 'PSA', EDV: 'Endeavor',
+  UPS: 'UPS', FDX: 'FedEx', GTI: 'Atlas Air', SCX: 'Sun Country', VXP: 'Avelo', MXY: 'Breeze',
+  ACA: 'Air Canada', WJA: 'WestJet', ROU: 'Air Canada Rouge', JZA: 'Jazz',
+  BAW: 'British Airways', VIR: 'Virgin Atlantic', DLH: 'Lufthansa', AFR: 'Air France',
+  KLM: 'KLM', IBE: 'Iberia', SWR: 'Swiss', EZY: 'easyJet', RYR: 'Ryanair', THY: 'Turkish',
+  UAE: 'Emirates', ETD: 'Etihad', QTR: 'Qatar Airways', SIA: 'Singapore Airlines',
+  QFA: 'Qantas', ANZ: 'Air New Zealand', CPA: 'Cathay Pacific', ANA: 'All Nippon',
+  JAL: 'Japan Airlines', KAL: 'Korean Air', AAR: 'Asiana', CCA: 'Air China',
+  CES: 'China Eastern', CSN: 'China Southern', IGO: 'IndiGo', AIC: 'Air India',
+  VTI: 'Vistara', SEJ: 'SpiceJet', AXB: 'Air India Express', UAE2: 'Emirates',
+  AMX: 'Aeroméxico', GLO: 'GOL', AZU: 'Azul', TAM: 'LATAM', AVA: 'Avianca',
+  SAS: 'SAS', FIN: 'Finnair', TAP: 'TAP Portugal', AUA: 'Austrian', BEL: 'Brussels',
+  ELY: 'El Al', SVA: 'Saudia', MEA: 'Middle East Air', ABY: 'Air Arabia', WZZ: 'Wizz Air',
+}
+// ICAO aircraft type code → friendly name (common types).
+const AIRCRAFT_BY_TYPE = {
+  B737: 'Boeing 737-700', B738: 'Boeing 737-800', B739: 'Boeing 737-900',
+  B38M: 'Boeing 737 MAX 8', B39M: 'Boeing 737 MAX 9', B3XM: 'Boeing 737 MAX 10',
+  B752: 'Boeing 757-200', B753: 'Boeing 757-300', B762: 'Boeing 767-200',
+  B763: 'Boeing 767-300', B764: 'Boeing 767-400', B772: 'Boeing 777-200',
+  B77L: 'Boeing 777-200LR', B77W: 'Boeing 777-300ER', B773: 'Boeing 777-300',
+  B788: 'Boeing 787-8', B789: 'Boeing 787-9', B78X: 'Boeing 787-10',
+  B744: 'Boeing 747-400', B748: 'Boeing 747-8', B712: 'Boeing 717',
+  A319: 'Airbus A319', A320: 'Airbus A320', A321: 'Airbus A321',
+  A19N: 'Airbus A319neo', A20N: 'Airbus A320neo', A21N: 'Airbus A321neo',
+  A332: 'Airbus A330-200', A333: 'Airbus A330-300', A339: 'Airbus A330-900neo',
+  A359: 'Airbus A350-900', A35K: 'Airbus A350-1000', A388: 'Airbus A380',
+  E170: 'Embraer E170', E175: 'Embraer E175', E190: 'Embraer E190', E195: 'Embraer E195',
+  E75L: 'Embraer E175', E75S: 'Embraer E175',
+  CRJ2: 'Bombardier CRJ200', CRJ7: 'Bombardier CRJ700', CRJ9: 'Bombardier CRJ900',
+  CRJX: 'Bombardier CRJ1000', DH8D: 'Dash 8 Q400', AT76: 'ATR 72', AT75: 'ATR 72',
+  MD88: 'McDonnell Douglas MD-88', MD90: 'McDonnell Douglas MD-90', BCS1: 'Airbus A220-100', BCS3: 'Airbus A220-300',
+}
+const airlineFromCs = (cs) => {
+  if (!cs) return ''
+  const m = String(cs).toUpperCase().match(/^[A-Z]{3}/)
+  return m ? (AIRLINE_BY_ICAO[m[0]] || '') : ''
+}
+const aircraftName = (t) => (t ? (AIRCRAFT_BY_TYPE[t] || t) : '')
+
 async function renderAirport(iata) {
   if (!iata || iata.length < 3 || iata.length > 4) return
 
@@ -214,17 +259,19 @@ async function renderAirport(iata) {
 
   const flLink = (f) => {
     const cs = f.callsign || f.icao24 || ''
-    return f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>` : esc(cs)
+    const al = airlineFromCs(cs)
+    const label = al ? `${al} ${esc(cs)}` : esc(cs)
+    return f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${al ? esc(al) + ' ' : ''}${esc(cs)}</a>` : label
   }
   const fmtAlt = (f) => (f.alt_ft ? Math.round(f.alt_ft).toLocaleString() + ' ft' : '—')
-  const fmtDist = (f) => (f.dist_km != null ? Math.round(f.dist_km).toLocaleString() + ' km' : '—')
   const arrRow = (f) => {
     const eta = (f.eta_min != null && f.eta_min > 0) ? `in ${Math.round(f.eta_min)} min` : 'on approach'
-    return `<tr><td>${flLink(f)}</td><td>${eta}</td><td>${fmtAlt(f)}</td><td>${fmtDist(f)}</td></tr>`
+    return `<tr><td>${flLink(f)}</td><td>${esc(aircraftName(f.type)) || '—'}</td><td>${eta}</td><td>${fmtAlt(f)}</td></tr>`
   }
-  const depRow = (f) => `<tr><td>${flLink(f)}</td><td>climbing out</td><td>${fmtAlt(f)}</td><td>${fmtDist(f)}</td></tr>`
-  const arrThead = '<tr><th>Flight</th><th>ETA</th><th>Altitude</th><th>Distance</th></tr>'
-  const depThead = '<tr><th>Flight</th><th>Status</th><th>Altitude</th><th>Distance</th></tr>'
+  const depRow = (f) =>
+    `<tr><td>${flLink(f)}</td><td>${esc(aircraftName(f.type)) || '—'}</td><td>climbing out</td><td>${fmtAlt(f)}</td></tr>`
+  const arrThead = '<tr><th>Flight</th><th>Aircraft</th><th>ETA</th><th>Altitude</th></tr>'
+  const depThead = '<tr><th>Flight</th><th>Aircraft</th><th>Status</th><th>Altitude</th></tr>'
   const arrRows = arrivals.slice(0, 18).map(arrRow).join('\n')
   const depRows = departures.slice(0, 18).map(depRow).join('\n')
 
