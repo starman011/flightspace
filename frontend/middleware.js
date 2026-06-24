@@ -343,9 +343,10 @@ async function renderAirline(slug) {
   const flightRows = flights.slice(0, 20).map(f => {
     const cs   = f.callsign || f.icao24 || ''
     const link = f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${esc(cs)}</a>` : esc(cs)
-    const alt  = f.altitude ? Math.round(f.altitude) + ' ft' : '—'
-    const spd  = f.velocity  ? Math.round(f.velocity)  + ' kts' : '—'
-    return `<tr><td>${link}</td><td>${esc(f.type_description || '—')}</td><td>${esc(alt)}</td><td>${esc(spd)}</td></tr>`
+    const ac   = f.type_description || aircraftName(f.type) || '—'
+    const alt  = f.altitude ? Math.round(f.altitude).toLocaleString() + ' ft' : '—'
+    const status = f.on_ground ? 'On ground' : 'In flight'
+    return `<tr><td>${link}</td><td>${esc(ac)}</td><td>${esc(alt)}</td><td>${status}</td></tr>`
   }).join('\n')
 
   // Airline logo via avs.io CDN (already in CSP allowlist)
@@ -359,7 +360,7 @@ async function renderAirline(slug) {
     ${flightRows ? `
     <h2>Currently Tracked Flights</h2>
     <table>
-      <tr><th>Flight</th><th>Aircraft</th><th>Altitude</th><th>Speed</th></tr>
+      <tr><th>Flight</th><th>Aircraft</th><th>Altitude</th><th>Status</th></tr>
       ${flightRows}
     </table>` : ''}
     <p style="margin-top:32px">
