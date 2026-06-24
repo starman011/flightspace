@@ -395,6 +395,17 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       setTimeout(() => {
         globeRef.current?.flyToGalaxy?.(result.ra, result.dec, result.z)
       }, activeScale !== 'galaxy' ? 800 : 50)
+    } else if (result._type === 'airport') {
+      // Zoom to the city's airport and open its live arrivals/departures board.
+      const toEarth = activeScale !== 'earth'
+      if (toEarth) {
+        setActiveScale('earth')
+        globeRef.current?.setCameraScale?.('earth')
+      }
+      setSelectedAirport(result.iata)
+      if (result.lat != null && result.lon != null) {
+        setTimeout(() => globeRef.current?.flyTo?.(result.lat, result.lon), toEarth ? 800 : 50)
+      }
     } else {
       setSelectedIcao24(result.icao24)
     }

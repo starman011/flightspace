@@ -1,7 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './SearchBar.module.css'
+import { AIRPORTS } from '../Globe/airportData.js'
 
 const API = import.meta.env.VITE_API_URL || ''
+
+// Local airport/city match — instant, no API. Matches IATA code, city, or name.
+function matchAirports(q) {
+  const u = q.trim().toUpperCase()
+  if (u.length < 2) return []
+  const hits = []
+  for (const a of AIRPORTS) {
+    const iata = (a.iata || '').toUpperCase()
+    const city = (a.city || '').toUpperCase()
+    const name = (a.name || '').toUpperCase()
+    let score = -1
+    if (iata === u) score = 0
+    else if (city === u) score = 1
+    else if (city.startsWith(u)) score = 2
+    else if (name.startsWith(u)) score = 3
+    else if (city.includes(u) || name.includes(u)) score = 4
+    if (score >= 0) hits.push({ a, score, tier: a.tier ?? 9 })
+  }
+  hits.sort((x, y) => x.score - y.score || x.tier - y.tier)
+  return hits.slice(0, 6).map(h => ({ ...h.a, _type: 'airport' }))
+}
 
 export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale }) {
   const [query, setQuery] = useState('')
@@ -58,14 +80,19 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
             setResults((data.results ?? []).map(r => ({ ...r, _type: 'galaxy' })))
           }
         } else {
-          // Flight search
-          const res = await fetch(`${API}/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=10`, {
-            credentials: 'include',
-          })
-          if (res.ok) {
-            const data = await res.json()
-            setResults((data.results ?? []).map(r => ({ ...r, _type: 'flight' })))
-          }
+          // Airports/cities (instant, local) first, then live flights from the API.
+          const airportHits = matchAirports(q)
+          let flightHits = []
+          try {
+            const res = await fetch(`${API}/api/v1/aircraft/search?q=${encodeURIComponent(q)}&limit=8`, {
+              credentials: 'include',
+            })
+            if (res.ok) {
+              const data = await res.json()
+              flightHits = (data.results ?? []).map(r => ({ ...r, _type: 'flight' }))
+            }
+          } catch { /* keep airport hits even if flight search fails */ }
+          setResults([...airportHits, ...flightHits])
         }
       } catch {
         // Silently ignore search errors
@@ -101,7 +128,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
             onChange={handleChange}
             placeholder={isDeepSpace
               ? 'search galaxy name, NGC, Messier, target ID...'
-              : 'search callsign, flight, icao...'
+              : 'search city, airport, flight, callsign...'
             }
             spellCheck={false}
             autoComplete="off"
@@ -112,7 +139,12 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
         {results.length > 0 && (
           <ul className={styles.results}>
             {results.map((r, i) => (
-              r._type === 'galaxy' ? (
+              r._type === 'airport' ? (
+                <li key={`apt-${r.iata}`} className={styles.result} onClick={() => handleSelect(r)}>
+                  <span className={styles.callsign}>{r.city} ({r.iata})</span>
+                  <span className={styles.type}>{r.name} · Arrivals &amp; Departures</span>
+                </li>
+              ) : r._type === 'galaxy' ? (
                 <li key={r.targetid || r.name || i} className={styles.result} onClick={() => handleSelect(r)}>
                   <span className={styles.callsign}>{r.name || `DESI ${r.targetid}`}</span>
                   <span className={styles.type}>
@@ -140,7 +172,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
 
         {query && !loading && results.length === 0 && (
           <p className={styles.empty}>
-            {isDeepSpace ? 'no galaxies found' : 'no flights found'}
+            {isDeepSpace ? 'no galaxies found' : 'no cities, airports or flights found'}
           </p>
         )}
       </div>
