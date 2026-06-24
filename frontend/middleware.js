@@ -169,11 +169,13 @@ async function renderAirport(iata) {
 
   let arrivals   = []
   let departures = []
+  let recentArr  = []
+  let recentDep  = []
   if (arrRes.status === 'fulfilled' && arrRes.value.ok) {
-    try { const d = await arrRes.value.json(); arrivals   = Array.isArray(d) ? d : (d.arrivals   || []) } catch (_) {}
+    try { const d = await arrRes.value.json(); arrivals = Array.isArray(d) ? d : (d.arrivals || []); recentArr = d.recentArrivals || [] } catch (_) {}
   }
   if (depRes.status === 'fulfilled' && depRes.value.ok) {
-    try { const d = await depRes.value.json(); departures = Array.isArray(d) ? d : (d.departures || []) } catch (_) {}
+    try { const d = await depRes.value.json(); departures = Array.isArray(d) ? d : (d.departures || []); recentDep = d.recentDepartures || [] } catch (_) {}
   }
 
   const canonical = `${SITE}/airport/${iata}`
@@ -231,6 +233,20 @@ async function renderAirport(iata) {
   const arrRows = arrivals.slice(0, 18).map(arrRow).join('\n')
   const depRows = departures.slice(0, 18).map(depRow).join('\n')
 
+  // Recent completed flights from OpenSky (real origin/destination + time).
+  const peerCell = (p) => {
+    if (!p) return '—'
+    return p.length === 3 ? `<a href="${SITE}/airport/${esc(p)}">${esc(p)}</a>` : esc(p)
+  }
+  const recentRow = (f) => {
+    const cs = f.callsign || f.icao24 || ''
+    const al = airlineFromCs(cs)
+    const link = f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${al ? esc(al) + ' ' : ''}${esc(cs)}</a>` : esc(cs)
+    return `<tr><td>${link}</td><td>${peerCell(f.peer)}</td><td>${esc(f.time_utc || '—')} UTC</td></tr>`
+  }
+  const recentArrRows = recentArr.slice(0, 20).map(recentRow).join('\n')
+  const recentDepRows = recentDep.slice(0, 20).map(recentRow).join('\n')
+
   return html(canonical, title, desc, jsonLd, `
     <h1>${esc(fullName)} (${esc(iata)}) — Live Flight Tracker</h1>
     <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
@@ -238,6 +254,8 @@ async function renderAirport(iata) {
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
     ${arrRows ? `<h2>Live Arrivals at ${esc(cityName)} ${esc(iata)} Airport</h2><table>${arrThead}${arrRows}</table>` : ''}
     ${depRows ? `<h2>Live Departures from ${esc(cityName)} ${esc(iata)} Airport</h2><table>${depThead}${depRows}</table>` : ''}
+    ${recentArrRows ? `<h2>Recent Arrivals at ${esc(cityName)} ${esc(iata)} Airport</h2><table><tr><th>Flight</th><th>From</th><th>Arrived</th></tr>${recentArrRows}</table>` : ''}
+    ${recentDepRows ? `<h2>Recent Departures from ${esc(cityName)} ${esc(iata)} Airport</h2><table><tr><th>Flight</th><th>To</th><th>Departed</th></tr>${recentDepRows}</table>` : ''}
     <h2>About ${esc(apLabel)}</h2>
     <p>${esc(about)}</p>
     <h2>${esc(iata)} — Frequently Asked Questions</h2>
