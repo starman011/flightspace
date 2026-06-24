@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import styles from './AirportPanel.module.css'
 import { AIRPORTS } from '../Globe/airportData.js'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels.js'
+import AirportBoard from '../AirportBoard/AirportBoard.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -9,6 +10,7 @@ const AIRPORT_LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
 export default function AirportPanel({ iata, onClose, onFlightClick }) {
   const [tab, setTab] = useState('arrivals')
+  const [boardOpen, setBoardOpen] = useState(false)
   const [arrivals, setArrivals] = useState([])
   const [departures, setDepartures] = useState([])
   const [loading, setLoading] = useState(true)
@@ -84,8 +86,13 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
             if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '↗' }, 1500) }
           }).catch(() => {})
         }} title="Copy link">↗</button>
+        <button className={styles.share} onClick={() => setBoardOpen(true)} title="Full flight board">⤢</button>
         <button className={styles.close} onClick={onClose}>&times;</button>
       </div>
+
+      {boardOpen && (
+        <AirportBoard iata={iata} onClose={() => setBoardOpen(false)} onFlightClick={onFlightClick} />
+      )}
 
       {/* Tabs */}
       <div className={styles.tabs}>
