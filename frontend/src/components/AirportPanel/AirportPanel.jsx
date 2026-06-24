@@ -86,7 +86,6 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
             if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '↗' }, 1500) }
           }).catch(() => {})
         }} title="Copy link">↗</button>
-        <button className={styles.share} onClick={() => setBoardOpen(true)} title="Full flight board">⤢</button>
         <button className={styles.close} onClick={onClose}>&times;</button>
       </div>
 
@@ -158,6 +157,15 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
           {data.length} aircraft {tab === 'arrivals' ? 'inbound' : 'outbound'}
         </div>
       )}
+
+      <button className={styles.fullBoardBtn} onClick={() => setBoardOpen(true)}>
+        <span className={styles.fullBoardIcon}>🛬</span>
+        <span>
+          <strong>Full {cityName} flight board</strong>
+          <small>Live + recent arrivals &amp; departures · city guide</small>
+        </span>
+        <span className={styles.fullBoardArrow}>→</span>
+      </button>
     </div>
   )
 }
