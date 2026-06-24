@@ -6,11 +6,67 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/skydot/backend/src/models"
 	"github.com/skydot/backend/src/utils"
 )
+
+// RecentFlight is a completed arrival/departure from OpenSky (real flight with
+// origin/destination airport + time), shown alongside the live "now" board.
+type RecentFlight struct {
+	ICAO24   string `json:"icao24"`
+	Callsign string `json:"callsign,omitempty"`
+	Peer     string `json:"peer,omitempty"`     // origin (arrivals) or dest (departures): IATA if known, else ICAO
+	TimeUTC  string `json:"time_utc,omitempty"` // HH:MM UTC
+}
+
+// icaoToIATA is the reverse of iataToICAO (airport_icao.go), for showing the
+// origin/destination of OpenSky flights as friendly IATA codes.
+var icaoToIATA = func() map[string]string {
+	m := make(map[string]string, len(iataToICAO))
+	for iata, icao := range iataToICAO {
+		m[icao] = iata
+	}
+	return m
+}()
+
+// buildRecent turns OpenSky flights into display rows (most recent first, max 25).
+func buildRecent(flights []openSkyFlight, kind string) []RecentFlight {
+	sort.Slice(flights, func(i, j int) bool {
+		ti, tj := flights[i].LastSeen, flights[j].LastSeen
+		if kind == "departure" {
+			ti, tj = flights[i].FirstSeen, flights[j].FirstSeen
+		}
+		return ti > tj
+	})
+	out := make([]RecentFlight, 0, len(flights))
+	for _, f := range flights {
+		peerICAO, ts := f.EstDepartureAirport, f.LastSeen
+		if kind == "departure" {
+			peerICAO, ts = f.EstArrivalAirport, f.FirstSeen
+		}
+		peer := peerICAO
+		if iata, ok := icaoToIATA[peerICAO]; ok {
+			peer = iata
+		}
+		t := ""
+		if ts > 0 {
+			t = time.Unix(ts, 0).UTC().Format("15:04")
+		}
+		out = append(out, RecentFlight{
+			ICAO24:   f.ICAO24,
+			Callsign: strings.TrimSpace(f.Callsign),
+			Peer:     peer,
+			TimeUTC:  t,
+		})
+		if len(out) >= 25 {
+			break
+		}
+	}
+	return out
+}
 
 // Airport coordinates (IATA -> [lat, lon]) live in airports_coords.go,
 // auto-generated from the frontend airport dataset (930 airports).
@@ -147,10 +203,17 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 		arrivals = arrivals[:30]
 	}
 
+	// Real recent arrivals from OpenSky (with origin airport + time), cached.
+	var recent []RecentFlight
+	if flights, ok := fetchOpenSkyFlights(ctx, ac.rdb, "arrival", iataToICAO[iata]); ok {
+		recent = buildRecent(flights, "arrival")
+	}
+
 	utils.JSON(w, http.StatusOK, map[string]interface{}{
-		"airport":  iata,
-		"arrivals": arrivals,
-		"count":    len(arrivals),
+		"airport":        iata,
+		"arrivals":       arrivals,
+		"count":          len(arrivals),
+		"recentArrivals": recent,
 	})
 }
 
@@ -241,9 +304,16 @@ func (ac *AirportController) GetDepartures(w http.ResponseWriter, r *http.Reques
 		departures = departures[:30]
 	}
 
+	// Real recent departures from OpenSky (with destination airport + time), cached.
+	var recent []RecentFlight
+	if flights, ok := fetchOpenSkyFlights(ctx, ac.rdb, "departure", iataToICAO[iata]); ok {
+		recent = buildRecent(flights, "departure")
+	}
+
 	utils.JSON(w, http.StatusOK, map[string]interface{}{
-		"airport":    iata,
-		"departures": departures,
-		"count":      len(departures),
+		"airport":          iata,
+		"departures":       departures,
+		"count":            len(departures),
+		"recentDepartures": recent,
 	})
 }
