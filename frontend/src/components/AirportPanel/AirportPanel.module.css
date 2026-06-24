@@ -151,9 +151,18 @@
 }
 
 .callsign {
+  display: flex;
+  flex-direction: column;
   color: rgba(76, 140, 228, 0.85);
   font-weight: 500;
   letter-spacing: 0.04em;
+}
+.sub {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(160, 175, 200, 0.5);
+  margin-top: 1px;
 }
 
 .eta {

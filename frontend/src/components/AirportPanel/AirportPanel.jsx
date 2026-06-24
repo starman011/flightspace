@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import styles from './AirportPanel.module.css'
 import { AIRPORTS } from '../Globe/airportData.js'
+import { airlineFromCs, aircraftName } from '../../data/flightLabels.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -126,7 +127,15 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
               className={`${styles.row} ${tab === 'departures' ? styles.rowDep : ''}`}
               onClick={() => onFlightClick?.(a.icao24)}
             >
-              <span className={styles.callsign}>{a.callsign || a.icao24}</span>
+              <span className={styles.callsign}>
+                {a.callsign || a.icao24}
+                {(() => {
+                  const al = airlineFromCs(a.callsign)
+                  const ac = aircraftName(a.type)
+                  const meta = [al, ac].filter(Boolean).join(' · ')
+                  return meta ? <span className={styles.sub}>{meta}</span> : null
+                })()}
+              </span>
               <span className={styles.dim}>{a.dist_km < 10 ? a.dist_km.toFixed(1) : Math.round(a.dist_km)} km</span>
               {tab === 'arrivals' && (
                 <span className={styles.eta}>{a.eta_min < 1 ? '<1' : Math.round(a.eta_min)} min</span>
