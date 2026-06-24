@@ -12,17 +12,8 @@ import (
 	"github.com/skydot/backend/src/utils"
 )
 
-// Airport coordinates for IATA lookup
-var airports = map[string][2]float64{
-	"JFK": {40.64, -73.78}, "LAX": {33.94, -118.41}, "LHR": {51.47, -0.46},
-	"CDG": {49.01, 2.55}, "DXB": {25.25, 55.36}, "SIN": {1.36, 103.99},
-	"HND": {35.55, 139.78}, "PEK": {40.08, 116.60}, "SYD": {-33.95, 151.18},
-	"FRA": {50.03, 8.57}, "AMS": {52.31, 4.77}, "ATL": {33.64, -84.43},
-	"ORD": {41.97, -87.91}, "HKG": {22.31, 113.92}, "ICN": {37.46, 126.44},
-	"BKK": {13.68, 100.75}, "DEL": {28.56, 77.10}, "BOM": {19.09, 72.87},
-	"GRU": {-23.43, -46.47}, "DFW": {32.90, -97.04}, "ORY": {48.72, 2.36},
-	"NRT": {35.77, 140.39}, "MUC": {48.36, 11.79}, "MAD": {40.47, -3.56},
-}
+// Airport coordinates (IATA -> [lat, lon]) live in airports_coords.go,
+// auto-generated from the frontend airport dataset (930 airports).
 
 // ArrivalEntry is a single inbound aircraft with ETA
 type ArrivalEntry struct {
