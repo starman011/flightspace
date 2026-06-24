@@ -92,8 +92,11 @@ func openSkyAccessToken(ctx context.Context) (string, error) {
 	return osToken, nil
 }
 
-// fetchOpenSkyFlights returns recent flights for an airport. kind is
-// "arrival" or "departure". Results are cached in Redis for 20 minutes.
+// fetchOpenSkyFlights returns recent flights for an airport from the Redis
+// cache ONLY — it never makes a network call on the request path (OpenSky can
+// take many seconds, which would block the airport endpoint and cause 499s).
+// On a cache miss it kicks off a background refresh and returns nothing; the
+// data appears on a subsequent request once the cache is warm.
 func fetchOpenSkyFlights(ctx context.Context, rdb *redis.Client, kind, icao string) ([]openSkyFlight, bool) {
 	if !OpenSkyEnabled() || icao == "" {
 		return nil, false
@@ -104,38 +107,52 @@ func fetchOpenSkyFlights(ctx context.Context, rdb *redis.Client, kind, icao stri
 		if json.Unmarshal([]byte(cached), &fs) == nil {
 			return fs, true
 		}
+		return nil, false
 	}
+	go refreshOpenSky(kind, icao, rdb) // warm the cache off the request path
+	return nil, false
+}
+
+// refreshOpenSky fetches + caches one airport's flights in the background.
+// A short Redis lock prevents a stampede of concurrent fetches.
+func refreshOpenSky(kind, icao string, rdb *redis.Client) {
+	bg := context.Background()
+	lockKey := "opensky:lock:" + kind + ":" + icao
+	if ok, _ := rdb.SetNX(bg, lockKey, "1", 30*time.Second).Result(); !ok {
+		return
+	}
+	ctx, cancel := context.WithTimeout(bg, 10*time.Second)
+	defer cancel()
 
 	token, err := openSkyAccessToken(ctx)
 	if err != nil {
-		return nil, false
+		return
 	}
 	end := time.Now().Unix()
-	begin := end - 12*3600 // last 12 hours (well within the 2-day limit)
+	begin := end - 12*3600 // last 12 hours (within the 2-day limit)
 	u := fmt.Sprintf("%s/flights/%s?airport=%s&begin=%d&end=%d", openSkyAPIBase, kind, url.QueryEscape(icao), begin, end)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return nil, false
+		return
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := osHTTP.Do(req)
 	if err != nil {
-		return nil, false
+		return
 	}
 	defer resp.Body.Close()
+	cacheKey := "opensky:" + kind + ":" + icao
 	if resp.StatusCode != http.StatusOK {
-		// 404 = no flights in window; cache an empty result briefly to avoid hammering.
 		if resp.StatusCode == http.StatusNotFound {
-			rdb.Set(ctx, cacheKey, "[]", 10*time.Minute)
+			rdb.Set(bg, cacheKey, "[]", 10*time.Minute) // no flights in window
 		}
-		return nil, false
+		return
 	}
 	var flights []openSkyFlight
 	if err := json.NewDecoder(resp.Body).Decode(&flights); err != nil {
-		return nil, false
+		return
 	}
 	if b, err := json.Marshal(flights); err == nil {
-		rdb.Set(ctx, cacheKey, b, 20*time.Minute)
+		rdb.Set(bg, cacheKey, b, 20*time.Minute)
 	}
-	return flights, true
 }
