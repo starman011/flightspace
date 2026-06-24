@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -126,6 +127,7 @@ func refreshOpenSky(kind, icao string, rdb *redis.Client) {
 
 	token, err := openSkyAccessToken(ctx)
 	if err != nil {
+		log.Printf("[opensky] token error: %v", err)
 		return
 	}
 	end := time.Now().Unix()
@@ -138,11 +140,13 @@ func refreshOpenSky(kind, icao string, rdb *redis.Client) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := osHTTP.Do(req)
 	if err != nil {
+		log.Printf("[opensky] %s %s request error: %v", kind, icao, err)
 		return
 	}
 	defer resp.Body.Close()
 	cacheKey := "opensky:" + kind + ":" + icao
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("[opensky] %s %s -> HTTP %d", kind, icao, resp.StatusCode)
 		if resp.StatusCode == http.StatusNotFound {
 			rdb.Set(bg, cacheKey, "[]", 10*time.Minute) // no flights in window
 		}
@@ -152,6 +156,7 @@ func refreshOpenSky(kind, icao string, rdb *redis.Client) {
 	if err := json.NewDecoder(resp.Body).Decode(&flights); err != nil {
 		return
 	}
+	log.Printf("[opensky] %s %s -> %d flights", kind, icao, len(flights))
 	if b, err := json.Marshal(flights); err == nil {
 		rdb.Set(bg, cacheKey, b, 20*time.Minute)
 	}

@@ -214,6 +214,7 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 		"arrivals":       arrivals,
 		"count":          len(arrivals),
 		"recentArrivals": recent,
+		"openskyEnabled": OpenSkyEnabled(),
 	})
 }
 
@@ -315,5 +316,6 @@ func (ac *AirportController) GetDepartures(w http.ResponseWriter, r *http.Reques
 		"departures":       departures,
 		"count":            len(departures),
 		"recentDepartures": recent,
+		"openskyEnabled":   OpenSkyEnabled(),
 	})
 }
