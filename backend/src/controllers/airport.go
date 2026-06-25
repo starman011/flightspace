@@ -75,7 +75,8 @@ func buildRecent(flights []openSkyFlight, kind string) []RecentFlight {
 type ArrivalEntry struct {
 	ICAO24   string  `json:"icao24"`
 	Callsign string  `json:"callsign,omitempty"`
-	Type     string  `json:"type,omitempty"` // ICAO aircraft type code (e.g. B738)
+	Type     string  `json:"type,omitempty"`   // ICAO aircraft type code (e.g. B738)
+	Origin   string  `json:"origin,omitempty"` // origin airport IATA (from adsbdb)
 	DistKm   float64 `json:"dist_km"`
 	ETAMin   float64 `json:"eta_min"`
 	AltFt    float64 `json:"alt_ft,omitempty"`
@@ -203,6 +204,15 @@ func (ac *AirportController) GetArrivals(w http.ResponseWriter, r *http.Request)
 		arrivals = arrivals[:30]
 	}
 
+	// Enrich with origin airport from adsbdb (cache-only; warm misses in background).
+	for i := range arrivals {
+		if o, _, ok := cachedRouteIATA(ctx, ac.rdb, arrivals[i].Callsign); ok {
+			arrivals[i].Origin = o
+		} else if i < 12 {
+			go warmRoute(ac.rdb, arrivals[i].Callsign)
+		}
+	}
+
 	// Real recent arrivals from OpenSky (with origin airport + time), cached.
 	var recent []RecentFlight
 	if flights, ok := fetchOpenSkyFlights(ctx, ac.rdb, "arrival", iataToICAO[iata]); ok {
@@ -223,6 +233,7 @@ type DepartureEntry struct {
 	ICAO24   string  `json:"icao24"`
 	Callsign string  `json:"callsign,omitempty"`
 	Type     string  `json:"type,omitempty"` // ICAO aircraft type code (e.g. B738)
+	Dest     string  `json:"dest,omitempty"` // destination airport IATA (from adsbdb)
 	DistKm   float64 `json:"dist_km"`
 	AltFt    float64 `json:"alt_ft,omitempty"`
 	SpeedKts float64 `json:"speed_kts,omitempty"`
@@ -303,6 +314,15 @@ func (ac *AirportController) GetDepartures(w http.ResponseWriter, r *http.Reques
 
 	if len(departures) > 30 {
 		departures = departures[:30]
+	}
+
+	// Enrich with destination airport from adsbdb (cache-only; warm misses in background).
+	for i := range departures {
+		if _, d, ok := cachedRouteIATA(ctx, ac.rdb, departures[i].Callsign); ok {
+			departures[i].Dest = d
+		} else if i < 12 {
+			go warmRoute(ac.rdb, departures[i].Callsign)
+		}
 	}
 
 	// Real recent departures from OpenSky (with destination airport + time), cached.
