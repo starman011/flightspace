@@ -38,7 +38,9 @@ type openSkyFlight struct {
 }
 
 var (
-	osHTTP     = &http.Client{Timeout: 8 * time.Second}
+	// Generous timeout: only used off the request path (background goroutine),
+	// and the OpenSky auth endpoint can be slow from some hosts.
+	osHTTP     = &http.Client{Timeout: 20 * time.Second}
 	osTokenMu  sync.Mutex
 	osToken    string
 	osTokenExp time.Time
@@ -122,7 +124,7 @@ func refreshOpenSky(kind, icao string, rdb *redis.Client) {
 	if ok, _ := rdb.SetNX(bg, lockKey, "1", 30*time.Second).Result(); !ok {
 		return
 	}
-	ctx, cancel := context.WithTimeout(bg, 10*time.Second)
+	ctx, cancel := context.WithTimeout(bg, 45*time.Second)
 	defer cancel()
 
 	token, err := openSkyAccessToken(ctx)
