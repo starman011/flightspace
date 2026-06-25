@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,9 +39,21 @@ type openSkyFlight struct {
 }
 
 var (
-	// Generous timeout: only used off the request path (background goroutine),
-	// and the OpenSky auth endpoint can be slow from some hosts.
-	osHTTP     = &http.Client{Timeout: 20 * time.Second}
+	// Force IPv4 dialing: from some container hosts (Railway) the IPv6 route to
+	// auth.opensky-network.org is black-holed, so the dial hangs until the
+	// context deadline ("context deadline exceeded"). tcp4 avoids that.
+	osHTTP = &http.Client{
+		Timeout: 20 * time.Second,
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}).DialContext(ctx, "tcp4", addr)
+			},
+			ForceAttemptHTTP2:   true,
+			TLSHandshakeTimeout: 10 * time.Second,
+			MaxIdleConns:        10,
+			IdleConnTimeout:     90 * time.Second,
+		},
+	}
 	osTokenMu  sync.Mutex
 	osToken    string
 	osTokenExp time.Time
