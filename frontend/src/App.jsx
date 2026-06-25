@@ -215,6 +215,7 @@ export default function App() {
   const [skyFlat, setSkyFlat] = useState(false)        // phone lying flat → prompt to lift it
   const [skyImgLoading, setSkyImgLoading] = useState(false)  // fetching high-res sky cutout
   const [locating, setLocating] = useState(false)            // geolocating for "fly to my location"
+  const [locateMsg, setLocateMsg] = useState(null)           // feedback toast for the locate button
   const [skyCamOn, setSkyCamOn] = useState(false)      // camera passthrough active
   const skyVideoRef = useRef(null)
   const skyStreamRef = useRef(null)
@@ -443,11 +444,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   // Geolocate → smoothly fly the globe to ~100 km above the user's location.
   const handleLocate = useCallback(() => {
-    if (!navigator.geolocation || locating) return
+    if (locating) return
+    if (!navigator.geolocation) { setLocateMsg('Location isn’t supported on this device.'); return }
     setLocating(true)
+    setLocateMsg('Finding your location…')
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false)
+        setLocateMsg(null)
         const { latitude, longitude } = pos.coords
         const toEarth = activeScale !== 'earth'
         if (toEarth) {
@@ -457,10 +461,23 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         // Let the scale switch settle, then smooth-zoom from the world view to ~100 km up.
         setTimeout(() => globeRef.current?.flyTo?.(latitude, longitude, 100), toEarth ? 850 : 60)
       },
-      () => setLocating(false),   // denied / unavailable
+      (err) => {
+        setLocating(false)
+        console.warn('[locate] geolocation error', err?.code, err?.message)
+        setLocateMsg(err?.code === 1
+          ? 'Location is blocked. Allow location for this site in your browser, then tap again.'
+          : 'Couldn’t get your location — try again.')
+      },
       { enableHighAccuracy: false, timeout: 9000, maximumAge: 300000 },
     )
   }, [locating, activeScale])
+
+  // Auto-dismiss the locate feedback message.
+  useEffect(() => {
+    if (!locateMsg || locateMsg === 'Finding your location…') return
+    const t = setTimeout(() => setLocateMsg(null), 5000)
+    return () => clearTimeout(t)
+  }, [locateMsg])
   const galaxySetAtRef = useRef(0)
   const handleSkyObjectClick = useCallback((obj) => {
     if (!obj) {
@@ -1105,6 +1122,19 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
           </svg>
         </button>
+      )}
+
+      {!activePage && !focusedPad && locateMsg && (
+        <div style={{
+          position: 'fixed', left: 64, bottom: 72, zIndex: 690, maxWidth: 'min(70vw, 280px)',
+          background: 'rgba(8,12,18,0.94)', backdropFilter: 'blur(14px)',
+          border: '1px solid rgba(178,255,26,0.25)', borderRadius: 10,
+          padding: '8px 12px', color: 'rgba(215,235,245,0.92)',
+          fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: 1.4,
+          boxShadow: '0 6px 22px rgba(0,0,0,0.5)',
+        }}>
+          {locateMsg}
+        </div>
       )}
 
       {showWeather && activeScale === 'earth' && <WindLegend />}
