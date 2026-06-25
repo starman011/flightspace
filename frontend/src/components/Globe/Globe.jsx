@@ -1134,10 +1134,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       setCameraScale(scale)
       int.current.targetCameraScale = scale
     },
-    flyTo: (lat, lon) => {
+    flyTo: (lat, lon, altKm) => {
       if (!int.current?.camera) return
       const camera = int.current.camera
-      const d = camera.position.length()
+      // altKm given → zoom to that altitude (1 + km/earthRadius); else keep distance.
+      const d = (altKm != null) ? (1 + altKm / 6371) : camera.position.length()
       int.current.flyToTarget = ll2v(lat, lon, EARTH_R).normalize().multiplyScalar(d)
       int.current.flyToStart  = Date.now()
       int.current.flyToFrom   = camera.position.clone()
@@ -2396,7 +2397,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const _t = 1 - Math.pow(1 - _rawT, 3)
         const _interp = new Vector3()
           .lerpVectors(int.current.flyToFrom, int.current.flyToTarget, _t)
-        camera.position.copy(_interp.normalize().multiplyScalar(int.current.flyToTarget.length()))
+        // Interpolate radius too (smooth zoom), not just direction — so flyTo can
+        // change altitude (e.g. zoom from the world view down to ~100 km).
+        const _r0 = int.current.flyToFrom.length()
+        const _r1 = int.current.flyToTarget.length()
+        camera.position.copy(_interp.normalize().multiplyScalar(_r0 + (_r1 - _r0) * _t))
         camera.lookAt(0, 0, 0)
         controls.enableRotate = false
         if (_rawT >= 1) {

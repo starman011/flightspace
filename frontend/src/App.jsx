@@ -214,6 +214,7 @@ export default function App() {
   const [arMsg, setArMsg] = useState(null)             // status/diagnostic toast for sky view
   const [skyFlat, setSkyFlat] = useState(false)        // phone lying flat → prompt to lift it
   const [skyImgLoading, setSkyImgLoading] = useState(false)  // fetching high-res sky cutout
+  const [locating, setLocating] = useState(false)            // geolocating for "fly to my location"
   const [skyCamOn, setSkyCamOn] = useState(false)      // camera passthrough active
   const skyVideoRef = useRef(null)
   const skyStreamRef = useRef(null)
@@ -439,6 +440,27 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   const handlePlanetClose = useCallback(() => setSelectedPlanet(null), [])
   const handleAirportClick = useCallback((iata) => setSelectedAirport(iata), [])
   const handleAirportClose = useCallback(() => setSelectedAirport(null), [])
+
+  // Geolocate → smoothly fly the globe to ~100 km above the user's location.
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation || locating) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false)
+        const { latitude, longitude } = pos.coords
+        const toEarth = activeScale !== 'earth'
+        if (toEarth) {
+          setActiveScale('earth')
+          globeRef.current?.setCameraScale?.('earth')
+        }
+        // Let the scale switch settle, then smooth-zoom from the world view to ~100 km up.
+        setTimeout(() => globeRef.current?.flyTo?.(latitude, longitude, 100), toEarth ? 850 : 60)
+      },
+      () => setLocating(false),   // denied / unavailable
+      { enableHighAccuracy: false, timeout: 9000, maximumAge: 300000 },
+    )
+  }, [locating, activeScale])
   const galaxySetAtRef = useRef(0)
   const handleSkyObjectClick = useCallback((obj) => {
     if (!obj) {
@@ -1059,6 +1081,31 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
 
       <SiteFooter active={!activePage && !selectedIcao24 && !selectedAirport && !launchPanelOpen && !profilePanelOpen && !focusedPad && !searchOpen} />
+
+      {/* ── Locate me: geolocate + smooth-zoom to ~100 km above your location ── */}
+      {!activePage && !focusedPad && (
+        <button
+          onClick={handleLocate}
+          title="Zoom to my location"
+          aria-label="Zoom to my location"
+          style={{
+            position: 'fixed', left: 16, bottom: 72, zIndex: 690,
+            width: 40, height: 40, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(8,12,18,0.92)', backdropFilter: 'blur(14px)',
+            border: `1px solid ${locating ? 'rgba(178,255,26,0.6)' : 'rgba(178,255,26,0.22)'}`,
+            color: locating ? '#b2ff1a' : 'rgba(195,245,255,0.75)',
+            cursor: 'pointer', boxShadow: '0 4px 18px rgba(0,0,0,0.4)',
+            transition: 'border-color 0.2s, color 0.2s',
+            animation: locating ? 'padPing 1.2s ease-in-out infinite' : 'none',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3.2" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          </svg>
+        </button>
+      )}
 
       {showWeather && activeScale === 'earth' && <WindLegend />}
 
