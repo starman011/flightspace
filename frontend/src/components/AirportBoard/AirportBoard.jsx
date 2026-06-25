@@ -140,18 +140,22 @@ export default function AirportBoard({ iata, onClose, onFlightClick }) {
               ) : (
                 <>
                   <div className={`${styles.rowHead} ${styles.liveGrid}`}>
-                    <span>Flight</span><span>Aircraft</span><span>{isArr ? 'ETA' : 'Status'}</span><span>Altitude</span>
+                    <span>Flight</span><span>{isArr ? 'From' : 'To'}</span><span>{isArr ? 'ETA' : 'Status'}</span><span>Altitude</span>
                   </div>
-                  {live.map((f, i) => (
-                    <div key={`l${i}`} className={`${styles.row} ${styles.liveGrid}`} onClick={() => f.icao24 && onFlightClick?.(f.icao24)}>
-                      <span className={styles.flight}>{flightName(f.callsign, f.icao24)}</span>
-                      <span className={styles.peer}>{aircraftName(f.type) || '—'}</span>
-                      <span className={styles.time}>
-                        {isArr ? (f.eta_min != null && f.eta_min > 0 ? `in ${Math.round(f.eta_min)} min` : 'on approach') : 'climbing out'}
-                      </span>
-                      <span className={styles.alt}>{f.alt_ft ? `${Math.round(f.alt_ft).toLocaleString()} ft` : '—'}</span>
-                    </div>
-                  ))}
+                  {live.map((f, i) => {
+                    const code = isArr ? f.origin : f.dest
+                    const where = code ? peerLabel(code) : (aircraftName(f.type) || '—')
+                    return (
+                      <div key={`l${i}`} className={`${styles.row} ${styles.liveGrid}`} onClick={() => f.icao24 && onFlightClick?.(f.icao24)}>
+                        <span className={styles.flight}>{flightName(f.callsign, f.icao24)}</span>
+                        <span className={styles.peer}>{where}</span>
+                        <span className={styles.time}>
+                          {isArr ? (f.eta_min != null && f.eta_min > 0 ? `in ${Math.round(f.eta_min)} min` : 'on approach') : 'climbing out'}
+                        </span>
+                        <span className={styles.alt}>{f.alt_ft ? `${Math.round(f.alt_ft).toLocaleString()} ft` : '—'}</span>
+                      </div>
+                    )
+                  })}
                 </>
               )}
             </>

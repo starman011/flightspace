@@ -468,7 +468,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           ? 'Location is blocked. Allow location for this site in your browser, then tap again.'
           : 'Couldn’t get your location — try again.')
       },
-      { enableHighAccuracy: false, timeout: 9000, maximumAge: 300000 },
+      { enableHighAccuracy: false, timeout: 27000, maximumAge: 600000 },
     )
   }, [locating, activeScale])
 

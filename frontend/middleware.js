@@ -222,14 +222,22 @@ async function renderAirport(iata) {
     return f.icao24 ? `<a href="${SITE}/flight/${f.icao24}">${al ? esc(al) + ' ' : ''}${esc(cs)}</a>` : label
   }
   const fmtAlt = (f) => (f.alt_ft ? Math.round(f.alt_ft).toLocaleString() + ' ft' : '—')
+  const aptCity = (code) => {
+    if (!code) return ''
+    const i = AIRPORT_INFO[code] || AIRPORT_FULL[code]
+    return i ? `${i.city} (${code})` : code
+  }
   const arrRow = (f) => {
     const eta = (f.eta_min != null && f.eta_min > 0) ? `in ${Math.round(f.eta_min)} min` : 'on approach'
-    return `<tr><td>${flLink(f)}</td><td>${esc(aircraftName(f.type)) || '—'}</td><td>${eta}</td><td>${fmtAlt(f)}</td></tr>`
+    const from = f.origin ? esc(aptCity(f.origin)) : (esc(aircraftName(f.type)) || '—')
+    return `<tr><td>${flLink(f)}</td><td>${from}</td><td>${eta}</td><td>${fmtAlt(f)}</td></tr>`
   }
-  const depRow = (f) =>
-    `<tr><td>${flLink(f)}</td><td>${esc(aircraftName(f.type)) || '—'}</td><td>climbing out</td><td>${fmtAlt(f)}</td></tr>`
-  const arrThead = '<tr><th>Flight</th><th>Aircraft</th><th>ETA</th><th>Altitude</th></tr>'
-  const depThead = '<tr><th>Flight</th><th>Aircraft</th><th>Status</th><th>Altitude</th></tr>'
+  const depRow = (f) => {
+    const to = f.dest ? esc(aptCity(f.dest)) : (esc(aircraftName(f.type)) || '—')
+    return `<tr><td>${flLink(f)}</td><td>${to}</td><td>climbing out</td><td>${fmtAlt(f)}</td></tr>`
+  }
+  const arrThead = '<tr><th>Flight</th><th>From</th><th>ETA</th><th>Altitude</th></tr>'
+  const depThead = '<tr><th>Flight</th><th>To</th><th>Status</th><th>Altitude</th></tr>'
   const arrRows = arrivals.slice(0, 18).map(arrRow).join('\n')
   const depRows = departures.slice(0, 18).map(depRow).join('\n')
 

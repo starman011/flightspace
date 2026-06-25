@@ -136,9 +136,9 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
               <span className={styles.callsign}>
                 {a.callsign || a.icao24}
                 {(() => {
-                  const al = airlineFromCs(a.callsign)
-                  const ac = aircraftName(a.type)
-                  const meta = [al, ac].filter(Boolean).join(' · ')
+                  const code = tab === 'arrivals' ? a.origin : a.dest
+                  const route = code ? `${tab === 'arrivals' ? 'from' : 'to'} ${AIRPORT_LOOKUP[code]?.city || code}` : ''
+                  const meta = route || [airlineFromCs(a.callsign), aircraftName(a.type)].filter(Boolean).join(' · ')
                   return meta ? <span className={styles.sub}>{meta}</span> : null
                 })()}
               </span>
