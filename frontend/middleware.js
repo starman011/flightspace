@@ -1270,7 +1270,7 @@ function renderHome() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}" />
-  <link rel="canonical" href="${canonical}" />
+  <link rel="canonical" href="${esc(canonical)}" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${canonical}" />
@@ -1589,10 +1589,10 @@ function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}" />
-  <link rel="canonical" href="${canonical}" />
+  <link rel="canonical" href="${esc(canonical)}" />
   <meta name="robots" content="index, follow" />
   <meta property="og:type"        content="website" />
-  <meta property="og:url"         content="${canonical}" />
+  <meta property="og:url"         content="${esc(canonical)}" />
   <meta property="og:title"       content="${esc(title)}" />
   <meta property="og:description" content="${esc(desc)}" />
   <meta property="og:image"       content="${esc(ogImg)}" />
