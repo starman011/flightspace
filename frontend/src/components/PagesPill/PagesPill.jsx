@@ -8,6 +8,7 @@ const PAGES = [
   { id: 'galaxy',    scale: 'galaxy', label: 'Deep Space' },
   { id: 'rockets',   filter: true,    label: 'Launches' },
   { id: 'asteroids', filter: true,    label: 'NEO' },
+  { id: 'flights',   page: 'flight',  label: 'Flights near you' },
   { id: 'journal',   page: 'blog',    label: 'Journal' },
 ]
 
@@ -41,6 +42,11 @@ function PageIcon({ id, size = 16 }) {
     case 'rockets':
     case 'asteroids':
       return <FilterIcon id={id} size={size} />
+    case 'flights': return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />
+      </svg>
+    )
     case 'journal': return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />

@@ -446,30 +446,48 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   // Geolocate → smoothly fly the globe to ~100 km above the user's location.
   const handleLocate = useCallback(() => {
     if (locating) return
-    if (!navigator.geolocation) { setLocateMsg('Location isn’t supported on this device.'); return }
     setLocating(true)
     setLocateMsg('Finding your location…')
+
+    // Smooth-zoom the globe to ~100 km above the given coordinates.
+    const flyToCoords = (latitude, longitude) => {
+      setLocating(false)
+      setLocateMsg(null)
+      const toEarth = activeScale !== 'earth'
+      if (toEarth) {
+        setActiveScale('earth')
+        globeRef.current?.setCameraScale?.('earth')
+      }
+      // Let the scale switch settle, then smooth-zoom from the world view to ~100 km up.
+      setTimeout(() => globeRef.current?.flyTo?.(latitude, longitude, 100), toEarth ? 850 : 60)
+    }
+
+    // Fallback: approximate location from IP — works when GPS is denied,
+    // unavailable, or times out (common on desktop).
+    const ipFallback = (blocked) => {
+      fetch('https://get.geojs.io/v1/ip/geo.json')
+        .then(r => r.json())
+        .then(d => {
+          const lat = parseFloat(d.latitude), lon = parseFloat(d.longitude)
+          if (Number.isFinite(lat) && Number.isFinite(lon)) flyToCoords(lat, lon)
+          else throw new Error('no coords')
+        })
+        .catch(() => {
+          setLocating(false)
+          setLocateMsg(blocked
+            ? 'Location is blocked. Allow location for this site, then tap again.'
+            : 'Couldn’t find your location — try again.')
+        })
+    }
+
+    if (!navigator.geolocation) { ipFallback(false); return }
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false)
-        setLocateMsg(null)
-        const { latitude, longitude } = pos.coords
-        const toEarth = activeScale !== 'earth'
-        if (toEarth) {
-          setActiveScale('earth')
-          globeRef.current?.setCameraScale?.('earth')
-        }
-        // Let the scale switch settle, then smooth-zoom from the world view to ~100 km up.
-        setTimeout(() => globeRef.current?.flyTo?.(latitude, longitude, 100), toEarth ? 850 : 60)
-      },
+      (pos) => flyToCoords(pos.coords.latitude, pos.coords.longitude),
       (err) => {
-        setLocating(false)
-        console.warn('[locate] geolocation error', err?.code, err?.message)
-        setLocateMsg(err?.code === 1
-          ? 'Location is blocked. Allow location for this site in your browser, then tap again.'
-          : 'Couldn’t get your location — try again.')
+        console.warn('[locate] geolocation error', err?.code, err?.message, '→ IP fallback')
+        ipFallback(err?.code === 1)
       },
-      { enableHighAccuracy: false, timeout: 27000, maximumAge: 600000 },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
     )
   }, [locating, activeScale])
 
