@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 const STORAGE_KEY = 'fs.ambient.muted'
 
 export function useAmbientAudio() {
-  const [muted, setMuted] = useState(() => localStorage.getItem(STORAGE_KEY) === '1')
+  // Sound OFF by default; only ON if the user explicitly unmuted before.
+  const [muted, setMuted] = useState(() => localStorage.getItem(STORAGE_KEY) !== '0')
   const [ready, setReady] = useState(false)
   const audioRef = useRef(null)
 
@@ -43,7 +44,7 @@ export function useAmbientAudio() {
       audio.pause()
       localStorage.setItem(STORAGE_KEY, '1')
     } else {
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.setItem(STORAGE_KEY, '0')
       if (ready) audio.play().catch(() => {})
     }
   }, [muted, ready])
