@@ -1,15 +1,8 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import styles from './WaitlistPage.module.css'
 
 /* ── Hero image pool ─────────────────────────────────────────────── */
-const HEROES = [
-  'photo-1462331940025-496dfbfc7564', // Milky Way
-  'photo-1543722530-d2c3201371e7',    // Deep space galaxies
-  'photo-1451187580459-43490279c0fa', // Earth from space
-  'photo-1419242902214-272b3f66ee7a', // Meteor/stars
-]
-
 /* ── Feature icons (inline SVG, 16×16) ──────────────────────────── */
 function IconLiveFlights() {
   return (
@@ -112,7 +105,6 @@ export default function WaitlistPage({ onClose }) {
   const [email, setEmail]   = useState('')
   const [status, setStatus] = useState('idle')
 
-  const heroId  = useMemo(() => HEROES[Math.floor(Math.random() * HEROES.length)], [])
   const starsRef = useRef(null)
 
   useEffect(() => {
@@ -183,8 +175,8 @@ export default function WaitlistPage({ onClose }) {
           {/* Hero image */}
           <img
             className={styles.hero}
-            src={`https://images.unsplash.com/${heroId}?w=900&h=400&fit=crop&q=85&auto=format`}
-            alt="Space"
+            src="/night-sky.jpg"
+            alt="People watching the Milky Way and Andromeda from a wildflower hill"
           />
 
           {/* Mission copy */}

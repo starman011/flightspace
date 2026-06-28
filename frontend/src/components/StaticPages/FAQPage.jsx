@@ -1,5 +1,11 @@
 import styles from './StaticPages.module.css'
 
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+)
+
 export default function FAQPage({ onClose }) {
   const faqs = [
     { q: 'Is ObjectTracer free?', a: 'Yes. ObjectTracer is completely free with no ads. We rely on donations to keep the servers running.' },
@@ -13,12 +19,19 @@ export default function FAQPage({ onClose }) {
   ]
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.panel} onClick={e => e.stopPropagation()}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Frequently Asked Questions</h2>
-          <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+    <div className={styles.overlay}>
+      <div className={styles.panel}>
+        <button className={styles.heroClose} onClick={onClose} aria-label="Close"><CloseIcon /></button>
+
+        <div className={styles.hero}>
+          <img className={styles.heroImg} src="/boy-sky.jpg" alt="A child pointing up at a plane crossing the sky" />
+          <div className={styles.heroOverlay} />
+          <div className={styles.heroText}>
+            <p className={styles.heroKicker}>ObjectTracer</p>
+            <h1 className={styles.heroTitle}>Frequently asked questions</h1>
+          </div>
         </div>
+
         <div className={styles.body}>
           {faqs.map((f, i) => (
             <div key={i} className={styles.faqItem}>

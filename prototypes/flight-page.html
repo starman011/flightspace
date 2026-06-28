@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AA100 · Flight Status — ObjectTracer (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eaf2ff;
+    --dim:rgba(208,224,244,.62);
+    --faint:rgba(208,224,244,.40);
+    --cyan:#4dd0e1;
+    --blue:#5b8cff;
+    --glass:rgba(140,170,210,.08);
+    --glass-2:rgba(140,170,210,.13);
+    --stroke:rgba(180,205,235,.18);
+    --stroke-hi:rgba(180,215,245,.32);
+    --ok:#5fd38a;
+    --warn:#ffc24d;
+    --land:#9fb2c8;
+    --mono:'Space Mono',ui-monospace,monospace;
+    --disp:'Big Shoulders Display',sans-serif;
+    --body:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    background:#03060c;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- fixed sky stage ---------- */
+  .stage{position:fixed;inset:0;z-index:0;overflow:hidden}
+  .sky{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(120% 90% at 78% -10%, rgba(255,196,120,.30), transparent 42%),
+      radial-gradient(140% 120% at 20% 0%, rgba(91,140,255,.22), transparent 55%),
+      linear-gradient(180deg,#0a1f3c 0%, #0a1730 30%, #070f22 60%, #03060c 100%);
+    transition:filter .2s linear;
+    will-change:filter;
+  }
+  /* sun glow that drifts with scroll */
+  .sun{
+    position:absolute;top:-8vh;right:14vw;width:42vmax;height:42vmax;
+    background:radial-gradient(circle, rgba(255,214,150,.45), rgba(255,180,120,.10) 40%, transparent 65%);
+    filter:blur(8px);will-change:transform;pointer-events:none;
+  }
+  /* grain */
+  .grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");}
+  #wind{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  /* the plane + contrail */
+  .flight{position:absolute;top:34vh;left:0;will-change:transform;pointer-events:none}
+  .contrail{position:absolute;right:46px;top:50%;height:10px;width:46vw;transform:translateY(-50%);
+    background:linear-gradient(270deg, rgba(255,255,255,.55), rgba(255,255,255,.16) 35%, transparent 92%);
+    filter:blur(2px);border-radius:10px}
+  .contrail.second{height:4px;top:32%;width:30vw;opacity:.5}
+  .plane{width:84px;height:auto;display:block;filter:drop-shadow(0 6px 16px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(150,200,255,.25))}
+
+  /* ---------- foreground content ---------- */
+  .content{position:relative;z-index:2}
+
+  /* sticky top bar */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;gap:14px;
+    padding:14px 22px;
+    background:linear-gradient(180deg, rgba(4,8,16,.55), rgba(4,8,16,0));
+    backdrop-filter:blur(2px)}
+  .brand{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase}
+  .topflight{font-family:var(--disp);font-weight:800;font-size:22px;letter-spacing:.02em;line-height:1}
+  .topbar .spacer{flex:1}
+
+  /* status chip */
+  .chip{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    padding:6px 11px;border-radius:999px;border:1px solid var(--stroke-hi);
+    display:inline-flex;align-items:center;gap:7px;background:var(--glass);backdrop-filter:blur(12px)}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+  .chip.enroute .dot{background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.4s infinite}
+  .chip.landed{color:var(--land)} .chip.landed .dot{background:var(--land);box-shadow:none;animation:none}
+  .chip.delayed{color:var(--warn)} .chip.delayed .dot{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  section{position:relative;padding:0 22px}
+
+  /* hero */
+  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:13vh}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+  .hflightno{font-family:var(--disp);font-weight:900;font-size:clamp(64px,16vw,200px);line-height:.82;letter-spacing:.005em;
+    text-transform:uppercase;background:linear-gradient(180deg,#fff,#bcd2f0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .route{display:flex;align-items:center;gap:18px;margin-top:18px;flex-wrap:wrap}
+  .route .ap{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,46px);letter-spacing:.04em}
+  .route .arr{font-family:var(--mono);font-size:20px;color:var(--cyan)}
+  .route .city{font-family:var(--body);font-size:13px;color:var(--dim);display:block;letter-spacing:.04em;margin-top:2px;font-weight:500}
+  .herometa{display:flex;gap:14px;align-items:center;margin-top:22px;flex-wrap:wrap}
+  .scrollcue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);font-family:var(--mono);
+    font-size:10px;letter-spacing:.26em;color:var(--faint);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .scrollcue .bar{width:1px;height:34px;background:linear-gradient(var(--faint),transparent);animation:drop 1.8s infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}50.1%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* glass card base */
+  .glass{background:var(--glass);border:1px solid var(--stroke);border-radius:20px;
+    backdrop-filter:blur(20px) saturate(120%);-webkit-backdrop-filter:blur(20px) saturate(120%);
+    box-shadow:0 20px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06)}
+
+  /* reveal on scroll */
+  .reveal{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* progress / mid section */
+  .midsec{min-height:120vh;display:flex;align-items:center;justify-content:center}
+  .progwrap{width:min(820px,92vw);padding:30px 30px 26px}
+  .progtitle{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:22px;display:flex;justify-content:space-between}
+  .track{position:relative;height:2px;background:var(--stroke);border-radius:2px;margin:30px 8px 14px}
+  .track .fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:2px;box-shadow:0 0 12px rgba(91,140,255,.6)}
+  .track .puck{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:16px;filter:drop-shadow(0 0 6px rgba(150,200,255,.6))}
+  .track .end{position:absolute;top:50%;width:8px;height:8px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%)}
+  .track .end.l{left:0} .track .end.r{right:0;transform:translate(50%,-50%);background:var(--faint)}
+  .progends{display:flex;justify-content:space-between;font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:.04em;margin-top:8px}
+  .progends small{display:block;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.08em;font-weight:400;margin-top:3px}
+  .windrow{display:flex;gap:26px;margin-top:26px;flex-wrap:wrap}
+  .windstat{font-family:var(--mono)} .windstat b{display:block;font-size:22px;color:var(--ink);font-weight:700}
+  .windstat span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+  /* board (FIDS) */
+  .boardsec{min-height:100vh;display:flex;align-items:center;justify-content:center;padding-top:6vh;padding-bottom:10vh}
+  .board{width:min(960px,94vw);padding:0;overflow:hidden}
+  .boardhead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 28px;border-bottom:1px solid var(--stroke)}
+  .boardhead h2{font-family:var(--disp);font-weight:800;font-size:30px;letter-spacing:.03em;text-transform:uppercase}
+  .boardhead .sub{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.12em;margin-top:4px}
+  .legs{display:grid;grid-template-columns:1fr auto 1fr}
+  .leg{padding:30px 28px}
+  .leg .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+  .leg .code{font-family:var(--disp);font-weight:900;font-size:60px;line-height:.85;letter-spacing:.02em}
+  .leg .name{font-size:13px;color:var(--dim);margin-top:6px;font-weight:500}
+  .times{display:flex;gap:26px;margin-top:22px}
+  .t .k{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .t .v{font-family:var(--mono);font-weight:700;font-size:26px;margin-top:5px;letter-spacing:.02em}
+  .t .v.act{color:var(--cyan)} .t .v.delay{color:var(--warn)} .t .v.strike{text-decoration:line-through;color:var(--faint);font-weight:400;font-size:18px}
+  .gaterow{display:flex;gap:30px;margin-top:22px}
+  .gaterow .g .k{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .gaterow .g .v{font-family:var(--disp);font-weight:800;font-size:30px;margin-top:3px}
+  .legmid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;min-width:88px;border-left:1px solid var(--stroke);border-right:1px solid var(--stroke)}
+  .legmid .plane2{font-size:24px;transform:rotate(90deg);opacity:.8;margin-bottom:10px}
+  .legmid .dur{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.06em;text-align:center}
+  .legmid .dist{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:6px}
+  .boardfoot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 28px;border-top:1px solid var(--stroke);flex-wrap:wrap}
+  .statusline{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.02em}
+  .statusline .em{color:var(--cyan)} .statusline.landed .em{color:var(--land)} .statusline.delayed .em{color:var(--warn)}
+  .aircraftline{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;text-align:right}
+
+  /* CTA */
+  .ctasec{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:24px;padding-bottom:14vh}
+  .ctasec h3{font-family:var(--disp);font-weight:800;font-size:clamp(30px,6vw,58px);letter-spacing:.02em;text-transform:uppercase;max-width:14ch;line-height:.95}
+  .cta{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+    padding:18px 30px;border-radius:16px;border:1px solid var(--stroke-hi);color:var(--ink);cursor:pointer;
+    background:linear-gradient(180deg, rgba(91,140,255,.22), rgba(77,208,225,.10));backdrop-filter:blur(16px);
+    display:inline-flex;align-items:center;gap:12px;transition:transform .2s, box-shadow .2s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(91,140,255,.35)}
+  .cta.ghost{background:var(--glass);color:var(--dim)}
+  .ctanote{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.1em}
+
+  /* dev toggle */
+  .dev{position:fixed;right:18px;bottom:18px;z-index:20;display:flex;gap:6px;padding:7px;border-radius:14px;
+    background:rgba(6,12,20,.8);border:1px solid var(--stroke);backdrop-filter:blur(14px)}
+  .dev button{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+    padding:7px 11px;border-radius:9px;border:1px solid transparent;background:transparent;cursor:pointer}
+  .dev button.on{color:#03060c;background:var(--cyan);border-color:var(--cyan);font-weight:700}
+
+  @media(max-width:680px){
+    .legs{grid-template-columns:1fr}
+    .legmid{flex-direction:row;gap:14px;border:none;border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke);padding:14px 28px}
+    .legmid .plane2{transform:rotate(0);margin:0}
+    .leg .code{font-size:46px}
+    .topflight{font-size:18px}
+    .dev{bottom:auto;top:64px}
+  }
+
+  /* ---------- PAGE 1 cover ---------- */
+  .cover{position:relative;height:100vh;width:100vw;overflow:hidden;padding:0;background:#2f7fd0}
+  .coverimg{position:absolute;inset:-5%;background:url('../frontend/public/flight-sky.jpg') center/cover no-repeat;
+    animation:kenburns 32s ease-in-out infinite alternate;will-change:transform}
+  @keyframes kenburns{0%{transform:scale(1.05) translate(0,0)}100%{transform:scale(1.13) translate(-2.2%,-1.6%)}}
+  .cover #scene{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+  .coverveil{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg, rgba(3,6,12,.18) 0%, rgba(3,6,12,0) 40%, rgba(3,6,12,0) 60%, rgba(3,6,12,.55) 100%)}
+  .ctext{position:absolute;left:26px;bottom:12vh;z-index:3}
+  .ceyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+    color:rgba(255,255,255,.85);margin-bottom:14px;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+  .ctitle{font-family:var(--disp);font-weight:900;font-size:clamp(56px,13vw,164px);line-height:.78;
+    letter-spacing:.01em;text-transform:uppercase;color:#fff;text-shadow:0 8px 34px rgba(0,0,0,.32)}
+  .cblurb{position:absolute;right:26px;bottom:12vh;max-width:320px;z-index:3;text-align:left;
+    font-family:var(--mono);font-size:12px;line-height:1.65;color:rgba(255,255,255,.82);text-shadow:0 2px 12px rgba(0,0,0,.5)}
+  .ccue{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:3;
+    font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.75);
+    display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ccue .bar{width:1px;height:32px;background:linear-gradient(rgba(255,255,255,.75),transparent);animation:drop 1.8s infinite}
+  @media(max-width:680px){ .cblurb{display:none} }
+
+  /* ---------- locate ---------- */
+  .locsec{min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .loccard{width:min(640px,92vw);padding:44px 42px;text-align:left}
+  .loceyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);margin-bottom:16px}
+  .loctitle{font-family:var(--disp);font-weight:800;font-size:clamp(34px,5.5vw,58px);line-height:.9;letter-spacing:.01em;text-transform:uppercase}
+  .locsub{font-size:15px;color:var(--dim);margin-top:16px;line-height:1.6;max-width:46ch}
+  .locactions{display:flex;align-items:center;gap:14px;margin-top:28px;flex-wrap:wrap}
+  .locor{font-family:var(--mono);font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em}
+  .locinput{flex:1;min-width:190px;font-family:var(--body);font-size:14px;color:var(--ink);
+    padding:15px 18px;border-radius:14px;border:1px solid var(--stroke);background:rgba(140,170,210,.06);outline:none}
+  .locinput:focus{border-color:var(--stroke-hi)}
+  .locinput::placeholder{color:var(--faint)}
+  .locchips{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .locchips>span{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .locchip{font-family:var(--body);font-size:13px;color:var(--dim);padding:8px 14px;border-radius:999px;
+    border:1px solid var(--stroke);background:var(--glass);cursor:pointer;transition:.2s}
+  .locchip:hover{color:var(--ink);border-color:var(--stroke-hi)}
+
+  /* ---------- airport board ---------- */
+  .aptsec{min-height:90vh;display:none;align-items:flex-start;justify-content:center;padding-top:3vh;padding-bottom:12vh}
+  .aptsec.show{display:flex}
+  .aptboard{width:min(980px,95vw);overflow:hidden;padding:0}
+  .aptbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px;border-bottom:1px solid var(--stroke);flex-wrap:wrap}
+  .aptKicker{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+  .aptTitle{display:flex;align-items:baseline;gap:12px;margin-top:7px;flex-wrap:wrap}
+  .aptCode{font-family:var(--disp);font-weight:900;font-size:42px;letter-spacing:.03em;line-height:.9}
+  .aptName{font-size:13px;color:var(--dim)}
+  .nearby{font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .nchip{font-family:var(--mono);font-size:11px;color:var(--dim);padding:6px 10px;border-radius:8px;border:1px solid var(--stroke);background:var(--glass);cursor:pointer}
+  .nchip:hover{color:var(--ink);border-color:var(--stroke-hi)}
+  .aptTabs{display:flex;gap:8px;padding:16px 26px 6px}
+  .aptTab{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+    padding:9px 16px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer}
+  .aptTab.on{color:var(--ink);background:var(--glass-2);border-color:var(--stroke-hi)}
+  .aptHead{display:grid;grid-template-columns:1.4fr 1.7fr .8fr 1fr;gap:14px;padding:14px 26px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--stroke)}
+  .aptRow{display:grid;grid-template-columns:1.4fr 1.7fr .8fr 1fr;gap:14px;padding:16px 26px;align-items:center;
+    border-bottom:1px solid rgba(180,205,235,.07);cursor:pointer;transition:background .15s}
+  .aptRow:hover{background:rgba(140,170,210,.06)}
+  .rcs{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.02em}
+  .rcs small{display:block;font-weight:400;font-size:11px;color:var(--faint);letter-spacing:.04em;margin-top:3px}
+  .rcity{font-family:var(--body);font-size:15px;color:var(--ink)}
+  .rtime{font-family:var(--mono);font-size:16px;color:var(--dim)}
+  .pill{justify-self:start;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:6px 10px;border-radius:999px;border:1px solid var(--stroke-hi);background:var(--glass)}
+  .pill.ok{color:var(--ok)} .pill.go{color:var(--cyan)} .pill.warn{color:var(--warn)} .pill.land{color:var(--land)}
+  .aptfoot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 26px;border-top:1px solid var(--stroke);flex-wrap:wrap}
+  .aptfoot>span{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  @media(max-width:680px){
+    .aptHead,.aptRow{grid-template-columns:1.3fr 1.3fr .9fr}
+    .aptHead span:last-child{display:none}
+    .pill{grid-column:1 / -1;justify-self:start;margin-top:2px}
+  }
+</style>
+</head>
+<body>
+
+<!-- fixed sky + plane -->
+<div class="stage">
+  <div class="sky" id="sky">
+    <div class="sun" id="sun"></div>
+  </div>
+  <canvas id="wind"></canvas>
+  <div class="flight" id="flight">
+    <div class="contrail"></div>
+    <div class="contrail second"></div>
+    <svg class="plane" viewBox="0 0 512 512" fill="#eef4ff" xmlns="http://www.w3.org/2000/svg">
+      <path d="M482 256c0 14-11 25-25 25H318l-86 150c-2 4-6 6-11 6h-29c-8 0-14-8-12-16l34-140h-78l-34 45c-2 3-6 5-10 5H72c-8 0-14-8-11-16l22-59-22-59c-3-8 3-16 11-16h20c4 0 8 2 10 5l34 45h78L190 96c-2-8 4-16 12-16h29c5 0 9 2 11 6l86 150h139c14 0 25 11 25 25z"/>
+    </svg>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<!-- top bar -->
+<div class="topbar">
+  <span class="brand">ObjectTracer</span>
+  <span class="topflight" id="topflight">Near you</span>
+  <span class="spacer"></span>
+  <span class="chip enroute" id="topchip"><span class="dot"></span><span id="topchiptext">locate to begin</span></span>
+</div>
+
+<div class="content">
+
+  <!-- PAGE 1 · cinematic cover (algorithmic foliage + sky + plane) -->
+  <section class="cover" id="cover">
+    <div class="coverimg"></div>
+    <canvas id="scene"></canvas>
+    <div class="coverveil"></div>
+    <div class="ctext">
+      <div class="ceyebrow">ObjectTracer · Live Flight Story</div>
+      <div class="ctitle">Passing<br>Overhead</div>
+    </div>
+    <div class="cblurb">AA100 is crossing the Atlantic right now — London to New York at 38,000 ft. Live position from ADS-B, status from AeroDataBox. Scroll to follow it down.</div>
+    <div class="ccue"><span>scroll</span><span class="bar"></span></div>
+  </section>
+
+  <!-- LOCATE -->
+  <section class="locsec" id="locsec">
+    <div class="loccard glass reveal">
+      <div class="loceyebrow">Flights near you</div>
+      <h2 class="loctitle">What's flying<br>around you right now?</h2>
+      <p class="locsub">Live arrivals &amp; departures from your nearest airport. Share your location, or pick a city.</p>
+      <div class="locactions">
+        <button class="cta" id="useLoc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 1 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg><span id="useLocText">Use my location</span></button>
+        <span class="locor">or</span>
+        <input class="locinput" id="locInput" placeholder="Type a city or airport…" />
+      </div>
+      <div class="locchips">
+        <span>Try</span>
+        <button class="locchip" data-apt="JFK">New York</button>
+        <button class="locchip" data-apt="LHR">London</button>
+        <button class="locchip" data-apt="HND">Tokyo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AIRPORT BOARD -->
+  <section class="aptsec" id="boardWrap">
+    <div class="aptboard glass reveal">
+      <div class="aptbar">
+        <div class="aptbarL">
+          <span class="aptKicker">Nearest airport</span>
+          <div class="aptTitle"><span class="aptCode" id="aptCode">JFK</span><span class="aptName" id="aptName">New York Kennedy · 18 km away</span></div>
+        </div>
+        <div class="nearby" id="nearby"></div>
+      </div>
+      <div class="aptTabs">
+        <button class="aptTab on" data-tab="arr">Arrivals</button>
+        <button class="aptTab" data-tab="dep">Departures</button>
+      </div>
+      <div class="aptHead">
+        <span>Flight</span><span id="aptColPeer">From</span><span>Sched</span><span>Status</span>
+      </div>
+      <div id="aptRows"></div>
+      <div class="aptfoot">
+        <span>Live from ADS-B + AeroDataBox · tap a flight for full status</span>
+        <button class="cta ghost" id="globeBtn"><span>Open on 3D globe →</span></button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------- scroll-driven plane ---------------- */
+const flight = document.getElementById('flight');
+const sky = document.getElementById('sky');
+const sun = document.getElementById('sun');
+
+let targetP = 0, curP = 0;
+function onScroll(){
+  const max = document.body.scrollHeight - window.innerHeight;
+  targetP = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+window.addEventListener('resize', onScroll);
+onScroll();
+
+function lerp(a,b,t){return a+(b-a)*t}
+
+function tick(){
+  curP += (targetP - curP) * 0.08;            // smooth follow
+  const vw = window.innerWidth;
+  // plane glides left -> right
+  const x = lerp(-90, vw*0.84, curP);
+  const baseY = window.innerHeight*0.30;
+  const y = baseY + Math.sin(curP*Math.PI*1.6)*40 - curP*60;   // gentle climb + drift
+  const bank = Math.cos(curP*Math.PI*1.6)*6;                    // subtle bank
+  flight.style.transform = `translate(${x}px,${y}px) rotate(${bank}deg)`;
+  // sky shifts brighter->deeper as we "climb"
+  sky.style.filter = `brightness(${1 - curP*0.35}) saturate(${1 + curP*0.25})`;
+  sun.style.transform = `translate(${-curP*180}px, ${curP*90}px)`;
+  requestAnimationFrame(tick);
+}
+tick();
+
+/* ---------------- canvas wind streaks ---------------- */
+const cv = document.getElementById('wind');
+const ctx = cv.getContext('2d');
+let W,H,parts=[];
+const SPEED_STOPS=[[0,'#90caf9'],[5,'#4dd0e1'],[10,'#81c784'],[16,'#fff176'],[22,'#ffb74d'],[32,'#ef5350']];
+function colorFor(s){let c=SPEED_STOPS[0][1];for(const[v,col]of SPEED_STOPS){if(s>=v)c=col}return c}
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;init()}
+function init(){
+  parts=[];const n=Math.round(W/12);
+  for(let i=0;i<n;i++)parts.push({
+    x:Math.random()*W,y:Math.random()*H,
+    len:8+Math.random()*42,sp:0.6+Math.random()*2.2,
+    s:Math.random()*34
+  });
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const gust = 0.5 + curP*1.6;                 // wind builds with altitude/scroll
+  for(const p of parts){
+    p.x += p.sp*gust + 0.4;
+    p.y -= 0.15*gust;
+    if(p.x>W+60){p.x=-60;p.y=Math.random()*H}
+    if(p.y<-20)p.y=H+20;
+    ctx.strokeStyle=colorFor(p.s);
+    ctx.globalAlpha=0.10+0.10*Math.min(1,p.sp*gust/3);
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x - p.len*(0.6+gust*0.5), p.y + 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  requestAnimationFrame(draw);
+}
+addEventListener('resize',resize);resize();draw();
+
+/* ---------------- reveal on scroll ---------------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.25});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------------- nearest-airport board (mock data) ---------------- */
+const APTS={
+  JFK:{name:'New York Kennedy',dist:18,nearby:[['LGA',14],['EWR',24]],
+    arr:[
+      {cs:'BA117',al:'British Airways',city:'London LHR',time:'13:05',st:'land'},
+      {cs:'AF006',al:'Air France',city:'Paris CDG',time:'13:20',st:'go'},
+      {cs:'DL202',al:'Delta',city:'Los Angeles',time:'13:32',st:'ok'},
+      {cs:'EK201',al:'Emirates',city:'Dubai',time:'13:48',st:'warn'},
+      {cs:'JL004',al:'Japan Airlines',city:'Tokyo HND',time:'14:05',st:'ok'},
+      {cs:'IB6251',al:'Iberia',city:'Madrid',time:'14:18',st:'go'},
+    ],
+    dep:[
+      {cs:'AA100',al:'American',city:'London LHR',time:'13:40',st:'go'},
+      {cs:'DL410',al:'Delta',city:'Atlanta',time:'13:55',st:'ok'},
+      {cs:'UA28',al:'United',city:'San Francisco',time:'14:10',st:'ok'},
+      {cs:'VS4',al:'Virgin Atlantic',city:'London LHR',time:'14:25',st:'land'},
+      {cs:'LH401',al:'Lufthansa',city:'Frankfurt',time:'14:40',st:'warn'},
+    ]},
+  LHR:{name:'London Heathrow',dist:22,nearby:[['LCY',25],['LGW',40]],
+    arr:[
+      {cs:'AA100',al:'American',city:'New York JFK',time:'09:50',st:'land'},
+      {cs:'SQ318',al:'Singapore',city:'Singapore',time:'10:05',st:'go'},
+      {cs:'QF1',al:'Qantas',city:'Sydney',time:'10:20',st:'ok'},
+      {cs:'EK29',al:'Emirates',city:'Dubai',time:'10:40',st:'warn'},
+    ],
+    dep:[
+      {cs:'BA117',al:'British Airways',city:'New York JFK',time:'10:15',st:'go'},
+      {cs:'EK6',al:'Emirates',city:'Dubai',time:'10:30',st:'ok'},
+      {cs:'AF1681',al:'Air France',city:'Paris CDG',time:'10:45',st:'warn'},
+      {cs:'CX252',al:'Cathay Pacific',city:'Hong Kong',time:'11:05',st:'ok'},
+    ]},
+  HND:{name:'Tokyo Haneda',dist:15,nearby:[['NRT',60]],
+    arr:[
+      {cs:'JL004',al:'JAL',city:'New York JFK',time:'16:05',st:'land'},
+      {cs:'NH106',al:'ANA',city:'Los Angeles',time:'16:25',st:'ok'},
+      {cs:'SQ634',al:'Singapore',city:'Singapore',time:'16:45',st:'go'},
+    ],
+    dep:[
+      {cs:'NH105',al:'ANA',city:'Los Angeles',time:'16:40',st:'go'},
+      {cs:'JL003',al:'JAL',city:'New York JFK',time:'17:00',st:'ok'},
+      {cs:'KE2708',al:'Korean Air',city:'Seoul',time:'17:20',st:'ok'},
+    ]},
+};
+const STLABEL={ok:'On time',go:'On approach',warn:'Delayed',land:'Landed'};
+let curApt='JFK', curTab='arr';
+
+function cityMatch(q){
+  q=(q||'').trim().toLowerCase(); if(!q) return null;
+  const alias={'new york':'JFK','newyork':'JFK','nyc':'JFK','jfk':'JFK',
+    'london':'LHR','lhr':'LHR','tokyo':'HND','hnd':'HND'};
+  if(alias[q]) return alias[q];
+  for(const k in APTS){ if(k.toLowerCase()===q || APTS[k].name.toLowerCase().includes(q)) return k; }
+  return null;
+}
+function renderBoard(){
+  const a=APTS[curApt];
+  document.getElementById('aptCode').textContent=curApt;
+  document.getElementById('aptName').textContent=a.name+' · '+a.dist+' km away';
+  document.getElementById('topflight').textContent=curApt;
+  document.getElementById('topchiptext').textContent=a.arr.length+' arriving · '+a.dep.length+' departing';
+  document.getElementById('nearby').innerHTML='Nearby&nbsp; '+a.nearby.map(([c,d])=>`<button class="nchip" data-apt="${c}">${c} · ${d}km</button>`).join(' ');
+  const rows=(curTab==='arr'?a.arr:a.dep);
+  document.getElementById('aptColPeer').textContent=(curTab==='arr'?'From':'To');
+  document.getElementById('aptRows').innerHTML=rows.map(f=>`
+    <div class="aptRow" data-cs="${f.cs}">
+      <span class="rcs">${f.cs}<small>${f.al}</small></span>
+      <span class="rcity">${f.city}</span>
+      <span class="rtime">${f.time}</span>
+      <span class="pill ${f.st}">${STLABEL[f.st]}</span>
+    </div>`).join('');
+  document.querySelectorAll('.aptTab').forEach(t=>t.classList.toggle('on',t.dataset.tab===curTab));
+  document.querySelectorAll('.nchip').forEach(b=>b.onclick=()=>{
+    if(APTS[b.dataset.apt]){curApt=b.dataset.apt;renderBoard();}
+    else alert(b.dataset.apt+' — no mock data yet (real build pulls any airport)');
+  });
+  document.querySelectorAll('.aptRow').forEach(r=>r.onclick=()=>
+    alert('→ opens the flight page for '+r.dataset.cs+' (full status + track on the 3D globe)'));
+}
+function resolveApt(k){
+  curApt=k; curTab='arr';
+  document.getElementById('boardWrap').classList.add('show');
+  renderBoard();
+  document.getElementById('boardWrap').scrollIntoView({behavior:'smooth'});
+}
+document.getElementById('useLoc').onclick=()=>{
+  const span=document.getElementById('useLocText');
+  span.textContent='Locating…';
+  const done=()=>{ span.textContent='Use my location'; resolveApt('JFK'); };
+  if(navigator.geolocation) navigator.geolocation.getCurrentPosition(done,done,{timeout:6000,maximumAge:600000});
+  else done();
+};
+document.getElementById('locInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ const k=cityMatch(e.target.value);
+    if(k) resolveApt(k); else alert('Try New York, London or Tokyo (mock data)'); }
+});
+document.querySelectorAll('.locchip').forEach(b=>b.onclick=()=>resolveApt(b.dataset.apt));
+document.querySelectorAll('.aptTab').forEach(t=>t.onclick=()=>{ curTab=t.dataset.tab; renderBoard(); });
+document.getElementById('globeBtn').onclick=()=>alert('→ opens '+curApt+' on the 3D globe with live aircraft');
+
+/* ================= PAGE 1 · algorithmic foliage + sky + plane ================= */
+(function(){
+  const cv=document.getElementById('scene'); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  let W,H,DPR,sprigs=[];
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+
+  function build(){
+    sprigs=[];
+    // small leaves, dense canopy — mostly clover with a few tiny yellow flowers
+    const add=(x,y,baseAngle,o={})=>sprigs.push(Object.assign({
+      x,y,baseAngle,len:rnd(40,110),
+      type:Math.random()<0.78?'clover':'flower',
+      size:rnd(4,9),phase:rnd(0,Math.PI*2),sway:rnd(0.05,0.14),
+      depth:rnd(0.5,1.4),curve:rnd(-0.4,0.4),hue:rnd(98,142),
+      flutter:rnd(0.6,1.6)
+    },o));
+    // top edge — hang down (densest canopy, two staggered rows)
+    for(let i=0;i<Math.max(40,Math.round(W/8));i++)
+      add(rnd(-44,W+44), rnd(-34,52), rnd(Math.PI*0.30,Math.PI*0.70),
+          {len:rnd(44,170),depth:rnd(0.65,1.55),size:rnd(4,11)});
+    // bottom edge — reach up
+    for(let i=0;i<Math.max(26,Math.round(W/12));i++)
+      add(rnd(-34,W+34), rnd(H-26,H+26), rnd(-Math.PI*0.70,-Math.PI*0.30),
+          {len:rnd(40,150),depth:rnd(0.75,1.6),size:rnd(5,12)});
+    // sides — frame the gap
+    for(let i=0;i<Math.max(12,Math.round(H/45));i++){
+      add(rnd(-30,36), rnd(-14,H), rnd(-0.5,0.6), {len:rnd(40,118),size:rnd(4,10)});
+      add(rnd(W-36,W+30), rnd(-14,H), Math.PI+rnd(-0.5,0.6), {len:rnd(40,118),size:rnd(4,10)});
+    }
+    sprigs.sort((a,b)=>a.depth-b.depth); // near foliage drawn last
+  }
+
+  const wind=t=> Math.sin(t*0.00055)*0.5 + Math.sin(t*0.0016+1.3)*0.32 + Math.sin(t*0.0041+2.1)*0.13;
+
+  function clover(r){
+    for(let k=0;k<3;k++){ ctx.save(); ctx.rotate(k*2*Math.PI/3);
+      ctx.beginPath(); ctx.moveTo(0,r*0.62);
+      ctx.bezierCurveTo(r*0.92,r*0.12,r*0.62,-r*0.82,0,-r*0.30);
+      ctx.bezierCurveTo(-r*0.62,-r*0.82,-r*0.92,r*0.12,0,r*0.62);
+      ctx.fill(); ctx.restore(); }
+  }
+  function flower(r){
+    ctx.save(); ctx.fillStyle='#ffd23f';
+    for(let k=0;k<5;k++){ ctx.save(); ctx.rotate(k*2*Math.PI/5);
+      ctx.beginPath(); ctx.ellipse(0,-r,r*0.46,r*0.92,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle='#ff9d2b'; ctx.beginPath(); ctx.arc(0,0,r*0.42,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+
+  function sprig(s,t){
+    const gust=wind(t);
+    let ang=s.baseAngle + Math.sin(t*0.001*s.depth+s.phase)*s.sway + gust*s.sway*5.5;
+    ctx.save(); ctx.translate(s.x,s.y);
+    const segs=6, L=s.len*s.depth, step=L/segs;
+    const pts=[]; let px=0,py=0,a=ang;
+    ctx.strokeStyle=`hsl(${s.hue} 46% ${20+s.depth*9}%)`;
+    ctx.lineWidth=Math.max(1.4,s.size*0.12*s.depth); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,0);
+    for(let i=1;i<=segs;i++){
+      a += s.curve*0.14 + Math.sin(t*0.002*s.flutter+s.phase+i)*0.022*(1+gust);
+      px+=Math.cos(a)*step; py+=Math.sin(a)*step; pts.push([px,py,a]); ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    const leafFill=`hsl(${s.hue} 52% ${26+s.depth*8}%)`;
+    for(let i=1;i<pts.length;i++){ const[lx,ly,la]=pts[i];
+      ctx.save(); ctx.translate(lx,ly); ctx.rotate(la+Math.PI/2);
+      if(s.type==='clover'){ ctx.fillStyle=leafFill; clover(s.size*0.6*s.depth); }
+      else if(i>=pts.length-2){ flower(s.size*0.6*s.depth); }   // flowers only near the tip
+      else { ctx.fillStyle=leafFill; clover(s.size*0.5*s.depth); }
+      ctx.restore(); }
+    const[tx,ty,ta]=pts[pts.length-1];
+    ctx.save(); ctx.translate(tx,ty); ctx.rotate(ta+Math.PI/2);
+    if(s.type==='clover'){ ctx.fillStyle=leafFill; clover(s.size*0.7*s.depth); } else flower(s.size*0.72*s.depth);
+    ctx.restore(); ctx.restore();
+  }
+
+  function plane(t){
+    // realistic airliner planform (viewed from below), twin contrails from the engines
+    const period=21000, p=(t%period)/period;
+    const x=-160+p*(W+320), y=H*0.28 - p*H*0.05;
+    const S=8;                                  // small in the sky, like the photo
+    ctx.save(); ctx.translate(x,y); ctx.rotate(-0.05);
+
+    // engine y-offset → contrail spacing
+    const eng=1.15*S;
+    const trail=(oy)=>{
+      const g=ctx.createLinearGradient(-360,0,-2*S,0);
+      g.addColorStop(0,'rgba(255,255,255,0)');
+      g.addColorStop(.6,'rgba(255,255,255,.30)');
+      g.addColorStop(1,'rgba(255,255,255,.72)');
+      ctx.strokeStyle=g; ctx.lineCap='round'; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.moveTo(-360,oy); ctx.lineTo(-1.6*S,oy); ctx.stroke();
+    };
+    trail(-eng); trail(eng);
+
+    ctx.fillStyle='#f2f6ff';
+    ctx.strokeStyle='rgba(40,60,90,.55)'; ctx.lineWidth=0.5;
+
+    // swept wings (root near nose-third, tips swept back & out)
+    ctx.beginPath();
+    ctx.moveTo(0.6*S,0); ctx.lineTo(-2.4*S, 2.6*S); ctx.lineTo(-3.0*S, 2.6*S);
+    ctx.lineTo(-1.0*S, 0.18*S); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0.6*S,0); ctx.lineTo(-2.4*S,-2.6*S); ctx.lineTo(-3.0*S,-2.6*S);
+    ctx.lineTo(-1.0*S,-0.18*S); ctx.closePath(); ctx.fill();
+
+    // tailplane (small swept stabilizers)
+    ctx.beginPath();
+    ctx.moveTo(-2.6*S,0); ctx.lineTo(-3.7*S, 1.1*S); ctx.lineTo(-3.95*S,1.1*S);
+    ctx.lineTo(-3.1*S,0.08*S); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-2.6*S,0); ctx.lineTo(-3.7*S,-1.1*S); ctx.lineTo(-3.95*S,-1.1*S);
+    ctx.lineTo(-3.1*S,-0.08*S); ctx.closePath(); ctx.fill();
+
+    // fuselage (pointed nose → tapered tail)
+    ctx.beginPath();
+    ctx.moveTo(2.1*S,0);
+    ctx.bezierCurveTo(1.4*S,0.42*S, -2.6*S,0.46*S, -3.9*S,0.06*S);
+    ctx.bezierCurveTo(-2.6*S,-0.46*S, 1.4*S,-0.42*S, 2.1*S,0);
+    ctx.closePath(); ctx.fill();
+
+    // engines (nacelles on the wings, where the contrails start)
+    ctx.fillStyle='#dde6f4';
+    ctx.beginPath(); ctx.ellipse(-1.5*S, eng, 0.5*S,0.32*S,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-1.5*S,-eng, 0.5*S,0.32*S,0,0,Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+
+  function resize(){
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  // The real photo is the backdrop now. Canvas is a transparent overlay.
+  // Flip to true to fly an extra plane across the open sky.
+  const SHOW_PLANE=false;
+  function frame(now){
+    ctx.clearRect(0,0,W,H);
+    if(SHOW_PLANE) plane(now);
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize',resize); resize(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
