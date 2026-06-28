@@ -85,12 +85,33 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
 
   const locate = () => {
     setNote('')
-    if (!navigator.geolocation) { setNote('Location is not available — search a city instead.'); return }
     setLocating(true)
+
+    const fromCoords = (lat, lon) => { setLocating(false); resolve(nearestAirport(lat, lon)) }
+
+    // Fallback: approximate location from IP — works when GPS is denied,
+    // unavailable, or times out (common on desktop).
+    const ipFallback = (blocked) => {
+      fetch('https://get.geojs.io/v1/ip/geo.json')
+        .then(r => r.json())
+        .then(d => {
+          const lat = parseFloat(d.latitude), lon = parseFloat(d.longitude)
+          if (Number.isFinite(lat) && Number.isFinite(lon)) fromCoords(lat, lon)
+          else throw new Error('no coords')
+        })
+        .catch(() => {
+          setLocating(false)
+          setNote(blocked
+            ? 'Location is blocked — search a city instead.'
+            : 'Could not get your location — search a city instead.')
+        })
+    }
+
+    if (!navigator.geolocation) { ipFallback(false); return }
     navigator.geolocation.getCurrentPosition(
-      pos => { setLocating(false); resolve(nearestAirport(pos.coords.latitude, pos.coords.longitude)) },
-      () => { setLocating(false); setNote('Could not get your location — search a city instead.') },
-      { timeout: 15000, maximumAge: 600000 }
+      pos => fromCoords(pos.coords.latitude, pos.coords.longitude),
+      err => { console.warn('[flight locate] geolocation error', err?.code, err?.message, '→ IP fallback'); ipFallback(err?.code === 1) },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
     )
   }
 
