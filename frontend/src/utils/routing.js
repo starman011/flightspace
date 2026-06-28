@@ -81,6 +81,7 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activePage === 'faq')      return '/faq'
   if (activePage === 'donate')   return '/donate'
   if (activePage === 'blog')     return '/blog'
+  if (activePage === 'flight')   return '/flight'
   if (selectedIcao24 === 'ISS')     return '/iss'
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
@@ -165,6 +166,7 @@ export function parseInitialState(pathname) {
     issMode: false,
     notFound: false,
   }
+  if (pathname === '/flight')           return { ...base, activePage: 'flight' }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
   if (pathname.startsWith('/airport/')) return { ...base, selectedAirport: pathname.replace('/airport/', '').toUpperCase() }
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true, selectedLaunchId: pathname.replace('/launch/', '') }

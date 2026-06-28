@@ -8,7 +8,7 @@
   inset: 0;
   z-index: 200;
   background:
-    linear-gradient(180deg, rgba(3, 7, 14, 0.90), rgba(4, 8, 16, 0.94)),
+    radial-gradient(120% 80% at 50% 0%, rgba(5, 9, 16, 0.30), rgba(4, 8, 16, 0.62)),
     url('/night-sky.jpg') center/cover no-repeat fixed;
   backdrop-filter: blur(16px);
   display: flex;
@@ -83,8 +83,11 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border-right: 1px solid rgba(200, 210, 225, 0.06);
+  border-right: 1px solid rgba(200, 210, 225, 0.08);
   overflow-y: auto;
+  background: rgba(7, 11, 19, 0.26);
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
   animation: slideUp 0.4s ease 0.05s both;
 }
 
@@ -95,6 +98,9 @@
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  background: rgba(7, 11, 19, 0.16);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
   animation: slideUp 0.4s ease 0.18s both;
 }
 
@@ -222,9 +228,9 @@
   position: relative;
   padding: 22px 20px;
   border-radius: 16px;
-  background: rgba(12, 16, 28, 0.55);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  background: rgba(12, 16, 28, 0.42);
+  backdrop-filter: blur(26px) saturate(140%);
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
   display: flex;
   flex-direction: column;
   gap: 12px;

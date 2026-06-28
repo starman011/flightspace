@@ -26,6 +26,7 @@ import ContactPage from './components/StaticPages/ContactPage'
 import FAQPage from './components/StaticPages/FAQPage'
 import DonatePage from './components/StaticPages/DonatePage'
 import BlogPage from './components/StaticPages/BlogPage'
+import FlightPage from './components/FlightPage/FlightPage'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 // OrbitalMapBar removed — filters now in BottomBar (desktop) and CommandCenterOverlay (mobile)
@@ -1091,6 +1092,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'donate' && <DonatePage onClose={() => setActivePage(null)} />}
       {activePage === 'waitlist' && <WaitlistPage onClose={() => setActivePage(null)} />}
       {activePage === 'blog' && <BlogPage onClose={() => setActivePage(null)} initialSlug={init.blogSlug} />}
+      {activePage === 'flight' && (
+        <FlightPage
+          onClose={() => setActivePage(null)}
+          onFlightClick={(icao24) => { setActivePage(null); setSelectedIcao24(icao24) }}
+          onOpenAirport={(iata) => { setActivePage(null); setSelectedAirport(iata) }}
+        />
+      )}
 
       {/* Audio now integrated into BottomBar */}
       <WaitlistPopup />

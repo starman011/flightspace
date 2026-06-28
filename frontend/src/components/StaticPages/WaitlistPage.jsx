@@ -172,13 +172,6 @@ export default function WaitlistPage({ onClose }) {
         {/* LEFT */}
         <div className={styles.left}>
 
-          {/* Hero image */}
-          <img
-            className={styles.hero}
-            src="/night-sky.jpg"
-            alt="People watching the Milky Way and Andromeda from a wildflower hill"
-          />
-
           {/* Mission copy */}
           <div>
             <p className={styles.eyebrow}>Our Mission</p>

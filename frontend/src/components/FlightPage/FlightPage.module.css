@@ -1,0 +1,194 @@
+/* ── /flight — full-screen "flights near you" discovery page ──────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #05080e;
+  color: #eaf2ff;
+  animation: fadeIn 0.3s var(--ease-panel, ease);
+  -webkit-overflow-scrolling: touch;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.close {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 6;
+  width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(14, 18, 26, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: rgba(232, 238, 248, 0.85);
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s, color 0.18s;
+}
+.close:hover { background: rgba(26, 32, 44, 0.82); color: #fff; transform: scale(1.06) }
+.close svg { width: 16px; height: 16px }
+
+/* ── page 1 · cinematic cover ─────────────────────────────────────────────── */
+.cover {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.coverImg {
+  position: absolute;
+  inset: -5%;
+  background: url('/flight-sky.jpg') center/cover no-repeat;
+  animation: kenburns 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes kenburns {
+  0%   { transform: scale(1.05) translate(0, 0) }
+  100% { transform: scale(1.13) translate(-2.2%, -1.6%) }
+}
+.coverVeil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(5,8,14,0.15) 0%, rgba(5,8,14,0) 38%, rgba(5,8,14,0) 60%, rgba(5,8,14,0.85) 100%);
+}
+.coverText { position: relative; padding: 0 clamp(22px, 5vw, 64px) clamp(64px, 14vh, 150px); max-width: 1100px }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: #b2ff1a;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.5);
+}
+.coverTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(46px, 9vw, 124px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-top: 16px;
+  text-shadow: 0 8px 40px rgba(0,0,0,0.35);
+}
+.blurb {
+  font-family: var(--font-body);
+  font-size: clamp(14px, 1.6vw, 17px);
+  color: rgba(225, 235, 248, 0.82);
+  margin-top: 18px;
+  max-width: 46ch;
+  line-height: 1.6;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.cue {
+  position: absolute;
+  left: 50%; bottom: 22px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.cueBar { width: 1px; height: 32px; background: linear-gradient(rgba(255,255,255,0.7), transparent); animation: drop 1.8s infinite }
+@keyframes drop {
+  0%   { transform: scaleY(0); transform-origin: top }
+  50%  { transform: scaleY(1); transform-origin: top }
+  50.1%{ transform-origin: bottom }
+  100% { transform: scaleY(0); transform-origin: bottom }
+}
+
+/* ── locate ───────────────────────────────────────────────────────────────── */
+.section { padding: 0 clamp(20px, 5vw, 48px) }
+.glass {
+  background: rgba(140, 170, 210, 0.07);
+  border: 1px solid rgba(180, 205, 235, 0.16);
+  border-radius: 24px;
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.locSec { min-height: 100dvh; display: flex; align-items: center; justify-content: center }
+.locCard { width: min(640px, 92vw); padding: 44px 42px }
+.locEyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #b2ff1a; margin-bottom: 16px }
+.locTitle { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5vw, 50px); line-height: 0.96; letter-spacing: -0.02em }
+.locSub { font-family: var(--font-body); font-size: 15px; color: rgba(208,224,244,0.66); margin-top: 16px; line-height: 1.6; max-width: 46ch }
+.locActions { display: flex; align-items: center; gap: 14px; margin-top: 28px; flex-wrap: wrap }
+.locOr { font-family: var(--font-mono); font-size: 11px; color: rgba(208,224,244,0.4); text-transform: uppercase; letter-spacing: 0.1em }
+.locInput {
+  flex: 1; min-width: 190px;
+  font-family: var(--font-body); font-size: 14px; color: #eaf2ff;
+  padding: 15px 18px; border-radius: 14px;
+  border: 1px solid rgba(180,205,235,0.18);
+  background: rgba(140,170,210,0.06); outline: none;
+  transition: border-color 0.18s;
+}
+.locInput:focus { border-color: rgba(178,255,26,0.45) }
+.locInput::placeholder { color: rgba(208,224,244,0.4) }
+.locChips { display: flex; align-items: center; gap: 10px; margin-top: 22px; flex-wrap: wrap }
+.locChips > span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(208,224,244,0.4) }
+.chip {
+  font-family: var(--font-body); font-size: 13px; color: rgba(208,224,244,0.66);
+  padding: 8px 14px; border-radius: 999px;
+  border: 1px solid rgba(180,205,235,0.16); background: rgba(140,170,210,0.07);
+  cursor: pointer; transition: 0.18s;
+}
+.chip:hover { color: #eaf2ff; border-color: rgba(180,215,245,0.32) }
+.locNote { margin-top: 18px; font-family: var(--font-mono); font-size: 12px; color: #ffb74d }
+
+/* primary / ghost buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 15px 24px; border-radius: 14px;
+  border: 1px solid rgba(178,255,26,0.35);
+  background: rgba(178,255,26,0.10); color: #b2ff1a;
+  font-family: var(--font-mono); font-weight: 600; font-size: 13px; letter-spacing: 0.04em;
+  cursor: pointer; transition: background 0.18s, border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+.btn:hover { background: rgba(178,255,26,0.16); border-color: rgba(178,255,26,0.55); transform: translateY(-1px); box-shadow: 0 10px 30px rgba(178,255,26,0.14) }
+.btn svg { width: 17px; height: 17px }
+.btnGhost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 18px; border-radius: 12px;
+  border: 1px solid rgba(180,205,235,0.18); background: rgba(140,170,210,0.07);
+  color: rgba(208,224,244,0.78);
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+  cursor: pointer; transition: 0.18s;
+}
+.btnGhost:hover { color: #eaf2ff; border-color: rgba(180,215,245,0.32) }
+.btnGhost svg { width: 15px; height: 15px }
+
+/* ── airport board ────────────────────────────────────────────────────────── */
+.aptSec { min-height: 90dvh; display: flex; align-items: flex-start; justify-content: center; padding-top: 4vh; padding-bottom: 12vh }
+.aptBoard { width: min(980px, 95vw); overflow: hidden; padding: 0 }
+.aptBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 26px; border-bottom: 1px solid rgba(180,205,235,0.16); flex-wrap: wrap }
+.aptKicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(208,224,244,0.4) }
+.aptTitle { display: flex; align-items: baseline; gap: 12px; margin-top: 7px; flex-wrap: wrap }
+.aptCode { font-family: var(--font-display); font-weight: 800; font-size: 40px; letter-spacing: 0.02em; line-height: 0.9 }
+.aptName { font-size: 13px; color: rgba(208,224,244,0.62) }
+.nearby { font-family: var(--font-mono); font-size: 11px; color: rgba(208,224,244,0.4); display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.nchip { font-family: var(--font-mono); font-size: 11px; color: rgba(208,224,244,0.66); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(180,205,235,0.16); background: rgba(140,170,210,0.07); cursor: pointer }
+.nchip:hover { color: #eaf2ff; border-color: rgba(180,215,245,0.32) }
+.tabs { display: flex; gap: 8px; padding: 16px 26px 6px }
+.tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(208,224,244,0.62); padding: 9px 16px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer }
+.tabOn { color: #05080e; background: #b2ff1a; border-color: #b2ff1a; font-weight: 700 }
+.head { display: grid; grid-template-columns: 1.4fr 1.7fr 1fr 0.9fr; gap: 14px; padding: 14px 26px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(208,224,244,0.4); border-bottom: 1px solid rgba(180,205,235,0.16) }
+.row { display: grid; grid-template-columns: 1.4fr 1.7fr 1fr 0.9fr; gap: 14px; padding: 16px 26px; align-items: center; border-bottom: 1px solid rgba(180,205,235,0.07); cursor: pointer; transition: background 0.15s }
+.row:hover { background: rgba(140,170,210,0.06) }
+.rcs { font-family: var(--font-mono); font-weight: 700; font-size: 16px; letter-spacing: 0.02em }
+.rcs small { display: block; font-weight: 400; font-size: 11px; color: rgba(208,224,244,0.4); letter-spacing: 0.04em; margin-top: 3px }
+.rcity { font-family: var(--font-body); font-size: 15px; color: #eaf2ff }
+.rtime { font-family: var(--font-mono); font-size: 15px; color: rgba(208,224,244,0.62) }
+.pill { justify-self: start; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(180,215,245,0.32); background: rgba(140,170,210,0.07) }
+.pillGo { color: #4dd0e1 } .pillOk { color: #5fd38a } .pillWarn { color: #ffc24d }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 26px; border-top: 1px solid rgba(180,205,235,0.16); flex-wrap: wrap }
+.foot > span { font-family: var(--font-mono); font-size: 11px; color: rgba(208,224,244,0.4) }
+.empty, .loading { padding: 40px 26px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: rgba(208,224,244,0.5) }
+
+@media (max-width: 680px) {
+  .head, .row { grid-template-columns: 1.3fr 1.3fr 0.9fr }
+  .head span:last-child, .alt { display: none }
+  .pill { grid-column: 1 / -1; justify-self: start; margin-top: 2px }
+  .locCard { padding: 32px 24px }
+}
