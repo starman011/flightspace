@@ -251,13 +251,14 @@
   .guideGrid { grid-template-columns: 1fr; gap: 18px }
   .gallery { grid-template-columns: repeat(2, 1fr) }
   .gallery img { height: 100px }
-  /* one flight per line on mobile: Flight · From/To · Status */
-  .head, .row { grid-template-columns: 1fr 1.25fr auto; gap: 10px; padding-left: 18px; padding-right: 18px }
-  .head span:nth-child(4), .rtime { display: none }   /* drop the ETA/Alt column */
-  .rcs { font-size: 14px }
-  .rcs small { display: none }                         /* drop airline sub-line */
-  .rcity { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-  .pill { grid-column: auto; justify-self: end; margin-top: 0; white-space: nowrap }
+  /* keep all columns on mobile — just shrink the type so a flight fits one row */
+  .head, .row { grid-template-columns: 1.1fr 1.25fr 0.85fr 0.7fr; gap: 8px; padding-left: 14px; padding-right: 14px }
+  .head { font-size: 9px; letter-spacing: 0.1em }
+  .rcs { font-size: 12.5px }
+  .rcs small { font-size: 9px }
+  .rcity { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .rtime { font-size: 12px }
+  .pill { font-size: 8.5px; padding: 4px 7px; letter-spacing: 0.05em; white-space: nowrap; justify-self: start }
   .footerCols { grid-template-columns: repeat(2, 1fr); gap: 24px }
   .footerBottom { flex-direction: column; align-items: flex-start }
 }
