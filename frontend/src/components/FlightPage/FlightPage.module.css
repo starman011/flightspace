@@ -162,12 +162,25 @@
 .btnGhost svg { width: 15px; height: 15px }
 
 /* ── airport board ────────────────────────────────────────────────────────── */
-.aptSec { min-height: 90dvh; display: flex; align-items: flex-start; justify-content: center; padding-top: 4vh; padding-bottom: 12vh }
+.aptSec { min-height: 90dvh; display: flex; flex-direction: column; align-items: center; gap: 22px; padding-top: 4vh; padding-bottom: 12vh }
 .aptBoard { width: min(980px, 95vw); overflow: hidden; padding: 0 }
 .cityHero { position: relative; height: 200px; overflow: hidden }
 .cityHero img { width: 100%; height: 100%; object-fit: cover; display: block }
 .cityHeroVeil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,10,16,0.10) 28%, rgba(6,10,16,0.92) 100%) }
 .cityHeroLabel { position: absolute; left: 24px; bottom: 16px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(225,235,248,0.85); text-shadow: 0 2px 12px rgba(0,0,0,0.55) }
+
+/* ── city guide (places, cuisine, photos) ────────────────────────────────── */
+.cityGuide { width: min(980px, 95vw); padding: 28px 30px 32px }
+.guideHead { display: flex; flex-direction: column; gap: 6px }
+.guideTitle { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.01em; color: #fff }
+.guideIntro { font-family: var(--font-body); font-size: 15px; line-height: 1.65; color: rgba(208,224,244,0.78); margin-top: 10px }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 20px }
+.gallery img { width: 100%; height: 116px; object-fit: cover; border-radius: 12px; display: block; border: 1px solid rgba(180,205,235,0.10) }
+.guideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 24px }
+.guideCol h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #b2ff1a; margin: 0 0 10px }
+.guideCol ul { list-style: none; padding: 0; margin: 0 }
+.guideCol li { font-family: var(--font-body); font-size: 14.5px; color: rgba(208,224,244,0.8); padding: 8px 0; border-bottom: 1px solid rgba(180,205,235,0.08) }
+.guideCol li:last-child { border-bottom: none }
 .aptBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 26px; border-bottom: 1px solid rgba(180,205,235,0.16); flex-wrap: wrap }
 .aptKicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(208,224,244,0.4) }
 .aptTitle { display: flex; align-items: baseline; gap: 12px; margin-top: 7px; flex-wrap: wrap }
@@ -235,6 +248,9 @@
   .locOr { text-align: center }
   .aptSec { padding-top: 3vh }
   .cityHero { height: 150px }
+  .guideGrid { grid-template-columns: 1fr; gap: 18px }
+  .gallery { grid-template-columns: repeat(2, 1fr) }
+  .gallery img { height: 100px }
   .head, .row { grid-template-columns: 1.3fr 1.3fr 0.9fr }
   .head span:last-child, .alt { display: none }
   .pill { grid-column: 1 / -1; justify-self: start; margin-top: 2px }

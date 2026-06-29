@@ -3,6 +3,7 @@ import styles from './FlightPage.module.css'
 import { AIRPORTS } from '../Globe/airportData'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels'
 import { COLUMNS as FOOTER_COLUMNS } from '../SiteFooter/SiteFooter'
+import { CITY_FLAVOR } from '../../data/cityFlavor'
 
 const API = import.meta.env.VITE_API_URL || ''
 const LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
@@ -73,7 +74,7 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
   const [locating, setLocating] = useState(false)
   const [note, setNote] = useState('')
   const [q, setQ] = useState('')
-  const [cityImg, setCityImg] = useState(null)
+  const [city, setCity] = useState(null)   // { img, extract, gallery[] } from Wikipedia
   const boardRef = useRef(null)
 
   const resolve = useCallback((airport) => {
@@ -158,15 +159,29 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Per-airport city photo (Wikipedia) — gives every airport view a real image.
+  // Per-airport city photos + intro (Wikipedia) — a real image, a short blurb,
+  // and a small gallery so people get a feel for the destination.
   useEffect(() => {
     if (!apt) return
     let alive = true
-    setCityImg(null)
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(apt.city)}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive && d?.thumbnail?.source) setCityImg(d.originalimage?.source || d.thumbnail.source) })
-      .catch(() => {})
+    setCity(null)
+    const title = encodeURIComponent(apt.city)
+    Promise.all([
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`).then(r => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/media-list/${title}`).then(r => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([sum, media]) => {
+      if (!alive) return
+      const img = sum?.originalimage?.source || sum?.thumbnail?.source || null
+      const extract = sum?.extract || null
+      let gallery = []
+      if (media?.items) {
+        gallery = media.items
+          .filter(it => it.type === 'image' && it.srcset?.length && !/\.svg/i.test(it.srcset[0].src))
+          .slice(0, 6)
+          .map(it => (it.srcset[0].src.startsWith('//') ? `https:${it.srcset[0].src}` : it.srcset[0].src))
+      }
+      setCity({ img, extract, gallery })
+    })
     return () => { alive = false }
   }, [apt])
 
@@ -241,9 +256,9 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
       {apt && (
         <section className={`${styles.section} ${styles.aptSec}`} ref={boardRef}>
           <div className={`${styles.glass} ${styles.aptBoard}`}>
-            {cityImg && (
+            {city?.img && (
               <div className={styles.cityHero}>
-                <img src={cityImg} alt={apt.city} loading="lazy" />
+                <img src={city.img} alt={apt.city} loading="lazy" />
                 <div className={styles.cityHeroVeil} />
                 <span className={styles.cityHeroLabel}>{apt.city}</span>
               </div>
@@ -302,6 +317,44 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
               </button>
             </div>
           </div>
+
+          {(CITY_FLAVOR[apt.iata] || city?.extract) && (() => {
+            const flavor = CITY_FLAVOR[apt.iata]
+            return (
+              <div className={`${styles.glass} ${styles.cityGuide}`}>
+                <div className={styles.guideHead}>
+                  <span className={styles.aptKicker}>Discover</span>
+                  <h3 className={styles.guideTitle}>{apt.city}</h3>
+                </div>
+                {(flavor?.knownFor || city?.extract) && (
+                  <p className={styles.guideIntro}>{flavor?.knownFor || city.extract}</p>
+                )}
+                {city?.gallery?.length > 0 && (
+                  <div className={styles.gallery}>
+                    {city.gallery.map((src, i) => (
+                      <img key={i} src={src} alt={`${apt.city} ${i + 1}`} loading="lazy" />
+                    ))}
+                  </div>
+                )}
+                {(flavor?.places?.length || flavor?.cuisine?.length) ? (
+                  <div className={styles.guideGrid}>
+                    {flavor?.places?.length > 0 && (
+                      <div className={styles.guideCol}>
+                        <h4>Places to visit</h4>
+                        <ul>{flavor.places.map(p => <li key={p}>{p}</li>)}</ul>
+                      </div>
+                    )}
+                    {flavor?.cuisine?.length > 0 && (
+                      <div className={styles.guideCol}>
+                        <h4>Local cuisine</h4>
+                        <ul>{flavor.cuisine.map(c => <li key={c}>{c}</li>)}</ul>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })()}
         </section>
       )}
 
