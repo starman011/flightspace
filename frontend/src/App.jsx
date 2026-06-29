@@ -375,20 +375,21 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     if (activeScale !== 'earth') { setActiveScale('earth'); globeRef.current?.setCameraScale?.('earth') }
     setLiveEnabled(true)
     setSelectedIcao24(icao24)
-    setTrackingId(icao24)
     watchObject?.(icao24)                 // stream this specific aircraft even if out of view
     // Anticipate: fly toward the airport area right away…
     if (hint?.lat != null && hint?.lon != null) {
       setTimeout(() => globeRef.current?.flyTo?.(hint.lat, hint.lon), 80)
     }
-    // …then lock onto the aircraft as soon as its live position arrives.
+    // …then fly to the aircraft once its live position arrives. No persistent
+    // camera lock (setTrackingId) — that fights the zoom controls every frame
+    // and causes the lag. The detail panel's "track" toggle handles following.
     let tries = 0
-    const lockOn = () => {
+    const flyOnce = () => {
       const ac = aircraftRef.current.get(icao24)
       if (ac?.lat != null) globeRef.current?.flyTo?.(ac.lat, ac.lon)
-      else if (tries++ < 48) setTimeout(lockOn, 250)
+      else if (tries++ < 48) setTimeout(flyOnce, 250)
     }
-    setTimeout(lockOn, 450)
+    setTimeout(flyOnce, 450)
   }, [activeScale, watchObject])
 
   const openedFromProfileRef = useRef(false)
