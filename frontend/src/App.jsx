@@ -835,6 +835,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <PagesPill
         activeScale={activeScale}
         activeFilter={activeFilter}
+        activePage={activePage}
         onScaleChange={(s) => { setActivePage(null); handleCameraScale(s) }}
         onActiveFilterChange={(f) => { setActivePage(null); setActiveFilter(f) }}
         onFiltersChange={setFilters}

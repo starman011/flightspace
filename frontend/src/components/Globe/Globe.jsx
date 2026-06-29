@@ -1791,7 +1791,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Stale tiles stay visible on zoom change — they cover the surface
     // while new tiles load, preventing the earth base color from showing.
     const tileCache   = new Map()   // tileKey → {mesh, mat, geo, tx, ty, z, parent}
-    const failedTiles = new Set()   // tileKeys that failed network load — skip re-queuing
+    const failedTiles = new Map()   // tileKey → { n, until } — failed loads, retried with backoff
     let tileQueue    = []           // [{tx, ty, z, priority, isParent}]
     let tileLoading  = 0            // count of in-flight XHR loads
     const tileLoader = new TextureLoader()  // shared — one allocation, not one/tile
@@ -1821,6 +1821,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     }
 
     const tileKey = (tx, ty, z) => `${z}/${tx}/${ty}`
+
+    // A tile may be (re)queued if it never failed, or it failed fewer than
+    // TILE_MAX_RETRY times and its backoff cooldown has elapsed. This recovers
+    // transient ESRI/CartoDB failures instead of leaving a permanent blank square.
+    const TILE_MAX_RETRY = 4
+    const canLoadTile = (key) => {
+      const f = failedTiles.get(key)
+      if (!f) return true
+      if (f.n >= TILE_MAX_RETRY) return false
+      return Date.now() >= f.until
+    }
 
     const clearTiles = () => {
       for (const [, t] of tileCache) {
@@ -1916,10 +1927,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
               isParent: item.isParent, isStale: false,
               targetOpacity: target,
             })
+            failedTiles.delete(key)   // recovered → allow normal lifecycle
             processQueue()
           },
           undefined,
-          () => { tileLoading--; geo.dispose(); mat.dispose(); tileCache.delete(key); failedTiles.add(key); processQueue() },
+          () => {
+            tileLoading--; geo.dispose(); mat.dispose(); tileCache.delete(key)
+            const f = failedTiles.get(key) || { n: 0, until: 0 }
+            f.n += 1
+            f.until = Date.now() + 1500 * f.n   // gentle backoff so we don't hammer the tile host
+            failedTiles.set(key, f)
+            processQueue()
+          },
         )
       }
     }
@@ -2046,7 +2065,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const gtx = ((gpcx + dx) % gpN + gpN) % gpN
           const gty = Math.max(0, Math.min(gpN - 1, gpcy + dy))
           const _gk = tileKey(gtx, gty, gpz)
-          if (!tileCache.has(_gk) && !failedTiles.has(_gk)) {
+          if (!tileCache.has(_gk) && canLoadTile(_gk)) {
             newItems.push({ tx: gtx, ty: gty, z: gpz, isParent: true,
                             priority: 900 - (Math.abs(dx) + Math.abs(dy)) })
           }
@@ -2059,7 +2078,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const ptx = ((pcx + dx) % pN + pN) % pN
           const pty = Math.max(0, Math.min(pN - 1, pcy + dy))
           const _pk = tileKey(ptx, pty, pz)
-          if (!tileCache.has(_pk) && !failedTiles.has(_pk)) {
+          if (!tileCache.has(_pk) && canLoadTile(_pk)) {
             newItems.push({ tx: ptx, ty: pty, z: pz, isParent: true,
                             priority: 700 - (Math.abs(dx) + Math.abs(dy)) })
           }
@@ -2073,7 +2092,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const tx = ((cx + dx) % N + N) % N
           const ty = Math.max(0, Math.min(N - 1, cy + dy))
           const _dk = tileKey(tx, ty, z)
-          if (!tileCache.has(_dk) && !failedTiles.has(_dk)) {
+          if (!tileCache.has(_dk) && canLoadTile(_dk)) {
             newItems.push({ tx, ty, z, isParent: false,
                             priority: (rx + ry) - (Math.abs(dx) + Math.abs(dy)) })
           }

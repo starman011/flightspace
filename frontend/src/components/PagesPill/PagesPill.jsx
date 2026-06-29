@@ -58,7 +58,7 @@ function PageIcon({ id, size = 16 }) {
 }
 
 export default function PagesPill({
-  activeScale, activeFilter,
+  activeScale, activeFilter, activePage,
   onScaleChange, onActiveFilterChange, onFiltersChange,
   onLaunchPanelToggle, onPageOpen, hidden, overPage,
 }) {
@@ -85,7 +85,8 @@ export default function PagesPill({
   }
 
   const isActive = (page) => {
-    if (page.page) return false
+    if (page.page) return activePage === page.page
+    if (activePage) return false      // a page overlay is open → no scale/filter is "active"
     if (page.filter) return activeFilter === page.id
     return activeScale === page.scale && !activeFilter
   }

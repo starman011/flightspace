@@ -251,9 +251,13 @@
   .guideGrid { grid-template-columns: 1fr; gap: 18px }
   .gallery { grid-template-columns: repeat(2, 1fr) }
   .gallery img { height: 100px }
-  .head, .row { grid-template-columns: 1.3fr 1.3fr 0.9fr }
-  .head span:last-child, .alt { display: none }
-  .pill { grid-column: 1 / -1; justify-self: start; margin-top: 2px }
+  /* one flight per line on mobile: Flight · From/To · Status */
+  .head, .row { grid-template-columns: 1fr 1.25fr auto; gap: 10px; padding-left: 18px; padding-right: 18px }
+  .head span:nth-child(4), .rtime { display: none }   /* drop the ETA/Alt column */
+  .rcs { font-size: 14px }
+  .rcs small { display: none }                         /* drop airline sub-line */
+  .rcity { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .pill { grid-column: auto; justify-self: end; margin-top: 0; white-space: nowrap }
   .footerCols { grid-template-columns: repeat(2, 1fr); gap: 24px }
   .footerBottom { flex-direction: column; align-items: flex-start }
 }
