@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './FlightPage.module.css'
 import { AIRPORTS } from '../Globe/airportData'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels'
+import { COLUMNS as FOOTER_COLUMNS } from '../SiteFooter/SiteFooter'
 
 const API = import.meta.env.VITE_API_URL || ''
 const LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
@@ -275,6 +276,26 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
           </div>
         </section>
       )}
+
+      {/* ── site footer (internal links + sitemap) ── */}
+      <footer className={styles.footer}>
+        <div className={styles.footerCols}>
+          {FOOTER_COLUMNS.map(col => (
+            <nav key={col.title} className={styles.footerCol} aria-label={col.title}>
+              <h3 className={styles.footerColTitle}>{col.title}</h3>
+              {col.links.map(([label, href]) => (
+                <a key={href} href={href} className={styles.footerLink}>{label}</a>
+              ))}
+            </nav>
+          ))}
+        </div>
+        <div className={styles.footerBottom}>
+          <span>© {new Date().getFullYear()} ObjectTracer — real-time 3D flight &amp; space tracker</span>
+          <span className={styles.footerBottomLinks}>
+            <a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a><a href="/donate">Donate</a>
+          </span>
+        </div>
+      </footer>
     </div>
   )
 }

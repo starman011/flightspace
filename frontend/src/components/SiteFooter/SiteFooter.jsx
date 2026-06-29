@@ -4,7 +4,7 @@ import styles from './SiteFooter.module.css'
 // Crawlable internal-link footer. Hidden by default to preserve the immersive
 // globe; slides up only after the user scrolls down / swipes up twice.
 // `active` gates the gesture listeners (only on the main globe view).
-const COLUMNS = [
+export const COLUMNS = [
   {
     title: 'Trackers',
     links: [

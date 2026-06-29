@@ -64,6 +64,9 @@ export default async function middleware(request) {
   if (parts[0] === 'flights' && parts[1]) {
     return renderFlightsOver(parts[1].toLowerCase())
   }
+  if (pathname === '/flight') {
+    return renderFlightNear()
+  }
   if (pathname === '/iss') {
     return renderISS()
   }
@@ -1175,6 +1178,51 @@ async function renderRoute(slug) {
 // Rich, link-dense HTML so Google can build SITELINKS (the sub-links under the
 // main result). Sitelinks are algorithmic — they need a clear section structure
 // + strong internal links + brand authority. This provides the structure.
+function renderFlightNear() {
+  const canonical = `${SITE}/flight`
+  const title = 'Flights Near You — Live Arrivals & Departures by Airport | ObjectTracer'
+  const desc  = 'See live flights arriving at and departing from your nearest airport in real time on a 3D globe. Share your location or search any city, airport, or flight.'
+
+  const airports = [
+    ['JFK', 'New York'], ['LAX', 'Los Angeles'], ['LHR', 'London Heathrow'], ['DXB', 'Dubai'],
+    ['DEL', 'Delhi'], ['BOM', 'Mumbai'], ['ATL', 'Atlanta'], ['SIN', 'Singapore'], ['CDG', 'Paris'], ['HND', 'Tokyo'],
+  ]
+  const routes = [
+    ['del-bom', 'Delhi → Mumbai'], ['jfk-lax', 'New York → Los Angeles'], ['dxb-lhr', 'Dubai → London'],
+    ['bom-lhr', 'Mumbai → London'], ['atl-mia', 'Atlanta → Miami'],
+  ]
+  const airlines = [
+    ['indigo', 'IndiGo'], ['emirates', 'Emirates'], ['air-india', 'Air India'],
+    ['american-airlines', 'American Airlines'], ['singapore-airlines', 'Singapore Airlines'],
+  ]
+  const airportLinks = airports.map(([i, c]) => `<li><a href="${SITE}/airport/${i}">${esc(c)} (${i}) — live arrivals &amp; departures</a></li>`).join('\n')
+  const routeLinks   = routes.map(([s, n]) => `<li><a href="${SITE}/route/${s}">${esc(n)}</a></li>`).join('\n')
+  const airlineLinks = airlines.map(([s, n]) => `<li><a href="${SITE}/airline/${s}">${esc(n)} flight tracker</a></li>`).join('\n')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: canonical,
+    description: desc,
+    isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` },
+  }
+
+  const body = `
+  <h1>Flights near you</h1>
+  <p>${esc(desc)}</p>
+  <p>Open ObjectTracer, share your location or search a city, and watch every aircraft arriving at and departing from your nearest airport — live from ADS-B. Tap any flight to track it on the interactive 3D globe.</p>
+  <h2>Live airport boards</h2>
+  <ul>${airportLinks}</ul>
+  <h2>Popular routes</h2>
+  <ul>${routeLinks}</ul>
+  <h2>Airlines</h2>
+  <ul>${airlineLinks}</ul>
+  <p><a href="${SITE}/about">About</a> · <a href="${SITE}/faq">FAQ</a> · <a href="${SITE}/contact">Contact</a> · <a href="${SITE}/">Home</a></p>
+  `
+  return html(canonical, title, desc, jsonLd, body, 'FLIGHTS NEAR YOU')
+}
+
 function renderHome() {
   const canonical = `${SITE}/`
   const title = 'ObjectTracer — Live Flight Tracker, ISS, Satellites & Deep Space on a 3D Globe'

@@ -3,13 +3,15 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 95;
+  z-index: 200;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
   background: #05080e;
   color: #eaf2ff;
   animation: fadeIn 0.3s var(--ease-panel, ease);
-  -webkit-overflow-scrolling: touch;
 }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
@@ -186,9 +188,42 @@
 .foot > span { font-family: var(--font-mono); font-size: 11px; color: rgba(208,224,244,0.4) }
 .empty, .loading { padding: 40px 26px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: rgba(208,224,244,0.5) }
 
+/* ── footer (internal links + sitemap) ───────────────────────────────────── */
+.footer {
+  border-top: 1px solid rgba(180, 205, 235, 0.12);
+  background: rgba(6, 10, 16, 0.6);
+  padding: 56px clamp(20px, 5vw, 48px) 40px;
+}
+.footerCols {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;
+}
+.footerCol { display: flex; flex-direction: column; gap: 11px }
+.footerColTitle {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(208, 224, 244, 0.5); margin-bottom: 4px;
+}
+.footerLink {
+  font-family: var(--font-body); font-size: 13.5px;
+  color: rgba(208, 224, 244, 0.7); text-decoration: none; transition: color 0.15s;
+}
+.footerLink:hover { color: #b2ff1a }
+.footerBottom {
+  max-width: 1100px; margin: 36px auto 0; padding-top: 22px;
+  border-top: 1px solid rgba(180, 205, 235, 0.1);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 12px; color: rgba(208, 224, 244, 0.4);
+}
+.footerBottomLinks { display: flex; gap: 16px }
+.footerBottomLinks a { color: rgba(208, 224, 244, 0.6); text-decoration: none }
+.footerBottomLinks a:hover { color: #b2ff1a }
+
 @media (max-width: 680px) {
   .head, .row { grid-template-columns: 1.3fr 1.3fr 0.9fr }
   .head span:last-child, .alt { display: none }
   .pill { grid-column: 1 / -1; justify-self: start; margin-top: 2px }
   .locCard { padding: 32px 24px }
+  .footerCols { grid-template-columns: repeat(2, 1fr); gap: 24px }
+  .footerBottom { flex-direction: column; align-items: flex-start }
 }
