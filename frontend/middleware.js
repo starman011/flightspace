@@ -189,8 +189,8 @@ async function renderAirport(iata) {
   const country  = info ? info.country : ''
   const apLabel  = `${cityName} ${iata} Airport`
   const where    = country ? `${cityName}, ${country}` : cityName
-  const title = `${iata} ${cityName} Airport — Live Arrivals, Departures & Flight Status | ObjectTracer`
-  const desc  = `Live ${cityName} (${iata}) airport flight tracker: real-time arrivals, departures and flight status at ${fullName}. ${arrivals.length} arrivals and ${departures.length} departures tracked now on ObjectTracer's 3D globe.`
+  const title = `${cityName} Flights (${iata}) — Live Arrivals & Departures | ObjectTracer`
+  const desc  = `Flights to and from ${cityName} (${iata}): live arrivals, departures and flight status at ${fullName}, tracked in real time. ${arrivals.length} arrivals and ${departures.length} departures on the map now — free on ObjectTracer's 3D globe.`
 
   // Varied "about" opener (rotates by IATA hash) so 930 pages aren't identical
   let h = 0; for (let i = 0; i < iata.length; i++) h = (h * 31 + iata.charCodeAt(i)) >>> 0
@@ -259,7 +259,7 @@ async function renderAirport(iata) {
   const recentDepRows = recentDep.slice(0, 20).map(recentRow).join('\n')
 
   return html(canonical, title, desc, jsonLd, `
-    <h1>${esc(fullName)} (${esc(iata)}) — Live Flight Tracker</h1>
+    <h1>${esc(cityName)} flights — live arrivals &amp; departures (${esc(iata)})</h1>
     <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
        ${arrivals.length} arrivals and ${departures.length} departures are currently tracked via ADS-B.</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
