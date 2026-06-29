@@ -258,6 +258,12 @@ async function renderAirport(iata) {
   const recentArrRows = recentArr.slice(0, 20).map(recentRow).join('\n')
   const recentDepRows = recentDep.slice(0, 20).map(recentRow).join('\n')
 
+  // Aggressive interlinking: nearby airports + the region(s) this airport sits in.
+  const nearbyLinks = nearbyAirports(iata)
+    .map(b => `<a href="${SITE}/airport/${b.iata}">${esc(b.city || b.name)} (${b.iata})</a>`).join(' · ')
+  const regionLinks = regionsForAirport(iata, country)
+    .map(s => `<a href="${SITE}/flights/${s}">Flights over ${esc(REGION_INFO[s].name)}</a>`).join(' · ')
+
   return html(canonical, title, desc, jsonLd, `
     <h1>${esc(cityName)} flights — live arrivals &amp; departures (${esc(iata)})</h1>
     <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
@@ -271,6 +277,8 @@ async function renderAirport(iata) {
     <p>${esc(about)}</p>
     <h2>${esc(iata)} — Frequently Asked Questions</h2>
     ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+    ${nearbyLinks ? `<h2>Airports near ${esc(cityName)}</h2><p>${nearbyLinks}.</p>` : ''}
+    ${regionLinks ? `<h2>Regional flight trackers</h2><p>${regionLinks}.</p>` : ''}
     <h2>Track more on ObjectTracer</h2>
     <p>
       Other busy airports:
@@ -925,6 +933,38 @@ const REGION_INFO = {
   'singapore':    { name: 'Singapore',      desc: 'home to Changi Airport, consistently voted the world\'s best', airports: ['SIN'] },
 }
 
+// ── Interlinking maps: connect every airport page to its region + neighbours ──
+const IATA_TO_REGIONS = {}
+for (const [slug, r] of Object.entries(REGION_INFO)) {
+  for (const ia of r.airports) (IATA_TO_REGIONS[ia] ||= []).push(slug)
+}
+const COUNTRY_TO_REGION = {
+  'India': 'india', 'United States': 'usa', 'United Kingdom': 'uk',
+  'United Arab Emirates': 'uae', 'Canada': 'canada', 'Australia': 'australia',
+  'Singapore': 'singapore',
+}
+function regionsForAirport(iata, country) {
+  const set = new Set(IATA_TO_REGIONS[iata] || [])
+  if (country && COUNTRY_TO_REGION[country]) set.add(COUNTRY_TO_REGION[country])
+  return [...set]
+}
+// Nearest airports by great-circle distance (within ~1500 km = same metro/region).
+function nearbyAirports(iata, n = 6) {
+  const a = AIRPORT_FULL[iata]
+  if (!a) return []
+  const toR = Math.PI / 180
+  return Object.values(AIRPORT_FULL)
+    .filter(b => b.iata !== iata && b.lat != null)
+    .map(b => {
+      const dLat = (b.lat - a.lat) * toR, dLon = (b.lon - a.lon) * toR
+      const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLon / 2) ** 2
+      return { iata: b.iata, city: b.city, name: b.name, d: 2 * 6371 * Math.asin(Math.sqrt(s)) }
+    })
+    .filter(b => b.d < 1500)
+    .sort((x, y) => x.d - y.d)
+    .slice(0, n)
+}
+
 async function renderFlightsOver(slug) {
   const region = REGION_INFO[slug]
   if (!region) return
@@ -953,6 +993,11 @@ async function renderFlightsOver(slug) {
 
     <h2>Major Airports in ${esc(region.name)}</h2>
     <ul style="padding-left:20px;line-height:2">${airportLinks}</ul>
+
+    <h2>Flights over other regions</h2>
+    <p>${Object.entries(REGION_INFO).filter(([s]) => s !== slug)
+        .map(([s, r]) => `<a href="${SITE}/flights/${s}">${esc(r.name)}</a>`).join(' · ')}.</p>
+    <p>Or find your nearest airport on the <a href="${SITE}/flight">live flight board</a>.</p>
 
     <p style="margin-top:24px">
       ObjectTracer uses real-time ADS-B data to track every aircraft flying over ${esc(region.name)}.
