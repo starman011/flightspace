@@ -1350,12 +1350,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     renderer.domElement.addEventListener('pointerdown', () => {
       controls.autoRotate = false
       int.current.onInteract?.()
-      // On mobile, pause tracking lock for 3s so user can pan freely
-      if (int.current.trackingId && window.innerWidth < 768) {
-        int.current.trackPausedUntil = Date.now() + 3000
-      }
+      // Pause the tracking lock during a drag/pinch (any device) so the camera
+      // doesn't fight the gesture; it eases back onto the plane afterward.
+      if (int.current.trackingId) int.current.trackPausedUntil = Date.now() + 2500
     })
-    renderer.domElement.addEventListener('wheel', () => { int.current.onInteract?.() }, { passive: true })
+    renderer.domElement.addEventListener('wheel', () => {
+      int.current.onInteract?.()
+      // Pause tracking while zooming (extended on each wheel tick) → smooth zoom,
+      // then ease back. This is what removes the zoom lag while following a plane.
+      if (int.current.trackingId) int.current.trackPausedUntil = Date.now() + 1500
+    }, { passive: true })
 
     // Galaxy FOV zoom — scroll/pinch changes field of view for sky zoom
     const galaxyWheel = (e) => {
@@ -2435,6 +2439,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         if (_trackId && !_trackPaused) {
           const _trackedInst = int.current.idToInstance?.get(_trackId)
           if (_trackedInst?.lat != null) {
+            // Just resumed after a pan/zoom pause → ease back onto the plane
+            // instead of snapping.
+            if (int.current.trackWasPaused) {
+              int.current.trackWasPaused  = false
+              int.current.trackTweenStart = Date.now()
+              int.current.trackTweenFrom  = camera.position.clone()
+            }
             const _d = camera.position.length()
             const _targetPos = ll2v(_trackedInst.lat, _trackedInst.lon, EARTH_R)
               .normalize().multiplyScalar(_d)
@@ -2472,6 +2483,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             controls.enableRotate = false
           }
         } else if (_trackId && _trackPaused) {
+          int.current.trackWasPaused = true   // remember to ease back when the pause ends
           controls.enableRotate = true
         } else {
           controls.enableRotate = true
@@ -3143,6 +3155,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       flyToStart:  null,            // timestamp
       flyToFrom:   null,            // Vector3 camera start
       trackPausedUntil: 0,          // timestamp — user panning pauses tracking lock until this time
+      trackWasPaused: false,        // true while paused → triggers a smooth ease-back on resume
       mobilePanel: false,           // true when mobile detail panel is open (offset camera target)
       solarFlyTarget: null,         // planet fly-to destination (Vector3)
       solarFlyStart:  null,
