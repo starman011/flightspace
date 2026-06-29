@@ -263,6 +263,10 @@ async function renderAirport(iata) {
     .map(b => `<a href="${SITE}/airport/${b.iata}">${esc(b.city || b.name)} (${b.iata})</a>`).join(' · ')
   const regionLinks = regionsForAirport(iata, country)
     .map(s => `<a href="${SITE}/flights/${s}">Flights over ${esc(REGION_INFO[s].name)}</a>`).join(' · ')
+  const _citySlug = IATA_TO_CITY_SLUG[iata]
+  const cityPageLink = _citySlug
+    ? `<a href="${SITE}/city/${_citySlug}">All ${esc(CITY_AIRPORTS[_citySlug].name)} airports</a>`
+    : ''
 
   return html(canonical, title, desc, jsonLd, `
     <h1>${esc(cityName)} flights — live arrivals &amp; departures (${esc(iata)})</h1>
@@ -277,6 +281,7 @@ async function renderAirport(iata) {
     <p>${esc(about)}</p>
     <h2>${esc(iata)} — Frequently Asked Questions</h2>
     ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
+    ${cityPageLink ? `<p>${cityPageLink} — live arrivals &amp; departures across the metro.</p>` : ''}
     ${nearbyLinks ? `<h2>Airports near ${esc(cityName)}</h2><p>${nearbyLinks}.</p>` : ''}
     ${regionLinks ? `<h2>Regional flight trackers</h2><p>${regionLinks}.</p>` : ''}
     <h2>Track more on ObjectTracer</h2>
@@ -771,6 +776,12 @@ const CITY_AIRPORTS = {
   'johannesburg':      { name: 'Johannesburg',       country: 'South Africa', airports: ['JNB'] },
 }
 
+// IATA → city slug, so each airport page can link up to its city flight page.
+const IATA_TO_CITY_SLUG = {}
+for (const [slug, c] of Object.entries(CITY_AIRPORTS)) {
+  for (const ia of c.airports) IATA_TO_CITY_SLUG[ia] = slug
+}
+
 async function renderCity(slug) {
   const city = CITY_AIRPORTS[slug]
   if (!city) return
@@ -788,8 +799,12 @@ async function renderCity(slug) {
     }
   } catch (_) {}
 
-  const title = `${city.name} Live Flight Tracker — All Airports & Arrivals | ObjectTracer`
-  const desc  = `Track all live flights at ${city.name}, ${city.country} on ObjectTracer's real-time 3D globe. Covers ${iataList.join(', ')} — live arrivals, departures, and real-time ADS-B tracking.`
+  const title = `${city.name} Flights — All Airports, Live Arrivals & Departures | ObjectTracer`
+  const desc  = `Flights to and from ${city.name}, ${city.country}: live arrivals and departures across ${iataList.join(', ')}, tracked in real time on ObjectTracer's 3D globe.`
+  const cityRegion = COUNTRY_TO_REGION[city.country]
+  const cityRegionLink = cityRegion ? `Regional tracker: <a href="${SITE}/flights/${cityRegion}">Flights over ${esc(REGION_INFO[cityRegion].name)}</a>.` : ''
+  const otherCityLinks = Object.entries(CITY_AIRPORTS).filter(([s]) => s !== slug)
+    .map(([s, c]) => `<a href="${SITE}/city/${s}">${esc(c.name)}</a>`).join(' · ')
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -832,6 +847,11 @@ async function renderCity(slug) {
       <tr><th>Flight</th><th>From</th><th>Altitude</th></tr>
       ${flightRows}
     </table>` : ''}
+
+    ${cityRegionLink ? `<p>${cityRegionLink}</p>` : ''}
+
+    <h2>Flights at other cities</h2>
+    <p>${otherCityLinks}.</p>
 
     <p style="margin-top:24px">
       ObjectTracer tracks all flights arriving at and departing from ${esc(city.name)} airports in real-time.
