@@ -13,7 +13,7 @@
 .mapToggle {
   position: fixed;
   bottom: 88px;
-  right: 24px;
+  right: 40px;
   display: flex;
   gap: 3px;
   background: rgba(0, 0, 20, 0.72);

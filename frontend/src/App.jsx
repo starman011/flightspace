@@ -368,6 +368,29 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
     })
   }, [])
 
+  // From the /flight page: immediately go live, track, and fly to the picked
+  // flight on the globe (don't leave the user on the static offline card).
+  const handleTrackFromFlightPage = useCallback((icao24, hint) => {
+    setActivePage(null)
+    if (activeScale !== 'earth') { setActiveScale('earth'); globeRef.current?.setCameraScale?.('earth') }
+    setLiveEnabled(true)
+    setSelectedIcao24(icao24)
+    setTrackingId(icao24)
+    watchObject?.(icao24)                 // stream this specific aircraft even if out of view
+    // Anticipate: fly toward the airport area right away…
+    if (hint?.lat != null && hint?.lon != null) {
+      setTimeout(() => globeRef.current?.flyTo?.(hint.lat, hint.lon), 80)
+    }
+    // …then lock onto the aircraft as soon as its live position arrives.
+    let tries = 0
+    const lockOn = () => {
+      const ac = aircraftRef.current.get(icao24)
+      if (ac?.lat != null) globeRef.current?.flyTo?.(ac.lat, ac.lon)
+      else if (tries++ < 48) setTimeout(lockOn, 250)
+    }
+    setTimeout(lockOn, 450)
+  }, [activeScale, watchObject])
+
   const openedFromProfileRef = useRef(false)
   const handlePanelClose = useCallback(() => {
     setSelectedIcao24(null)
@@ -1113,7 +1136,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'flight' && (
         <FlightPage
           onClose={() => setActivePage(null)}
-          onFlightClick={(icao24) => { setActivePage(null); setSelectedIcao24(icao24) }}
+          onFlightClick={handleTrackFromFlightPage}
           onOpenAirport={(iata) => { setActivePage(null); setSelectedAirport(iata) }}
         />
       )}

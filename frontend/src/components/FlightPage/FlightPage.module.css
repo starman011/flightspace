@@ -164,6 +164,10 @@
 /* ── airport board ────────────────────────────────────────────────────────── */
 .aptSec { min-height: 90dvh; display: flex; align-items: flex-start; justify-content: center; padding-top: 4vh; padding-bottom: 12vh }
 .aptBoard { width: min(980px, 95vw); overflow: hidden; padding: 0 }
+.cityHero { position: relative; height: 200px; overflow: hidden }
+.cityHero img { width: 100%; height: 100%; object-fit: cover; display: block }
+.cityHeroVeil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,10,16,0.10) 28%, rgba(6,10,16,0.92) 100%) }
+.cityHeroLabel { position: absolute; left: 24px; bottom: 16px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(225,235,248,0.85); text-shadow: 0 2px 12px rgba(0,0,0,0.55) }
 .aptBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 26px; border-bottom: 1px solid rgba(180,205,235,0.16); flex-wrap: wrap }
 .aptKicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(208,224,244,0.4) }
 .aptTitle { display: flex; align-items: baseline; gap: 12px; margin-top: 7px; flex-wrap: wrap }
@@ -220,10 +224,20 @@
 .footerBottomLinks a:hover { color: #b2ff1a }
 
 @media (max-width: 680px) {
+  .cover { height: 100svh }
+  .coverText { padding-bottom: 16vh }
+  /* locate: stop forcing a full-height centered card (looked cramped on mobile) */
+  .locSec { min-height: auto; align-items: stretch; padding: 13vh 18px 11vh }
+  .locCard { width: 100%; padding: 30px 22px }
+  .locActions { flex-direction: column; align-items: stretch; gap: 10px }
+  .locActions .btn { width: 100%; justify-content: center }
+  .locActions form { width: 100% }
+  .locOr { text-align: center }
+  .aptSec { padding-top: 3vh }
+  .cityHero { height: 150px }
   .head, .row { grid-template-columns: 1.3fr 1.3fr 0.9fr }
   .head span:last-child, .alt { display: none }
   .pill { grid-column: 1 / -1; justify-self: start; margin-top: 2px }
-  .locCard { padding: 32px 24px }
   .footerCols { grid-template-columns: repeat(2, 1fr); gap: 24px }
   .footerBottom { flex-direction: column; align-items: flex-start }
 }

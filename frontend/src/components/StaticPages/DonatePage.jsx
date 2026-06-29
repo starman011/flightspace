@@ -4,11 +4,16 @@ export default function DonatePage({ onClose }) {
   return (
     <div className={styles.overlay}>
       <div className={styles.panel}>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+        <button className={styles.heroClose} onClick={onClose} aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Support ObjectTracer</h2>
+        <div className={styles.hero}>
+          <img className={styles.heroImg} src="/boy-sky.jpg" alt="A child pointing up at a plane crossing the sky" />
+          <div className={styles.heroOverlay} />
+          <div className={styles.heroText}>
+            <p className={styles.heroKicker}>ObjectTracer</p>
+            <h1 className={styles.heroTitle}>Support ObjectTracer</h1>
+          </div>
         </div>
         <div className={styles.body}>
           <p>

@@ -73,6 +73,7 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
   const [locating, setLocating] = useState(false)
   const [note, setNote] = useState('')
   const [q, setQ] = useState('')
+  const [cityImg, setCityImg] = useState(null)
   const boardRef = useRef(null)
 
   const resolve = useCallback((airport) => {
@@ -149,6 +150,26 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Deep link: /flight?a=JFK opens that airport's board directly (shareable).
+  useEffect(() => {
+    const a = new URLSearchParams(window.location.search).get('a')
+    const code = a && a.toUpperCase()
+    if (code && LOOKUP[code]) resolve({ ...LOOKUP[code] })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Per-airport city photo (Wikipedia) — gives every airport view a real image.
+  useEffect(() => {
+    if (!apt) return
+    let alive = true
+    setCityImg(null)
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(apt.city)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive && d?.thumbnail?.source) setCityImg(d.originalimage?.source || d.thumbnail.source) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [apt])
+
   const isArr = tab === 'arr'
   const rows = isArr ? arr : dep
 
@@ -220,6 +241,13 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
       {apt && (
         <section className={`${styles.section} ${styles.aptSec}`} ref={boardRef}>
           <div className={`${styles.glass} ${styles.aptBoard}`}>
+            {cityImg && (
+              <div className={styles.cityHero}>
+                <img src={cityImg} alt={apt.city} loading="lazy" />
+                <div className={styles.cityHeroVeil} />
+                <span className={styles.cityHeroLabel}>{apt.city}</span>
+              </div>
+            )}
             <div className={styles.aptBar}>
               <div>
                 <span className={styles.aptKicker}>Nearest airport</span>
@@ -256,7 +284,7 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
                   const { id, al } = flightName(f)
                   const status = isArr ? arrStatus(f) : { label: 'Departing', cls: styles.pillGo }
                   return (
-                    <div key={f.icao24 || i} className={styles.row} onClick={() => f.icao24 && onFlightClick?.(f.icao24)}>
+                    <div key={f.icao24 || i} className={styles.row} onClick={() => f.icao24 && onFlightClick?.(f.icao24, apt ? { lat: apt.lat, lon: apt.lon } : null)}>
                       <span className={styles.rcs}>{id}{al && <small>{al}</small>}</span>
                       <span className={styles.rcity}>{peerLabel(f)}</span>
                       <span className={`${styles.pill} ${status.cls}`}>{status.label}</span>
