@@ -1129,6 +1129,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'blog' && <BlogPage onClose={() => setActivePage(null)} initialSlug={init.blogSlug} />}
       {activePage === 'flight' && (
         <FlightPage
+          initialAirport={init.flightAirport}
           onClose={() => setActivePage(null)}
           onFlightClick={handleTrackFromFlightPage}
           onOpenAirport={(iata) => { setActivePage(null); setSelectedAirport(iata) }}

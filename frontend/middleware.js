@@ -62,7 +62,12 @@ export default async function middleware(request) {
     return renderSatellite(parts[1].toLowerCase())
   }
   if (parts[0] === 'flights' && parts[1]) {
-    return renderFlightsOver(parts[1].toLowerCase())
+    const slug = parts[1].toLowerCase()
+    if (REGION_INFO[slug]) return renderFlightsOver(slug)
+    if (CITY_AIRPORTS[slug]) return renderCity(slug)         // canonical → /city/{slug}
+    const iata = slug.toUpperCase()
+    if (AIRPORT_FULL[iata]) return renderAirport(iata)       // canonical → /airport/{IATA}
+    return renderFlightsOver(slug)                            // unknown → SPA fallback
   }
   if (pathname === '/flight') {
     return renderFlightNear()

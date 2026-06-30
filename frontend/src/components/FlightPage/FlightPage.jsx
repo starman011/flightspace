@@ -64,7 +64,7 @@ function matchAirport(q) {
   return m ? { ...m } : null
 }
 
-export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
+export default function FlightPage({ onClose, onFlightClick, onOpenAirport, initialAirport }) {
   const [apt, setApt] = useState(null)        // { iata, city, name, lat, lon, dist }
   const [nearby, setNearby] = useState([])
   const [tab, setTab] = useState('arr')
@@ -151,9 +151,10 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Deep link: /flight?a=JFK opens that airport's board directly (shareable).
+  // Deep link: /flights/JFK (path) or /flight?a=JFK (query) opens that airport's
+  // board directly — shareable and SEO-friendly.
   useEffect(() => {
-    const a = new URLSearchParams(window.location.search).get('a')
+    const a = initialAirport || new URLSearchParams(window.location.search).get('a')
     const code = a && a.toUpperCase()
     if (code && LOOKUP[code]) resolve({ ...LOOKUP[code] })
     // eslint-disable-next-line react-hooks/exhaustive-deps

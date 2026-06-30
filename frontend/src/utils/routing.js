@@ -213,11 +213,15 @@ export function parseInitialState(pathname) {
     return c ? { ...base, cityFocus: { iata: c.iata, name: c.n }, selectedAirport: c.iata } : base
   }
 
-  // Region landing: /flights/india → fly to region
+  // /flights/{slug}: region → fly to region; city/airport → open the flight board.
   if (pathname.startsWith('/flights/')) {
     const slug = pathname.replace('/flights/', '').toLowerCase()
     const r = REGION_FOCUS[slug]
-    return r ? { ...base, regionFocus: { lat: r.lat, lon: r.lon, name: r.n } } : base
+    if (r) return { ...base, regionFocus: { lat: r.lat, lon: r.lon, name: r.n } }
+    const c = CITY_IATA[slug]
+    if (c) return { ...base, activePage: 'flight', flightAirport: c.iata }
+    if (/^[a-z]{3}$/.test(slug)) return { ...base, activePage: 'flight', flightAirport: slug.toUpperCase() }
+    return base
   }
 
   if (pathname.startsWith('/satellite/')) {
