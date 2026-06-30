@@ -49,8 +49,10 @@ function PageIcon({ id, size = 16 }) {
       </svg>
     )
     case 'planes': return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
-        <path d="M12 2c.7 0 1.2 1 1.2 2.3V9l7.8 4.6v1.9L13.2 13v4.4l2.3 1.7v1.6L12 20l-3.5 .7v-1.6l2.3-1.7V13L3 15.5v-1.9L10.8 9V4.3C10.8 3 11.3 2 12 2z" />
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3 3 7.5 12 12l9-4.5L12 3z" />
+        <path d="M3 12l9 4.5 9-4.5" />
+        <path d="M3 16.5 12 21l9-4.5" />
       </svg>
     )
     case 'journal': return (

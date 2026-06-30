@@ -7,22 +7,27 @@ const API = import.meta.env.VITE_API_URL || ''
 
 // Popular carriers (ICAO callsign prefix → display name) and aircraft types
 // (ICAO type code → friendly name). These drive the picker chips.
+// [ICAO callsign prefix, display name, Wikipedia title for the hero photo]
 const AIRLINES = [
-  ['UAE', 'Emirates'], ['QTR', 'Qatar Airways'], ['ETD', 'Etihad'],
-  ['BAW', 'British Airways'], ['DLH', 'Lufthansa'], ['AFR', 'Air France'], ['KLM', 'KLM'],
-  ['AAL', 'American'], ['UAL', 'United'], ['DAL', 'Delta'], ['SWA', 'Southwest'],
-  ['IGO', 'IndiGo'], ['AIC', 'Air India'], ['SIA', 'Singapore'], ['CPA', 'Cathay Pacific'],
-  ['QFA', 'Qantas'], ['UAE', 'Emirates'], ['THY', 'Turkish'], ['RYR', 'Ryanair'], ['EZY', 'easyJet'],
-  ['ANA', 'ANA'], ['JAL', 'Japan Airlines'],
+  ['UAE', 'Emirates', 'Emirates (airline)'], ['QTR', 'Qatar Airways', 'Qatar Airways'], ['ETD', 'Etihad', 'Etihad Airways'],
+  ['BAW', 'British Airways', 'British Airways'], ['DLH', 'Lufthansa', 'Lufthansa'], ['AFR', 'Air France', 'Air France'], ['KLM', 'KLM', 'KLM'],
+  ['AAL', 'American', 'American Airlines'], ['UAL', 'United', 'United Airlines'], ['DAL', 'Delta', 'Delta Air Lines'], ['SWA', 'Southwest', 'Southwest Airlines'],
+  ['IGO', 'IndiGo', 'IndiGo'], ['AIC', 'Air India', 'Air India'], ['SIA', 'Singapore', 'Singapore Airlines'], ['CPA', 'Cathay Pacific', 'Cathay Pacific'],
+  ['QFA', 'Qantas', 'Qantas'], ['THY', 'Turkish', 'Turkish Airlines'], ['RYR', 'Ryanair', 'Ryanair'], ['EZY', 'easyJet', 'EasyJet'],
+  ['ANA', 'ANA', 'All Nippon Airways'], ['JAL', 'Japan Airlines', 'Japan Airlines'],
 ]
+// [ICAO type code, display name, Wikipedia title (family) for the hero photo]
 const TYPES = [
-  ['B738', 'Boeing 737-800'], ['B38M', 'Boeing 737 MAX 8'], ['A320', 'Airbus A320'], ['A20N', 'Airbus A320neo'],
-  ['A21N', 'Airbus A321neo'], ['B77W', 'Boeing 777-300ER'], ['B772', 'Boeing 777-200'], ['A359', 'Airbus A350-900'],
-  ['B789', 'Boeing 787-9'], ['B788', 'Boeing 787-8'], ['A388', 'Airbus A380'], ['B744', 'Boeing 747-400'],
-  ['A333', 'Airbus A330-300'], ['E190', 'Embraer 190'], ['AT76', 'ATR 72-600'], ['DH8D', 'Dash 8 Q400'],
+  ['B738', 'Boeing 737-800', 'Boeing 737 Next Generation'], ['B38M', 'Boeing 737 MAX 8', 'Boeing 737 MAX'],
+  ['A320', 'Airbus A320', 'Airbus A320 family'], ['A20N', 'Airbus A320neo', 'Airbus A320neo family'],
+  ['A21N', 'Airbus A321neo', 'Airbus A320neo family'], ['B77W', 'Boeing 777-300ER', 'Boeing 777'],
+  ['B772', 'Boeing 777-200', 'Boeing 777'], ['A359', 'Airbus A350-900', 'Airbus A350'],
+  ['B789', 'Boeing 787-9', 'Boeing 787 Dreamliner'], ['B788', 'Boeing 787-8', 'Boeing 787 Dreamliner'],
+  ['A388', 'Airbus A380', 'Airbus A380'], ['B744', 'Boeing 747-400', 'Boeing 747'],
+  ['A333', 'Airbus A330-300', 'Airbus A330'], ['E190', 'Embraer 190', 'Embraer E-Jet family'],
+  ['AT76', 'ATR 72-600', 'ATR 72'], ['DH8D', 'Dash 8 Q400', 'De Havilland Canada Dash 8'],
 ]
-// de-dupe (Emirates listed twice above for emphasis in two columns visually)
-const UNIQ_AIRLINES = AIRLINES.filter((a, i) => AIRLINES.findIndex(b => b[0] === a[0]) === i)
+const UNIQ_AIRLINES = AIRLINES
 
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -33,16 +38,24 @@ export default function PlanesPage({ onClose, onFlightClick }) {
   const [sel, setSel] = useState(null)        // { code, name, mode }
   const [data, setData] = useState(null)      // { count, flights[] }
   const [loading, setLoading] = useState(false)
+  const [hero, setHero] = useState(null)      // airline / aircraft-type photo (Wikipedia)
 
   const fetchFleet = useCallback((m, code) => {
     const q = m === 'airline' ? `airline=${encodeURIComponent(code)}` : `type=${encodeURIComponent(code)}`
     return fetch(`${API}/api/v1/fleet?${q}`).then(r => r.json())
   }, [])
 
-  const pick = useCallback((m, code, name) => {
+  const pick = useCallback((m, code, name, wiki) => {
     setSel({ code, name, mode: m })
     setLoading(true)
     setData(null)
+    setHero(null)
+    if (wiki) {
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wiki)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d && d.type !== 'disambiguation') setHero(d.originalimage?.source || d.thumbnail?.source || null) })
+        .catch(() => {})
+    }
     fetchFleet(m, code).then(d => { setData(d || { count: 0, flights: [] }); setLoading(false) })
       .catch(() => { setData({ count: 0, flights: [] }); setLoading(false) })
     setTimeout(() => document.getElementById('planesBoard')?.scrollIntoView({ behavior: 'smooth' }), 80)
@@ -52,8 +65,8 @@ export default function PlanesPage({ onClose, onFlightClick }) {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     const a = p.get('airline'), t = p.get('type')
-    if (a) { setMode('airline'); pick('airline', a.toUpperCase(), (UNIQ_AIRLINES.find(x => x[0] === a.toUpperCase()) || [a, a])[1]) }
-    else if (t) { setMode('type'); pick('type', t.toUpperCase(), (TYPES.find(x => x[0] === t.toUpperCase()) || [t, t])[1]) }
+    if (a) { const e = UNIQ_AIRLINES.find(x => x[0] === a.toUpperCase()) || [a, a, a]; setMode('airline'); pick('airline', a.toUpperCase(), e[1], e[2]) }
+    else if (t) { const e = TYPES.find(x => x[0] === t.toUpperCase()) || [t, t, t]; setMode('type'); pick('type', t.toUpperCase(), e[1], e[2]) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -100,8 +113,8 @@ export default function PlanesPage({ onClose, onFlightClick }) {
             <button className={`${styles.tab} ${mode === 'type' ? styles.tabOn : ''}`} onClick={() => setMode('type')}>Aircraft types</button>
           </div>
           <div className={styles.locChips} style={{ marginTop: 18 }}>
-            {chips.map(([code, name]) => (
-              <button key={code} className={styles.chip} onClick={() => pick(mode, code, name)}>{name}</button>
+            {chips.map(([code, name, wiki]) => (
+              <button key={code} className={styles.chip} onClick={() => pick(mode, code, name, wiki)}>{name}</button>
             ))}
           </div>
         </div>
@@ -111,6 +124,13 @@ export default function PlanesPage({ onClose, onFlightClick }) {
       {sel && (
         <section className={`${styles.section} ${styles.aptSec}`} id="planesBoard">
           <div className={`${styles.glass} ${styles.aptBoard}`}>
+            {hero && (
+              <div className={styles.cityHero}>
+                <img src={hero} alt={sel.name} loading="lazy" />
+                <div className={styles.cityHeroVeil} />
+                <span className={styles.cityHeroLabel}>{sel.name}</span>
+              </div>
+            )}
             <div className={styles.aptBar}>
               <div>
                 <span className={styles.aptKicker}>{sel.mode === 'airline' ? 'Airline fleet' : 'Aircraft type'}</span>
