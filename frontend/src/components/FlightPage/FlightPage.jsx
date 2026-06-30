@@ -8,6 +8,17 @@ import { CITY_FLAVOR } from '../../data/cityFlavor'
 const API = import.meta.env.VITE_API_URL || ''
 const LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
+// Some city names are Wikipedia disambiguation pages (no photo) — map them to
+// the correct article so the hero image and gallery load.
+const WIKI_ALIAS = {
+  'New York': 'New York City',
+  'Washington': 'Washington, D.C.',
+  'Washington DC': 'Washington, D.C.',
+  'Kansas City': 'Kansas City, Missouri',
+  'San Jose': 'San Jose, California',
+  'Quebec': 'Quebec City',
+}
+
 /* ── minimalist line icons (no emoji) ─────────────────────────────────────── */
 const PinIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -167,7 +178,7 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport, init
     if (!apt) return
     let alive = true
     setCity(null)
-    const title = encodeURIComponent(apt.city)
+    const title = encodeURIComponent(WIKI_ALIAS[apt.city] || apt.city)
     Promise.all([
       fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`).then(r => (r.ok ? r.json() : null)).catch(() => null),
       fetch(`https://en.wikipedia.org/api/rest_v1/page/media-list/${title}`).then(r => (r.ok ? r.json() : null)).catch(() => null),
