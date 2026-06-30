@@ -72,6 +72,9 @@ export default async function middleware(request) {
   if (pathname === '/flight') {
     return renderFlightNear()
   }
+  if (pathname === '/planes') {
+    return renderPlanes()
+  }
   if (pathname === '/iss') {
     return renderISS()
   }
@@ -1291,6 +1294,39 @@ function renderFlightNear() {
   <p><a href="${SITE}/about">About</a> · <a href="${SITE}/faq">FAQ</a> · <a href="${SITE}/contact">Contact</a> · <a href="${SITE}/">Home</a></p>
   `
   return html(canonical, title, desc, jsonLd, body, 'FLIGHTS NEAR YOU')
+}
+
+function renderPlanes() {
+  const canonical = `${SITE}/planes`
+  const title = 'Live Fleet Tracker — Flights by Airline & Aircraft Type | ObjectTracer'
+  const desc  = 'See how many aircraft each airline or aircraft type has airborne worldwide right now, and track any of them live on a 3D globe.'
+
+  const airlines = [
+    ['emirates', 'Emirates'], ['qatar-airways', 'Qatar Airways'], ['british-airways', 'British Airways'],
+    ['lufthansa', 'Lufthansa'], ['american-airlines', 'American Airlines'], ['united', 'United'],
+    ['delta', 'Delta'], ['air-france', 'Air France'], ['indigo', 'IndiGo'], ['air-india', 'Air India'],
+    ['singapore-airlines', 'Singapore Airlines'], ['ryanair', 'Ryanair'],
+  ]
+  const airlineLinks = airlines.map(([s, n]) => `<li><a href="${SITE}/airline/${s}">${esc(n)} fleet — live flights</a></li>`).join('\n')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: canonical,
+    description: desc,
+    isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` },
+  }
+
+  const body = `
+  <h1>Live fleet tracker</h1>
+  <p>${esc(desc)}</p>
+  <p>Open ObjectTracer's fleet board, pick an airline or an aircraft type, and see every one of them airborne now — then tap any flight to follow it on the interactive 3D globe.</p>
+  <h2>Track an airline fleet</h2>
+  <ul>${airlineLinks}</ul>
+  <p>Or find flights at your nearest airport on the <a href="${SITE}/flight">live flight board</a>.</p>
+  `
+  return html(canonical, title, desc, jsonLd, body, 'LIVE FLEETS')
 }
 
 function renderHome() {

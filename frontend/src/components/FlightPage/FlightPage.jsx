@@ -64,7 +64,7 @@ function matchAirport(q) {
   return m ? { ...m } : null
 }
 
-export default function FlightPage({ onClose, onFlightClick, onOpenAirport, initialAirport }) {
+export default function FlightPage({ onClose, onFlightClick, onOpenAirport, initialAirport, onAirportChange }) {
   const [apt, setApt] = useState(null)        // { iata, city, name, lat, lon, dist }
   const [nearby, setNearby] = useState([])
   const [tab, setTab] = useState('arr')
@@ -81,10 +81,11 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport, init
     if (!airport) { setNote('No airport found — try a city like New York, London or Tokyo.'); return }
     setNote('')
     setApt(airport)
+    onAirportChange?.(airport.iata)   // lets the URL reflect /flights/{iata}
     setNearby(nearbyAirports(airport.lat, airport.lon, airport.iata))
     setTab('arr')
     setTimeout(() => boardRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
-  }, [])
+  }, [onAirportChange])
 
   const locate = () => {
     setNote('')

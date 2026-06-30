@@ -16,6 +16,8 @@ export const ROUTE_META = {
                      description: 'View your tracked flights, pinned launches, and personalized settings on ObjectTracer.' },
   '/flight':       { title: 'Flights Near You — Live Arrivals & Departures | ObjectTracer',
                      description: 'See live flights arriving at and departing from your nearest airport in real time on a 3D globe. Share your location or search any city.' },
+  '/planes':       { title: 'Live Fleet Tracker — Flights by Airline & Aircraft Type | ObjectTracer',
+                     description: 'See how many aircraft each airline or aircraft type has airborne right now worldwide, and track any of them live on a 3D globe.' },
   '/airport':      { title: 'Airport — Live Departures & Arrivals | ObjectTracer',
                      description: 'View live departures and arrivals at this airport with real-time flight tracking on a 3D globe.' },
   '/waitlist':     { title: 'Join the ObjectTracer Waitlist — Early Access',
@@ -74,14 +76,16 @@ export function updateRouteMeta(path) {
   if (twDesc)  twDesc.content = meta.description
 }
 
-export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage) {
+export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage, flightApt) {
   if (activePage === 'waitlist') return '/waitlist'
   if (activePage === 'about')    return '/about'
   if (activePage === 'contact')  return '/contact'
   if (activePage === 'faq')      return '/faq'
   if (activePage === 'donate')   return '/donate'
   if (activePage === 'blog')     return '/blog'
-  if (activePage === 'flight')   return '/flight'
+  if (activePage === 'planes')   return '/planes'
+  // Flight board: reflect the selected airport as /flights/{iata}; bare /flight otherwise.
+  if (activePage === 'flight')   return flightApt ? `/flights/${flightApt.toLowerCase()}` : '/flight'
   if (selectedIcao24 === 'ISS')     return '/iss'
   if (selectedIcao24)               return `/flight/${selectedIcao24}`
   if (selectedAirport)              return `/airport/${selectedAirport}`
@@ -167,8 +171,11 @@ export function parseInitialState(pathname) {
     notFound: false,
   }
   if (pathname === '/flight')           return { ...base, activePage: 'flight' }
+  if (pathname === '/planes')           return { ...base, activePage: 'planes' }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
-  if (pathname.startsWith('/airport/')) return { ...base, selectedAirport: pathname.replace('/airport/', '').toUpperCase() }
+  // Airport landings open the flight board first (not the globe); the board's
+  // "open on globe" then switches to the /airport/{IATA} globe view.
+  if (pathname.startsWith('/airport/')) return { ...base, activePage: 'flight', flightAirport: pathname.replace('/airport/', '').toUpperCase() }
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true, selectedLaunchId: pathname.replace('/launch/', '') }
   if (pathname === '/profile')      return { ...base, profilePanelOpen: true }
   if (pathname === '/solar-system') return { ...base, activeScale: 'solar' }

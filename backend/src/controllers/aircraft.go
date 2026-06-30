@@ -267,7 +267,112 @@ func (ac *AircraftController) Search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetRoute handles GET /api/v1/aircraft/{icao24}/route.
+var fleetAirlineRe = regexp.MustCompile(`^[A-Z0-9]{2,3}$`)
+var fleetTypeRe = regexp.MustCompile(`^[A-Z0-9]{2,4}$`)
+
+// Fleet handles GET /api/v1/fleet?airline={ICAO}  or  ?type={ICAO type code}.
+// Lists live aircraft worldwide matching an airline (callsign prefix) or an
+// aircraft type — powers the /planes discovery page. Cached 20s in Redis.
+func (ac *AircraftController) Fleet(w http.ResponseWriter, r *http.Request) {
+	airline := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("airline")))
+	typ := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("type")))
+
+	if airline == "" && typ == "" {
+		utils.Error(w, http.StatusBadRequest, "airline or type query parameter is required")
+		return
+	}
+	if airline != "" && !fleetAirlineRe.MatchString(airline) {
+		utils.Error(w, http.StatusBadRequest, "invalid airline code")
+		return
+	}
+	if typ != "" && !fleetTypeRe.MatchString(typ) {
+		utils.Error(w, http.StatusBadRequest, "invalid type code")
+		return
+	}
+
+	ctx := r.Context()
+	cacheKey := "fleet:" + airline + ":" + typ
+	if cached, err := ac.rdb.Get(ctx, cacheKey).Result(); err == nil && cached != "" {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(cached))
+		return
+	}
+
+	raw, err := ac.rdb.HGetAll(ctx, aircraftLiveKey).Result()
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "failed to fetch aircraft")
+		return
+	}
+
+	type fleetItem struct {
+		ICAO24   string   `json:"icao24"`
+		Callsign *string  `json:"callsign,omitempty"`
+		Lat      float64  `json:"lat"`
+		Lon      float64  `json:"lon"`
+		Alt      *float64 `json:"alt_ft,omitempty"`
+		Hdg      *float64 `json:"hdg,omitempty"`
+		Vel      *float64 `json:"vel,omitempty"`
+		Type     *string  `json:"type,omitempty"`
+		Country  *string  `json:"country,omitempty"`
+		OnGround bool     `json:"on_ground"`
+	}
+
+	items := make([]fleetItem, 0, 256)
+	for _, v := range raw {
+		var a models.LiveAircraft
+		if err := json.Unmarshal([]byte(v), &a); err != nil {
+			continue
+		}
+		if a.Cat != "plane" && a.Cat != "helicopter" {
+			continue
+		}
+		if airline != "" {
+			cs := ""
+			if a.Callsign != nil {
+				cs = strings.ToUpper(strings.TrimSpace(*a.Callsign))
+			}
+			if !strings.HasPrefix(cs, airline) {
+				continue
+			}
+		}
+		if typ != "" {
+			if a.T == nil || strings.ToUpper(strings.TrimSpace(*a.T)) != typ {
+				continue
+			}
+		}
+		items = append(items, fleetItem{
+			ICAO24: a.ID, Callsign: a.Callsign, Lat: a.Lat, Lon: a.Lon,
+			Alt: a.Alt, Hdg: a.Hdg, Vel: a.Vel, Type: a.T, Country: a.Ctry, OnGround: a.Grnd,
+		})
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		ci, cj := "", ""
+		if items[i].Callsign != nil {
+			ci = *items[i].Callsign
+		}
+		if items[j].Callsign != nil {
+			cj = *items[j].Callsign
+		}
+		return ci < cj
+	})
+
+	total := len(items)
+	if len(items) > 500 {
+		items = items[:500]
+	}
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"airline": airline,
+		"type":    typ,
+		"count":   total,
+		"flights": items,
+	})
+	ac.rdb.Set(ctx, cacheKey, string(body), 20*time.Second)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(body)
+}
+
 // GetRoute handles GET /api/v1/aircraft/{icao24}/route.
 // Priority: 1) adsbdb.com API (real flight plan data), 2) OpenFlights route DB. No guesswork.
 func (ac *AircraftController) GetRoute(w http.ResponseWriter, r *http.Request) {

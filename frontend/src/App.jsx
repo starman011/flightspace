@@ -27,6 +27,7 @@ import FAQPage from './components/StaticPages/FAQPage'
 import DonatePage from './components/StaticPages/DonatePage'
 import BlogPage from './components/StaticPages/BlogPage'
 import FlightPage from './components/FlightPage/FlightPage'
+import PlanesPage from './components/PlanesPage/PlanesPage'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 // OrbitalMapBar removed — filters now in BottomBar (desktop) and CommandCenterOverlay (mobile)
@@ -180,6 +181,7 @@ export default function App() {
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
   const [activePage, setActivePage]         = useState(init.activePage)
+  const [flightApt, setFlightApt]           = useState(init.flightAirport || null)  // airport shown in the flight board (drives /flights/{iata} URL)
   const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)
   const [selectedMoonSite, setSelectedMoonSite] = useState(null)
@@ -239,11 +241,11 @@ export default function App() {
   const skipFirstUrlSync = useRef(!!landing)
   useEffect(() => {
     if (skipFirstUrlSync.current) { skipFirstUrlSync.current = false; return }
-    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage)
+    const path = stateToPath(selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage, flightApt)
     updateRouteMeta(path)
     if (window.location.pathname === path) return
     window.history.replaceState(null, '', path)
-  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage])
+  }, [selectedIcao24, activeScale, launchPanelOpen, activeFilter, profilePanelOpen, selectedAirport, activePage, flightApt])
 
 // Sync initial scale to Globe on mount (e.g., direct /deep-space URL)
   useEffect(() => {
@@ -1130,9 +1132,16 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'flight' && (
         <FlightPage
           initialAirport={init.flightAirport}
+          onAirportChange={setFlightApt}
+          onClose={() => { setActivePage(null); setFlightApt(null) }}
+          onFlightClick={handleTrackFromFlightPage}
+          onOpenAirport={(iata) => { setActivePage(null); setFlightApt(null); setSelectedAirport(iata) }}
+        />
+      )}
+      {activePage === 'planes' && (
+        <PlanesPage
           onClose={() => setActivePage(null)}
           onFlightClick={handleTrackFromFlightPage}
-          onOpenAirport={(iata) => { setActivePage(null); setSelectedAirport(iata) }}
         />
       )}
 

@@ -14,9 +14,10 @@ describe('parseInitialState', () => {
     expect(s.selectedIcao24).toBe('abc123')
   })
 
-  it('parses /airport/:iata and uppercases', () => {
+  it('parses /airport/:iata into the flight board (uppercased)', () => {
     const s = parseInitialState('/airport/jfk')
-    expect(s.selectedAirport).toBe('JFK')
+    expect(s.activePage).toBe('flight')
+    expect(s.flightAirport).toBe('JFK')
   })
 
   it('parses /launch/:id', () => {
