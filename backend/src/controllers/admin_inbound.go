@@ -189,6 +189,34 @@ func (ac *AdminController) ListInbound(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusOK, map[string]any{"messages": out})
 }
 
+// SyncInbound imports a specific received email by its Resend id (backfill /
+// history for emails that arrived before the webhook was live, or if it missed one).
+func (ac *AdminController) SyncInbound(w http.ResponseWriter, r *http.Request) {
+	if !ac.isAdmin(r) {
+		utils.Error(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		EmailID string `json:"email_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.Error(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	id := strings.TrimSpace(body.EmailID)
+	if id == "" || len(id) > 80 || strings.ContainsAny(id, "/ \t\r\n?#&") {
+		utils.Error(w, http.StatusBadRequest, "invalid email id")
+		return
+	}
+	if err := ac.fetchAndStoreReceived(r.Context(), id); err != nil {
+		log.Printf(`{"level":"error","service":"admin","msg":"sync failed","id":%q,"error":%q}`, id, err)
+		utils.Error(w, http.StatusBadGateway, "could not fetch this email from Resend — check the ID")
+		return
+	}
+	utils.JSON(w, http.StatusOK, map[string]string{"status": "synced"})
+}
+
 func (ac *AdminController) InboundRead(w http.ResponseWriter, r *http.Request) {
 	if !ac.isAdmin(r) {
 		utils.Error(w, http.StatusForbidden, "forbidden")

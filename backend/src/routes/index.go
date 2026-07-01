@@ -102,6 +102,7 @@ func Setup(
 	mux.Handle("POST /api/v1/admin/messages/{id}/read",      rateLimit(authReq(http.HandlerFunc(admin.MarkRead))))
 	mux.Handle("POST /api/v1/admin/messages/{id}/reply",     rateLimit(authReq(http.HandlerFunc(admin.Reply))))
 	mux.Handle("GET /api/v1/admin/inbound",                  rateLimit(authReq(http.HandlerFunc(admin.ListInbound))))
+	mux.Handle("POST /api/v1/admin/inbound/sync",            rateLimit(authReq(http.HandlerFunc(admin.SyncInbound))))
 	mux.Handle("POST /api/v1/admin/inbound/{id}/read",       rateLimit(authReq(http.HandlerFunc(admin.InboundRead))))
 	mux.Handle("POST /api/v1/admin/inbound/{id}/reply",      rateLimit(authReq(http.HandlerFunc(admin.InboundReply))))
 	// Resend inbound webhook (public; svix-verified when RESEND_WEBHOOK_SECRET is set)

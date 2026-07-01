@@ -6,9 +6,11 @@ export default function ContactPage({ onClose }) {
   const [email,   setEmail]   = useState('')
   const [message, setMessage] = useState('')
   const [status,  setStatus]  = useState('idle')
+  const [errMsg,  setErrMsg]  = useState('')
 
   const submit = async (e) => {
     e.preventDefault()
+    if (message.trim().length < 5) { setErrMsg('Please write at least a few words'); setStatus('error'); return }
     setStatus('loading')
     try {
       const API = import.meta.env.VITE_API_URL || ''
@@ -17,9 +19,13 @@ export default function ContactPage({ onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error || '')
+      }
       setStatus('done')
-    } catch {
+    } catch (err) {
+      setErrMsg(err?.message || '')
       setStatus('error')
     }
   }
@@ -90,7 +96,7 @@ export default function ContactPage({ onClose }) {
                 </div>
                 {status === 'error' && (
                   <p style={{ color: 'rgba(255,100,100,0.8)', fontSize: 12, fontFamily: 'var(--font-mono)', marginBottom: 10 }}>
-                    Something went wrong — please try again.
+                    {errMsg ? errMsg.charAt(0).toUpperCase() + errMsg.slice(1) + '.' : 'Something went wrong — please try again.'}
                   </p>
                 )}
                 <button

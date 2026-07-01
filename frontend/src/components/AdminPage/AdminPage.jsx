@@ -47,6 +47,8 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState(null)
+  const [syncId, setSyncId] = useState('')
+  const [syncing, setSyncing] = useState(false)
 
   const listUrl = tab === 'inbound' ? `${API}/api/v1/admin/inbound` : `${API}/api/v1/admin/messages`
   const itemBase = (id) => tab === 'inbound' ? `${API}/api/v1/admin/inbound/${id}` : `${API}/api/v1/admin/messages/${id}`
@@ -94,6 +96,21 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
       .finally(() => setSending(false))
   }
 
+  const sync = () => {
+    const id = syncId.trim()
+    if (!id || syncing) return
+    setSyncing(true)
+    fetch(`${API}/api/v1/admin/inbound/sync`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email_id: id }),
+    })
+      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(() => { setSyncId(''); setToast('Imported'); setTimeout(() => setToast(null), 2500); load() })
+      .catch(() => { setToast('Import failed — check the Resend email ID'); setTimeout(() => setToast(null), 3000) })
+      .finally(() => setSyncing(false))
+  }
+
   const unread = items.filter(m => !m.read_at).length
 
   return (
@@ -113,6 +130,21 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
           <button className={`${styles.tab} ${tab === 'inbound' ? styles.tabOn : ''}`} onClick={() => setTab('inbound')}>Received emails</button>
           <button className={`${styles.tab} ${tab === 'contact' ? styles.tabOn : ''}`} onClick={() => setTab('contact')}>Contact form</button>
         </div>
+
+        {tab === 'inbound' && state === 'ready' && (
+          <div className={styles.syncRow}>
+            <input
+              className={styles.syncInput}
+              placeholder="Paste a Resend email ID to import history…"
+              value={syncId}
+              onChange={e => setSyncId(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sync()}
+            />
+            <button className={styles.ghost} onClick={sync} disabled={syncing || !syncId.trim()}>
+              {syncing ? 'Importing…' : 'Import'}
+            </button>
+          </div>
+        )}
 
         {state === 'loading' && <p className={styles.info}>Loading…</p>}
 

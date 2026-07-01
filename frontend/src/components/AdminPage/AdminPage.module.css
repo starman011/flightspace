@@ -36,6 +36,12 @@
 .tab:hover { color: #eaf2ff }
 .tabOn { color: #05080e; background: #b2ff1a; border-color: #b2ff1a; font-weight: 700 }
 
+.syncRow { display: flex; gap: 8px; margin-bottom: 16px }
+.syncInput { flex: 1; min-width: 0; box-sizing: border-box; padding: 10px 14px; border-radius: 10px;
+  border: 1px solid rgba(180,205,235,0.16); background: rgba(140,170,210,0.06); color: #eaf2ff;
+  font-family: var(--font-mono); font-size: 12px; outline: none }
+.syncInput:focus { border-color: rgba(178,255,26,0.45) }
+
 .gate { max-width: 420px; margin: 8vh auto; text-align: center; padding: 34px 28px;
   border: 1px solid rgba(180,205,235,0.16); border-radius: 20px; background: rgba(140,170,210,0.06); backdrop-filter: blur(20px) }
 .gate h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 12px }
