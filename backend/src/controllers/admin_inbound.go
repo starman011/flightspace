@@ -107,7 +107,8 @@ func (ac *AdminController) fetchAndStoreReceived(ctx context.Context, emailID st
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("resend receiving status %d", resp.StatusCode)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return fmt.Errorf("resend receiving status %d: %s", resp.StatusCode, strings.TrimSpace(string(b)))
 	}
 
 	var e struct {
@@ -211,7 +212,7 @@ func (ac *AdminController) SyncInbound(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := ac.fetchAndStoreReceived(r.Context(), id); err != nil {
 		log.Printf(`{"level":"error","service":"admin","msg":"sync failed","id":%q,"error":%q}`, id, err)
-		utils.Error(w, http.StatusBadGateway, "could not fetch this email from Resend — check the ID")
+		utils.Error(w, http.StatusBadGateway, "Resend fetch failed: "+err.Error())
 		return
 	}
 	utils.JSON(w, http.StatusOK, map[string]string{"status": "synced"})

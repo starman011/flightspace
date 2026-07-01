@@ -107,9 +107,9 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
       headers: { 'Content-Type': 'application/json', ...authH },
       body: JSON.stringify({ email_id: id }),
     })
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(async r => { if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '') } return r.json() })
       .then(() => { setSyncId(''); setToast('Imported'); setTimeout(() => setToast(null), 2500); load() })
-      .catch(() => { setToast('Import failed — check the Resend email ID'); setTimeout(() => setToast(null), 3000) })
+      .catch(err => { setToast(err?.message ? `Import failed: ${err.message}` : 'Import failed — check the ID'); setTimeout(() => setToast(null), 6000) })
       .finally(() => setSyncing(false))
   }
 
