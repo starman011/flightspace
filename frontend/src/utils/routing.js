@@ -84,6 +84,7 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activePage === 'donate')   return '/donate'
   if (activePage === 'blog')     return '/blog'
   if (activePage === 'planes')   return '/planes'
+  if (activePage === 'admin')    return '/admin'
   // Flight board: reflect the selected airport as /flights/{iata}; bare /flight otherwise.
   if (activePage === 'flight')   return flightApt ? `/flights/${flightApt.toLowerCase()}` : '/flight'
   if (selectedIcao24 === 'ISS')     return '/iss'
@@ -172,6 +173,7 @@ export function parseInitialState(pathname) {
   }
   if (pathname === '/flight')           return { ...base, activePage: 'flight' }
   if (pathname === '/planes')           return { ...base, activePage: 'planes' }
+  if (pathname === '/admin')            return { ...base, activePage: 'admin' }
   if (pathname.startsWith('/flight/'))  return { ...base, selectedIcao24: pathname.replace('/flight/', '') }
   // Airport landings open the flight board first (not the globe); the board's
   // "open on globe" then switches to the /airport/{IATA} globe view.

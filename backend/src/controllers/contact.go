@@ -10,10 +10,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/skydot/backend/src/utils"
 )
 
-func ContactSubmit(w http.ResponseWriter, r *http.Request) {
+type ContactController struct {
+	pool *pgxpool.Pool
+}
+
+func NewContactController(pool *pgxpool.Pool) *ContactController {
+	return &ContactController{pool: pool}
+}
+
+func (cc *ContactController) Submit(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 8192)
 
 	var body struct {
@@ -41,6 +50,14 @@ func ContactSubmit(w http.ResponseWriter, r *http.Request) {
 	if len(body.Message) > 4000 {
 		utils.Error(w, http.StatusBadRequest, "message too long")
 		return
+	}
+
+	// Store the message so the admin can review and reply from the admin page.
+	if _, err := cc.pool.Exec(r.Context(),
+		`INSERT INTO contact_messages (name, email, message) VALUES ($1, $2, $3)`,
+		body.Name, email, body.Message,
+	); err != nil {
+		log.Printf(`{"level":"error","service":"contact","msg":"store failed","error":%q}`, err)
 	}
 
 	go sendContactEmail(body.Name, email, body.Message)

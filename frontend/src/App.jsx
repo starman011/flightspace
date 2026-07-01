@@ -28,6 +28,7 @@ import DonatePage from './components/StaticPages/DonatePage'
 import BlogPage from './components/StaticPages/BlogPage'
 import FlightPage from './components/FlightPage/FlightPage'
 import PlanesPage from './components/PlanesPage/PlanesPage'
+import AdminPage from './components/AdminPage/AdminPage'
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 // OrbitalMapBar removed — filters now in BottomBar (desktop) and CommandCenterOverlay (mobile)
@@ -1142,6 +1143,13 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <PlanesPage
           onClose={() => setActivePage(null)}
           onFlightClick={handleTrackFromFlightPage}
+        />
+      )}
+      {activePage === 'admin' && (
+        <AdminPage
+          onClose={() => setActivePage(null)}
+          isAuthenticated={isAuthenticated}
+          onSignIn={() => setAuthModalOpen(true)}
         />
       )}
 

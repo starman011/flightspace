@@ -38,6 +38,8 @@ func Setup(
 	desi     := controllers.NewDESIController()
 	desi.StartBackgroundFetch() // pre-fetch 1M galaxies on boot, refresh every 24h
 	oauth    := controllers.NewOAuthController(pool, rdb, jwtSecret, googleClientID, appleClientID)
+	contact  := controllers.NewContactController(pool)
+	admin    := controllers.NewAdminController(pool)
 
 	authOpt := middlewares.AuthOptional(jwtSecret)
 	authReq := middlewares.AuthRequired(jwtSecret)
@@ -92,7 +94,13 @@ func Setup(
 
 	// Waitlist
 	mux.Handle("POST /api/v1/waitlist", rateLimit(http.HandlerFunc(waitlist.Subscribe)))
-	mux.Handle("POST /api/v1/contact",  rateLimit(http.HandlerFunc(controllers.ContactSubmit)))
+	mux.Handle("POST /api/v1/contact",  rateLimit(http.HandlerFunc(contact.Submit)))
+
+	// Admin panel (single allowlisted email; enforced server-side per handler)
+	mux.Handle("GET /api/v1/admin/me",                       rateLimit(authReq(http.HandlerFunc(admin.GetMe))))
+	mux.Handle("GET /api/v1/admin/messages",                 rateLimit(authReq(http.HandlerFunc(admin.ListMessages))))
+	mux.Handle("POST /api/v1/admin/messages/{id}/read",      rateLimit(authReq(http.HandlerFunc(admin.MarkRead))))
+	mux.Handle("POST /api/v1/admin/messages/{id}/reply",     rateLimit(authReq(http.HandlerFunc(admin.Reply))))
 	mux.Handle("GET /api/v1/admin/waitlist.csv", http.HandlerFunc(waitlist.Export))
 
 	// DESI deep space catalog
