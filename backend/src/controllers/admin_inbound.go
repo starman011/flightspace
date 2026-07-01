@@ -91,9 +91,15 @@ func (ac *AdminController) ResendWebhook(w http.ResponseWriter, r *http.Request)
 }
 
 func (ac *AdminController) fetchAndStoreReceived(ctx context.Context, emailID string) error {
-	apiKey := os.Getenv("RESEND_API_KEY")
+	// Reading received emails needs a full-access key. Prefer a dedicated
+	// RESEND_READ_API_KEY (so the send key can stay restricted); fall back to
+	// RESEND_API_KEY if it already has full access.
+	apiKey := os.Getenv("RESEND_READ_API_KEY")
 	if apiKey == "" {
-		return fmt.Errorf("RESEND_API_KEY not set")
+		apiKey = os.Getenv("RESEND_API_KEY")
+	}
+	if apiKey == "" {
+		return fmt.Errorf("RESEND_READ_API_KEY / RESEND_API_KEY not set")
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
 		"https://api.resend.com/emails/receiving/"+emailID, nil)
