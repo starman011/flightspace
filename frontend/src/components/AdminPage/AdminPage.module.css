@@ -30,6 +30,12 @@
 
 .info { font-family: var(--font-mono); font-size: 13px; color: rgba(208,224,244,0.5); padding: 20px 0 }
 
+.tabs { display: flex; gap: 8px; margin-bottom: 18px }
+.tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: rgba(208,224,244,0.6);
+  padding: 9px 15px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer }
+.tab:hover { color: #eaf2ff }
+.tabOn { color: #05080e; background: #b2ff1a; border-color: #b2ff1a; font-weight: 700 }
+
 .gate { max-width: 420px; margin: 8vh auto; text-align: center; padding: 34px 28px;
   border: 1px solid rgba(180,205,235,0.16); border-radius: 20px; background: rgba(140,170,210,0.06); backdrop-filter: blur(20px) }
 .gate h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 12px }

@@ -16,24 +16,49 @@ function timeAgo(iso) {
   return d.toLocaleDateString()
 }
 
+const addr = (from) => {
+  const m = /<(.+?)>/.exec(from || '')
+  return m ? m[1] : (from || '')
+}
+
+// Normalize both sources into one card shape.
+function normalize(raw, tab) {
+  if (tab === 'inbound') {
+    return {
+      id: raw.id,
+      who: raw.from,
+      email: addr(raw.from),
+      subject: raw.subject || '(no subject)',
+      body: raw.text || (raw.html ? '(HTML email — open in your mail app to view the full formatting)' : '(no text content)'),
+      created_at: raw.created_at, read_at: raw.read_at, replied_at: raw.replied_at, reply_body: raw.reply_body,
+    }
+  }
+  return {
+    id: raw.id, who: raw.name || raw.email, email: raw.email, subject: null,
+    body: raw.message, created_at: raw.created_at, read_at: raw.read_at, replied_at: raw.replied_at, reply_body: raw.reply_body,
+  }
+}
+
 export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
+  const [tab, setTab] = useState('inbound')       // inbound | contact
   const [state, setState] = useState('loading')   // loading | denied | ready
-  const [messages, setMessages] = useState([])
+  const [items, setItems] = useState([])
   const [openId, setOpenId] = useState(null)
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState(null)
 
+  const listUrl = tab === 'inbound' ? `${API}/api/v1/admin/inbound` : `${API}/api/v1/admin/messages`
+  const itemBase = (id) => tab === 'inbound' ? `${API}/api/v1/admin/inbound/${id}` : `${API}/api/v1/admin/messages/${id}`
+
   const load = useCallback(() => {
     setState('loading')
-    fetch(`${API}/api/v1/admin/messages`, { credentials: 'include' })
-      .then(r => {
-        if (r.status === 200) return r.json()
-        throw new Error(String(r.status))
-      })
-      .then(d => { setMessages(d.messages || []); setState('ready') })
+    setOpenId(null)
+    fetch(listUrl, { credentials: 'include' })
+      .then(r => { if (r.status === 200) return r.json(); throw new Error(String(r.status)) })
+      .then(d => { setItems((d.messages || []).map(m => normalize(m, tab))); setState('ready') })
       .catch(() => setState('denied'))
-  }, [])
+  }, [listUrl, tab])
 
   useEffect(() => { load() }, [load, isAuthenticated])
 
@@ -43,36 +68,33 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const openMsg = (m) => {
+  const openItem = (m) => {
     setOpenId(prev => prev === m.id ? null : m.id)
     setReply('')
     if (!m.read_at) {
-      fetch(`${API}/api/v1/admin/messages/${m.id}/read`, { method: 'POST', credentials: 'include' }).catch(() => {})
-      setMessages(prev => prev.map(x => x.id === m.id ? { ...x, read_at: new Date().toISOString() } : x))
+      fetch(`${itemBase(m.id)}/read`, { method: 'POST', credentials: 'include' }).catch(() => {})
+      setItems(prev => prev.map(x => x.id === m.id ? { ...x, read_at: new Date().toISOString() } : x))
     }
   }
 
   const sendReply = (m) => {
     if (reply.trim().length < 2 || sending) return
     setSending(true)
-    fetch(`${API}/api/v1/admin/messages/${m.id}/reply`, {
-      method: 'POST',
-      credentials: 'include',
+    fetch(`${itemBase(m.id)}/reply`, {
+      method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reply: reply.trim() }),
     })
       .then(r => { if (!r.ok) throw new Error(); return r.json() })
       .then(() => {
-        setMessages(prev => prev.map(x => x.id === m.id ? { ...x, replied_at: new Date().toISOString(), reply_body: reply.trim() } : x))
-        setReply('')
-        setToast('Reply sent')
-        setTimeout(() => setToast(null), 2500)
+        setItems(prev => prev.map(x => x.id === m.id ? { ...x, replied_at: new Date().toISOString(), reply_body: reply.trim() } : x))
+        setReply(''); setToast('Reply sent'); setTimeout(() => setToast(null), 2500)
       })
       .catch(() => { setToast('Failed to send — try again'); setTimeout(() => setToast(null), 3000) })
       .finally(() => setSending(false))
   }
 
-  const unread = messages.filter(m => !m.read_at).length
+  const unread = items.filter(m => !m.read_at).length
 
   return (
     <div className={styles.overlay}>
@@ -82,10 +104,15 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
         <header className={styles.head}>
           <div>
             <p className={styles.kicker}>ObjectTracer · Admin</p>
-            <h1 className={styles.title}>Contact messages{unread > 0 && <span className={styles.badge}>{unread} new</span>}</h1>
+            <h1 className={styles.title}>Inbox{unread > 0 && <span className={styles.badge}>{unread} new</span>}</h1>
           </div>
           {state === 'ready' && <button className={styles.ghost} onClick={load}>Refresh</button>}
         </header>
+
+        <div className={styles.tabs}>
+          <button className={`${styles.tab} ${tab === 'inbound' ? styles.tabOn : ''}`} onClick={() => setTab('inbound')}>Received emails</button>
+          <button className={`${styles.tab} ${tab === 'contact' ? styles.tabOn : ''}`} onClick={() => setTab('contact')}>Contact form</button>
+        </div>
 
         {state === 'loading' && <p className={styles.info}>Loading…</p>}
 
@@ -103,16 +130,18 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
           </div>
         )}
 
-        {state === 'ready' && messages.length === 0 && <p className={styles.info}>No messages yet.</p>}
+        {state === 'ready' && items.length === 0 && (
+          <p className={styles.info}>{tab === 'inbound' ? 'No received emails yet. New emails to your inbound address will appear here.' : 'No contact-form messages yet.'}</p>
+        )}
 
-        {state === 'ready' && messages.map(m => {
+        {state === 'ready' && items.map(m => {
           const open = openId === m.id
           return (
             <div key={m.id} className={`${styles.card} ${!m.read_at ? styles.unread : ''}`}>
-              <button className={styles.cardHead} onClick={() => openMsg(m)}>
+              <button className={styles.cardHead} onClick={() => openItem(m)}>
                 <div className={styles.who}>
-                  <span className={styles.name}>{m.name || m.email}</span>
-                  <span className={styles.email}>{m.email}</span>
+                  <span className={styles.name}>{m.subject || m.who}</span>
+                  <span className={styles.email}>{m.who !== m.email && m.subject ? `${m.who} · ` : ''}{m.email}</span>
                 </div>
                 <div className={styles.meta}>
                   {m.replied_at ? <span className={`${styles.pill} ${styles.pillReplied}`}>Replied</span>
@@ -123,7 +152,7 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
 
               {open && (
                 <div className={styles.body}>
-                  <p className={styles.message}>{m.message}</p>
+                  <p className={styles.message}>{m.body}</p>
 
                   {m.replied_at && (
                     <div className={styles.prevReply}>
@@ -134,7 +163,7 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
 
                   <textarea
                     className={styles.textarea}
-                    placeholder={`Reply to ${m.name || m.email}…`}
+                    placeholder={`Reply to ${m.email}…`}
                     value={reply}
                     onChange={e => setReply(e.target.value)}
                   />

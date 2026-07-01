@@ -101,6 +101,11 @@ func Setup(
 	mux.Handle("GET /api/v1/admin/messages",                 rateLimit(authReq(http.HandlerFunc(admin.ListMessages))))
 	mux.Handle("POST /api/v1/admin/messages/{id}/read",      rateLimit(authReq(http.HandlerFunc(admin.MarkRead))))
 	mux.Handle("POST /api/v1/admin/messages/{id}/reply",     rateLimit(authReq(http.HandlerFunc(admin.Reply))))
+	mux.Handle("GET /api/v1/admin/inbound",                  rateLimit(authReq(http.HandlerFunc(admin.ListInbound))))
+	mux.Handle("POST /api/v1/admin/inbound/{id}/read",       rateLimit(authReq(http.HandlerFunc(admin.InboundRead))))
+	mux.Handle("POST /api/v1/admin/inbound/{id}/reply",      rateLimit(authReq(http.HandlerFunc(admin.InboundReply))))
+	// Resend inbound webhook (public; svix-verified when RESEND_WEBHOOK_SECRET is set)
+	mux.Handle("POST /api/v1/webhooks/resend",               rateLimit(http.HandlerFunc(admin.ResendWebhook)))
 	mux.Handle("GET /api/v1/admin/waitlist.csv", http.HandlerFunc(waitlist.Export))
 
 	// DESI deep space catalog
