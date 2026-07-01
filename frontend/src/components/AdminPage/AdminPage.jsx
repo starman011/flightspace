@@ -39,7 +39,8 @@ function normalize(raw, tab) {
   }
 }
 
-export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
+export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSignIn }) {
+  const authH = sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}
   const [tab, setTab] = useState('inbound')       // inbound | contact
   const [state, setState] = useState('loading')   // loading | denied | ready
   const [items, setItems] = useState([])
@@ -56,11 +57,12 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
   const load = useCallback(() => {
     setState('loading')
     setOpenId(null)
-    fetch(listUrl, { credentials: 'include' })
+    fetch(listUrl, { credentials: 'include', headers: authH })
       .then(r => { if (r.status === 200) return r.json(); throw new Error(String(r.status)) })
       .then(d => { setItems((d.messages || []).map(m => normalize(m, tab))); setState('ready') })
       .catch(() => setState('denied'))
-  }, [listUrl, tab])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listUrl, tab, sessionToken])
 
   useEffect(() => { load() }, [load, isAuthenticated])
 
@@ -74,7 +76,7 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
     setOpenId(prev => prev === m.id ? null : m.id)
     setReply('')
     if (!m.read_at) {
-      fetch(`${itemBase(m.id)}/read`, { method: 'POST', credentials: 'include' }).catch(() => {})
+      fetch(`${itemBase(m.id)}/read`, { method: 'POST', credentials: 'include', headers: authH }).catch(() => {})
       setItems(prev => prev.map(x => x.id === m.id ? { ...x, read_at: new Date().toISOString() } : x))
     }
   }
@@ -84,7 +86,7 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
     setSending(true)
     fetch(`${itemBase(m.id)}/reply`, {
       method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authH },
       body: JSON.stringify({ reply: reply.trim() }),
     })
       .then(r => { if (!r.ok) throw new Error(); return r.json() })
@@ -102,7 +104,7 @@ export default function AdminPage({ onClose, isAuthenticated, onSignIn }) {
     setSyncing(true)
     fetch(`${API}/api/v1/admin/inbound/sync`, {
       method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authH },
       body: JSON.stringify({ email_id: id }),
     })
       .then(r => { if (!r.ok) throw new Error(); return r.json() })

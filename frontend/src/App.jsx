@@ -1149,6 +1149,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <AdminPage
           onClose={() => setActivePage(null)}
           isAuthenticated={isAuthenticated}
+          sessionToken={sessionToken}
           onSignIn={() => setAuthModalOpen(true)}
         />
       )}
