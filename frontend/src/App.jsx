@@ -231,9 +231,10 @@ export default function App() {
   useEffect(() => { aircraftRef.current = aircraft }, [aircraft])
 
   const handleGlobeInteract = useCallback(() => {
+    // Collapse the signal stream while the user works the globe, and leave it
+    // collapsed — the old 3s auto-re-expand made the feed "open on its own".
     setStreamCollapsed(true)
     clearTimeout(collapseTimerRef.current)
-    collapseTimerRef.current = setTimeout(() => setStreamCollapsed(false), 3000)
   }, [])
 
   // Sync state → URL + SEO meta tags (replaceState only — no React Router re-renders).
