@@ -1168,7 +1168,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           title="Zoom to my location"
           aria-label="Zoom to my location"
           style={{
-            position: 'fixed', left: 16, bottom: 72, zIndex: 690,
+            position: 'fixed', left: 16, bottom: 118, zIndex: 690,
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(8,12,18,0.92)', backdropFilter: 'blur(14px)',

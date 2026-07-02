@@ -72,6 +72,9 @@ export default function SiteFooter({ active = true }) {
         <button className={styles.handle} onClick={() => setVisible(false)} aria-label="Collapse footer" title="Collapse">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
+        <button className={styles.footerClose} onClick={() => setVisible(false)} aria-label="Close" title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       <div className={styles.inner}>
         {COLUMNS.map(col => (
           <nav key={col.title} className={styles.col} aria-label={col.title}>

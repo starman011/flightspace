@@ -1,5 +1,24 @@
 # ObjectTracer Feature Roadmap
 
+## POLISH BACKLOG — 2026-07-01
+- [ ] Greet page — remove alpha tag; remove ALL emoji (use SVG); more image than text; text concise/smaller/better
+- [ ] "Our mission" popup — smaller height; clear RED close cross; less text
+- [ ] Website performance audit
+- [ ] Globe interaction + zoom in/out more fluid
+- [ ] Space feed sometimes opens on its own — find & fix
+- [ ] Map pan is sluggish — improve
+- [ ] Every close cross on the site → RED cross
+- [ ] Mobile: top pill has many icons — make shorter with a user toggle to expand
+- [ ] Footer: RED close cross at top-right of its component to close it
+- [ ] Mission launchpad click → fly back to Earth first, then show launchpad
+- [ ] Deep-space directory → open full-screen
+- [ ] Live fleets — aircraft-type + airline pics to search/filter, with text labels
+- [ ] Mobile: locate button overlaps footer button — move locate button up
+- [ ] Desktop feed right-side gradient glitches (jumps right, left edge disappears) — fix
+- [ ] Airport icon — circle with plane logo; airport name shown on globe
+
+
+
 ## Status Legend
 - [ ] Not started
 - [x] Done

@@ -1,239 +1,105 @@
-/* ── Beta Welcome Modal ─────────────────────────────────────────────────── */
-
+/* ── Greet modal — bento of page "flavours" (image + text) ────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  z-index: 300;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: fadeIn 0.3s ease;
+  background: rgba(3, 6, 12, 0.72);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.25s ease;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
 .modal {
   position: relative;
-  width: 100%;
-  max-width: 520px;
-  max-height: 80dvh;
+  width: min(720px, 100%);
+  max-height: 90dvh;
   overflow-y: auto;
-  background:
-    radial-gradient(120% 50% at 50% 0%, rgba(0, 180, 255, 0.06) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(10, 14, 22, 0.97) 0%, rgba(6, 10, 18, 0.98) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 60px rgba(0, 120, 255, 0.04),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  animation: modalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  padding: 26px;
+  border-radius: 22px;
+  border: 1px solid rgba(180, 205, 235, 0.14);
+  background: linear-gradient(180deg, rgba(20, 26, 34, 0.96), rgba(10, 14, 20, 0.98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.98) } to { opacity: 1; transform: none } }
+.modal::-webkit-scrollbar { width: 0 }
 
-@keyframes modalIn {
-  from { transform: translateY(20px) scale(0.97); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* ── Close button ────────────────────────────────────────────────────────── */
 .close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 10;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 16px;
+  top: 14px; right: 14px;
+  z-index: 3;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255, 90, 90, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 60, 60, 0.14);
+  color: #ff6b6b;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.18s, transform 0.18s;
 }
-.close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
+.close:hover { background: rgba(255, 60, 60, 0.28); transform: scale(1.08) }
+.close svg { width: 16px; height: 16px }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
-.header {
-  padding: 28px 28px 16px;
-  text-align: center;
-}
+.head { margin: 2px 40px 16px 0 }
+.title { font-family: var(--font-display); font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: #fff; letter-spacing: -0.02em }
+.subtitle { font-family: var(--font-body); font-size: 13.5px; color: rgba(208, 224, 244, 0.66); margin-top: 6px }
 
-.betaBadge {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #b2ff1a;
-  background: rgba(178, 255, 26, 0.08);
-  border: 1px solid rgba(178, 255, 26, 0.25);
-  border-radius: 4px;
-  padding: 3px 10px;
-  margin-bottom: 12px;
+/* bento */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 84px;
+  grid-auto-flow: dense;
+  gap: 10px;
 }
-
-.title {
-  font-family: var(--font-mono);
-  font-size: 26px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0 0 8px;
-  letter-spacing: -0.01em;
-  background: linear-gradient(180deg, #ffffff 0%, #b8c8e0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.subtitle {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(200, 220, 240, 0.6);
-  margin: 0;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ── Content ─────────────────────────────────────────────────────────────── */
-.content {
-  padding: 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.group {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-
-.groupHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.groupIcon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.groupTitle {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.04em;
-  margin: 0;
-}
-
-.list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.item {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgba(200, 220, 240, 0.65);
-  padding-left: 14px;
+.cell {
   position: relative;
-}
-
-.item::before {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 7px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(178, 255, 26, 0.4);
-}
-
-/* ── Footer ──────────────────────────────────────────────────────────────── */
-.footer {
-  padding: 16px 24px 24px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(180, 205, 235, 0.10);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 14px;
+  justify-content: flex-end;
+  padding: 12px;
 }
+.wide { grid-column: span 2 }
+.wideTall { grid-column: span 2; grid-row: span 2 }
 
-.footerText {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.06em;
-  text-align: center;
-  margin: 0;
-}
+.tile { background: linear-gradient(140deg, rgba(140, 170, 210, 0.13), rgba(140, 170, 210, 0.03)) }
+.photo { border-color: rgba(180, 205, 235, 0.16) }
+.cellImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover }
+.veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 8, 14, 0.05) 30%, rgba(4, 8, 14, 0.85) 100%) }
+
+.icon { position: relative; width: 22px; height: 22px; color: #b2ff1a; margin-bottom: auto }
+.cellText { position: relative }
+.cellTitle { font-family: var(--font-body); font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.01em }
+.cellDesc { font-size: 11px; color: rgba(224, 232, 244, 0.78); margin-top: 2px; line-height: 1.35 }
 
 .enterBtn {
   width: 100%;
-  max-width: 280px;
-  padding: 12px 0;
-  background: linear-gradient(180deg, rgba(178, 255, 26, 0.14), rgba(178, 255, 26, 0.06));
-  border: 1px solid rgba(178, 255, 26, 0.3);
-  border-radius: 10px;
-  color: #b2ff1a;
+  margin-top: 16px;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #b2ff1a;
+  color: #05080e;
   font-family: var(--font-mono);
-  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: all 0.18s;
-  box-shadow: 0 4px 18px rgba(178, 255, 26, 0.08);
+  transition: filter 0.15s;
 }
-.enterBtn:hover {
-  background: linear-gradient(180deg, rgba(178, 255, 26, 0.22), rgba(178, 255, 26, 0.10));
-  border-color: rgba(178, 255, 26, 0.5);
-  box-shadow: 0 6px 24px rgba(178, 255, 26, 0.16);
-  transform: translateY(-1px);
-}
+.enterBtn:hover { filter: brightness(1.08) }
 
-/* ── Mobile ──────────────────────────────────────────────────────────────── */
-@media (max-width: 767px) {
-  .overlay { padding: 12px; align-items: flex-end; }
-  .modal {
-    max-height: 85dvh;
-    border-radius: 18px 18px 0 0;
-  }
-  .header { padding: 22px 20px 12px; }
-  .title { font-size: 22px; }
-  .subtitle { font-size: 12px; }
-  .content { padding: 0 16px; gap: 10px; }
-  .group { padding: 10px 12px; }
-  .groupTitle { font-size: 11px; }
-  .item { font-size: 11px; }
-  .footer { padding: 14px 16px 20px; }
-  .enterBtn { font-size: 11px; padding: 11px 0; }
+/* mobile: 2 cols, no row-spanning (prevents overflow), modal scrolls */
+@media (max-width: 560px) {
+  .modal { padding: 20px }
+  .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 96px; gap: 8px }
+  .wide { grid-column: span 2 }
+  .wideTall { grid-column: span 2; grid-row: span 1 }
 }

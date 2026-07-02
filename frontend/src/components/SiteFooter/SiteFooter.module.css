@@ -35,6 +35,16 @@
   color: rgba(178, 255, 26, 0.75); transition: color .18s, background .18s;
 }
 .handle:hover { color: #b2ff1a; background: rgba(178, 255, 26, 0.08); }
+
+/* Red close cross — top-right of the footer panel */
+.footerClose {
+  position: absolute; top: 12px; right: 16px; z-index: 2;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255, 90, 90, 0.5); border-radius: 999px;
+  background: rgba(255, 60, 60, 0.14); color: #ff6b6b; cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
+}
+.footerClose:hover { background: rgba(255, 60, 60, 0.28); transform: scale(1.08); }
 .handleBar { width: 26px; height: 3px; border-radius: 2px; background: rgba(178, 255, 26, 0.55); }
 
 .inner {
