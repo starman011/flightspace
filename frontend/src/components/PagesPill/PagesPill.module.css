@@ -83,6 +83,22 @@
   transition: color 0.2s, background 0.2s, transform 0.2s;
 }
 
+/* Mobile collapse toggle — hidden on desktop */
+.toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(178, 255, 26, 0.75);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .btn:hover {
   color: rgba(200, 210, 225, 0.85);
   background: rgba(255, 255, 255, 0.06);
@@ -142,4 +158,9 @@
   /* No label expansion on mobile — keeps the pill a fixed, centered width */
   .activeLabel { display: none; }
   .btn.active { width: 24px; padding: 0; }
+
+  /* Collapsed by default: show only the active tile + the toggle.
+     Tap the toggle to reveal all tiles. */
+  .toggle { display: flex; width: 24px; height: 24px; }
+  .pill:not(.expanded) .btn:not(.active) { display: none; }
 }

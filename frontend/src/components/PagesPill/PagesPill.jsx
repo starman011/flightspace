@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import styles from './PagesPill.module.css'
 import { FilterIcon } from '../BottomBar/BottomBar'
 
@@ -70,6 +71,7 @@ export default function PagesPill({
   onScaleChange, onActiveFilterChange, onFiltersChange,
   onLaunchPanelToggle, onPageOpen, hidden, overPage,
 }) {
+  const [expanded, setExpanded] = useState(false)
   if (hidden) return null
 
   const handleClick = (page) => {
@@ -100,7 +102,17 @@ export default function PagesPill({
   }
 
   return (
-    <nav className={`${styles.pill} ${overPage ? styles.overPage : ''}`} aria-label="Pages">
+    <nav className={`${styles.pill} ${overPage ? styles.overPage : ''} ${expanded ? styles.expanded : ''}`} aria-label="Pages">
+      <button
+        className={styles.toggle}
+        onClick={() => setExpanded(e => !e)}
+        aria-label={expanded ? 'Show fewer' : 'Show all'}
+        title={expanded ? 'Show fewer' : 'Show all'}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          {expanded ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+        </svg>
+      </button>
       {PAGES.map(page => (
         <button
           key={page.id}
