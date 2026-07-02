@@ -142,7 +142,7 @@ export default function GalaxyPanel({ galaxy, onClose }) {
             {enrich?.source ? ` · ${enrich.source}` : ''}
           </span>
         </div>
-        <button className={styles.close} onClick={onClose}>✕</button>
+        <button className={styles.close} onClick={onClose} aria-label="Close">✕</button>
       </div>
 
       {/* ── Telescope image (Legacy Survey cutout) ─────────────────────── */}

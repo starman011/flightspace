@@ -73,3 +73,11 @@ input {
 input:focus {
   border-color: var(--primary);
 }
+
+/* Close crosses are red across the app (design directive) — the button chrome
+   stays as-is; only the × / X glyph turns red via currentColor. */
+[aria-label^="Close" i],
+[aria-label="close" i],
+[aria-label="Dismiss" i] {
+  color: #ff6b6b !important;
+}

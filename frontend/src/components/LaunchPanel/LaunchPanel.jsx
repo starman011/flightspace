@@ -409,7 +409,7 @@ export default function LaunchPanel({ open, onClose, onLocatePad, pinnedLaunchId
         <span className={styles.title}>
           {selectedMission ? 'Mission Detail' : 'Mission Launchpad'}
         </span>
-        <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
       </div>
 
       {/* ── Mission detail view ── */}

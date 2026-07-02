@@ -11,7 +11,7 @@ export default function DeepSpaceGuide({ onClose }) {
           <h3 className={styles.name}>Deep Space</h3>
           <span className={styles.subtitle}>DESI DR1 Galaxy Map</span>
         </div>
-        <button className={styles.close} onClick={onClose}>✕</button>
+        <button className={styles.close} onClick={onClose} aria-label="Close">✕</button>
       </div>
 
       {/* ── What you're seeing ────────────────────────────────────────── */}

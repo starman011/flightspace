@@ -86,7 +86,7 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
             if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '↗' }, 1500) }
           }).catch(() => {})
         }} title="Copy link">↗</button>
-        <button className={styles.close} onClick={onClose}>&times;</button>
+        <button className={styles.close} onClick={onClose} aria-label="Close">&times;</button>
       </div>
 
       {boardOpen && (
