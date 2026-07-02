@@ -10,7 +10,9 @@
   transition: background 0.18s, border-color 0.18s, transform 0.18s;
 }
 .fab:hover { background: rgba(178, 255, 26, 0.12); border-color: rgba(178, 255, 26, 0.6); transform: translateY(-1px); }
-@media (max-width: 720px) { .fab { left: 12px; bottom: 14px; } }
+/* Mobile: sit just below the locate button (bottom:118) so neither collides
+   with the bottom space-feed grab zone. */
+@media (max-width: 720px) { .fab { left: 16px; bottom: 74px; } }
 
 .footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 700;
