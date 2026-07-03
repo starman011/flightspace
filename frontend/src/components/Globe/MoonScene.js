@@ -274,17 +274,26 @@ export function createMoonScene(scene) {
   // ── Moon sphere ───────────────────────────────────────────────────────────
   // 4K NASA-derived albedo, 256 segments for crisp limb at close range
   const moonGeo = new SphereGeometry(MOON_R, 256, 256)
-  const moonTex = loader.load('/textures/planets/moon.jpg', (t) => {
-    t.anisotropy = 16
-    t.colorSpace = 'srgb'
-  })
   const moonMat = new MeshStandardMaterial({
-    map: moonTex,
+    color: 0xb8b8b8,    // flat grey until the deferred texture streams in
     roughness: 0.92,
     metalness: 0.0,
-    bumpMap: moonTex,   // reuse albedo as a cheap surface bump
     bumpScale: 0.0035,
   })
+  // Deferred: 3.6MB texture — load on first moon-scale entry, not at boot
+  let moonTexRequested = false
+  function loadMoonTexture() {
+    if (moonTexRequested) return
+    moonTexRequested = true
+    loader.load('/textures/planets/moon.jpg', (t) => {
+      t.anisotropy = 16
+      t.colorSpace = 'srgb'
+      moonMat.map = t
+      moonMat.bumpMap = t   // reuse albedo as a cheap surface bump
+      moonMat.color.set(0xffffff)
+      moonMat.needsUpdate = true
+    })
+  }
   const moonMesh = new Mesh(moonGeo, moonMat)
   moonGroup.add(moonMesh)
 
@@ -585,7 +594,7 @@ export function createMoonScene(scene) {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
-  function show() { moonGroup.visible = true }
+  function show() { loadMoonTexture(); moonGroup.visible = true }
   function hide() { moonGroup.visible = false }
 
   // Accepts { lro: {x,y,z,vx,vy,vz,update_at}, ... } in Moon-centered ICRF km / km·s.

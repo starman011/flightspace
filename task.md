@@ -5,8 +5,8 @@
 - [x] "Our mission" waitlist popup — mobile-safe (fixed card + inner scroll), night-sky hero, concise, red close always visible
 - [x] Website performance audit — done, see specs/perf-audit-2026-07-03.md (~16MB eager assets found)
   - [x] Perf fix: ambient-space.mp3 (5.6MB) no longer downloads at boot (preload=none)
-  - [ ] Perf fix: defer moon.jpg (3.6MB) to moon-scale entry, or downscale 4K→2K
-  - [ ] Perf fix: defer planet textures (~6MB) to solar-scale entry
+  - [x] Perf fix: defer moon.jpg (3.6MB) to moon-scale entry (4K kept for close-range quality)
+  - [x] Perf fix: defer planet textures (~6MB) to solar-scale entry
   - [x] Perf fix: delete unreferenced logo-full.svg (505KB)
   - [ ] Perf fix: React.lazy route pages (Admin/Planes/Flight/Blog/Static/DeepSpace)
   - [ ] Perf fix: hero JPGs → WebP (~1MB saved)

@@ -115,6 +115,17 @@ export function createSolarSystem(scene, renderer) {
   solarGroup.visible = false
   scene.add(solarGroup)
 
+  // Deferred texture loads (~6MB of planet JPGs) — queued at init, fetched on
+  // first show(). Planets render flat-colored until their texture streams in.
+  const textureQueue = []
+  let texturesRequested = false
+  function loadTextures() {
+    if (texturesRequested) return
+    texturesRequested = true
+    textureQueue.forEach(fn => fn())
+    textureQueue.length = 0
+  }
+
   // ── Extra ambient light for solar view (planets lit from all sides slightly) ─
   // The Earth globe uses a faint AmbientLight (0.12). We add a solar-only ambient
   // so the night sides of planets aren't pitch black.
@@ -127,9 +138,9 @@ export function createSolarSystem(scene, renderer) {
   const sunMesh = new Mesh(new SphereGeometry(sunR, 32, 32), sunMat)
   solarGroup.add(sunMesh)
 
-  loader.load(PLANET_TEXTURE.sun, tex => {
+  textureQueue.push(() => loader.load(PLANET_TEXTURE.sun, tex => {
     sunMat.map = tex; sunMat.needsUpdate = true
-  })
+  }))
 
   // Sun corona glow
   const coronaMat = new MeshBasicMaterial({
@@ -172,12 +183,12 @@ export function createSolarSystem(scene, renderer) {
 
     const texKey = name === 'earth' ? 'earth_day' : name
     if (PLANET_TEXTURE[texKey]) {
-      loader.load(PLANET_TEXTURE[texKey], tex => {
+      textureQueue.push(() => loader.load(PLANET_TEXTURE[texKey], tex => {
         if (renderer) tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy())
         mat.map = tex
         mat.color.set(0xffffff)
         mat.needsUpdate = true
-      })
+      }))
     }
   }
 
@@ -193,9 +204,9 @@ export function createSolarSystem(scene, renderer) {
   ringMesh.rotation.z = 0.47
   planetMeshes.saturn.add(ringMesh)
 
-  loader.load(PLANET_TEXTURE.saturn_ring, tex => {
+  textureQueue.push(() => loader.load(PLANET_TEXTURE.saturn_ring, tex => {
     ringMat.map = tex; ringMat.needsUpdate = true
-  })
+  }))
 
   // ── Orbit path lines ─────────────────────────────────────────────────────
   for (const name of PLANET_NAMES) {
@@ -494,7 +505,7 @@ export function createSolarSystem(scene, renderer) {
     updateSpacecraft()
   }
 
-  function show() { solarGroup.visible = true }
+  function show() { loadTextures(); solarGroup.visible = true }
   function hide() { solarGroup.visible = false }
 
   function dispose() {
