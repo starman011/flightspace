@@ -2,17 +2,15 @@
 
 .panel {
   position: fixed;
-  top: 0;
-  left: var(--sidebar-w);
-  right: 0;
-  bottom: 0;
-  transition: left var(--duration-panel) var(--ease-panel);
+  inset: 0;   /* true full-screen — the old var(--sidebar-w) offset left a dead
+                 strip after the sidebar component was removed */
   background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   z-index: 60;
   overflow-y: auto;
-  padding: var(--space-8) var(--space-10);
+  /* center content on ultra-wide screens: cap the readable column at 1400px */
+  padding: var(--space-8) max(var(--space-10), calc((100vw - 1400px) / 2));
   transform: translateY(8px);
   opacity: 0;
   pointer-events: none;
@@ -687,7 +685,6 @@
 
 @media (max-width: 767px) {
   .panel {
-    left: 0 !important;
     padding: var(--space-5);
   }
 

@@ -12,7 +12,7 @@
 - [x] Mobile: top pill collapses to active tile + expand toggle
 - [x] Footer: RED close cross at top-right
 - [x] Mission launchpad click → fly back to Earth first, then show launchpad — fixed (locate-pad now switches scale to Earth, then flies to pad after the 800ms scale flight)
-- [ ] Deep-space directory → open full-screen
+- [x] Deep-space directory → open full-screen — fixed (removed stale 256px --sidebar-w offset; inset:0 + 1400px centered content cap)
 - [ ] Live fleets — aircraft-type + airline pics to search/filter, with text labels
 - [x] Mobile: locate button raised above footer button
 - [x] Desktop feed right-side gradient glitch — fixed (90deg/200% linear flow)
