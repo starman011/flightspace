@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, Component, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, Component, useEffect, lazy, Suspense } from 'react'
 
 class ErrorBoundary extends Component {
   state = { error: null }
@@ -20,15 +20,17 @@ import ProfilePanel from './components/ProfilePanel/ProfilePanel'
 import BottomBar from './components/BottomBar/BottomBar'
 import TopRightPill from './components/TopRightPill/TopRightPill'
 import PagesPill from './components/PagesPill/PagesPill'
-import AboutPage from './components/StaticPages/AboutPage'
-import WaitlistPage from './components/StaticPages/WaitlistPage'
-import ContactPage from './components/StaticPages/ContactPage'
-import FAQPage from './components/StaticPages/FAQPage'
-import DonatePage from './components/StaticPages/DonatePage'
-import BlogPage from './components/StaticPages/BlogPage'
-import FlightPage from './components/FlightPage/FlightPage'
-import PlanesPage from './components/PlanesPage/PlanesPage'
-import AdminPage from './components/AdminPage/AdminPage'
+// Page components render only when a page is open — lazy chunks keep them
+// (and their CSS) out of the boot bundle
+const AboutPage    = lazy(() => import('./components/StaticPages/AboutPage'))
+const WaitlistPage = lazy(() => import('./components/StaticPages/WaitlistPage'))
+const ContactPage  = lazy(() => import('./components/StaticPages/ContactPage'))
+const FAQPage      = lazy(() => import('./components/StaticPages/FAQPage'))
+const DonatePage   = lazy(() => import('./components/StaticPages/DonatePage'))
+const BlogPage     = lazy(() => import('./components/StaticPages/BlogPage'))
+const FlightPage   = lazy(() => import('./components/FlightPage/FlightPage'))
+const PlanesPage   = lazy(() => import('./components/PlanesPage/PlanesPage'))
+const AdminPage    = lazy(() => import('./components/AdminPage/AdminPage'))
 import CommandCenterOverlay from './components/CommandCenterOverlay/CommandCenterOverlay'
 import DeepSpacePanel from './components/DeepSpacePanel/DeepSpacePanel'
 // OrbitalMapBar removed — filters now in BottomBar (desktop) and CommandCenterOverlay (mobile)
@@ -1133,7 +1135,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         </div>
       )}
 
-      {/* ── Static pages ── */}
+      {/* ── Static pages (lazy chunks; null fallback — pages animate in) ── */}
+      <Suspense fallback={null}>
       {activePage === 'about' && <AboutPage onClose={() => setActivePage(null)} />}
       {activePage === 'contact' && <ContactPage onClose={() => setActivePage(null)} />}
       {activePage === 'faq' && <FAQPage onClose={() => setActivePage(null)} />}
@@ -1163,6 +1166,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onSignIn={() => setAuthModalOpen(true)}
         />
       )}
+      </Suspense>
 
       {/* Audio now integrated into BottomBar */}
       <WaitlistPopup />

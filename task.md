@@ -8,7 +8,7 @@
   - [x] Perf fix: defer moon.jpg (3.6MB) to moon-scale entry (4K kept for close-range quality)
   - [x] Perf fix: defer planet textures (~6MB) to solar-scale entry
   - [x] Perf fix: delete unreferenced logo-full.svg (505KB)
-  - [ ] Perf fix: React.lazy route pages (Admin/Planes/Flight/Blog/Static/DeepSpace)
+  - [x] Perf fix: React.lazy route pages — 9 pages split (index 107→92KB gz, css 42→34KB gz); DeepSpacePanel kept eager (always-rendered fade animation)
   - [ ] Perf fix: hero JPGs → WebP (~1MB saved)
 - [ ] Globe interaction + zoom in/out more fluid
 - [x] Space feed sometimes opens on its own — fixed (removed 3s auto-re-expand)
