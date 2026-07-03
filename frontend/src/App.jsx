@@ -657,15 +657,24 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   }, [])
 
   const handleLocatePad = useCallback((launch) => {
+    // From solar/moon/deep-space, return the camera to Earth first — flying
+    // straight to the pad from another scale glitches the scene.
+    const toEarth = activeScale !== 'earth'
+    if (toEarth) {
+      setActiveScale('earth')
+      globeRef.current?.setCameraScale?.('earth')
+    }
     if (launch?.pad_lat && launch?.pad_lon) {
-      globeRef.current?.flyTo?.(launch.pad_lat, launch.pad_lon)
+      const fly = () => globeRef.current?.flyTo?.(launch.pad_lat, launch.pad_lon)
+      if (toEarth) setTimeout(fly, 800)   // let the scale flight land, then swoop to the pad
+      else fly()
     }
     setFocusedPad(launch)
     setReturnMission(launch)
     setLaunchPanelOpen(false)
     setSelectedIcao24(null)
     setTrackingId(null)
-  }, [])
+  }, [activeScale])
 
   const handleExitPadFocus = useCallback(() => {
     setFocusedPad(null)
