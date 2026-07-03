@@ -10,6 +10,7 @@ export function useAmbientAudio() {
 
   useEffect(() => {
     const audio = new Audio('/ambient-space.mp3')
+    audio.preload = 'none'   // 5.6MB — don't download at boot; play() fetches on first unmute
     audio.loop = true
     audio.volume = 0.12
     audioRef.current = audio

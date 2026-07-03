@@ -3,7 +3,13 @@
 ## POLISH BACKLOG — 2026-07-01
 - [x] Greet page — bento image+text; removed alpha + all emoji (SVG); concise; mobile-safe; red close
 - [x] "Our mission" waitlist popup — mobile-safe (fixed card + inner scroll), night-sky hero, concise, red close always visible
-- [ ] Website performance audit
+- [x] Website performance audit — done, see specs/perf-audit-2026-07-03.md (~16MB eager assets found)
+  - [x] Perf fix: ambient-space.mp3 (5.6MB) no longer downloads at boot (preload=none)
+  - [ ] Perf fix: defer moon.jpg (3.6MB) to moon-scale entry, or downscale 4K→2K
+  - [ ] Perf fix: defer planet textures (~6MB) to solar-scale entry
+  - [x] Perf fix: delete unreferenced logo-full.svg (505KB)
+  - [ ] Perf fix: React.lazy route pages (Admin/Planes/Flight/Blog/Static/DeepSpace)
+  - [ ] Perf fix: hero JPGs → WebP (~1MB saved)
 - [ ] Globe interaction + zoom in/out more fluid
 - [x] Space feed sometimes opens on its own — fixed (removed 3s auto-re-expand)
 - [x] Space feed opens after closing aircraft card — fixed (overlay now hides via visibility, not display:none; display toggle restarted the feedSlideIn entry animation, flashing the collapsed feed open)
