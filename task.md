@@ -9,7 +9,7 @@
   - [x] Perf fix: defer planet textures (~6MB) to solar-scale entry
   - [x] Perf fix: delete unreferenced logo-full.svg (505KB)
   - [x] Perf fix: React.lazy route pages — 9 pages split (index 107→92KB gz, css 42→34KB gz); DeepSpacePanel kept eager (always-rendered fade animation)
-  - [ ] Perf fix: hero JPGs → WebP (~1MB saved)
+  - [x] Perf fix: hero JPGs recompressed q48 same dims (1.6MB→742KB; WebP skipped — no encoder on box, JPEG kept filenames/code untouched)
 - [ ] Globe interaction + zoom in/out more fluid
 - [x] Space feed sometimes opens on its own — fixed (removed 3s auto-re-expand)
 - [x] Space feed opens after closing aircraft card — fixed (overlay now hides via visibility, not display:none; display toggle restarted the feedSlideIn entry animation, flashing the collapsed feed open)
