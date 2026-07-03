@@ -93,3 +93,21 @@ $0 cost, no external API, uses data already flowing through the system.
 **Full research document:** `specs/002-critical-features/f4-night-sky-research.md`
 
 **Sources:** Yale BSC5, d3-celestial, astronomy-engine (cosinekitty), ESO, MDN DeviceOrientationEvent, Stellarium Web Engine (reference only)
+
+---
+
+## 5. Space Feed Auto-Opens After Closing Aircraft Card (Bugfix)
+
+**Problem:** Click aircraft → DetailPanel opens → close card → Space Feed slides open by itself, even when collapsed (desktop pull-tab state or mobile peek sheet).
+
+**Root cause (Article IX §9.1 protocol):**
+- `CommandCenterOverlay` hides via inline `display: none` while any panel is open (`showCommandCenter` in App.jsx).
+- Per CSS spec, an element with `display: none` has no boxes — when display is restored, all CSS animations inside RESTART from the beginning (MDN: CSS animations; CSSWG display spec).
+- `.stream` carries an entry animation `feedSlideIn 0.5s` whose keyframes set `transform`/`opacity`. Running animations override normal declarations, so for 0.5s the keyframe transform replaces `.streamDesktopCollapsed` translateX (desktop) and `.streamClosed` translateY (mobile peek) — the feed renders fully open, then snaps back.
+- Trigger is any `display:none → visible` toggle of the overlay: closing DetailPanel, LaunchPanel, pad focus, asteroids filter, moon scale.
+
+**Fix:** Hide the overlay with `visibility: hidden` instead of `display: none` (CommandCenterOverlay.jsx). Visibility toggles do not restart animations; hidden elements remain non-interactive and invisible. One-line, viewport-agnostic (Article XI).
+
+**Protection:** `CommandCenterOverlay.test.jsx` — asserts the hidden overlay never uses `display:none` and uses `visibility:hidden` (Article V / IX §9.1 step 6).
+
+**Sources:** MDN `animation` (display:none resets animations), MDN `visibility`, CSS Display Module Level 3.

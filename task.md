@@ -2,10 +2,11 @@
 
 ## POLISH BACKLOG — 2026-07-01
 - [x] Greet page — bento image+text; removed alpha + all emoji (SVG); concise; mobile-safe; red close
-- [ ] "Our mission" popup — smaller height; clear RED close cross; less text
+- [x] "Our mission" waitlist popup — mobile-safe (fixed card + inner scroll), night-sky hero, concise, red close always visible
 - [ ] Website performance audit
 - [ ] Globe interaction + zoom in/out more fluid
 - [x] Space feed sometimes opens on its own — fixed (removed 3s auto-re-expand)
+- [x] Space feed opens after closing aircraft card — fixed (overlay now hides via visibility, not display:none; display toggle restarted the feedSlideIn entry animation, flashing the collapsed feed open)
 - [ ] Map pan is sluggish — improve
 - [x] Every close cross on the site → RED cross (global [aria-label=Close] rule)
 - [x] Mobile: top pill collapses to active tile + expand toggle

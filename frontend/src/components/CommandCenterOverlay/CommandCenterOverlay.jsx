@@ -1663,7 +1663,10 @@ export default function CommandCenterOverlay({
 
 
   return (
-    <div className={styles.overlay} style={hidden ? { display: 'none' } : undefined}>
+    // visibility (not display) — display:none→block restarts every CSS
+    // animation inside, replaying feedSlideIn and flashing the collapsed
+    // Space Feed open each time a panel (e.g. aircraft card) closes
+    <div className={styles.overlay} style={hidden ? { visibility: 'hidden' } : undefined}>
       {/* Background SVG grid — hidden when zoomed in */}
       <div className={`${styles.gridBg} ${zoomedIn ? styles.heroHidden : ''}`}>
         <svg className={styles.gridSvg}>
