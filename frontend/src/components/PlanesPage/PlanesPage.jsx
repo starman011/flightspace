@@ -33,7 +33,7 @@ const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
 )
 
-export default function PlanesPage({ onClose, onFlightClick }) {
+export default function PlanesPage({ onClose, onFlightClick, initialAirline }) {
   const [mode, setMode] = useState('airline')
   const [sel, setSel] = useState(null)        // { code, name, mode }
   const [data, setData] = useState(null)      // { count, flights[] }
@@ -85,6 +85,14 @@ export default function PlanesPage({ onClose, onFlightClick }) {
 
   // Deep link: /planes?airline=UAE or /planes?type=B77W
   useEffect(() => {
+    // In-app handoff (e.g. airline landing fleet card) wins over URL params —
+    // by the time this lazy chunk mounts, App's URL sync may have rewritten the path.
+    if (initialAirline) {
+      const e = UNIQ_AIRLINES.find(x => x[0] === initialAirline) || [initialAirline, initialAirline, initialAirline]
+      setMode('airline')
+      pick('airline', initialAirline, e[1], e[2])
+      return
+    }
     const p = new URLSearchParams(window.location.search)
     const a = p.get('airline'), t = p.get('type')
     if (a) { const e = UNIQ_AIRLINES.find(x => x[0] === a.toUpperCase()) || [a, a, a]; setMode('airline'); pick('airline', a.toUpperCase(), e[1], e[2]) }

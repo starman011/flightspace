@@ -101,26 +101,26 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
 
 // ── Landing-page lookup tables (mirror middleware.js for SPA behavior) ────────
 
-// Airline slug → { callsign ICAO prefix, display name }
+// Airline slug → { callsign ICAO prefix, display name, IATA (logo CDN) }
 export const AIRLINE_ICAO = {
-  'american-airlines':{p:'AAL',n:'American Airlines'}, 'delta':{p:'DAL',n:'Delta Air Lines'},
-  'united':{p:'UAL',n:'United Airlines'}, 'southwest':{p:'SWA',n:'Southwest Airlines'},
-  'alaska-airlines':{p:'ASA',n:'Alaska Airlines'}, 'jetblue':{p:'JBU',n:'JetBlue Airways'},
-  'spirit':{p:'NKS',n:'Spirit Airlines'}, 'frontier':{p:'FFT',n:'Frontier Airlines'},
-  'air-canada':{p:'ACA',n:'Air Canada'}, 'westjet':{p:'WJA',n:'WestJet'},
-  'latam':{p:'LAN',n:'LATAM Airlines'}, 'azul':{p:'AZU',n:'Azul'}, 'gol':{p:'GLO',n:'GOL'},
-  'british-airways':{p:'BAW',n:'British Airways'}, 'lufthansa':{p:'DLH',n:'Lufthansa'},
-  'air-france':{p:'AFR',n:'Air France'}, 'klm':{p:'KLM',n:'KLM'}, 'ryanair':{p:'RYR',n:'Ryanair'},
-  'easyjet':{p:'EZY',n:'easyJet'}, 'iberia':{p:'IBE',n:'Iberia'}, 'swiss':{p:'SWR',n:'Swiss'},
-  'turkish-airlines':{p:'THY',n:'Turkish Airlines'}, 'wizz-air':{p:'WZZ',n:'Wizz Air'},
-  'norwegian':{p:'NAX',n:'Norwegian'}, 'tap':{p:'TAP',n:'TAP Air Portugal'}, 'finnair':{p:'FIN',n:'Finnair'},
-  'emirates':{p:'UAE',n:'Emirates'}, 'qatar-airways':{p:'QTR',n:'Qatar Airways'},
-  'etihad':{p:'ETD',n:'Etihad Airways'}, 'flydubai':{p:'FDB',n:'flydubai'}, 'air-arabia':{p:'ABY',n:'Air Arabia'},
-  'singapore-airlines':{p:'SIA',n:'Singapore Airlines'}, 'cathay-pacific':{p:'CPA',n:'Cathay Pacific'},
-  'japan-airlines':{p:'JAL',n:'Japan Airlines'}, 'ana':{p:'ANA',n:'All Nippon Airways'},
-  'korean-air':{p:'KAL',n:'Korean Air'}, 'air-asia':{p:'AXM',n:'AirAsia'}, 'qantas':{p:'QFA',n:'Qantas'},
-  'indigo':{p:'IGO',n:'IndiGo'}, 'air-india':{p:'AIC',n:'Air India'}, 'spicejet':{p:'SEJ',n:'SpiceJet'},
-  'vistara':{p:'VTI',n:'Vistara'}, 'akasa-air':{p:'QAL',n:'Akasa Air'}, 'air-india-express':{p:'IAX',n:'Air India Express'},
+  'american-airlines':{p:'AAL',n:'American Airlines',i:'AA'}, 'delta':{p:'DAL',n:'Delta Air Lines',i:'DL'},
+  'united':{p:'UAL',n:'United Airlines',i:'UA'}, 'southwest':{p:'SWA',n:'Southwest Airlines',i:'WN'},
+  'alaska-airlines':{p:'ASA',n:'Alaska Airlines',i:'AS'}, 'jetblue':{p:'JBU',n:'JetBlue Airways',i:'B6'},
+  'spirit':{p:'NKS',n:'Spirit Airlines',i:'NK'}, 'frontier':{p:'FFT',n:'Frontier Airlines',i:'F9'},
+  'air-canada':{p:'ACA',n:'Air Canada',i:'AC'}, 'westjet':{p:'WJA',n:'WestJet',i:'WS'},
+  'latam':{p:'LAN',n:'LATAM Airlines',i:'LA'}, 'azul':{p:'AZU',n:'Azul',i:'AD'}, 'gol':{p:'GLO',n:'GOL',i:'G3'},
+  'british-airways':{p:'BAW',n:'British Airways',i:'BA'}, 'lufthansa':{p:'DLH',n:'Lufthansa',i:'LH'},
+  'air-france':{p:'AFR',n:'Air France',i:'AF'}, 'klm':{p:'KLM',n:'KLM',i:'KL'}, 'ryanair':{p:'RYR',n:'Ryanair',i:'FR'},
+  'easyjet':{p:'EZY',n:'easyJet',i:'U2'}, 'iberia':{p:'IBE',n:'Iberia',i:'IB'}, 'swiss':{p:'SWR',n:'Swiss',i:'LX'},
+  'turkish-airlines':{p:'THY',n:'Turkish Airlines',i:'TK'}, 'wizz-air':{p:'WZZ',n:'Wizz Air',i:'W6'},
+  'norwegian':{p:'NAX',n:'Norwegian',i:'DY'}, 'tap':{p:'TAP',n:'TAP Air Portugal',i:'TP'}, 'finnair':{p:'FIN',n:'Finnair',i:'AY'},
+  'emirates':{p:'UAE',n:'Emirates',i:'EK'}, 'qatar-airways':{p:'QTR',n:'Qatar Airways',i:'QR'},
+  'etihad':{p:'ETD',n:'Etihad Airways',i:'EY'}, 'flydubai':{p:'FDB',n:'flydubai',i:'FZ'}, 'air-arabia':{p:'ABY',n:'Air Arabia',i:'G9'},
+  'singapore-airlines':{p:'SIA',n:'Singapore Airlines',i:'SQ'}, 'cathay-pacific':{p:'CPA',n:'Cathay Pacific',i:'CX'},
+  'japan-airlines':{p:'JAL',n:'Japan Airlines',i:'JL'}, 'ana':{p:'ANA',n:'All Nippon Airways',i:'NH'},
+  'korean-air':{p:'KAL',n:'Korean Air',i:'KE'}, 'air-asia':{p:'AXM',n:'AirAsia',i:'AK'}, 'qantas':{p:'QFA',n:'Qantas',i:'QF'},
+  'indigo':{p:'IGO',n:'IndiGo',i:'6E'}, 'air-india':{p:'AIC',n:'Air India',i:'AI'}, 'spicejet':{p:'SEJ',n:'SpiceJet',i:'SG'},
+  'vistara':{p:'VTI',n:'Vistara',i:'UK'}, 'akasa-air':{p:'QAL',n:'Akasa Air',i:'QP'}, 'air-india-express':{p:'IAX',n:'Air India Express',i:'IX'},
 }
 
 // City slug → { primary IATA, display name }
@@ -198,7 +198,7 @@ export function parseInitialState(pathname) {
   if (pathname.startsWith('/airline/')) {
     const slug = pathname.replace('/airline/', '').toLowerCase()
     const a = AIRLINE_ICAO[slug]
-    return a ? { ...base, airlineFilter: { prefix: a.p, name: a.n } } : base
+    return a ? { ...base, airlineFilter: { prefix: a.p, name: a.n, iata: a.i } } : base
   }
 
   // Route landing: /route/del-bom → fit camera + draw corridor between airports

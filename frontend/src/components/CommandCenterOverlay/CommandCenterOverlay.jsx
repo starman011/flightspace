@@ -1587,9 +1587,10 @@ export default function CommandCenterOverlay({
     return false
   })
 
-  // Globe interaction → dock sheet to peek (graceful, not full-hide)
+  // Globe interaction / landing pages → dock the feed out of the way
+  // (mobile: sheet to peek; desktop: collapse to the pull-tab)
   useEffect(() => {
-    if (forceCollapsed) setSheetState('peek')
+    if (forceCollapsed) { setSheetState('peek'); setDesktopOpen('collapsed') }
   }, [forceCollapsed])
 
   // Auto-dock stream + collapse hero when zoomed in close to Earth

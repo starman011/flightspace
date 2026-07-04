@@ -58,6 +58,7 @@ import { parseInitialState, stateToPath, updateRouteMeta } from './utils/routing
 import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
 import ContextBanner from './components/ContextBanner/ContextBanner'
+import AirlineFleetCard from './components/AirlineFleetCard/AirlineFleetCard'
 import LiveNudge from './components/LiveNudge/LiveNudge'
 import SkyReticle from './components/SkyReticle/SkyReticle'
 import SiteFooter from './components/SiteFooter/SiteFooter'
@@ -214,6 +215,7 @@ export default function App() {
     return null
   })
   const [streamCollapsed, setStreamCollapsed] = useState(false)
+  const [planesFleet, setPlanesFleet] = useState(null)  // ICAO prefix handed to PlanesPage by the fleet card
   const [arActive, setArActive] = useState(false)
   const [skyHeading, setSkyHeading] = useState(null)   // { raHms, decDms } live readout
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
@@ -727,6 +729,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {landing && (
         <ContextBanner
           icon={landing.kind === 'region' ? '🌍' : landing.kind === 'city' ? '🛫' : landing.kind === 'satellite' ? '🛰' : '✈'}
+          logo={landing.kind === 'airline' && landing.iata ? `https://pics.avs.io/44/44/${landing.iata}@2x.png` : undefined}
           label={
             landing.kind === 'airline' ? `${landing.name} — Live Flights`
             : landing.kind === 'route' ? `${landing.origin} → ${landing.dest}`
@@ -748,6 +751,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             globeRef.current?.drawTrail?.([])
             setSelectedAirport(null)
           }}
+        />
+      )}
+      {landing?.kind === 'airline' && !activePage && !selectedIcao24 && (
+        <AirlineFleetCard
+          name={landing.name}
+          prefix={landing.prefix}
+          iata={landing.iata}
+          count={aircraftWithShips.size}
+          onOpenFleet={() => { setPlanesFleet(landing.prefix); setActivePage('planes') }}
         />
       )}
       <BetaWelcome />
@@ -891,7 +903,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         issData={aircraft.get('ISS') ?? null}
         pinnedLaunch={pinnedLaunch}
         onUnpinLaunch={() => pinnedLaunch && pins.unpinLaunch(pinnedLaunch.id)}
-        forceCollapsed={streamCollapsed}
+        forceCollapsed={streamCollapsed || !!landing}
         onISSLink={{
           flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
           selectISS: ()         => setSelectedIcao24('ISS'),
@@ -1154,8 +1166,9 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       )}
       {activePage === 'planes' && (
         <PlanesPage
-          onClose={() => setActivePage(null)}
+          onClose={() => { setActivePage(null); setPlanesFleet(null) }}
           onFlightClick={handleTrackFromFlightPage}
+          initialAirline={planesFleet}
         />
       )}
       {activePage === 'admin' && (

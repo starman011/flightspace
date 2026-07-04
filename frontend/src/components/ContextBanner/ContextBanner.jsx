@@ -3,7 +3,7 @@ import { useState } from 'react'
 // Top context banner shown when arriving via an SEO landing page
 // (/airline/*, /route/*, /city/*, /flights/*). Tells the visitor exactly
 // what they're looking at so the page never feels like a generic homepage.
-export default function ContextBanner({ icon = '✈', label, sublabel, count, onClear }) {
+export default function ContextBanner({ icon = '✈', logo, label, sublabel, count, onClear }) {
   const [closed, setClosed] = useState(false)
   if (closed) return null
 
@@ -14,7 +14,7 @@ export default function ContextBanner({ icon = '✈', label, sublabel, count, on
         zIndex: 600, display: 'flex', alignItems: 'center', gap: 12,
         background: 'rgba(6,12,18,0.86)', backdropFilter: 'blur(18px)',
         border: '1px solid rgba(178,255,26,0.35)', borderRadius: 100,
-        padding: '8px 8px 8px 18px', maxWidth: '92vw',
+        padding: 8, maxWidth: '92vw',
         boxShadow: '0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(178,255,26,0.08)',
         animation: 'ctxBannerIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
       }}
@@ -26,7 +26,29 @@ export default function ContextBanner({ icon = '✈', label, sublabel, count, on
         }
       `}</style>
 
-      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      {count != null && (
+        <span style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'rgba(178,255,26,0.12)', borderRadius: 100,
+          padding: '4px 11px', flexShrink: 0,
+          fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, color: '#b2ff1a',
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b2ff1a',
+            boxShadow: '0 0 6px #b2ff1a' }} />
+          {count} live
+        </span>
+      )}
+
+      {logo ? (
+        <img
+          src={logo} alt="" loading="lazy"
+          style={{ width: 22, height: 22, borderRadius: 5, background: 'rgba(255,255,255,0.92)',
+            objectFit: 'contain', flexShrink: 0 }}
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+      ) : (
+        <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
         <span style={{
@@ -42,19 +64,6 @@ export default function ContextBanner({ icon = '✈', label, sublabel, count, on
           }}>{sublabel}</span>
         )}
       </div>
-
-      {count != null && (
-        <span style={{
-          display: 'flex', alignItems: 'center', gap: 5,
-          background: 'rgba(178,255,26,0.12)', borderRadius: 100,
-          padding: '4px 11px', flexShrink: 0,
-          fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, color: '#b2ff1a',
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b2ff1a',
-            boxShadow: '0 0 6px #b2ff1a' }} />
-          {count} live
-        </span>
-      )}
 
       <button
         onClick={() => { setClosed(true); onClear?.() }}
