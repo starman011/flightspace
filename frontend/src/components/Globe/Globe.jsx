@@ -1760,16 +1760,22 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     labelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden'
     el.appendChild(labelContainer)
     const _projV = new Vector3()
+    // Plane glyph inside a circle (SVG — no emoji), IATA always, full name when close
+    const AIRPORT_ICON = '<svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>'
+    const shortName = (name) => {
+      const s = name.replace(/\b(International|Intl\.?|Airport|Aeropuerto|Aéroport)\b/gi, '').replace(/\s{2,}/g, ' ').trim()
+      return s.length > 22 ? s.slice(0, 21).trimEnd() + '…' : s
+    }
     const airportLabelEls = AIRPORTS.map(a => {
       const div = document.createElement('div')
-      div.innerHTML = `<span style="font-size:9px;line-height:1;margin-right:3px;opacity:0.9">✈</span><span style="font-size:8px;letter-spacing:0.1em">${a.iata}</span>`
+      div.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:rgba(178,255,26,0.14);border:1px solid rgba(178,255,26,0.55);margin-right:4px;vertical-align:middle">${AIRPORT_ICON}</span><span style="font-size:8px;letter-spacing:0.1em;vertical-align:middle">${a.iata}</span><span data-apname style="display:none;font-size:7.5px;letter-spacing:0.02em;margin-left:4px;color:rgba(195,245,255,0.75);font-weight:500;vertical-align:middle">${shortName(a.name)}</span>`
       div.style.cssText = `position:absolute;display:none;transform:translate(-50%,-100%) translateY(-5px);padding:3px 6px 3px 5px;background:rgba(4,9,14,0.88);border:1px solid rgba(178,255,26,0.45);border-radius:4px;color:rgba(178,255,26,0.85);font:700 8px/1.3 var(--font-mono,monospace);white-space:nowrap;pointer-events:auto;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 1px 8px rgba(0,0,0,0.6),0 0 6px rgba(178,255,26,0.1)`
       div.title = `${a.name} — ${a.city}`
       div.addEventListener('click', () => { int.current.onAirportClick?.(a.iata) })
       div.addEventListener('mouseenter', () => { div.style.background = 'rgba(178,255,26,0.12)'; div.style.borderColor = 'rgba(178,255,26,0.9)'; div.style.color = '#b2ff1a'; div.style.boxShadow = '0 2px 12px rgba(0,0,0,0.7),0 0 14px rgba(178,255,26,0.25)' })
       div.addEventListener('mouseleave', () => { div.style.background = 'rgba(4,9,14,0.88)'; div.style.borderColor = 'rgba(178,255,26,0.45)'; div.style.color = 'rgba(178,255,26,0.85)'; div.style.boxShadow = '0 1px 8px rgba(0,0,0,0.6),0 0 6px rgba(178,255,26,0.1)' })
       labelContainer.appendChild(div)
-      return { div, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
+      return { div, nameEl: div.querySelector('[data-apname]'), nameShown: false, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
     })
 
     // ── Silver labels for familiar sky objects (galaxy scale only) ──
@@ -2882,11 +2888,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const halfW = el.clientWidth * 0.5, halfH = el.clientHeight * 0.5
           // dist thresholds: tier1 < 1.32 (~2000km), tier2 < 1.08 (~500km), tier3 < 1.025 (~160km)
           const tierCutoff = dist < 1.025 ? 3 : dist < 1.08 ? 2 : 1
+          const showNames  = tierCutoff >= 2   // full airport names from ~500km down
           // Camera direction for back-face culling (hide airports on far side of globe)
           const camDir = camera.position.clone().normalize()
           for (let i = 0; i < airportLabelEls.length; i++) {
             const al = airportLabelEls[i]
             if (al.tier > tierCutoff) { al.div.style.display = 'none'; continue }
+            if (al.nameShown !== showNames) {
+              al.nameShown = showNames
+              al.nameEl.style.display = showNames ? '' : 'none'
+            }
             const pos = ll2v(al.lat, al.lon, PLACE_R)
             // Dot product: positive = facing camera, negative = behind globe
             if (pos.clone().normalize().dot(camDir) < 0.1) { al.div.style.display = 'none'; continue }

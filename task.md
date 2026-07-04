@@ -22,7 +22,7 @@
 - [ ] Live fleets — aircraft-type + airline pics to search/filter, with text labels
 - [x] Mobile: locate button raised above footer button
 - [x] Desktop feed right-side gradient glitch — fixed (90deg/200% linear flow)
-- [ ] Airport icon — circle with plane logo; airport name shown on globe
+- [x] Airport icon — circle with plane logo; airport name shown on globe — done (SVG plane-in-circle replaces ✈ glyph; full name appears from ~500km zoom)
 
 
 
