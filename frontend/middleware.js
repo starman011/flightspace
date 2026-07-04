@@ -7,7 +7,7 @@ export const config = {
 }
 
 const BOT_RE =
-  /googlebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefsbot|mj12bot|dotbot/i
+  /googlebot|google-inspectiontool|googleother|applebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefsbot|mj12bot|dotbot/i
 
 import { AIRPORTS } from './src/components/Globe/airportData.js'
 import { airlineFromCs, aircraftName } from './src/data/flightLabels.js'
@@ -17,9 +17,30 @@ const SITE = 'https://www.objecttracer.com'
 
 // Full 930-airport lookup (name, city, lat/lon, tier) for content on every page
 const AIRPORT_FULL = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
-// A few always-valid airports/airlines to cross-link (builds the link graph)
-const XLINK_AIRPORTS = ['JFK', 'LHR', 'DXB', 'DEL', 'LAX', 'SIN']
-const XLINK_AIRLINES = [['emirates', 'Emirates'], ['indigo', 'IndiGo'], ['american-airlines', 'American'], ['british-airways', 'British Airways']]
+// Deterministic per-page sibling selection: each page links a DIFFERENT slice
+// of the catalog (seeded by its own slug), so the internal link graph reaches
+// all 930 airports / 44 airlines instead of the same 10 hubs from every page.
+function seedHash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h }
+function rotatePick(arr, seed, n) {
+  if (!arr.length) return []
+  const start = seed % arr.length, step = (seed % 37) + 7
+  const out = [], used = new Set()
+  for (let i = 0; out.length < Math.min(n, arr.length); i++) {
+    const idx = (start + i * step) % arr.length
+    if (!used.has(idx)) { used.add(idx); out.push(arr[idx]) }
+  }
+  return out
+}
+function airportLinksHtml(seedStr, excludeIata, n = 6) {
+  const pool = AIRPORTS.filter(a => a.iata !== excludeIata)
+  return rotatePick(pool, seedHash(seedStr), n)
+    .map(a => `<a href="${SITE}/airport/${a.iata}">${esc(a.city)} (${a.iata})</a>`).join(' · ')
+}
+function airlineLinksHtml(seedStr, excludeSlug, n = 4) {
+  const pool = Object.entries(AIRLINE_MAP).filter(([s]) => s !== excludeSlug)
+  return rotatePick(pool, seedHash(seedStr), n)
+    .map(([s, a]) => `<a href="${SITE}/airline/${s}">${esc(a.name)}</a>`).join(' · ')
+}
 
 export default async function middleware(request) {
   const { pathname } = new URL(request.url)
@@ -197,8 +218,9 @@ async function renderAirport(iata) {
   const country  = info ? info.country : ''
   const apLabel  = `${cityName} ${iata} Airport`
   const where    = country ? `${cityName}, ${country}` : cityName
-  const title = `${cityName} Flights (${iata}) — Live Arrivals & Departures | ObjectTracer`
-  const desc  = `Flights to and from ${cityName} (${iata}): live arrivals, departures and flight status at ${fullName}, tracked in real time. ${arrivals.length} arrivals and ${departures.length} departures on the map now — free on ObjectTracer's 3D globe.`
+  // Lead with the IATA phrase users actually type ("jfk arrivals", "jfk departures")
+  const title = `${iata} Arrivals & Departures — ${cityName} Airport Live Flight Status | ObjectTracer`
+  const desc  = `${iata} arrivals and departures live: real-time flight status at ${fullName}, ${cityName}, tracked from ADS-B on a free 3D map. Watch every inbound and outbound flight as it moves.`
 
   // Varied "about" opener (rotates by IATA hash) so 930 pages aren't identical
   let h = 0; for (let i = 0; i < iata.length; i++) h = (h * 31 + iata.charCodeAt(i)) >>> 0
@@ -277,7 +299,7 @@ async function renderAirport(iata) {
     : ''
 
   return html(canonical, title, desc, jsonLd, `
-    <h1>${esc(cityName)} flights — live arrivals &amp; departures (${esc(iata)})</h1>
+    <h1>${esc(iata)} Arrivals &amp; Departures — ${esc(fullName)}</h1>
     <p>Real-time arrivals, departures and flight status for ${esc(fullName)}${info ? `, ${esc(cityName)}, ${esc(info.country)}` : ''}.
        ${arrivals.length} arrivals and ${departures.length} departures are currently tracked via ADS-B.</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
@@ -295,8 +317,8 @@ async function renderAirport(iata) {
     <h2>Track more on ObjectTracer</h2>
     <p>
       Other busy airports:
-      ${XLINK_AIRPORTS.filter(x => x !== iata).map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
-      Airlines: ${XLINK_AIRLINES.map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      ${airportLinksHtml(iata, iata)}.
+      Airlines: ${airlineLinksHtml(iata, null)}.
       Or open the <a href="${SITE}/">live 3D globe</a> to watch ${esc(cityName)}'s traffic alongside the ISS, satellites and rocket launches.
     </p>`)
 }
@@ -374,8 +396,9 @@ async function renderAirline(slug) {
   } catch (_) {}
 
   const count = flights.length
-  const title = `${airline.name} Flight Tracker — Live Map & Status (${airline.iata}) | ObjectTracer`
-  const desc  = `Track all ${airline.name} (${airline.iata}) flights live on ObjectTracer's real-time 3D globe. ${count > 0 ? `${count} flights currently tracked.` : ''} Real-time ADS-B position, altitude, speed, and route for every ${airline.name} aircraft.`
+  // "{airline} flight status" is the #1 query family for these pages — lead with it
+  const title = `${airline.name} Flight Status & Live Tracker (${airline.iata}) | ObjectTracer`
+  const desc  = `${airline.name} flight status live: track every ${airline.name} (${airline.iata}/${airline.icao}) flight in real time — position, altitude, speed and route on a free live map, straight from ADS-B.`
 
   const faqs = [
     [`How can I track ${airline.name} flights live?`, `Open ObjectTracer's 3D globe — every ${airline.name} (${airline.iata}) aircraft currently broadcasting ADS-B is plotted in real time with its position, altitude, speed and route. Click any flight for full details.`],
@@ -404,7 +427,7 @@ async function renderAirline(slug) {
 
   const body = `
     ${logoHtml}
-    <h1>${esc(airline.name)} Live Flights</h1>
+    <h1>${esc(airline.name)} Flight Status — Live Tracker (${esc(airline.iata)})</h1>
     <p>${count > 0 ? `${count} ${esc(airline.name)} aircraft currently tracked via ADS-B.` : `No ${esc(airline.name)} flights currently in ADS-B coverage. Check back during peak hours.`}</p>
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
     ${flightRows ? `
@@ -428,8 +451,8 @@ async function renderAirline(slug) {
     ${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('\n')}
     <p style="margin-top:32px;font-size:14px;opacity:.8">
       Track more: Airports
-      ${XLINK_AIRPORTS.map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
-      Airlines: ${XLINK_AIRLINES.filter(([s]) => s !== slug).map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      ${airportLinksHtml(slug, null)}.
+      Airlines: ${airlineLinksHtml(slug, slug)}.
       Or open the <a href="${SITE}/">live 3D tracker</a>.
     </p>`
 
@@ -463,6 +486,28 @@ function slugify(name) {
     .substring(0, 100)
 }
 
+// Evergreen page for launches no longer in the live feed — title from the slug
+// (e.g. falcon-9-block-5-starlink-group-10-43 → "Falcon 9 Block 5 Starlink Group 10 43")
+function renderPastLaunch(slug) {
+  if (!/^[a-z0-9-]{4,120}$/.test(slug)) return // garbage slug → SPA/404 path
+  const name = slug.split('-').map(w => (/^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ')
+  const canonical = `${SITE}/launch/${slug}`
+  const title = `${name} Launch — Mission Archive | ObjectTracer`
+  const desc  = `${name}: past rocket launch tracked live on ObjectTracer. See upcoming launches with live countdowns, pad locations and mission details on the free 3D globe.`
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'WebPage',
+    name: `${name} Launch`, url: canonical, description: desc,
+  }
+  const body = `
+    <h1>${esc(name)}</h1>
+    <p>This mission has launched. ObjectTracer tracked it live — countdown, launch pad location and mission details — as it happened.</p>
+    <p>Rocket launches appear here with live countdowns before liftoff and stay tracked through orbit. Watch the next one live:</p>
+    <a class="cta" href="${SITE}/launches">See Upcoming Launches →</a>
+    <h2>Keep exploring</h2>
+    <p><a href="${SITE}/launches">Launch schedule &amp; countdowns</a> · <a href="${SITE}/satellite/starlink">Starlink tracker</a> · <a href="${SITE}/iss">ISS live tracker</a> · <a href="${SITE}/">Live 3D globe</a></p>`
+  return html(canonical, title, desc, jsonLd, body, 'LAUNCH ARCHIVE')
+}
+
 async function renderLaunch(slug) {
   let launches = []
   try {
@@ -475,7 +520,10 @@ async function renderLaunch(slug) {
 
   // Match slug against all launches
   const launch = launches.find(l => slugify(l.name) === slug)
-  if (!launch) return // unknown launch → pass to SPA
+  // Launch left the live feed (completed weeks ago) → render an evergreen
+  // archive page instead of falling through to the SPA shell, whose homepage
+  // canonical made Google file these URLs as duplicates.
+  if (!launch) return renderPastLaunch(slug)
 
   const canonical = `${SITE}/launch/${slug}`
   const isPast    = launch.is_past
@@ -891,7 +939,9 @@ async function renderSatellite(slug) {
   if (!sat) return
 
   const canonical = `${SITE}/satellite/${slug}`
-  const title = `${sat.name} Live Tracker — Real-Time Position | ObjectTracer`
+  // Lead with the short query phrase ("starlink tracker"), full name after the dash
+  const shortName = slug.length <= 4 ? slug.toUpperCase() : slug.charAt(0).toUpperCase() + slug.slice(1)
+  const title = `${shortName} Tracker — ${sat.name} Live Position & Map | ObjectTracer`
   const desc  = `${sat.desc} Track ${sat.name} live on ObjectTracer's interactive 3D globe.${sat.altKm ? ` Orbits at ~${sat.altKm} km altitude.` : ''}`
 
   const faqs = [
@@ -1239,8 +1289,8 @@ async function renderRoute(slug) {
 
     <p style="margin-top:32px;font-size:14px;opacity:.8">
       Track more: Airports
-      ${XLINK_AIRPORTS.filter(x => x !== origin && x !== dest).map(x => `<a href="${SITE}/airport/${x}">${x}</a>`).join(' · ')}.
-      Airlines: ${XLINK_AIRLINES.map(([s, n]) => `<a href="${SITE}/airline/${s}">${esc(n)}</a>`).join(' · ')}.
+      ${airportLinksHtml(`${origin}-${dest}`, origin)}.
+      Airlines: ${airlineLinksHtml(`${origin}-${dest}`, null)}.
       Or open the <a href="${SITE}/">live 3D tracker</a>.
     </p>`
 
@@ -1615,7 +1665,9 @@ ${urls}
 async function renderBlogFeed() {
   let posts = []
   try {
-    const res = await fetch(`${API}/api/v1/blog?limit=30`, { headers: { 'x-render': 'bot' } })
+    // limit=50 matches the sitemap (backend caps at 50) — the old 30 left the
+    // 20 oldest sitemap posts unreachable from any HTML page
+    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
     if (res.ok) { const d = await res.json(); posts = d.posts || [] }
   } catch (_) {}
 
@@ -1675,11 +1727,57 @@ function blogFraming(p) {
     <p>This connects to what you can track in real time on our 3D globe — explore ${links}. Or open the <a href="${SITE}/">live globe</a> to watch flights, satellites, the ISS and spacecraft move right now.</p>`
 }
 
+// Topic keys for related-post matching — mirrors the blogFraming word lists
+const BLOG_TOPICS = [
+  ['deep',    ['nebula', 'galaxy', 'cluster', 'cosmic', 'quasar', 'supernova', 'interstellar']],
+  ['moon',    ['moon', 'lunar']],
+  ['solar',   ['aurora', 'eclipse', 'corona', 'sunspot', 'solar flare']],
+  ['planets', ['mars', 'jupiter', 'saturn', 'venus', 'mercury', 'neptune', 'uranus', 'planet']],
+  ['neo',     ['comet', 'asteroid', 'meteor', 'near-earth']],
+  ['iss',     ['space station', 'astronaut', ' iss ', 'crew']],
+  ['launch',  ['rocket', 'launch', 'spacex', 'falcon', 'starship', 'booster']],
+  ['stars',   ['star', 'milky way', 'constellation', 'sun']],
+]
+function blogTopicKeys(p) {
+  const t = `${p.title} ${p.explanation || ''}`.toLowerCase()
+  return new Set(BLOG_TOPICS.filter(([, ws]) => ws.some(w => t.includes(w))).map(([k]) => k))
+}
+
+// Post→post links: 4 topic-related picks + prev/next by date. Without these,
+// every post is a leaf reachable only from /blog — the classic
+// "Discovered - currently not indexed" pattern.
+function relatedBlogHtml(p, all) {
+  if (!all.length) return ''
+  const i = all.findIndex(x => x.slug === p.slug)         // all is date DESC
+  const newer = i > 0 ? all[i - 1] : null
+  const older = i >= 0 && i + 1 < all.length ? all[i + 1] : null
+  const mine = blogTopicKeys(p)
+  const picks = all
+    .filter(x => x.slug !== p.slug && x !== older && x !== newer)
+    .map(x => { let s = 0; for (const k of blogTopicKeys(x)) if (mine.has(k)) s++; return { x, s } })
+    .sort((a, b) => b.s - a.s || (a.x.date < b.x.date ? 1 : -1))
+    .slice(0, 4).map(o => o.x)
+  const li = q => `<li><a href="${SITE}/blog/${esc(q.slug)}"><strong>${esc(q.title)}</strong><span>${esc(q.date)}</span></a></li>`
+  const nav = [
+    older && `<a href="${SITE}/blog/${esc(older.slug)}">← ${esc(older.title)}</a>`,
+    newer && `<a href="${SITE}/blog/${esc(newer.slug)}">${esc(newer.title)} →</a>`,
+  ].filter(Boolean).join(' · ')
+  if (!picks.length && !nav) return ''
+  return `
+    <h2>More from the Space Journal</h2>
+    ${picks.length ? `<ul class="cards">${picks.map(li).join('\n')}</ul>` : ''}
+    ${nav ? `<p>${nav}</p>` : ''}`
+}
+
 async function renderBlogPost(slug) {
-  let p = null
+  let p = null, allPosts = []
   try {
-    const res = await fetch(`${API}/api/v1/blog/${encodeURIComponent(slug)}`, { headers: { 'x-render': 'bot' } })
-    if (res.ok) p = await res.json()
+    const [pr, lr] = await Promise.all([
+      fetch(`${API}/api/v1/blog/${encodeURIComponent(slug)}`, { headers: { 'x-render': 'bot' } }),
+      fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } }),
+    ])
+    if (pr.ok) p = await pr.json()
+    if (lr.ok) { const d = await lr.json(); allPosts = d.posts || [] }
   } catch (_) {}
   if (!p) return // unknown slug → SPA
 
@@ -1705,6 +1803,7 @@ async function renderBlogPost(slug) {
     <h2>The science — from NASA's Astronomy Picture of the Day</h2>
     <p>${esc(p.explanation)}</p>
     ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)} · Source: NASA APOD</p>` : `<p style="font-size:.8rem;opacity:.6">Source: NASA Astronomy Picture of the Day (public domain)</p>`}
+    ${relatedBlogHtml(p, allPosts)}
     <p><a href="${SITE}/blog">← All Space Journal entries</a></p>`
   // Article OG image is the actual APOD image (passed as ogImageOverride)
   return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL', img)

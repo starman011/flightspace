@@ -384,6 +384,49 @@ When both tools are active, caveman reduces token burn on output while claude-me
 
 ---
 
+## Article XIII: Search Visibility — SEO as a First-Class Feature
+
+### Section 13.1: Every Public URL Must Be Self-Describing
+
+- Every URL in a sitemap MUST return indexable HTML to crawlers: unique `<title>`,
+  meta description, **self-referencing canonical**, at least one `<h1>`, and real
+  body text. A URL that falls through to the SPA shell (whose canonical points at
+  the homepage) is a defect, not a degradation.
+- Programmatic pages backed by live feeds (launches, asteroids, flights) MUST
+  render an evergreen fallback when the entity leaves the feed — never the shell.
+  Dead URLs teach Google's crawl scheduler that the whole pattern is low-value.
+
+### Section 13.2: Titles Speak the Searcher's Language
+
+- Titles and H1s MUST lead with the exact phrase users type (verified against
+  Search Console query data), not the product's internal naming:
+  "{Airline} Flight Status & Live Tracker", "{IATA} Arrivals & Departures",
+  "{Satellite} Tracker". Brand suffix last.
+- Meta descriptions stay evergreen — no live counts that go stale in cached
+  snippets. Counts belong in body text.
+
+### Section 13.3: The Link Graph Is Infrastructure
+
+- No page may be a leaf. Every rendered page links related entities:
+  posts→posts (related + prev/next), airports↔airlines↔routes, and back to its
+  hub. Sitemap-only URLs with zero inlinks sit in "Discovered — currently not
+  indexed" forever.
+- Cross-link selection MUST spread coverage across the full catalog
+  (deterministic rotation), not repeat the same few hubs from every page.
+
+### Section 13.4: Verification Before Shipping SEO Changes
+
+- Any change touching middleware rendering, sitemaps, canonicals, or meta MUST be
+  verified by fetching affected URL types with a Googlebot User-Agent and
+  checking title + canonical + H1 — before and after deploy.
+- `BOT_RE` MUST include Google's inspection/testing crawlers
+  (Google-InspectionTool, GoogleOther) so Search Console live tests see the same
+  HTML Googlebot sees.
+- Search Console indexing + performance reports are reviewed at least weekly;
+  regressions in indexed-page count are treated as bugs.
+
+---
+
 ## Amendment Log
 
 | Date | Article | Change | Rationale |
@@ -392,6 +435,7 @@ When both tools are active, caveman reduces token burn on output while claude-me
 | 2026-03-15 | Article X | Added Documentation-First Implementation (v1.1.0) | Enforce research-before-build discipline; prevent premature custom solutions |
 | 2026-03-25 | Article XI | Added Mobile-First Parity (v1.2.0) | All features must work on mobile; desktop layout must not be broken |
 | 2026-04-08 | Article XII | Added Developer Tooling — Token Efficiency & Session Memory (v1.3.0) | Adopt caveman + claude-mem for token savings and cross-session context |
+| 2026-07-05 | Article XIII | Added Search Visibility — SEO as a First-Class Feature (v1.4.0) | GSC audit found homepage-canonical shell pages, dead feed-backed URLs, and leaf pages causing 979 "Discovered — not indexed"; codify self-describing URLs, query-language titles, link-graph rules, and Googlebot verification |
 
 ---
 
@@ -418,4 +462,4 @@ This constitution is enforced through:
 No specification, plan, or task SHALL proceed without passing all applicable
 constitutional gates.
 
-**Version**: 1.3.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-04-08
+**Version**: 1.4.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-07-05

@@ -36,6 +36,20 @@ const ROUTE_META = {
                      description: 'Explore the Moon with real-time orbital data and surface visualization on an interactive 3D globe.' },
   '/asteroids':    { title: 'Near-Earth Asteroid Tracker — NASA NeoWs Data | ObjectTracer',
                      description: 'Track near-Earth asteroids in real-time using NASA NeoWs data on an interactive 3D globe.' },
+  // Pages below previously served the raw SPA shell (homepage title + canonical)
+  // to non-bot crawlers — now each gets its own static HTML with self-canonical.
+  '/faq':          { title: 'FAQ — ObjectTracer Live Flight & Space Tracker',
+                     description: 'Answers to common questions about ObjectTracer: live flight tracking, ISS and satellite views, data sources, and how the free 3D globe works.' },
+  '/about':        { title: 'About ObjectTracer — Real-Time Flight & Space Tracking',
+                     description: 'ObjectTracer tracks every flying thing on one real-time 3D globe: planes, ships, the ISS, satellites, rocket launches, asteroids, and galaxies. Free, no login.' },
+  '/contact':      { title: 'Contact ObjectTracer',
+                     description: 'Get in touch with the ObjectTracer team — questions, feedback, data corrections, and partnership inquiries.' },
+  '/waitlist':     { title: 'Join the ObjectTracer Waitlist',
+                     description: 'Sign up for early access to new ObjectTracer features: flight alerts, weather overlays, and more.' },
+  '/planes':       { title: 'Live Fleet Tracker — Airlines & Aircraft Types | ObjectTracer',
+                     description: 'See every airborne aircraft of any airline or aircraft type right now — live fleets tracked from ADS-B on a free 3D globe.' },
+  '/flight':       { title: 'Flights Near You — Live Flight Discovery | ObjectTracer',
+                     description: 'Discover flights near your location in real time: departures, arrivals, and overhead aircraft on a free live 3D map.' },
 }
 
 // Noscript content per route (meaningful text for non-JS crawlers)
@@ -70,9 +84,11 @@ function generateRouteHtml(template, route, meta) {
     `<meta name="description" content="${escapedDesc}" />`
   )
 
-  // Insert canonical link (after the comment about canonical)
+  // Replace the static canonical (index.html hardcodes the homepage fallback —
+  // the old "insert after comment" regex silently no-opped once that landed,
+  // shipping canonical="/" on every prerendered route)
   html = html.replace(
-    /<!-- canonical set dynamically[^>]*-->/,
+    /<link rel="canonical" href="[^"]*" \/>/,
     `<link rel="canonical" href="${fullUrl}" />`
   )
 

@@ -34,8 +34,10 @@ export const ROUTE_META = {
                      description: 'Track the International Space Station live on a real-time 3D globe. Live position, altitude, speed, crew manifest, and NASA 4K live stream.' },
   '/blog':         { title: 'Space Journal — Daily Astronomy & Space Imagery | ObjectTracer',
                      description: 'A daily space journal featuring NASA\'s Astronomy Picture of the Day — stunning cosmic imagery with the science behind each one.' },
-  '/airline':      { title: 'Live Airline Flight Tracker | ObjectTracer',
-                     description: 'Track all flights for this airline live on ObjectTracer\'s real-time 3D globe. Live ADS-B position, altitude, speed, and route.' },
+  '/airline':      { title: 'Airline Flight Status & Live Tracker | ObjectTracer',
+                     description: 'Live airline flight status: track every flight of this airline in real time — position, altitude, speed and route on a free live map.' },
+  '/satellite':    { title: 'Satellite Tracker — Live Position & Map | ObjectTracer',
+                     description: 'Track this satellite live: real-time orbital position, altitude, and ground track on a free interactive 3D globe.' },
 }
 
 export function routeKeyFromPath(path) {
@@ -43,6 +45,7 @@ export function routeKeyFromPath(path) {
   if (path.startsWith('/airport/')) return '/airport'
   if (path.startsWith('/airline/')) return '/airline'
   if (path.startsWith('/blog/')) return '/blog'
+  if (path.startsWith('/satellite/')) return '/satellite'
   return path
 }
 
