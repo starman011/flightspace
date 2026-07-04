@@ -139,12 +139,11 @@
 
 /* Mobile — smaller, centered at top */
 @media (max-width: 767px) {
-  /* Centered + icon-only (constant width) so the 7-tile pill fits in the
-     middle without ever reaching the top-right account/hamburger. */
+  /* Left-anchored + icon-only so the pill expands rightward from the edge
+     and never reaches the top-right account/hamburger. */
   .pill {
     top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 12px;
     gap: 0;
     padding: 4px;
   }
