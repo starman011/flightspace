@@ -50,3 +50,4 @@ frontend/coverage/
 # ── Docker volumes ────────────────────────────────────────────────────────────
 infra/postgres_data/
 infra/redis_data/
+marketing/
