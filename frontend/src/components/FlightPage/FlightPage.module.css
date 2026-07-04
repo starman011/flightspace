@@ -137,6 +137,11 @@
   cursor: pointer; transition: 0.18s;
 }
 .chip:hover { color: #eaf2ff; border-color: rgba(180,215,245,0.32) }
+
+/* Picture chips (PlanesPage fleet picker) — additive, base .chip unchanged */
+.chipPic { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; }
+.chipLogo { width: 18px; height: 18px; border-radius: 4px; background: rgba(255,255,255,0.92); object-fit: contain; flex-shrink: 0; }
+.chipPhoto { width: 34px; height: 22px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
 .locNote { margin-top: 18px; font-family: var(--font-mono); font-size: 12px; color: #ffb74d }
 
 /* primary / ghost buttons */

@@ -7,14 +7,14 @@ const API = import.meta.env.VITE_API_URL || ''
 
 // Popular carriers (ICAO callsign prefix → display name) and aircraft types
 // (ICAO type code → friendly name). These drive the picker chips.
-// [ICAO callsign prefix, display name, Wikipedia title for the hero photo]
+// [ICAO callsign prefix, display name, Wikipedia title for the hero photo, IATA (logo CDN)]
 const AIRLINES = [
-  ['UAE', 'Emirates', 'Emirates (airline)'], ['QTR', 'Qatar Airways', 'Qatar Airways'], ['ETD', 'Etihad', 'Etihad Airways'],
-  ['BAW', 'British Airways', 'British Airways'], ['DLH', 'Lufthansa', 'Lufthansa'], ['AFR', 'Air France', 'Air France'], ['KLM', 'KLM', 'KLM'],
-  ['AAL', 'American', 'American Airlines'], ['UAL', 'United', 'United Airlines'], ['DAL', 'Delta', 'Delta Air Lines'], ['SWA', 'Southwest', 'Southwest Airlines'],
-  ['IGO', 'IndiGo', 'IndiGo'], ['AIC', 'Air India', 'Air India'], ['SIA', 'Singapore', 'Singapore Airlines'], ['CPA', 'Cathay Pacific', 'Cathay Pacific'],
-  ['QFA', 'Qantas', 'Qantas'], ['THY', 'Turkish', 'Turkish Airlines'], ['RYR', 'Ryanair', 'Ryanair'], ['EZY', 'easyJet', 'EasyJet'],
-  ['ANA', 'ANA', 'All Nippon Airways'], ['JAL', 'Japan Airlines', 'Japan Airlines'],
+  ['UAE', 'Emirates', 'Emirates (airline)', 'EK'], ['QTR', 'Qatar Airways', 'Qatar Airways', 'QR'], ['ETD', 'Etihad', 'Etihad Airways', 'EY'],
+  ['BAW', 'British Airways', 'British Airways', 'BA'], ['DLH', 'Lufthansa', 'Lufthansa', 'LH'], ['AFR', 'Air France', 'Air France', 'AF'], ['KLM', 'KLM', 'KLM', 'KL'],
+  ['AAL', 'American', 'American Airlines', 'AA'], ['UAL', 'United', 'United Airlines', 'UA'], ['DAL', 'Delta', 'Delta Air Lines', 'DL'], ['SWA', 'Southwest', 'Southwest Airlines', 'WN'],
+  ['IGO', 'IndiGo', 'IndiGo', '6E'], ['AIC', 'Air India', 'Air India', 'AI'], ['SIA', 'Singapore', 'Singapore Airlines', 'SQ'], ['CPA', 'Cathay Pacific', 'Cathay Pacific', 'CX'],
+  ['QFA', 'Qantas', 'Qantas', 'QF'], ['THY', 'Turkish', 'Turkish Airlines', 'TK'], ['RYR', 'Ryanair', 'Ryanair', 'FR'], ['EZY', 'easyJet', 'EasyJet', 'U2'],
+  ['ANA', 'ANA', 'All Nippon Airways', 'NH'], ['JAL', 'Japan Airlines', 'Japan Airlines', 'JL'],
 ]
 // [ICAO type code, display name, Wikipedia title (family) for the hero photo]
 const TYPES = [
@@ -39,6 +39,28 @@ export default function PlanesPage({ onClose, onFlightClick }) {
   const [data, setData] = useState(null)      // { count, flights[] }
   const [loading, setLoading] = useState(false)
   const [hero, setHero] = useState(null)      // airline / aircraft-type photo (Wikipedia)
+  const [typeThumbs, setTypeThumbs] = useState(null)  // { B738: thumbUrl, … } for the type chips
+
+  // Fetch aircraft-family thumbnails once, on first visit to the type tab.
+  // Several types share a Wikipedia family page — fetch each title once.
+  useEffect(() => {
+    if (mode !== 'type' || typeThumbs) return
+    let cancelled = false
+    const titles = [...new Set(TYPES.map(t => t[2]))]
+    Promise.all(titles.map(w =>
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(w)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => [w, d?.thumbnail?.source || null])
+        .catch(() => [w, null])
+    )).then(pairs => {
+      if (cancelled) return
+      const byTitle = Object.fromEntries(pairs)
+      const map = {}
+      for (const [code, , wiki] of TYPES) map[code] = byTitle[wiki] || null
+      setTypeThumbs(map)
+    })
+    return () => { cancelled = true }
+  }, [mode, typeThumbs])
 
   const fetchFleet = useCallback((m, code) => {
     const q = m === 'airline' ? `airline=${encodeURIComponent(code)}` : `type=${encodeURIComponent(code)}`
@@ -113,8 +135,29 @@ export default function PlanesPage({ onClose, onFlightClick }) {
             <button className={`${styles.tab} ${mode === 'type' ? styles.tabOn : ''}`} onClick={() => setMode('type')}>Aircraft types</button>
           </div>
           <div className={styles.locChips} style={{ marginTop: 18 }}>
-            {chips.map(([code, name, wiki]) => (
-              <button key={code} className={styles.chip} onClick={() => pick(mode, code, name, wiki)}>{name}</button>
+            {chips.map(([code, name, wiki, iata]) => (
+              <button key={code} className={`${styles.chip} ${styles.chipPic}`} onClick={() => pick(mode, code, name, wiki)}>
+                {mode === 'airline' ? (
+                  iata && (
+                    <img
+                      className={styles.chipLogo}
+                      src={`https://pics.avs.io/24/24/${iata}@2x.png`}
+                      alt="" loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    />
+                  )
+                ) : (
+                  typeThumbs?.[code] && (
+                    <img
+                      className={styles.chipPhoto}
+                      src={typeThumbs[code]}
+                      alt="" loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    />
+                  )
+                )}
+                <span>{name}</span>
+              </button>
             ))}
           </div>
         </div>
