@@ -113,6 +113,7 @@ type SearchResult struct {
 	Callsign        *string  `json:"callsign,omitempty"`
 	TypeDescription *string  `json:"type_description,omitempty"`
 	Operator        *string  `json:"operator,omitempty"`
+	AirlineIATA     *string  `json:"airline_iata,omitempty"`
 	Latitude        float64  `json:"latitude"`
 	Longitude       float64  `json:"longitude"`
 	Altitude        *float64 `json:"altitude,omitempty"`

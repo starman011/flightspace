@@ -157,7 +157,18 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
                 </li>
               ) : (
                 <li key={r.icao24} className={styles.result} onClick={() => handleSelect(r)}>
-                  <span className={styles.callsign}>{r.callsign ?? r.icao24}</span>
+                  <span className={styles.callsign}>
+                    {r.airline_iata && (
+                      <img
+                        className={styles.airlineLogo}
+                        src={`https://pics.avs.io/36/36/${r.airline_iata}@2x.png`}
+                        alt=""
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    )}
+                    {r.callsign ?? r.icao24}
+                  </span>
                   {r.type_description && (
                     <span className={styles.type}>{r.type_description}</span>
                   )}

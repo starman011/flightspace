@@ -78,7 +78,7 @@
 ### 7. Airline Logos
 - [x] Airline IATA code from adsbdb API + OpenFlights ICAO→IATA mapping
 - [x] Small logo icon next to callsign in DetailPanel (pics.avs.io CDN)
-- [ ] Logo in search results dropdown
+- [x] Logo in search results dropdown — done (backend derives airline_iata from callsign prefix; pics.avs.io logo in flight rows, hidden on load error)
 
 ### 8. Flight Alerts
 - [ ] "Alert me when this flight lands" button

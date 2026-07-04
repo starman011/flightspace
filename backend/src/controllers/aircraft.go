@@ -236,6 +236,12 @@ func (ac *AircraftController) Search(w http.ResponseWriter, r *http.Request) {
 			Altitude:  a.Alt,
 			OnGround:  a.Grnd,
 		}
+		// Airline IATA from callsign ICAO prefix — powers the logo in search results
+		if len(callsign) >= 3 {
+			if iata, ok := data.AirlineICAOtoIATA[callsign[:3]]; ok {
+				sr.AirlineIATA = &iata
+			}
+		}
 		scored = append(scored, scoredResult{result: sr, score: score})
 	}
 
