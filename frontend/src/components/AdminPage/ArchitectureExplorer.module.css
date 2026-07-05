@@ -1,0 +1,201 @@
+/* ── Architecture Explorer — animated request-flow walkthrough ────────────── */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.intro {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(200, 215, 235, 0.6);
+  margin: 0;
+}
+
+/* Feature picker */
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pick {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 210, 225, 0.14);
+  background: rgba(140, 170, 210, 0.06);
+  color: rgba(208, 224, 244, 0.7);
+  cursor: pointer;
+  transition: 0.18s;
+}
+
+.pick:hover { border-color: rgba(178, 255, 26, 0.4); color: #eaf2ff; }
+
+.pickOn {
+  border-color: rgba(178, 255, 26, 0.6);
+  background: rgba(178, 255, 26, 0.1);
+  color: #b2ff1a;
+}
+
+/* Flow header + transport controls */
+.flowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flowName {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+}
+
+.flowTag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: rgba(178, 255, 26, 0.65);
+  margin-top: 2px;
+}
+
+.controls { display: flex; gap: 6px; }
+
+.ctl {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(200, 210, 225, 0.16);
+  background: rgba(140, 170, 210, 0.07);
+  color: rgba(208, 224, 244, 0.75);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.ctl:hover { border-color: rgba(178, 255, 26, 0.5); color: #b2ff1a; }
+
+/* Step list */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  cursor: pointer;
+  opacity: 0.32;
+  transition: opacity 0.4s ease;
+}
+
+.stepLit { opacity: 1; }
+
+/* Rail: dot + connecting line, colored per layer */
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 16px;
+  background: rgba(20, 28, 38, 0.9);
+  border: 2px solid var(--hue);
+  flex-shrink: 0;
+  transition: box-shadow 0.3s;
+}
+
+.stepNow .dot {
+  background: var(--hue);
+  box-shadow: 0 0 12px var(--hue);
+}
+
+.line {
+  width: 2px;
+  flex: 1;
+  min-height: 18px;
+  margin-top: 4px;
+  background: linear-gradient(180deg, var(--hue), rgba(200, 210, 225, 0.12));
+  opacity: 0.5;
+}
+
+/* Step card */
+.card {
+  border: 1px solid rgba(200, 210, 225, 0.1);
+  border-radius: 14px;
+  background: rgba(10, 15, 22, 0.72);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.stepNow .card {
+  border-color: var(--hue);
+  background: rgba(14, 20, 30, 0.92);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.layer {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--hue);
+  border: 1px solid var(--hue);
+  border-radius: 5px;
+  padding: 2px 7px;
+  opacity: 0.95;
+}
+
+.file {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(200, 215, 235, 0.5);
+  overflow-wrap: anywhere;
+}
+
+.fn {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #eaf2ff;
+  margin: 8px 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.desc {
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(200, 215, 235, 0.68);
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .flowHead { flex-direction: column; align-items: flex-start; }
+  .card { padding: 11px 12px; }
+}

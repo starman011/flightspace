@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styles from './AdminPage.module.css'
+import ArchitectureExplorer from './ArchitectureExplorer'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -55,6 +56,7 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
   const itemBase = (id) => tab === 'inbound' ? `${API}/api/v1/admin/inbound/${id}` : `${API}/api/v1/admin/messages/${id}`
 
   const load = useCallback(() => {
+    if (tab === 'arch') { setItems([]); setState('ready'); return }  // static walkthrough — nothing to fetch
     setState('loading')
     setOpenId(null)
     fetch(listUrl, { credentials: 'include', headers: authH })
@@ -131,7 +133,10 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${tab === 'inbound' ? styles.tabOn : ''}`} onClick={() => setTab('inbound')}>Received emails</button>
           <button className={`${styles.tab} ${tab === 'contact' ? styles.tabOn : ''}`} onClick={() => setTab('contact')}>Contact form</button>
+          <button className={`${styles.tab} ${tab === 'arch' ? styles.tabOn : ''}`} onClick={() => setTab('arch')}>How it works</button>
         </div>
+
+        {tab === 'arch' && <ArchitectureExplorer />}
 
         {tab === 'inbound' && state === 'ready' && (
           <div className={styles.syncRow}>
@@ -164,7 +169,7 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
           </div>
         )}
 
-        {state === 'ready' && items.length === 0 && (
+        {state === 'ready' && tab !== 'arch' && items.length === 0 && (
           <p className={styles.info}>{tab === 'inbound' ? 'No received emails yet. New emails to your inbound address will appear here.' : 'No contact-form messages yet.'}</p>
         )}
 
