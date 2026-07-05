@@ -1752,11 +1752,16 @@ function relatedBlogHtml(p, all) {
   const newer = i > 0 ? all[i - 1] : null
   const older = i >= 0 && i + 1 < all.length ? all[i + 1] : null
   const mine = blogTopicKeys(p)
-  const picks = all
-    .filter(x => x.slug !== p.slug && x !== older && x !== newer)
+  const pool = all.filter(x => x.slug !== p.slug && x !== older && x !== newer)
+  // 3 topic-related + 3 rotation-picked from the rest: similarity alone
+  // over-links popular clusters; the seeded rotation guarantees every post
+  // in the archive is reachable from several siblings.
+  const related = pool
     .map(x => { let s = 0; for (const k of blogTopicKeys(x)) if (mine.has(k)) s++; return { x, s } })
     .sort((a, b) => b.s - a.s || (a.x.date < b.x.date ? 1 : -1))
-    .slice(0, 4).map(o => o.x)
+    .slice(0, 3).map(o => o.x)
+  const rest = pool.filter(x => !related.includes(x))
+  const picks = [...related, ...rotatePick(rest, seedHash(p.slug), 3)]
   const li = q => `<li><a href="${SITE}/blog/${esc(q.slug)}"><strong>${esc(q.title)}</strong><span>${esc(q.date)}</span></a></li>`
   const nav = [
     older && `<a href="${SITE}/blog/${esc(older.slug)}">← ${esc(older.title)}</a>`,
