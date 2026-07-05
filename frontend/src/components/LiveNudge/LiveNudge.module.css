@@ -8,13 +8,13 @@
   z-index: 60;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   width: max-content;
-  max-width: 480px;
-  padding: 12px 12px 12px 18px;
+  max-width: 440px;
+  padding: 10px 10px 10px 22px;
   background: linear-gradient(180deg, rgba(12, 20, 30, 0.96), rgba(8, 13, 20, 0.96));
   border: 1px solid rgba(178, 255, 26, 0.22);
-  border-radius: 16px;
+  border-radius: 999px;   /* full capsule — the shape IS the design */
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 40px rgba(178, 255, 26, 0.06);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -28,15 +28,6 @@
   pointer-events: auto;
 }
 
-.dot {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 0 0 rgba(178, 255, 26, 0.5);
-  animation: livePulse 1.8s ease-out infinite;
-}
 @keyframes livePulse {
   0%   { box-shadow: 0 0 0 0  rgba(178, 255, 26, 0.5); }
   70%  { box-shadow: 0 0 0 10px rgba(178, 255, 26, 0); }
@@ -72,8 +63,8 @@
   background: #b2ff1a;
   color: #06121a;
   border: none;
-  border-radius: 10px;
-  padding: 9px 15px;
+  border-radius: 999px;   /* pill-in-capsule — green anchor on the right */
+  padding: 10px 18px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -94,7 +85,6 @@
 
 .close {
   flex: none;
-  align-self: flex-start;
   background: none;
   border: none;
   color: rgba(195, 245, 255, 0.35);
@@ -116,9 +106,10 @@
     max-width: none;
     transform: translateY(-14px);
     gap: 10px;
-    padding: 12px 8px 12px 14px;
+    padding: 10px 8px 10px 18px;
+    border-radius: 28px;   /* capsule reads too tight full-width — soft pill instead */
   }
   .wrap.in { transform: translateY(0); }
-  .body { max-width: none; font-size: 12.5px; }
-  .cta { padding: 9px 12px; }
+  .body { max-width: none; font-size: 12px; }
+  .cta { padding: 9px 14px; }
 }

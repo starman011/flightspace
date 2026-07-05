@@ -30,13 +30,9 @@ export default function LiveNudge({ visible, onGoLive }) {
 
   return (
     <div className={`${styles.wrap} ${shown ? styles.in : ''}`} role="status" aria-live="polite">
-      <span className={styles.dot} />
       <div className={styles.text}>
         <p className={styles.title}>The skies are asleep</p>
-        <p className={styles.body}>
-          Flip on <b>Live</b> to watch thousands of real flights, ships and
-          satellites stream across the globe — right now, in real time.
-        </p>
+        <p className={styles.body}>Real flights, ships &amp; satellites — one tap away.</p>
       </div>
       <button className={styles.cta} onClick={onGoLive}>
         Go Live<span className={styles.ctaDot} />

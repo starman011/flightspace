@@ -56,7 +56,12 @@ export default async function middleware(request) {
   }
 
   const ua = request.headers.get('user-agent') || ''
-  if (!BOT_RE.test(ua)) return // pass through → vercel.json rewrite → SPA
+  const isBot = BOT_RE.test(ua)
+  // App-first routes: humans get the instant SPA (no edge-render latency or
+  // content flash on the flagship globe); crawlers still get rendered HTML.
+  // Every other matched route is true SSR — same HTML for everyone, the SPA
+  // scripts are injected and React takes over after first paint.
+  if (!isBot && (pathname === '/' || pathname === '/planes' || pathname === '/flight')) return
 
   if (parts[0] === 'flight' && parts[1]) {
     return renderFlight(parts[1])
@@ -1838,8 +1843,31 @@ function ogImageUrl(title, subtitle, badge) {
   return `${SITE}/api/og?${p.toString()}`
 }
 
-function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
+// ── SPA asset tags — fetched from the deployed shell, cached per edge isolate ──
+// Vite hashes bundle names each deploy; reading them from the live /index.html
+// keeps SSR pages pointing at the current bundles without a build-time coupling.
+let _spaAssets = { tags: '', at: 0 }
+async function spaAssets() {
+  if (_spaAssets.tags && Date.now() - _spaAssets.at < 300_000) return _spaAssets.tags
+  try {
+    const res = await fetch(`${SITE}/index.html`, { headers: { 'x-mw-internal': '1' } })
+    if (!res.ok) return _spaAssets.tags
+    const shell = await res.text()
+    const tags = [
+      ...(shell.match(/<link rel="stylesheet"[^>]*>/g) || []),
+      ...(shell.match(/<link rel="modulepreload"[^>]*>/g) || []),
+      ...(shell.match(/<script type="module"[^>]*><\/script>/g) || []),
+    ].join('\n  ')
+    if (tags) _spaAssets = { tags, at: Date.now() }
+  } catch (_) { /* SSR page still works as a plain document */ }
+  return _spaAssets.tags
+}
+
+async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
   const ogImg = ogImageOverride || ogImageUrl(title, desc, ogBadge)
+  const assets = await spaAssets()
+  // SSR content and its styles live INSIDE #root, so React's first render
+  // sweeps them away when the app takes over. Nothing leaks into app styling.
   return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1862,25 +1890,31 @@ function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
   <meta name="twitter:description" content="${esc(desc)}" />
   <meta name="twitter:image"      content="${esc(ogImg)}" />
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <style>
-    body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:24px 16px;background:#050a0f;color:#e8f4ff}
-    a{color:#b2ff1a}h1{font-size:1.5rem;margin:0 0 8px}h2{font-size:1rem;margin:24px 0 8px;color:#b2ff1a}
-    p{color:rgba(200,220,240,.75);line-height:1.6}
-    table{border-collapse:collapse;width:100%;margin-bottom:20px}
-    th,td{padding:7px 11px;text-align:left;border:1px solid rgba(255,255,255,.08);font-size:.875rem}
-    th{background:rgba(255,255,255,.05);font-weight:600}
-    .cta{display:inline-block;margin-top:12px;padding:11px 22px;background:#b2ff1a;color:#000;font-weight:700;border-radius:8px;text-decoration:none}
-    nav{margin-bottom:18px;font-size:.85rem}
-  </style>
+  <style>body{background:#050a0f;margin:0}</style>
+  ${assets}
 </head>
 <body>
-  <nav><a href="${SITE}">← ObjectTracer</a></nav>
-  <main>${body}</main>
+  <div id="root">
+    <div class="ssr">
+      <style>
+        .ssr{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:24px 16px;color:#e8f4ff;min-height:100dvh}
+        .ssr a{color:#b2ff1a}.ssr h1{font-size:1.5rem;margin:0 0 8px}.ssr h2{font-size:1rem;margin:24px 0 8px;color:#b2ff1a}
+        .ssr p{color:rgba(200,220,240,.75);line-height:1.6}
+        .ssr table{border-collapse:collapse;width:100%;margin-bottom:20px}
+        .ssr th,.ssr td{padding:7px 11px;text-align:left;border:1px solid rgba(255,255,255,.08);font-size:.875rem}
+        .ssr th{background:rgba(255,255,255,.05);font-weight:600}
+        .ssr .cta{display:inline-block;margin-top:12px;padding:11px 22px;background:#b2ff1a;color:#000;font-weight:700;border-radius:8px;text-decoration:none}
+        .ssr nav{margin-bottom:18px;font-size:.85rem}
+      </style>
+      <nav><a href="${SITE}">← ObjectTracer</a></nav>
+      <main>${body}</main>
+    </div>
+  </div>
 </body>
 </html>`, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=60, stale-while-revalidate=30',
+      'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=30',
       'x-robots-tag': 'index, follow',
     },
   })
