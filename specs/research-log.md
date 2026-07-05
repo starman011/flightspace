@@ -111,3 +111,40 @@ $0 cost, no external API, uses data already flowing through the system.
 **Protection:** `CommandCenterOverlay.test.jsx` — asserts the hidden overlay never uses `display:none` and uses `visibility:hidden` (Article V / IX §9.1 step 6).
 
 **Sources:** MDN `animation` (display:none resets animations), MDN `visibility`, CSS Display Module Level 3.
+
+---
+
+## 6. SEO: CTR & Indexing Research (2026-07-05)
+
+**Questions:** Is UA-based bot rendering safe? How do programmatic pages escape
+"Discovered — currently not indexed"? Does lastmod matter? Do FAQ rich results still show?
+
+**Findings:**
+- **Dynamic rendering**: Google deprecated it as a *recommendation* ("workaround,
+  not long-term solution") but explicitly says there's no rush to migrate and it
+  won't become unsupported. Direction of travel: serve the same server-rendered
+  content to everyone (SSR/SSG). Our middleware approach keeps working (990 pages
+  indexed prove it); long-term roadmap item is serving bot HTML to all UAs.
+- **Discovered-not-indexed**: cause is bulk-published pages reachable only from
+  the sitemap. Fix is link topology: hub → category → detail, every page reachable
+  from an already-indexed page via plain HTML links — exactly the rotation
+  interlinking shipped in 65b0110/c6b6128. Also: zero-search-demand thin pages
+  dilute crawl budget → candidates for sitemap pruning (the 657 asteroid snapshot
+  URLs are the obvious case).
+- **lastmod**: Google either fully trusts (if verifiably accurate) or fully
+  ignores it. Our bulk-identical 2026-06-01/02 dates are ignored — harmless, but
+  fake-refreshing them would do nothing. Leave as is; make dates real if we ever
+  regenerate the sitemap programmatically.
+- **FAQ rich results: deprecated by Google in May 2026** (after being restricted
+  to gov/health since 2023). FAQPage JSON-LD no longer produces SERP rich results
+  for anyone; markup is still parsed for content understanding. Keep the FAQ text
+  (body content value), expect no CTR lift from the schema. BreadcrumbList remains
+  eligible.
+
+**Sources:** developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering,
+searchengineland.com/google-no-longer-recommends-using-dynamic-rendering-387054,
+searchenginejournal.com/google-no-rush-to-switch-away-from-dynamic-rendering,
+onely.com "How to fix Discovered currently not indexed", seomatic.ai programmatic
+SEO mistakes, seroundtable.com/google-lastmod-date-seo-hack-39318,
+getpassionfruit.com "Google drops FAQ rich results" (May 2026),
+developers.google.com/search/blog/2023/08/howto-faq-changes.
