@@ -1498,7 +1498,13 @@ function renderHome() {
   <div id="root">
     <div class="ssr">
       <style>
-        .ssr{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:32px 20px;color:#e8f4ff;min-height:100dvh}
+        .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
+        .ssr .boot{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+        .ssr .boot-mark{display:flex;align-items:center;gap:10px;font-family:ui-monospace,monospace;font-weight:700;font-size:24px;letter-spacing:.04em;color:#fff}
+        .ssr .boot-dot{width:10px;height:10px;border-radius:50%;background:#b2ff1a;box-shadow:0 0 12px #b2ff1a;animation:ssrPulse 1.6s ease-out infinite}
+        .ssr .boot-sub{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(178,255,26,.6);max-width:82vw;text-align:center}
+        @keyframes ssrPulse{0%,100%{opacity:1}50%{opacity:.35}}
+        .ssr .doc{max-width:860px;margin:0 auto;padding:32px 20px}
         .ssr a{color:#b2ff1a;text-decoration:none}.ssr h1{font-size:1.9rem;margin:0 0 12px}.ssr h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
         .ssr p{color:rgba(200,220,240,.72);line-height:1.6}
         .ssr .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#b2ff1a;color:#050a0f;font-weight:700;border-radius:8px}
@@ -1508,7 +1514,13 @@ function renderHome() {
         .ssr ul.cards li a span{color:rgba(200,220,240,.55);font-size:.82rem;line-height:1.4}
         .ssr p.links{line-height:2.2}
       </style>
-      <main>${body}</main>
+      <div class="boot">
+        <div class="boot-mark"><span class="boot-dot"></span>ObjectTracer</div>
+        <p class="boot-sub">Live flight &amp; space tracker — loading the globe</p>
+      </div>
+      <div class="doc">
+        <main>${body}</main>
+      </div>
     </div>
   </div>
 </body>
@@ -1904,7 +1916,16 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
   <div id="root">
     <div class="ssr">
       <style>
-        .ssr{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:24px 16px;color:#e8f4ff;min-height:100dvh}
+        .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
+        /* First viewport: branded boot screen — humans see this for the moment
+           React takes to mount; the article content sits below the fold for
+           crawlers, reader mode, and anyone who scrolls before the app boots. */
+        .ssr .boot{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+        .ssr .boot-mark{display:flex;align-items:center;gap:10px;font-family:ui-monospace,monospace;font-weight:700;font-size:22px;letter-spacing:.04em;color:#fff}
+        .ssr .boot-dot{width:10px;height:10px;border-radius:50%;background:#b2ff1a;box-shadow:0 0 12px #b2ff1a;animation:ssrPulse 1.6s ease-out infinite}
+        .ssr .boot-sub{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(178,255,26,.6);max-width:82vw;text-align:center}
+        @keyframes ssrPulse{0%,100%{opacity:1}50%{opacity:.35}}
+        .ssr .doc{max-width:800px;margin:0 auto;padding:24px 16px}
         .ssr a{color:#b2ff1a}.ssr h1{font-size:1.5rem;margin:0 0 8px}.ssr h2{font-size:1rem;margin:24px 0 8px;color:#b2ff1a}
         .ssr p{color:rgba(200,220,240,.75);line-height:1.6}
         .ssr table{border-collapse:collapse;width:100%;margin-bottom:20px}
@@ -1913,8 +1934,14 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
         .ssr .cta{display:inline-block;margin-top:12px;padding:11px 22px;background:#b2ff1a;color:#000;font-weight:700;border-radius:8px;text-decoration:none}
         .ssr nav{margin-bottom:18px;font-size:.85rem}
       </style>
-      <nav><a href="${SITE}">← ObjectTracer</a></nav>
-      <main>${body}</main>
+      <div class="boot">
+        <div class="boot-mark"><span class="boot-dot"></span>ObjectTracer</div>
+        <p class="boot-sub">${esc(title)}</p>
+      </div>
+      <div class="doc">
+        <nav><a href="${SITE}">← ObjectTracer</a></nav>
+        <main>${body}</main>
+      </div>
     </div>
   </div>
 </body>
