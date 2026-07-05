@@ -1,173 +1,238 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './ArchitectureExplorer.module.css'
 
-// ── Layer taxonomy — one color per architectural layer ────────────────────
+// ── Layer taxonomy — the classic backend layering, one color each ──────────
+// This codebase is stdlib-first (constitution Art. II §2.3): the SERVICE and
+// REPOSITORY responsibilities live INLINE in the controller file rather than
+// in separate classes. The walkthrough still labels those steps so you can
+// see which lines of the controller are playing which architectural role.
 const LAYERS = {
-  client:     { label: 'CLIENT',      hue: '#7dd3fc' },
-  router:     { label: 'ROUTER',      hue: '#c4b5fd' },
-  middleware: { label: 'MIDDLEWARE',  hue: '#fbbf24' },
-  controller: { label: 'CONTROLLER',  hue: '#b2ff1a' },
-  worker:     { label: 'WORKER',      hue: '#f0abfc' },
-  postgres:   { label: 'POSTGRES',    hue: '#60a5fa' },
-  redis:      { label: 'REDIS',       hue: '#f87171' },
-  external:   { label: 'EXTERNAL',    hue: '#fb923c' },
-  websocket:  { label: 'WEBSOCKET',   hue: '#34d399' },
-  response:   { label: 'RESPONSE',    hue: '#e2e8f0' },
+  client:     { label: 'CLIENT',     hue: '#7dd3fc', tip: 'Browser code — React components, fetch calls' },
+  network:    { label: 'NETWORK',    hue: '#94a3b8', tip: 'What HTTP itself does between browser and server' },
+  router:     { label: 'ROUTER',     hue: '#c4b5fd', tip: 'Matches method + URL to a handler function' },
+  middleware: { label: 'MIDDLEWARE', hue: '#fbbf24', tip: 'Wraps handlers — runs before them (rate limit, auth, CORS)' },
+  controller: { label: 'CONTROLLER', hue: '#b2ff1a', tip: 'Handler: parses the request, orchestrates, writes the response' },
+  service:    { label: 'SERVICE',    hue: '#5eead4', tip: 'Business rules — validation, decisions (inline here)' },
+  repository: { label: 'REPOSITORY', hue: '#60a5fa', tip: 'The code that talks to the database (inline here, via pgx)' },
+  postgres:   { label: 'POSTGRES',   hue: '#818cf8', tip: 'The database engine itself' },
+  redis:      { label: 'REDIS',      hue: '#f87171', tip: 'In-memory store — hot state, counters' },
+  external:   { label: 'EXTERNAL',   hue: '#fb923c', tip: 'Third-party APIs (Resend, NASA, adsb.lol)' },
+  worker:     { label: 'WORKER',     hue: '#f0abfc', tip: 'Background goroutine — no HTTP request involved' },
+  websocket:  { label: 'WEBSOCKET',  hue: '#34d399', tip: 'Persistent 2-way connection — server pushes' },
+  response:   { label: 'RESPONSE',   hue: '#e2e8f0', tip: 'The journey back — status code, JSON, UI update' },
 }
 
-// ── Feature flows — every file, function and query is real (from the repo) ──
+// ── Feature flows — every file, function, query and code line is real ──────
 const FLOWS = [
   {
     id: 'contact',
     name: 'Contact form',
-    tagline: 'User sends a message from /contact',
+    tagline: 'Full journey: a click → Postgres row → email — 11 stops',
     steps: [
       { layer: 'client', file: 'frontend/src/components/StaticPages/ContactPage.jsx',
-        fn: 'onSubmit()',
-        desc: 'User types name, email, message and hits Send. The component fires fetch(POST /api/v1/contact) with the form JSON.' },
+        fn: 'The click',
+        code: `fetch(API + '/api/v1/contact', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ name, email, message }),\n})`,
+        desc: 'The Send button\'s onClick gathers the three state variables the user typed and serializes them to a JSON string. fetch() hands that to the browser\'s network stack. Nothing about the backend exists in the frontend except this URL contract.' },
+      { layer: 'network', file: 'the browser + api.objecttracer.com',
+        fn: 'HTTP POST crosses the wire',
+        code: `POST /api/v1/contact HTTP/2\nHost: api.objecttracer.com\nContent-Type: application/json\n\n{"name":"…","email":"…","message":"…"}`,
+        desc: 'The frontend (Vercel) and backend (Railway) are different origins, so the browser enforces CORS: for this content type it first sends an OPTIONS preflight asking "may I POST here?". The cors.go middleware answers with Access-Control-Allow-Origin, and only then does the real POST fly.' },
       { layer: 'router', file: 'backend/src/routes/index.go',
-        fn: 'mux.Handle("POST /api/v1/contact", …)',
-        desc: 'Go 1.22 pattern router matches method + path and hands the request to the wrapped handler chain.' },
+        fn: 'Route registration (happens once, at server boot)',
+        code: `mux.Handle("POST /api/v1/contact",\n  rateLimit(http.HandlerFunc(contact.Submit)))`,
+        desc: 'Go\'s net/http ServeMux is the router: a table from "METHOD /path" patterns to handler functions. Note the onion wrapping — rateLimit(...) takes the Submit handler and returns a NEW handler that runs its own code first. That\'s all middleware is: a function that eats a handler and returns a handler.' },
       { layer: 'middleware', file: 'backend/src/middlewares/ratelimit.go',
-        fn: 'RateLimit(rdb)',
-        desc: 'Per-IP counter in Redis. Over the limit → 429 and the request never reaches the controller.' },
+        fn: 'RateLimit(rdb) — the outer onion layer',
+        code: `ip := extractIP(r)\nkey := fmt.Sprintf("rate:%s", ip)\ncount, err := increment(r.Context(), rdb, key, rateLimitWindow)\nif err != nil { /* Redis down → 503, fail closed */ }`,
+        desc: 'Before Submit ever runs: extract the caller\'s IP, INCR a Redis counter keyed rate:{ip} with an expiry window. Over the limit → 429 Too Many Requests and the chain stops here. Detail worth stealing: if Redis is unreachable it fails CLOSED (503) — an attacker can\'t disable rate limiting by taking Redis down.' },
       { layer: 'controller', file: 'backend/src/controllers/contact.go',
-        fn: 'ContactController.Submit()',
-        desc: 'Validates the payload (name/email/message present, sane lengths). Bad input → 400 with a field error.' },
-      { layer: 'postgres', file: 'backend/src/db/postgres.go (pgx pool)',
-        fn: 'INSERT INTO contact_messages (name, email, message)',
-        desc: 'Message is persisted first — email delivery can fail, the database record cannot.' },
+        fn: 'ContactController.Submit(w, r) — parse the request',
+        code: `r.Body = http.MaxBytesReader(w, r.Body, 8192)\nvar body struct {\n  Name    string \`json:"name"\`\n  Email   string \`json:"email"\`\n  Message string \`json:"message"\`\n}\nif err := json.NewDecoder(r.Body).Decode(&body); err != nil {\n  utils.Error(w, http.StatusBadRequest, "invalid json")\n  return\n}`,
+        desc: 'Every Go handler has the same signature: (http.ResponseWriter, *http.Request). First defensive move: cap the body at 8KB so nobody posts a 2GB "message". Then decode the JSON straight into an anonymous struct — the struct tags map JSON keys to fields. Malformed JSON → 400 and we\'re done.' },
+      { layer: 'service', file: 'backend/src/controllers/contact.go (inline — same function)',
+        fn: 'Business rules: is this message acceptable?',
+        code: `email, err := utils.NormalizeEmail(body.Email)\nif err != nil { utils.Error(w, 400, "invalid email"); return }\nif len(body.Message) < 5  { utils.Error(w, 400, "message too short"); return }\nif len(body.Message) > 4000 { utils.Error(w, 400, "message too long"); return }`,
+        desc: 'This is the "service layer" — the business decisions — even though it isn\'t a separate class here (stdlib-first codebase, no ceremony). Trim whitespace, normalize the email, enforce 5–4000 chars. Each failure returns a specific 400 message the frontend can show. Rule of thumb: the controller parses, the service DECIDES.' },
+      { layer: 'repository', file: 'backend/src/controllers/contact.go (inline, via db/postgres.go pool)',
+        fn: 'Persist — the only line that knows SQL',
+        code: `cc.pool.Exec(r.Context(),\n  \`INSERT INTO contact_messages (name, email, message)\n   VALUES ($1, $2, $3)\`,\n  body.Name, email, body.Message)`,
+        desc: 'The repository role: translate "save this message" into SQL. cc.pool is a pgx connection pool created once at boot (db/postgres.go) — handlers borrow a connection and return it. The $1/$2/$3 placeholders are parameterized queries: user input NEVER gets concatenated into SQL, which kills SQL injection dead. r.Context() means if the client disconnects, the query gets cancelled too.' },
+      { layer: 'postgres', file: 'Postgres (Neon)',
+        fn: 'The database engine does its job',
+        code: `INSERT 0 1  -- one row written, WAL-logged, durable`,
+        desc: 'Postgres parses the statement, plans it, writes the row plus a write-ahead-log entry so the data survives a crash. When Exec returns without error, the message is durably stored — this is the moment the feature has "worked" even if everything after fails.' },
       { layer: 'external', file: 'backend/src/controllers/contact.go',
-        fn: 'sendContactEmail() → POST api.resend.com/emails',
-        desc: 'Fire-and-forget goroutine notifies the admin inbox via Resend. Errors are logged, never surfaced to the user.' },
-      { layer: 'response', file: 'ContactPage.jsx',
-        fn: '200 → "Message sent"',
-        desc: 'The row now appears in /admin under the Contact form tab (AdminController.ListMessages).' },
+        fn: 'go sendContactEmail(…) — side effect, off the critical path',
+        code: `go sendContactEmail(body.Name, email, body.Message)\n// inside: POST https://api.resend.com/emails\n// errors are logged, never returned to the user`,
+        desc: 'The go keyword launches a goroutine — the email notification to the admin runs concurrently and the HTTP response does NOT wait for Resend. Deliberate ordering: DB write first (must succeed), email second (nice to have). If Resend is down the user still gets a success — the message is safe in Postgres.' },
+      { layer: 'response', file: 'backend/src/utils → ContactPage.jsx',
+        fn: 'The journey back',
+        code: `utils.JSON(w, http.StatusOK, map[string]string{"status": "sent"})\n// browser: res.ok → setState('sent')`,
+        desc: 'The controller serializes {"status":"sent"} with a 200, the middleware chain unwinds (rate-limit headers already set), the browser\'s fetch promise resolves, and React swaps the form for a success state. Total round trip: ~100-200ms, one Redis INCR, one Postgres INSERT.' },
+      { layer: 'client', file: 'frontend/src/components/AdminPage/AdminPage.jsx',
+        fn: 'Epilogue — where the message surfaces',
+        code: `GET /api/v1/admin/messages  → AdminController.ListMessages()\nSELECT … FROM contact_messages ORDER BY created_at DESC`,
+        desc: 'Later, the admin inbox reads the same table through its own guarded path (AuthRequired middleware + isAdmin email check). One table, two flows: the public write path you just walked, and the private read path.' },
     ],
   },
   {
     id: 'live-aircraft',
     name: 'Live aircraft on the globe',
-    tagline: 'The always-on pipeline behind the 3D view',
+    tagline: 'No request at all — a worker pipeline pushes to you',
     steps: [
-      { layer: 'external', file: 'adsb.lol open data feed',
-        fn: 'Poller.fetchAdsbLol() — every 5s',
-        desc: 'Background worker pulls the global ADS-B state: thousands of aircraft with position, altitude, speed, callsign.' },
       { layer: 'worker', file: 'backend/src/controllers/poller.go',
-        fn: 'parseAdsbAircraft() → storeInRedis()',
-        desc: 'Raw feed is normalized into LiveAircraft models, then pipelined into Redis with HSET aircraft:live per ICAO24.' },
-      { layer: 'redis', file: 'backend/src/db/redis.go',
-        fn: 'HSET aircraft:live — hot state, 30s TTL semantics',
-        desc: 'Redis is the single source of "right now". removeStale() drops aircraft silent for 120s.' },
-      { layer: 'postgres', file: 'backend/src/controllers/poller.go',
-        fn: 'storePositions() / storeTrails() / archiveTrails()',
-        desc: 'Positions append to Postgres for the 24h trail history and playback scrubber — warm data tier.' },
+        fn: 'Poller.Start() — a loop, not a handler',
+        code: `ticker := time.NewTicker(5 * time.Second)\nfor { <-ticker.C; p.poll(ctx, &backoff) }`,
+        desc: 'This flow inverts everything: no user clicks anything. A goroutine started at server boot wakes every 5 seconds. Workers like this are how you handle data that changes whether or not anyone is watching.' },
+      { layer: 'external', file: 'adsb.lol open ADS-B network',
+        fn: 'Poller.fetchAdsbLol()',
+        code: `GET https://api.adsb.lol/v2/…  → thousands of aircraft\nparseAdsbAircraft(raw) → []models.LiveAircraft`,
+        desc: 'One upstream fetch per tick returns the world\'s ADS-B picture. parseAdsbAircraft normalizes the vendor\'s shape into our own model struct — never let a third party\'s JSON schema leak into your domain; when the vendor changes, only the parser changes.' },
+      { layer: 'redis', file: 'backend/src/controllers/poller.go → db/redis.go',
+        fn: 'storeInRedis() — the hot tier',
+        code: `pipe := rdb.Pipeline()\nfor _, a := range aircraft {\n  pipe.HSet(ctx, "aircraft:live", a.ID, jsonBytes)\n}\npipe.Exec(ctx)`,
+        desc: 'All writes go through one pipelined round trip instead of 12,000 individual commands. Redis holds only "right now" — removeStale() deletes aircraft silent for 120s. Search, fleet queries and the WebSocket hub all read this single hash.' },
+      { layer: 'repository', file: 'backend/src/controllers/poller.go',
+        fn: 'storePositions() / storeTrails() — the warm tier',
+        code: `INSERT INTO positions (icao24, lat, lon, alt, ts) VALUES …\n-- append-only; historical positions are never mutated`,
+        desc: 'The same tick also appends to Postgres for the 24h trail history and playback. Two stores, two jobs: Redis answers "where is it now?", Postgres answers "where has it been?" (constitution Art. VIII data tiers).' },
       { layer: 'websocket', file: 'backend/src/controllers/ws_hub.go',
-        fn: 'Hub.Run() — 5s ticker → broadcast()',
-        desc: 'Hub diffs current state vs lastState and pushes deltas to every connected client; new clients get a full snapshot first (sendSnapshot).' },
-      { layer: 'client', file: 'frontend/src/hooks/useWebSocket.js → useAircraft.js',
-        fn: 'onSnapshot / onDelta',
-        desc: 'The aircraft Map updates, Globe.jsx writes new positions into the InstancedMesh — one draw call for 12K planes, interpolated between ticks.' },
+        fn: 'Hub.Run() — the broadcaster',
+        code: `case <-ticker.C:   // every 5s\n  h.broadcast(ctx)  // diff vs h.lastState → send deltas\n// new client? sendSnapshot(c) — full state once`,
+        desc: 'The Hub keeps every open WebSocket in a map. Each tick it diffs current Redis state against what it last sent and pushes only the CHANGES. New connections get one full snapshot first. Snapshot+delta is the standard trick for real-time feeds — full state is too big to resend every 5s.' },
+      { layer: 'client', file: 'frontend/src/hooks/useWebSocket.js → useAircraft.js → Globe.jsx',
+        fn: 'onSnapshot / onDelta → InstancedMesh',
+        code: `aircraft.set(delta.id, updated)   // Map, not array\nplaneMesh.setMatrixAt(slot, matrix)  // one GPU buffer write`,
+        desc: 'The browser merges deltas into a Map keyed by ICAO24, and the render loop writes new matrices into the InstancedMesh — 12,000 planes, one draw call, positions interpolated between ticks so motion looks continuous.' },
     ],
   },
   {
     id: 'search',
     name: 'Flight search',
-    tagline: 'Typing a callsign in the search bar',
+    tagline: 'Read path: Redis only, no SQL anywhere',
     steps: [
       { layer: 'client', file: 'frontend/src/components/SearchBar/SearchBar.jsx',
-        fn: 'search() — 300ms debounce',
-        desc: 'Local airport list matches instantly; live flights go to GET /api/v1/aircraft/search?q=.' },
+        fn: 'Debounced input',
+        code: `clearTimeout(debounceRef.current)\ndebounceRef.current = setTimeout(async () => {\n  fetch(\`/api/v1/aircraft/search?q=\${q}&limit=8\`)\n}, 300)`,
+        desc: 'Every keystroke resets a 300ms timer; only when you pause does the request fire. Without this, typing "emirates" would fire 8 requests. Local airport matching happens instantly from a bundled list — only live flights need the server.' },
       { layer: 'router', file: 'backend/src/routes/index.go',
-        fn: 'rateLimit(authOpt(aircraft.Search))',
-        desc: 'Handler chain: rate limit, then optional auth — search works logged-out, but a valid JWT attaches the user.' },
+        fn: 'Two middleware layers this time',
+        code: `mux.Handle("GET /api/v1/aircraft/search",\n  rateLimit(authOpt(http.HandlerFunc(aircraft.Search))))`,
+        desc: 'Read the wrapping inside-out: the handler is wrapped by authOpt, which is wrapped by rateLimit. Request order is therefore rateLimit → authOpt → Search. Order matters: you want to reject flooders before doing JWT crypto.' },
       { layer: 'middleware', file: 'backend/src/middlewares/auth.go',
         fn: 'AuthOptional(jwtSecret)',
-        desc: 'Parses the Bearer token if present; invalid tokens don\'t block the request, they just mean anonymous.' },
+        code: `token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")\n// valid → user claims into r.Context(); invalid → continue anonymous`,
+        desc: 'Optional auth parses the JWT if present and stuffs the user into the request context — but never blocks. Search works logged out. Compare AuthRequired on admin routes, which 401s instead. Same file, two policies.' },
       { layer: 'controller', file: 'backend/src/controllers/aircraft.go',
-        fn: 'AircraftController.Search()',
-        desc: 'HGETALL the Redis live set, score every aircraft (exact callsign 100, prefix 50, contains 10), derive airline_iata from the callsign prefix map.' },
+        fn: 'AircraftController.Search() — validate, then score',
+        code: `q := strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("q")))\nif q == "" { utils.Error(w, 400, "query parameter 'q' is required") }\nif len(q) > 100 { utils.Error(w, 400, "query too long") }`,
+        desc: 'Query params get the same distrust as JSON bodies: required, length-capped, normalized to uppercase once so every comparison downstream is cheap.' },
       { layer: 'redis', file: 'aircraft:live hash',
-        fn: 'HGetAll → in-memory scoring',
-        desc: 'No SQL involved — search only ever sees aircraft that are airborne right now.' },
+        fn: 'The whole dataset in one call',
+        code: `raw, _ := ac.rdb.HGetAll(ctx, "aircraft:live")\n// ~12K entries → unmarshal → score in a plain loop`,
+        desc: 'HGETALL pulls every live aircraft; the controller scores matches in memory: exact callsign = 100, prefix = 50, contains = 10, then sorts and slices. Searching only what\'s airborne right now means Redis IS the index — no SQL, no Elasticsearch, nothing to keep in sync.' },
+      { layer: 'service', file: 'backend/src/controllers/aircraft.go (inline)',
+        fn: 'Enrichment before the response',
+        code: `if iata, ok := data.AirlineICAOtoIATA[callsign[:3]]; ok {\n  sr.AirlineIATA = &iata\n}`,
+        desc: 'A pure in-memory map lookup turns the callsign prefix (UAE…) into the IATA code (EK) that the frontend needs for the logo CDN. Enrichment lives server-side so the client never bundles the OpenFlights dataset.' },
       { layer: 'response', file: 'SearchBar.jsx',
-        fn: 'results[] → dropdown',
-        desc: 'Rows render with the airline logo (pics.avs.io), type and altitude; clicking one selects the flight on the globe.' },
+        fn: '200 → dropdown',
+        code: `{"results":[{"icao24":"…","callsign":"UAE202",\n  "airline_iata":"EK","altitude":38000,…}]}`,
+        desc: 'React maps results to rows — airline logo, callsign, type, altitude. Click one → setSelectedIcao24 → the globe flies to the plane. The search response and the click handler share nothing but the icao24 string.' },
     ],
   },
   {
     id: 'admin-reply',
     name: 'Admin replies to a message',
-    tagline: 'From the /admin inbox to the user\'s inbox',
+    tagline: 'Auth vs authorization — two different gates',
     steps: [
       { layer: 'client', file: 'frontend/src/components/AdminPage/AdminPage.jsx',
-        fn: 'POST /api/v1/admin/messages/{id}/reply',
-        desc: 'Reply body sent with the Bearer session token from the signed-in Google account.' },
+        fn: 'Authenticated request',
+        code: `fetch(\`/api/v1/admin/messages/\${id}/reply\`, {\n  method: 'POST',\n  headers: { Authorization: \`Bearer \${sessionToken}\` },\n  body: JSON.stringify({ body: reply }),\n})`,
+        desc: 'The Bearer token is the JWT issued at Google sign-in. It travels in a header on every admin call — the server holds no session memory (stateless auth): everything needed to verify you is inside the signed token.' },
       { layer: 'middleware', file: 'backend/src/middlewares/auth.go',
-        fn: 'AuthRequired(jwtSecret)',
-        desc: 'No valid JWT → 401 before any admin code runs.' },
-      { layer: 'controller', file: 'backend/src/controllers/admin.go',
-        fn: 'isAdmin() → Reply()',
-        desc: 'Second gate: the JWT\'s email must equal ADMIN_EMAIL. Auth alone is not authorization.' },
-      { layer: 'external', file: 'backend/src/controllers/admin.go',
-        fn: 'POST api.resend.com/emails',
-        desc: 'Reply is delivered via Resend (send-scope API key; reading inbound mail needs the separate RESEND_READ_API_KEY).' },
-      { layer: 'postgres', file: 'contact_messages table',
-        fn: 'UPDATE … SET replied_at = NOW(), reply_body = $2',
-        desc: 'Thread state persists — the inbox shows the message as replied with the stored body.' },
+        fn: 'AuthRequired(jwtSecret) — gate #1: who are you?',
+        code: `claims, err := jwt.Parse(token, secret)\nif err != nil { utils.Error(w, 401, "unauthorized"); return }`,
+        desc: 'Verifies the token\'s signature with the server\'s secret and checks expiry. Tampered or stale token → 401 before any admin code runs. This answers identity — it does NOT answer permission.' },
+      { layer: 'service', file: 'backend/src/controllers/admin.go',
+        fn: 'isAdmin() — gate #2: are you ALLOWED?',
+        code: `func (ac *AdminController) isAdmin(r *http.Request) bool {\n  // JWT email must equal the ADMIN_EMAIL env var\n}`,
+        desc: 'Authorization is a business rule, so it lives with the business logic: any valid signed-in user passes gate #1, but only the allowlisted email passes gate #2. Confusing these two gates is a classic security bug — authentication is not authorization.' },
+      { layer: 'external', file: 'backend/src/controllers/admin.go → Reply()',
+        fn: 'Send the reply via Resend',
+        code: `POST https://api.resend.com/emails\nAuthorization: Bearer RESEND_API_KEY   // send-scope key`,
+        desc: 'Unlike the contact flow, here the email IS the feature — so it runs on the critical path and its failure becomes an error response. War story encoded in the env: send-scope keys can\'t READ mail; importing inbound email needs the separate RESEND_READ_API_KEY.' },
+      { layer: 'repository', file: 'contact_messages table',
+        fn: 'Record the thread state',
+        code: `UPDATE contact_messages\nSET replied_at = NOW(), reply_body = $2,\n    read_at = COALESCE(read_at, NOW())\nWHERE id = $1`,
+        desc: 'COALESCE(read_at, NOW()) is a nice micro-pattern: set read_at only if it\'s still NULL — replying implies reading, without stomping an earlier timestamp.' },
+      { layer: 'response', file: 'AdminPage.jsx',
+        fn: '200 → inbox updates',
+        code: `setItems(items => items.map(m =>\n  m.id === id ? { ...m, replied_at: new Date().toISOString() } : m))`,
+        desc: 'The UI updates optimistically from the response instead of refetching the whole list — one less round trip, same end state.' },
     ],
   },
   {
     id: 'journal',
     name: 'Space Journal post',
-    tagline: 'How a NASA APOD becomes a crawlable page',
+    tagline: 'Write path is a worker; read path is cached SQL + SSR',
     steps: [
       { layer: 'worker', file: 'backend/src/controllers/blog_poller.go',
-        fn: 'daily APOD fetch',
-        desc: 'Worker pulls NASA\'s Astronomy Picture of the Day and INSERTs a row into blog_posts (slug, title, intro, explanation, image).' },
+        fn: 'Daily APOD ingestion',
+        code: `GET https://api.nasa.gov/planetary/apod?api_key=…\nINSERT INTO blog_posts (slug, date, title, intro,\n  explanation, image_url, …)`,
+        desc: 'A scheduled worker turns NASA\'s Astronomy Picture of the Day into a row in blog_posts. The slug (2026-07-04-pathfinder-on-mars) is derived from date + title and becomes the permanent URL.' },
       { layer: 'router', file: 'backend/src/routes/index.go',
-        fn: 'GET /api/v1/blog/{slug}',
-        desc: 'Public, rate-limited endpoint serving one post.' },
-      { layer: 'controller', file: 'backend/src/controllers/blog_controller.go',
-        fn: 'GetBlogPost() — Cache-Control 300s',
-        desc: 'Single Postgres SELECT by slug; 5-minute CDN caching keeps repeat hits off the database.' },
+        fn: 'Public read endpoint',
+        code: `mux.Handle("GET /api/v1/blog/{slug}",\n  rateLimit(http.HandlerFunc(blog.GetBlogPost)))`,
+        desc: 'Go 1.22 path parameters: {slug} in the pattern, r.PathValue("slug") in the handler. No third-party router needed.' },
+      { layer: 'repository', file: 'backend/src/controllers/blog_controller.go',
+        fn: 'GetBlogPost() — one SELECT, then cache headers',
+        code: `SELECT slug, date, title, intro, explanation, image_url, …\nFROM blog_posts WHERE slug = $1\n-- response: Cache-Control: public, max-age=300`,
+        desc: 'A single indexed lookup. The Cache-Control header means Vercel\'s edge and browsers can reuse the answer for 5 minutes — the DB sees a fraction of actual traffic. Caching at the HTTP layer beats caching in code: no invalidation logic to write.' },
       { layer: 'client', file: 'frontend/middleware.js (Vercel Edge)',
-        fn: 'renderBlogPost()',
-        desc: 'Crawlers get full server-rendered HTML: article, JSON-LD, related-post links (3 topic + 3 rotation + prev/next). Humans get the SPA view.' },
-      { layer: 'response', file: 'Googlebot',
-        fn: 'index → impressions',
-        desc: 'Every post links 6+ siblings, so the crawler can walk the whole journal without touching the sitemap.' },
+        fn: 'renderBlogPost() — SSR for everyone',
+        code: `const [pr, lr] = await Promise.all([\n  fetch(\`/api/v1/blog/\${slug}\`),\n  fetch('/api/v1/blog?limit=50'),   // for related links\n])`,
+        desc: 'The edge function fetches the post AND the archive list in parallel, renders full HTML (article, JSON-LD, 3 topic-related + 3 rotation-picked sibling links, prev/next), injects the SPA scripts, and serves the same document to crawlers and humans.' },
+      { layer: 'response', file: 'Googlebot / reader',
+        fn: 'Crawlable, linked, indexed',
+        code: `<h2>More from the Space Journal</h2>\n<ul class="cards">…6 sibling posts…</ul>`,
+        desc: 'Because every post links six siblings, a crawler entering anywhere can walk the entire journal — no post is a dead end reachable only from the sitemap.' },
     ],
   },
   {
     id: 'google-auth',
     name: 'Sign in with Google',
-    tagline: 'OAuth credential to app session',
+    tagline: 'Trust delegation: verify Google\'s signature, issue your own',
     steps: [
       { layer: 'client', file: 'frontend/src/components/Auth/AuthModal.jsx',
-        fn: 'POST /api/v1/auth/google { credential }',
-        desc: 'Google Identity Services hands the app an ID token after the account chooser.' },
-      { layer: 'middleware', file: 'backend/src/middlewares/ratelimit.go',
-        fn: 'RateLimit(rdb)',
-        desc: 'Auth endpoints are rate-limited but never require an existing session.' },
+        fn: 'Google hands you a credential',
+        code: `POST /api/v1/auth/google\n{ "credential": "eyJhbGciOiJSUzI1NiIs…" }`,
+        desc: 'Google Identity Services runs the account chooser and gives the page a signed ID token (a JWT signed by GOOGLE, not by us). The frontend forwards it — it can\'t verify anything itself; verification needs Google\'s public keys and must happen server-side.' },
       { layer: 'controller', file: 'backend/src/controllers/oauth.go',
-        fn: 'OAuthController.GoogleLogin()',
-        desc: 'Verifies the ID token signature and audience against Google\'s keys, then upserts the user by email.' },
-      { layer: 'postgres', file: 'users table',
-        fn: 'INSERT … ON CONFLICT (email) DO UPDATE',
-        desc: 'Anonymous session data migrates to the account — no data loss on first sign-in (Article III).' },
-      { layer: 'response', file: 'AuthModal.jsx → TopRightPill',
-        fn: 'JWT session token',
-        desc: 'golang-jwt signs the session; the avatar appears top-right and authed endpoints accept the Bearer token.' },
+        fn: 'OAuthController.GoogleLogin() — verify before trusting',
+        code: `payload, err := idtoken.Validate(ctx, credential, googleClientID)\n// checks: RSA signature vs Google's JWKS, expiry,\n// audience == OUR client ID`,
+        desc: 'Three checks, all mandatory: the signature proves Google issued it, the expiry proves it\'s fresh, and the audience check proves it was issued for THIS app — without it, a token stolen from any other Google-login site would work here.' },
+      { layer: 'repository', file: 'users table',
+        fn: 'Upsert the user',
+        code: `INSERT INTO users (email, name, avatar_url)\nVALUES ($1, $2, $3)\nON CONFLICT (email) DO UPDATE SET name = $2, avatar_url = $3`,
+        desc: 'ON CONFLICT makes first sign-in and returning sign-in the same statement — no "does this user exist?" race condition. The anonymous session\'s data migrates to the account (constitution Art. III: no data loss at sign-in).' },
+      { layer: 'service', file: 'backend/src/controllers/oauth.go (inline)',
+        fn: 'Issue OUR token',
+        code: `token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)\nsigned, _ := token.SignedString([]byte(jwtSecret))`,
+        desc: 'Google\'s token is swapped for the app\'s own JWT (email, user id, expiry) signed with the server secret. From here on, auth middleware only ever checks OUR signature — Google is out of the loop until the token expires.' },
+      { layer: 'response', file: 'AuthModal.jsx → TopRightPill.jsx',
+        fn: 'Session established',
+        code: `localStorage.setItem('session', token)\n// every later call: Authorization: Bearer <token>`,
+        desc: 'The avatar appears top-right, and every authed endpoint (watchlist, pinned launches, admin) reads identity from the Bearer header. Stateless: the server stores no sessions, restarts lose nothing.' },
     ],
   },
 ]
 
-const STEP_MS = 1400   // autoplay cadence per step
+const STEP_MS = 2600   // teaching pace — slower than the old 1.4s
 
 export default function ArchitectureExplorer() {
   const [flowId, setFlowId] = useState(FLOWS[0].id)
-  const [active, setActive] = useState(0)     // highest lit step
+  const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(true)
   const timerRef = useRef(null)
 
@@ -189,9 +254,20 @@ export default function ArchitectureExplorer() {
   return (
     <div className={styles.wrap}>
       <p className={styles.intro}>
-        Pick a feature and watch the request walk through the real architecture —
-        every file, function and query below exists in the repo.
+        Pick a feature and follow the request from the click to the database and
+        back. Every file, function, query and code line below is real. The badges
+        follow classic layering — in this stdlib-first codebase the SERVICE and
+        REPOSITORY roles live inline in the controller, and each step shows exactly
+        which lines play which role.
       </p>
+
+      <div className={styles.legend}>
+        {Object.values(LAYERS).map(l => (
+          <span key={l.label} className={styles.legendItem} style={{ '--hue': l.hue }} title={l.tip}>
+            {l.label}
+          </span>
+        ))}
+      </div>
 
       <div className={styles.picker}>
         {FLOWS.map(f => (
@@ -247,10 +323,11 @@ export default function ArchitectureExplorer() {
               </span>
               <div className={styles.card}>
                 <div className={styles.cardTop}>
-                  <span className={styles.layer}>{layer.label}</span>
+                  <span className={styles.layer} title={layer.tip}>{layer.label}</span>
                   <span className={styles.file}>{s.file}</span>
                 </div>
                 <p className={styles.fn}>{s.fn}</p>
+                {s.code && <pre className={styles.code}>{s.code}</pre>}
                 <p className={styles.desc}>{s.desc}</p>
               </div>
             </li>

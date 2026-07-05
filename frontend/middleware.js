@@ -57,11 +57,10 @@ export default async function middleware(request) {
 
   const ua = request.headers.get('user-agent') || ''
   const isBot = BOT_RE.test(ua)
-  // App-first routes: humans get the instant SPA (no edge-render latency or
-  // content flash on the flagship globe); crawlers still get rendered HTML.
-  // Every other matched route is true SSR — same HTML for everyone, the SPA
-  // scripts are injected and React takes over after first paint.
-  if (!isBot && (pathname === '/' || pathname === '/planes' || pathname === '/flight')) return
+  // App-first routes: humans get the instant SPA; crawlers still get rendered
+  // HTML. Everything else (including the homepage) is true SSR — same HTML for
+  // everyone, SPA scripts injected, React takes over after first paint.
+  if (!isBot && (pathname === '/planes' || pathname === '/flight')) return
 
   if (parts[0] === 'flight' && parts[1]) {
     return renderFlight(parts[1])
@@ -1471,8 +1470,10 @@ function renderHome() {
       satellites, rocket launches, asteroids, and galaxies — all in one place.
     </p>`
 
-  // Custom homepage HTML (richer than the html() helper — adds card styling)
-  return new Response(`<!DOCTYPE html>
+  // Custom homepage HTML (richer than the html() helper — adds card styling).
+  // Served to everyone: content inside #root/.ssr paints instantly, then the
+  // injected SPA scripts boot the globe and replace it.
+  return spaAssets().then(assets => new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1490,28 +1491,34 @@ function renderHome() {
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="${ogImageUrl(title, desc, 'REAL-TIME 3D GLOBE')}" />
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <style>
-    body{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:32px 20px;background:#050a0f;color:#e8f4ff}
-    a{color:#b2ff1a;text-decoration:none}h1{font-size:1.9rem;margin:0 0 12px}h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
-    p{color:rgba(200,220,240,.72);line-height:1.6}
-    .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#b2ff1a;color:#050a0f;font-weight:700;border-radius:8px}
-    ul.cards{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-    ul.cards li a{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.02)}
-    ul.cards li a strong{color:#fff;font-size:.98rem}
-    ul.cards li a span{color:rgba(200,220,240,.55);font-size:.82rem;line-height:1.4}
-    p.links{line-height:2.2}
-  </style>
+  <style>body{background:#050a0f;margin:0}</style>
+  ${assets}
 </head>
 <body>
-  <main>${body}</main>
+  <div id="root">
+    <div class="ssr">
+      <style>
+        .ssr{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:32px 20px;color:#e8f4ff;min-height:100dvh}
+        .ssr a{color:#b2ff1a;text-decoration:none}.ssr h1{font-size:1.9rem;margin:0 0 12px}.ssr h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
+        .ssr p{color:rgba(200,220,240,.72);line-height:1.6}
+        .ssr .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#b2ff1a;color:#050a0f;font-weight:700;border-radius:8px}
+        .ssr ul.cards{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+        .ssr ul.cards li a{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.02)}
+        .ssr ul.cards li a strong{color:#fff;font-size:.98rem}
+        .ssr ul.cards li a span{color:rgba(200,220,240,.55);font-size:.82rem;line-height:1.4}
+        .ssr p.links{line-height:2.2}
+      </style>
+      <main>${body}</main>
+    </div>
+  </div>
 </body>
 </html>`, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=600',
+      'cache-control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
       'x-robots-tag': 'index, follow',
     },
-  })
+  }))
 }
 
 // ── ISS renderer ─────────────────────────────────────────────────────────────
