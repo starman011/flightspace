@@ -1499,11 +1499,16 @@ function renderHome() {
     <div class="ssr">
       <style>
         .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
-        .ssr .boot{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-        .ssr .boot-mark{display:flex;align-items:center;gap:10px;font-family:ui-monospace,monospace;font-weight:700;font-size:24px;letter-spacing:.04em;color:#fff}
-        .ssr .boot-dot{width:10px;height:10px;border-radius:50%;background:#b2ff1a;box-shadow:0 0 12px #b2ff1a;animation:ssrPulse 1.6s ease-out infinite}
-        .ssr .boot-sub{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(178,255,26,.6);max-width:82vw;text-align:center}
-        @keyframes ssrPulse{0%,100%{opacity:1}50%{opacity:.35}}
+        .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
+        .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
+        .ssr .lw{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center}
+        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(178,255,26,.8);border-right-color:rgba(178,255,26,.15);animation:ssrSpin 1.4s linear infinite}
+        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(178,255,26,.35);animation:ssrSpinR 2.2s linear infinite}
+        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(178,255,26,.9);box-shadow:0 0 12px rgba(178,255,26,.6),0 0 30px rgba(178,255,26,.2);animation:ssrPulse 1.4s ease-in-out infinite}
+        .ssr .lname{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
+        @keyframes ssrSpin{to{transform:rotate(360deg)}}
+        @keyframes ssrSpinR{to{transform:rotate(-360deg)}}
+        @keyframes ssrPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
         .ssr .doc{max-width:860px;margin:0 auto;padding:32px 20px}
         .ssr a{color:#b2ff1a;text-decoration:none}.ssr h1{font-size:1.9rem;margin:0 0 12px}.ssr h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
         .ssr p{color:rgba(200,220,240,.72);line-height:1.6}
@@ -1515,8 +1520,10 @@ function renderHome() {
         .ssr p.links{line-height:2.2}
       </style>
       <div class="boot">
-        <div class="boot-mark"><span class="boot-dot"></span>ObjectTracer</div>
-        <p class="boot-sub">Live flight &amp; space tracker — loading the globe</p>
+        <div class="bootC">
+          <div class="lw"><div class="lring"></div><div class="ldot"></div></div>
+          <p class="lname">Object Tracer</p>
+        </div>
       </div>
       <div class="doc">
         <main>${body}</main>
@@ -1917,14 +1924,20 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
     <div class="ssr">
       <style>
         .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
-        /* First viewport: branded boot screen — humans see this for the moment
-           React takes to mount; the article content sits below the fold for
-           crawlers, reader mode, and anyone who scrolls before the app boots. */
-        .ssr .boot{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-        .ssr .boot-mark{display:flex;align-items:center;gap:10px;font-family:ui-monospace,monospace;font-weight:700;font-size:22px;letter-spacing:.04em;color:#fff}
-        .ssr .boot-dot{width:10px;height:10px;border-radius:50%;background:#b2ff1a;box-shadow:0 0 12px #b2ff1a;animation:ssrPulse 1.6s ease-out infinite}
-        .ssr .boot-sub{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(178,255,26,.6);max-width:82vw;text-align:center}
-        @keyframes ssrPulse{0%,100%{opacity:1}50%{opacity:.35}}
+        /* First viewport: exact replica of the app's LoadingScreen (orbital
+           ring + dot + wordmark) so the React handoff is invisible — same
+           splash before and after mount, no perceptible swap. Article content
+           sits below the fold for crawlers and reader mode. */
+        .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
+        .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
+        .ssr .lw{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center}
+        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(178,255,26,.8);border-right-color:rgba(178,255,26,.15);animation:ssrSpin 1.4s linear infinite}
+        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(178,255,26,.35);animation:ssrSpinR 2.2s linear infinite}
+        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(178,255,26,.9);box-shadow:0 0 12px rgba(178,255,26,.6),0 0 30px rgba(178,255,26,.2);animation:ssrPulse 1.4s ease-in-out infinite}
+        .ssr .lname{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
+        @keyframes ssrSpin{to{transform:rotate(360deg)}}
+        @keyframes ssrSpinR{to{transform:rotate(-360deg)}}
+        @keyframes ssrPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
         .ssr .doc{max-width:800px;margin:0 auto;padding:24px 16px}
         .ssr a{color:#b2ff1a}.ssr h1{font-size:1.5rem;margin:0 0 8px}.ssr h2{font-size:1rem;margin:24px 0 8px;color:#b2ff1a}
         .ssr p{color:rgba(200,220,240,.75);line-height:1.6}
@@ -1935,8 +1948,10 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
         .ssr nav{margin-bottom:18px;font-size:.85rem}
       </style>
       <div class="boot">
-        <div class="boot-mark"><span class="boot-dot"></span>ObjectTracer</div>
-        <p class="boot-sub">${esc(title)}</p>
+        <div class="bootC">
+          <div class="lw"><div class="lring"></div><div class="ldot"></div></div>
+          <p class="lname">Object Tracer</p>
+        </div>
       </div>
       <div class="doc">
         <nav><a href="${SITE}">← ObjectTracer</a></nav>
