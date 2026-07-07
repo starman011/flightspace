@@ -7,11 +7,11 @@
   transform: translateX(-50%) translateY(-14px);
   z-index: 60;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: stretch;           /* lets the green pill fill the capsule height */
+  gap: 12px;
   width: max-content;
-  max-width: 440px;
-  padding: 10px 16px 10px 10px;   /* pill leads the capsule; breathing room right */
+  max-width: 460px;
+  padding: 5px 5px 5px 20px;      /* tight right inset — pill sits flush in the curve */
   background: linear-gradient(180deg, rgba(12, 20, 30, 0.96), rgba(8, 13, 20, 0.96));
   border: 1px solid rgba(178, 255, 26, 0.22);
   border-radius: 999px;   /* full capsule — the shape IS the design */
@@ -37,7 +37,9 @@
 .text {
   display: flex;
   flex-direction: column;
+  justify-content: center;   /* wrap is stretch-aligned — recenter the copy */
   gap: 2px;
+  padding: 6px 0;
 }
 .title {
   font-family: var(--font-mono);
@@ -63,8 +65,9 @@
   background: #b2ff1a;
   color: #06121a;
   border: none;
-  border-radius: 999px;   /* pill-in-capsule — green anchor on the right */
-  padding: 10px 18px;
+  border-radius: 999px;   /* pill within the pill — engulfs the capsule's right end */
+  align-self: stretch;    /* full inner height, flush with the capsule curve */
+  padding: 0 22px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -85,6 +88,7 @@
 
 .close {
   flex: none;
+  align-self: center;
   background: none;
   border: none;
   color: rgba(195, 245, 255, 0.35);
@@ -106,10 +110,10 @@
     max-width: none;
     transform: translateY(-14px);
     gap: 10px;
-    padding: 10px 12px 10px 8px;   /* pill leads on mobile too */
+    padding: 4px 4px 4px 16px;     /* engulfed pill on mobile too */
     border-radius: 28px;   /* capsule reads too tight full-width — soft pill instead */
   }
   .wrap.in { transform: translateY(0); }
   .body { max-width: none; font-size: 12px; }
-  .cta { padding: 9px 14px; }
+  .cta { padding: 0 16px; border-radius: 24px; }
 }

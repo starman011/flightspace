@@ -30,14 +30,14 @@ export default function LiveNudge({ visible, onGoLive }) {
 
   return (
     <div className={`${styles.wrap} ${shown ? styles.in : ''}`} role="status" aria-live="polite">
-      <button className={styles.cta} onClick={onGoLive}>
-        <span className={styles.ctaDot} />Go Live
-      </button>
       <div className={styles.text}>
         <p className={styles.title}>The skies are asleep</p>
         <p className={styles.body}>Real flights, ships &amp; satellites — one tap away.</p>
       </div>
       <button className={styles.close} onClick={dismiss} aria-label="Dismiss">×</button>
+      <button className={styles.cta} onClick={onGoLive}>
+        Go Live<span className={styles.ctaDot} />
+      </button>
     </div>
   )
 }
