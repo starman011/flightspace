@@ -1495,9 +1495,11 @@ function renderHome() {
   ${assets}
 </head>
 <body>
-  <div id="root">
+  <div id="root"></div>
+  <div id="ssr-shell">
     <div class="ssr">
       <style>
+        #ssr-shell{position:fixed;inset:0;z-index:99999;overflow:auto;background:#050a0f;transition:opacity .45s ease;overscroll-behavior:contain}
         .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
         .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
         .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
@@ -1920,14 +1922,19 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
   ${assets}
 </head>
 <body>
-  <div id="root">
+  <div id="root"></div>
+  <!-- SSR shell lives OUTSIDE #root: React mounts underneath untouched, then
+       App.jsx fades this overlay out once the app is painting — a controlled
+       cross-fade instead of an abrupt DOM swap. No JS → stays as the page. -->
+  <div id="ssr-shell">
     <div class="ssr">
       <style>
+        #ssr-shell{position:fixed;inset:0;z-index:99999;overflow:auto;background:#050a0f;transition:opacity .45s ease;overscroll-behavior:contain}
         .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
         /* First viewport: exact replica of the app's LoadingScreen (orbital
-           ring + dot + wordmark) so the React handoff is invisible — same
-           splash before and after mount, no perceptible swap. Article content
-           sits below the fold for crawlers and reader mode. */
+           ring + dot + wordmark) so the fade-out is invisible — same splash
+           above and below the overlay. Article content sits below the fold
+           for crawlers and reader mode. */
         .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
         .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
         .ssr .lw{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center}

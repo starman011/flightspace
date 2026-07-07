@@ -234,6 +234,21 @@ export default function App() {
   const aircraftRef = useRef(aircraft)
   useEffect(() => { aircraftRef.current = aircraft }, [aircraft])
 
+  // SSR handoff: the edge-served document paints inside #ssr-shell (outside
+  // #root). Once the app is mounted and painting, cross-fade the shell away —
+  // a controlled 450ms fade instead of an abrupt DOM swap, so the page never
+  // visibly "flashes" between the SSR splash and the live app.
+  useEffect(() => {
+    const shell = document.getElementById('ssr-shell')
+    if (!shell) return
+    // Two rAFs ≈ after the app's first real paint (LoadingScreen is up).
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      shell.style.opacity = '0'
+      shell.style.pointerEvents = 'none'
+      setTimeout(() => shell.remove(), 500)
+    }))
+  }, [])
+
   const handleGlobeInteract = useCallback(() => {
     // Collapse the signal stream while the user works the globe, and leave it
     // collapsed — the old 3s auto-re-expand made the feed "open on its own".
