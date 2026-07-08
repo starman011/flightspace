@@ -67,7 +67,7 @@
   border: none;
   border-radius: 999px;   /* pill within the pill — engulfs the capsule's right end */
   align-self: stretch;    /* full inner height, flush with the capsule curve */
-  padding: 0 22px;
+  padding: 0 34px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -115,5 +115,5 @@
   }
   .wrap.in { transform: translateY(0); }
   .body { max-width: none; font-size: 12px; }
-  .cta { padding: 0 16px; border-radius: 24px; }
+  .cta { padding: 0 26px; border-radius: 24px; }
 }
