@@ -2382,7 +2382,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // ── Screen-space spatial pick: works at all altitudes ──────────────
       if (int.current.targetCameraScale === 'earth' || int.current.targetCameraScale == null) {
         const acId = screenPick(e.clientX, e.clientY, isTouch)
-        if (acId) int.current.onAircraftClick?.(acId)
+        if (acId) { int.current.onAircraftClick?.(acId); return }
+
+        // Fallback: screenPick's raycast buffer holds only MAX_AC entities
+        // total, but the 6 category meshes render up to 6×MAX_AC. In dense
+        // views (e.g. coasts thick with ships + planes) entities beyond the
+        // shared buffer are visible but unpickable by screenPick. gpuPick
+        // reads the rendered pick scene (all slots) so it still finds them.
+        // Only runs on a screenPick miss — no per-frame or hover cost.
+        if (int.current.targetCameraScale === 'earth') {
+          const gpuId = gpuPick(e.clientX, e.clientY)
+          if (gpuId) int.current.onAircraftClick?.(gpuId)
+        }
       }
     }
     el.addEventListener('pointerdown', onPointerDown)
