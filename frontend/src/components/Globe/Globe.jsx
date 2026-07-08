@@ -3011,7 +3011,9 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const _rmk = int.current.routeMarkers
       if ((_rtu && _rtu.length) || (_rmk && _rmk.length)) {
         const _camDist = camera.position.length()
-        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.14, 2.4)
+        // Upper clamp 5.0 (was 2.4): trail reads too thin at full zoom-out — now
+        // >2x thicker at maximum camera height. Lower clamp keeps it slim up close.
+        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.14, 5.0)
         let _cur = int.current._routeScale
         _cur = (_cur == null) ? _target : _cur + (_target - _cur) * 0.35
         int.current._routeScale = _cur
