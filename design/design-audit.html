@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ObjectTracer — Design Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════════════
+     PROPOSED SYSTEM — the whole audit is these tokens, applied consistently.
+     The current app has the right ingredients but uses 6 different corner
+     radii (2/4/12/16/18/20) and 5 blur values (12–32). Unify to 4 radii +
+     1 glass recipe → all three principles fall out for free.
+     ═══════════════════════════════════════════════════════════════════════ */
+  :root {
+    /* — Surface — */
+    --void:      #050a0f;                       /* jet-black canvas (unchanged) */
+    --glass:     rgba(13, 19, 28, 0.72);        /* THE glass fill — one value everywhere */
+    --glass-2:   rgba(13, 19, 28, 0.55);        /* lighter glass for nested tiles */
+    --line:      rgba(200, 214, 235, 0.10);     /* hairline */
+    --gloss:     rgba(255, 255, 255, 0.16);     /* top-edge highlight = the signature */
+
+    /* — Ink — */
+    --ink:       #e9f1f8;                        /* primary text */
+    --ink-dim:   rgba(201, 216, 236, 0.56);      /* secondary */
+    --ink-faint: rgba(201, 216, 236, 0.34);      /* tertiary / captions */
+
+    /* — Accent (kept from brand) — */
+    --lime:      #b2ff1a;
+    --ice:       #c3f5ff;
+    --lime-soft: rgba(178, 255, 26, 0.12);
+    --lime-line: rgba(178, 255, 26, 0.30);
+
+    /* — THE recurring rounded-edge scale: 4 roles, no ad-hoc values — */
+    --r-pill:  999px;   /* controls: buttons, chips, toggles, nudge, pills */
+    --r-card:  22px;    /* containers: panels, sheets, cards (the squircle) */
+    --r-inset: 14px;    /* elements nested inside a card */
+    --r-tight: 10px;    /* small controls, logo chips, avatars */
+
+    /* — One glass recipe. Import as a set, never hand-tune per component — */
+    --blur: blur(20px) saturate(150%);
+    --shadow: 0 14px 44px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.35);
+
+    --mono: 'IBM Plex Mono', monospace;
+    --body: 'Inter', system-ui, sans-serif;
+    --display: 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(24, 44, 74, 0.35), transparent 55%),
+      radial-gradient(90% 60% at 80% 110%, rgba(20, 60, 40, 0.18), transparent 60%),
+      var(--void);
+    color: var(--ink);
+    font-family: var(--body);
+    min-height: 100vh;
+    padding: 48px 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ── Doc header ─────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--lime); margin-bottom: 14px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 52px);
+    letter-spacing: -0.02em; line-height: 1.02; margin-bottom: 16px;
+  }
+  h1 .g { background: linear-gradient(100deg, var(--ice), var(--lime)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { font-size: 16px; line-height: 1.65; color: var(--ink-dim); max-width: 620px; }
+
+  /* ── Principle chips ────────────────────────────────────────────────── */
+  .principles { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 8px; }
+  .principle {
+    display: flex; align-items: center; gap: 9px;
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line); border-top-color: var(--gloss);
+    border-radius: var(--r-pill); padding: 9px 16px 9px 12px;
+    font-family: var(--mono); font-size: 12px; color: var(--ink);
+  }
+  .principle .n { width: 20px; height: 20px; border-radius: 50%; background: var(--lime-soft);
+    border: 1px solid var(--lime-line); color: var(--lime); display: grid; place-items: center;
+    font-size: 11px; font-weight: 600; }
+
+  /* ── Section scaffold ───────────────────────────────────────────────── */
+  section { margin-top: 64px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sec-head h2 { font-family: var(--display); font-size: 24px; font-weight: 500; letter-spacing: -0.01em; }
+  .sec-head .tag { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.08em; }
+  .sec-note { font-size: 14px; line-height: 1.6; color: var(--ink-dim); max-width: 680px; margin-bottom: 26px; }
+  .sec-note b { color: var(--ink); font-weight: 600; }
+
+  /* ═══ THE GLASS PRIMITIVE — every surface below uses exactly this ═══ */
+  .glass {
+    background: var(--glass);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line);
+    border-top-color: var(--gloss);      /* glossy top rim → echoes the new logo */
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* ── Token legend ───────────────────────────────────────────────────── */
+  .tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .tok { padding: 18px; }
+  .tok .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 12px; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { width: 34px; height: 34px; border-radius: var(--r-tight); border: 1px solid var(--line); }
+  .radii { display: flex; align-items: flex-end; gap: 10px; }
+  .radbox { width: 46px; height: 46px; background: var(--lime-soft); border: 1px solid var(--lime-line); }
+  .radbox span { display: block; font-family: var(--mono); font-size: 9px; color: var(--ink-faint); text-align: center; margin-top: 6px; }
+
+  /* ── Stage: dark canvas that mimics the globe view ──────────────────── */
+  .stage {
+    position: relative; border-radius: var(--r-card); overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(80% 55% at 50% 120%, rgba(40, 92, 150, 0.5), transparent 60%),
+      radial-gradient(50% 40% at 70% 15%, rgba(30, 40, 70, 0.4), transparent 70%),
+      #03060a;
+    min-height: 560px;
+  }
+  .stage::after { /* faux horizon glow like the globe */
+    content: ''; position: absolute; left: -10%; right: -10%; bottom: -60%;
+    height: 90%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(120,170,255,0.22), transparent);
+    filter: blur(20px);
+  }
+  .stage-label { position: absolute; top: 14px; left: 16px; z-index: 5;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+
+  /* ── Top-left pages pill ────────────────────────────────────────────── */
+  .pages-pill { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 6;
+    display: flex; gap: 4px; padding: 5px;
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .pp-item { width: 34px; height: 34px; border-radius: var(--r-pill); display: grid; place-items: center;
+    color: var(--ink-dim); }
+  .pp-item.on { background: var(--lime-soft); border: 1px solid var(--lime-line); color: var(--lime); }
+  .pp-item svg { width: 17px; height: 17px; }
+
+  /* ── Top-right account pill ─────────────────────────────────────────── */
+  .acct { position: absolute; top: 16px; right: 16px; z-index: 6; display: flex; align-items: center; gap: 6px;
+    padding: 5px 6px 5px 14px;
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .acct .live { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--lime); display: flex; align-items: center; gap: 6px; }
+  .acct .live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+  .acct .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--ice), var(--lime)); }
+
+  /* ── DetailPanel card (desktop) ─────────────────────────────────────── */
+  .detail { position: absolute; top: 62px; right: 16px; width: 340px; z-index: 5; padding: 18px; }
+  .dp-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .dp-logo { width: 40px; height: 40px; border-radius: var(--r-tight); background:
+      radial-gradient(70% 60% at 50% 130%, rgba(90,150,240,0.9), transparent), #060a12;
+    border: 1px solid var(--line); flex: none; }
+  .dp-cs { font-family: var(--mono); font-weight: 600; font-size: 18px; letter-spacing: 0.02em; }
+  .dp-sub { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+  .dp-status { margin-left: auto; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    color: var(--lime); background: var(--lime-soft); border: 1px solid var(--lime-line);
+    border-radius: var(--r-pill); padding: 4px 10px; }
+  .route { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+  .route .port { text-align: center; }
+  .route .iata { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+  .route .city { font-size: 10px; color: var(--ink-faint); margin-top: 2px; }
+  .route .path { flex: 1; height: 2px; background: linear-gradient(90deg, var(--lime), var(--ice)); position: relative; border-radius: 2px; opacity: 0.5; }
+  .route .path::after { content: '✈'; position: absolute; right: 30%; top: 50%; transform: translateY(-50%); color: var(--lime); font-size: 12px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .stat { background: var(--glass-2); border: 1px solid var(--line); border-radius: var(--r-inset); padding: 11px 13px; }
+  .stat .k { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
+  .stat .v { font-family: var(--mono); font-size: 17px; font-weight: 500; margin-top: 4px; }
+  .stat .v small { font-size: 11px; color: var(--ink-dim); }
+  .dp-cta { margin-top: 16px; width: 100%; border: none; border-radius: var(--r-pill); padding: 12px;
+    background: var(--lime); color: #06121a; font-family: var(--mono); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.04em; cursor: pointer; }
+
+  /* ── Live nudge capsule (green engulfs right) ───────────────────────── */
+  .nudge { position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; align-items: stretch; gap: 14px; padding: 6px 6px 6px 20px; max-width: 430px;
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .nudge .txt { display: flex; flex-direction: column; justify-content: center; padding: 6px 0; }
+  .nudge .t { font-family: var(--mono); font-weight: 600; font-size: 13px; }
+  .nudge .b { font-size: 11.5px; color: var(--ink-dim); margin-top: 1px; }
+  .nudge .go { display: flex; align-items: center; gap: 8px; padding: 0 30px; border: none; border-radius: var(--r-pill);
+    background: var(--lime); color: #06121a; font-family: var(--mono); font-weight: 700; font-size: 12px;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+  .nudge .go::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #06121a; }
+
+  /* ── Bottom bar ─────────────────────────────────────────────────────── */
+  .bottombar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 6;
+    display: flex; align-items: center; gap: 6px; padding: 7px;
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .bb-item { width: 40px; height: 40px; border-radius: var(--r-pill); display: grid; place-items: center; color: var(--ink-dim); }
+  .bb-item.on { background: var(--lime-soft); border: 1px solid var(--lime-line); color: var(--lime); }
+  .bb-item svg { width: 18px; height: 18px; }
+  .bb-div { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+
+  /* ── Mobile frame ───────────────────────────────────────────────────── */
+  .phones { display: flex; gap: 30px; flex-wrap: wrap; }
+  .phone { width: 300px; height: 620px; border-radius: 42px; padding: 10px;
+    background: #0a0e14; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6); position: relative; flex: none; }
+  .phone .screen { position: relative; width: 100%; height: 100%; border-radius: 33px; overflow: hidden;
+    background:
+      radial-gradient(80% 50% at 50% 118%, rgba(40, 92, 150, 0.55), transparent 60%),
+      #03060a; }
+  .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 96px; height: 24px; background: #000; border-radius: var(--r-pill); z-index: 20; }
+
+  /* mobile pages pill — left anchored */
+  .m-pages { position: absolute; top: 46px; left: 12px; z-index: 10; display: flex; gap: 3px; padding: 4px;
+    background: var(--glass); backdrop-filter: var(--blur); border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .m-pages .pp-item { width: 28px; height: 28px; }
+  .m-pages .pp-item svg { width: 14px; height: 14px; }
+  .m-acct { position: absolute; top: 46px; right: 12px; z-index: 10; width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--ice), var(--lime)); border: 2px solid var(--glass); }
+
+  /* mobile bottom sheet (the detail card) */
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 12; border-radius: var(--r-card) var(--r-card) 0 0;
+    background: var(--glass); backdrop-filter: var(--blur); border: 1px solid var(--line); border-top-color: var(--gloss);
+    border-bottom: none; padding: 8px 16px 20px; }
+  .grab { width: 40px; height: 4px; border-radius: var(--r-pill); background: rgba(200,214,235,0.28); margin: 4px auto 14px; }
+  .sheet.peek { height: 40%; }
+  .m-bottombar { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 14; display: flex; gap: 4px; padding: 6px;
+    background: var(--glass); backdrop-filter: var(--blur); border: 1px solid var(--line); border-top-color: var(--gloss); border-radius: var(--r-pill); }
+  .m-bottombar .bb-item { width: 34px; height: 34px; }
+  .m-bottombar .bb-item svg { width: 16px; height: 16px; }
+
+  /* ── Before/After callout ───────────────────────────────────────────── */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 26px; }
+  .ba .card { padding: 20px; }
+  .ba .card h4 { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
+  .ba .before h4 { color: #ff6b6b; }
+  .ba .after h4 { color: var(--lime); }
+  .ba ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .ba li { font-size: 13px; line-height: 1.5; color: var(--ink-dim); padding-left: 18px; position: relative; }
+  .ba li::before { content: ''; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 2px; }
+  .ba .before li::before { background: rgba(255,107,107,0.5); }
+  .ba .after li::before { background: var(--lime); }
+  .ba li b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 720px) {
+    .stage { min-height: 480px; }
+    .detail { width: 260px; }
+    .ba { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">ObjectTracer · Design Audit</p>
+  <h1>One rounded language,<br>one <span class="g">sheet of glass</span>.</h1>
+  <p class="lede">The app already has the right instincts — dark cockpit canvas, lime readout accent, monospace data. What breaks the spell is inconsistency: six different corner radii, five blur strengths, ad-hoc padding. This audit collapses all of it into one system, so the three principles stop being aspirations and become defaults.</p>
+
+  <div class="principles">
+    <span class="principle"><span class="n">1</span> Recurring rounded edge</span>
+    <span class="principle"><span class="n">2</span> Minimal · readable · visible</span>
+    <span class="principle"><span class="n">3</span> Apple glass</span>
+  </div>
+
+  <!-- ── TOKENS ─────────────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-head"><h2>The system</h2><span class="tag">4 radii · 1 glass · 1 accent</span></div>
+    <p class="sec-note">Everything downstream is derived from this. The <b>signature move</b>: every glass surface carries a bright top-edge rim (a 16%-white <code>border-top</code>) — the same glossy top the new app-icon logo has. It reads as light catching the lip of real glass, and it ties the entire UI back to the brand mark.</p>
+    <div class="tokens">
+      <div class="glass tok">
+        <div class="lbl">Recurring radius</div>
+        <div class="radii">
+          <div><div class="radbox" style="border-radius:999px"></div><span>pill</span></div>
+          <div><div class="radbox" style="border-radius:22px"></div><span>card 22</span></div>
+          <div><div class="radbox" style="border-radius:14px"></div><span>inset 14</span></div>
+          <div><div class="radbox" style="border-radius:10px"></div><span>tight 10</span></div>
+        </div>
+      </div>
+      <div class="glass tok">
+        <div class="lbl">Ink — 3 weights only</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <span style="color:var(--ink);font-size:14px">Primary — flight callsign</span>
+          <span style="color:var(--ink-dim);font-size:13px">Secondary — supporting data</span>
+          <span style="color:var(--ink-faint);font-size:12px">Caption — units, labels</span>
+        </div>
+      </div>
+      <div class="glass tok">
+        <div class="lbl">Accent</div>
+        <div class="swatches">
+          <div class="sw" style="background:#b2ff1a"></div>
+          <div class="sw" style="background:#c3f5ff"></div>
+          <div class="sw" style="background:var(--lime-soft);border-color:var(--lime-line)"></div>
+          <div class="sw" style="background:linear-gradient(135deg,#c3f5ff,#b2ff1a)"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:10px">lime = live / interactive · ice = accent gradient only</div>
+      </div>
+      <div class="glass tok">
+        <div class="lbl">Glass recipe</div>
+        <div style="font-family:var(--mono);font-size:10.5px;line-height:1.8;color:var(--ink-dim)">
+          blur(20px) saturate(150%)<br>
+          fill rgba(13,19,28,.72)<br>
+          border top = gloss<br>
+          shadow 0 14 44 /.5
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DESKTOP ────────────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-head"><h2>Desktop</h2><span class="tag">the globe, uninterrupted</span></div>
+    <p class="sec-note">Controls float as glass islands over the globe and never box it in. The detail card leads with the <b>callsign and route</b> — the two things a viewer actually wants — then drops to a clean 2×2 of readouts. Every island shares the exact radius, blur, and top-rim, so they read as one family hovering at the same altitude.</p>
+    <div class="glass stage">
+      <span class="stage-label">Live · Earth</span>
+
+      <div class="pages-pill">
+        <span class="pp-item on" title="Globe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></span>
+        <span class="pp-item" title="Flights"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+        <span class="pp-item" title="Launches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c3 2 5 6 5 10l-5 4-5-4c0-4 2-8 5-10z"/><circle cx="12" cy="9" r="1.5" fill="currentColor"/></svg></span>
+        <span class="pp-item" title="Deep space"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="7" r="1"/><circle cx="17" cy="5" r="1.4"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="8" cy="17" r="1.3"/></svg></span>
+      </div>
+
+      <div class="acct">
+        <span class="live">2,041 live</span>
+        <span class="avatar"></span>
+      </div>
+
+      <div class="glass detail">
+        <div class="dp-head">
+          <div class="dp-logo"></div>
+          <div>
+            <div class="dp-cs">UAE 202</div>
+            <div class="dp-sub">Emirates · A6-EOB</div>
+          </div>
+          <span class="dp-status">Airborne</span>
+        </div>
+        <div class="route">
+          <div class="port"><div class="iata">DXB</div><div class="city">Dubai</div></div>
+          <div class="path"></div>
+          <div class="port"><div class="iata">JFK</div><div class="city">New York</div></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">Altitude</div><div class="v">38,000 <small>ft</small></div></div>
+          <div class="stat"><div class="k">Ground speed</div><div class="v">903 <small>km/h</small></div></div>
+          <div class="stat"><div class="k">Heading</div><div class="v">291<small>°</small></div></div>
+          <div class="stat"><div class="k">Watching</div><div class="v">17 <small>now</small></div></div>
+        </div>
+        <button class="dp-cta">Track this flight</button>
+      </div>
+
+      <div class="nudge">
+        <div class="txt">
+          <span class="t">The skies are asleep</span>
+          <span class="b">Real flights, ships &amp; satellites — one tap away.</span>
+        </div>
+        <button class="go">Go Live</button>
+      </div>
+
+      <div class="bottombar">
+        <span class="bb-item on"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></span>
+        <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+        <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span>
+        <span class="bb-div"></span>
+        <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 16 0M12 4v8l4 2"/></svg></span>
+        <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l7-5 7 5"/></svg></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MOBILE ─────────────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-head"><h2>Mobile</h2><span class="tag">the sheet that follows your thumb</span></div>
+    <p class="sec-note">Same family, restacked for one hand. Pages pill hugs the top-left so it never collides with the account avatar. The detail card becomes a bottom sheet with a real grab handle — <b>it tracks the finger 1:1 and a single flick expands it fully</b> (the old sheet needed several drags). Everything keeps the 22px top corners and the glass rim.</p>
+    <div class="phones">
+      <!-- Phone 1: detail sheet peeked -->
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="m-pages">
+            <span class="pp-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span>
+            <span class="pp-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19z"/></svg></span>
+            <span class="pp-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c3 2 5 6 5 10l-5 4-5-4c0-4 2-8 5-10z"/></svg></span>
+          </div>
+          <div class="m-acct"></div>
+          <div class="glass sheet peek">
+            <div class="grab"></div>
+            <div class="dp-head">
+              <div class="dp-logo"></div>
+              <div><div class="dp-cs" style="font-size:16px">UAE 202</div><div class="dp-sub">Emirates · A6-EOB</div></div>
+              <span class="dp-status">Airborne</span>
+            </div>
+            <div class="route" style="margin:14px 0">
+              <div class="port"><div class="iata" style="font-size:18px">DXB</div><div class="city">Dubai</div></div>
+              <div class="path"></div>
+              <div class="port"><div class="iata" style="font-size:18px">JFK</div><div class="city">New York</div></div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="k">Altitude</div><div class="v" style="font-size:15px">38,000<small> ft</small></div></div>
+              <div class="stat"><div class="k">Speed</div><div class="v" style="font-size:15px">903<small> km/h</small></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone 2: live nudge + bottom bar -->
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="m-pages">
+            <span class="pp-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span>
+          </div>
+          <div class="m-acct"></div>
+          <div class="nudge" style="left:12px;right:12px;bottom:74px;transform:none;max-width:none">
+            <div class="txt"><span class="t">Skies are asleep</span><span class="b">One tap to go live.</span></div>
+            <button class="go" style="padding:0 20px">Go Live</button>
+          </div>
+          <div class="m-bottombar">
+            <span class="bb-item on"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></span>
+            <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+            <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span>
+            <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 16 0"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHAT CHANGES ───────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-head"><h2>What actually changes</h2><span class="tag">the punch list</span></div>
+    <div class="ba">
+      <div class="glass card before">
+        <h4>Today</h4>
+        <ul>
+          <li>Radii scattered across <b>2, 4, 10, 12, 14, 16, 18, 20px</b> — nothing feels like one product</li>
+          <li>Blur ranges <b>12–32px</b> per component; glass panels sit at different "depths"</li>
+          <li>Detail card leads with logo + type code, not the <b>callsign &amp; route</b></li>
+          <li>Mobile sheet has no finger-tracking; needs <b>several drags</b> to open</li>
+          <li>Emoji still in a few spots (ISS crew, status glyphs)</li>
+        </ul>
+      </div>
+      <div class="glass card after">
+        <h4>Proposed</h4>
+        <ul>
+          <li>Exactly <b>4 radii</b> with fixed roles — pill / 22 / 14 / 10</li>
+          <li>One glass recipe + a <b>gloss top-rim</b> that ties every surface to the logo</li>
+          <li>Detail card reorders to <b>callsign → route → 2×2 readouts → one CTA</b></li>
+          <li>Bottom sheet tracks the thumb; <b>one flick = full</b> (already shipped)</li>
+          <li>Replace remaining emoji with the SVG icon set for a single visual voice</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <p style="margin-top:56px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:0.08em">
+    Open this file in a browser · edit the <code>:root</code> tokens to iterate the whole system at once
+  </p>
+</div>
+</body>
+</html>

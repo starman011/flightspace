@@ -83,6 +83,22 @@
   --radius-lg:   12px;
   --radius-pill: 9999px;
 
+  /* ── Unified design system (design audit 2026-07) ────────────────────────
+     ONE recurring rounded-edge scale + ONE glass recipe, applied everywhere.
+     Signature: --glass-gloss is a bright top-edge rim that echoes the app
+     logo's glossy top, tying every floating surface to the brand mark. */
+  --r-pill:  9999px;   /* controls: buttons, chips, toggles, nudge, pills */
+  --r-card:  22px;     /* containers: panels, sheets, cards (the squircle) */
+  --r-inset: 14px;     /* elements nested inside a card */
+  --r-tight: 10px;     /* small controls, logo chips, avatars */
+
+  --glass-fill:   rgba(13, 19, 28, 0.72);   /* the glass — one fill everywhere */
+  --glass-fill-2: rgba(13, 19, 28, 0.55);   /* lighter nested tiles */
+  --glass-line:   rgba(200, 214, 235, 0.10);/* hairline border */
+  --glass-gloss:  rgba(255, 255, 255, 0.16);/* top-edge rim — THE signature */
+  --glass-blur-lg: blur(20px) saturate(150%);
+  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+
   /* ── Motion ────────────────────────────────────────────────────────────── */
   --ease-camera:  cubic-bezier(0.16, 1, 0.3, 1);
   --ease-panel:   cubic-bezier(0.4, 0, 0.2, 1);

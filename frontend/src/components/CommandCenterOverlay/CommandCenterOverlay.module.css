@@ -1695,10 +1695,10 @@
     top: auto;
     width: 100%;
     height: 95dvh;
-    border-radius: 20px 20px 0 0;
-    border-left: 1px solid rgba(200, 210, 225, 0.1);
-    border-right: 1px solid rgba(200, 210, 225, 0.1);
-    border-top: 1px solid rgba(200, 210, 225, 0.14);
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    border-left: 1px solid var(--glass-line);
+    border-right: 1px solid var(--glass-line);
+    border-top: 1px solid var(--glass-gloss);   /* signature gloss rim */
     border-bottom: none;
     padding: 4px var(--space-4) var(--space-4);
     padding-left: var(--space-4); /* reset desktop 40px collapse-tab offset */

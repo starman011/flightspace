@@ -12,12 +12,13 @@
   width: max-content;
   max-width: 460px;
   padding: 5px 5px 5px 20px;      /* tight right inset — pill sits flush in the curve */
-  background: linear-gradient(180deg, rgba(12, 20, 30, 0.96), rgba(8, 13, 20, 0.96));
-  border: 1px solid rgba(178, 255, 26, 0.22);
-  border-radius: 999px;   /* full capsule — the shape IS the design */
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 40px rgba(178, 255, 26, 0.06);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-line);
+  border-top-color: var(--glass-gloss);   /* signature gloss rim */
+  border-radius: var(--r-pill);   /* full capsule — the shape IS the design */
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);

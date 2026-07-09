@@ -9,16 +9,16 @@
   gap: 2px;
   padding: 4px 6px;
 
-  background: rgba(8, 12, 18, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
 
-  border-radius: 18px;
+  border: 1px solid var(--glass-line);
+  border-top-color: var(--glass-gloss);   /* signature gloss rim */
+  border-radius: var(--r-pill);
   isolation: isolate;
 
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(200, 210, 225, 0.03) inset;
+  box-shadow: var(--glass-shadow);
 }
 
 /* Stay above full-screen pages (Journal/About/…) so the nav notch is always

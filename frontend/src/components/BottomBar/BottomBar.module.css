@@ -9,17 +9,15 @@
   align-items: center;
   padding: 6px 8px;
 
-  background: rgba(8, 12, 18, 0.94);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
 
-  border: 1px solid rgba(200, 210, 225, 0.08);
-  border-radius: 22px;
+  border: 1px solid var(--glass-line);
+  border-top-color: var(--glass-gloss);   /* signature gloss rim */
+  border-radius: var(--r-pill);
 
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  box-shadow: var(--glass-shadow);
 
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
