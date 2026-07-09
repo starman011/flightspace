@@ -234,6 +234,33 @@
   .m-bottombar .bb-item { width: 34px; height: 34px; }
   .m-bottombar .bb-item svg { width: 16px; height: 16px; }
 
+  /* ── Space feed rail + cards ────────────────────────────────────────── */
+  .feed { position: absolute; top: 62px; right: 16px; bottom: 84px; width: 320px; z-index: 5;
+    padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  .feed-head { display: flex; align-items: center; justify-content: space-between; }
+  .feed-title { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-weight: 600; font-size: 13px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+  .feed-collapse { color: var(--ink-faint); font-size: 18px; }
+  .feed-card { background: var(--glass-2); border: 1px solid var(--line); border-top-color: rgba(255,255,255,0.08);
+    border-radius: var(--r-inset); padding: 13px 15px; }
+  .fc-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--lime); }
+  .fc-title { font-family: var(--body); font-weight: 600; font-size: 14px; margin-top: 6px; color: var(--ink); }
+  .fc-sub { font-size: 11.5px; color: var(--ink-dim); margin-top: 3px; }
+
+  /* collapsed pull-tab */
+  .feed-tab { position: absolute; top: 50%; right: 0; transform: translateY(-50%); z-index: 4;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 7px;
+    background: var(--glass); backdrop-filter: var(--blur); border: 1px solid var(--line); border-top-color: var(--gloss);
+    border-right: none; border-radius: var(--r-pill) 0 0 var(--r-pill); }
+  .feed-tab-chev { color: var(--lime); font-size: 14px; }
+  .feed-tab-label { writing-mode: vertical-rl; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
+
+  .peek-row { display: flex; align-items: center; gap: 7px; padding: 2px; }
+  .peek-filter { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: var(--r-pill);
+    border: 1px solid var(--line); color: var(--ink-dim); }
+  .peek-filter.on { background: var(--lime-soft); border-color: var(--lime-line); color: var(--lime); }
+  .peek-hint { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+
   /* ── Before/After callout ───────────────────────────────────────────── */
   .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 26px; }
   .ba .card { padding: 20px; }
@@ -424,6 +451,78 @@
             <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
             <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span>
             <span class="bb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 16 0"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SPACE FEED ─────────────────────────────────────────────────── -->
+  <section>
+    <div class="sec-head"><h2>The space feed</h2><span class="tag">a rail that gets out of the way</span></div>
+    <p class="sec-note">The feed is a <b>reading surface</b>, so it earns more opacity and the 22px card corners — but the same gloss rim and glass keep it in the family. On desktop it docks right and auto-collapses to a slim <b>pull-tab</b> (full-pill, animated gradient edge). On mobile it's the three-height sheet — peek shows only the grab handle + filters, and one flick opens it fully.</p>
+
+    <div class="glass stage" style="min-height:480px">
+      <span class="stage-label">Live · Feed</span>
+
+      <!-- Desktop: expanded right rail -->
+      <div class="glass feed">
+        <div class="feed-head">
+          <span class="feed-title"><span class="live-dot"></span>Space Feed</span>
+          <span class="feed-collapse">›</span>
+        </div>
+        <div class="feed-card">
+          <span class="fc-tag">Launch · T-04:12:30</span>
+          <div class="fc-title">Falcon 9 · Starlink Group 10-54</div>
+          <div class="fc-sub">Cape Canaveral SLC-40 · 23 sats</div>
+        </div>
+        <div class="feed-card">
+          <span class="fc-tag">ISS · overhead in 6 min</span>
+          <div class="fc-title">International Space Station</div>
+          <div class="fc-sub">408 km · 27,600 km/h · 7 crew</div>
+        </div>
+        <div class="feed-card">
+          <span class="fc-tag">Aurora · Kp 6</span>
+          <div class="fc-title">Geomagnetic storm watch</div>
+          <div class="fc-sub">Visible to ~50° latitude tonight</div>
+        </div>
+      </div>
+
+      <!-- Desktop: the collapsed pull-tab it becomes -->
+      <div class="feed-tab"><span class="feed-tab-chev">‹</span><span class="feed-tab-label">Feed</span></div>
+    </div>
+
+    <div class="phones" style="margin-top:22px">
+      <!-- Mobile: half-open sheet -->
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="m-pages"><span class="pp-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span></div>
+          <div class="m-acct"></div>
+          <div class="glass sheet" style="height:56%">
+            <div class="grab"></div>
+            <div class="feed-head" style="padding:0 2px 12px"><span class="feed-title"><span class="live-dot"></span>Space Feed</span></div>
+            <div class="feed-card"><span class="fc-tag">Launch · T-04:12</span><div class="fc-title">Falcon 9 · Starlink 10-54</div></div>
+            <div class="feed-card"><span class="fc-tag">ISS · overhead 6 min</span><div class="fc-title">Space Station</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile: peek state -->
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="m-pages"><span class="pp-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span></div>
+          <div class="m-acct"></div>
+          <div class="glass sheet" style="height:14%">
+            <div class="grab"></div>
+            <div class="peek-row">
+              <span class="peek-filter on">All</span>
+              <span class="peek-filter">Planes</span>
+              <span class="peek-filter">Ships</span>
+              <span class="peek-filter">Sats</span>
+              <span class="peek-hint">swipe up ↑</span>
+            </div>
           </div>
         </div>
       </div>
