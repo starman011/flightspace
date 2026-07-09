@@ -271,32 +271,86 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
   }, [icao24, watchObject])
 
-  /* ── Swipe gesture for mobile sheet ──────────────────────────────────────── */
-  const touchStartY = useRef(null)
-  const touchStartSheet = useRef(null)
+  /* ── Fluid swipe gesture for the mobile sheet ────────────────────────────
+     The card tracks the finger in real time (max-height follows the drag) and
+     snaps to the nearest state on release — with a velocity flick shortcut, so
+     a single drag can travel mini→full. The old version had no touchmove (card
+     felt dead) and stepped one state per gesture (needed several drags). */
+  const touchStartY   = useRef(null)
+  const touchStartH   = useRef(0)
+  const draggingRef   = useRef(false)
+  const dragVy        = useRef(0)   // px/ms, + = downward
+  const lastY         = useRef(0)
+  const lastT         = useRef(0)
+  const clearInlineTimer = useRef(null)
+
+  const snapHeights = () => {
+    const vh = window.innerHeight || 800
+    return { mini: 80, peek: Math.round(vh * 0.38), full: Math.round(vh * 0.88) }
+  }
+
   const handleTouchStart = useCallback((e) => {
+    const el = panelRef.current
+    if (!el) return
+    clearTimeout(clearInlineTimer.current)
     touchStartY.current = e.touches[0].clientY
-    touchStartSheet.current = sheet
-  }, [sheet])
-  const handleTouchEnd = useCallback((e) => {
-    if (touchStartY.current == null) return
-    const dy = e.changedTouches[0].clientY - touchStartY.current
-    const threshold = 50
-    const from = touchStartSheet.current
-    if (dy > threshold) {
-      // Swipe down → collapse one step: full → peek → mini
-      if (from === 'full') setSheet('peek')
-      else if (from === 'peek') setSheet('mini')
-    } else if (dy < -threshold) {
-      // Swipe up → expand one step: mini → peek → full
-      if (from === 'mini') setSheet('peek')
-      else if (from === 'peek') setSheet('full')
-    } else {
-      // Tap the handle → expand (mini→peek, peek→full, full→peek)
-      setSheet(from === 'mini' ? 'peek' : from === 'full' ? 'peek' : 'full')
-    }
-    touchStartY.current = null
+    touchStartH.current = el.getBoundingClientRect().height
+    lastY.current = e.touches[0].clientY
+    lastT.current = e.timeStamp
+    dragVy.current = 0
+    draggingRef.current = true
+    el.style.transition = 'none'   // 1:1 finger tracking, no lag
   }, [])
+
+  const handleTouchMove = useCallback((e) => {
+    if (!draggingRef.current) return
+    const el = panelRef.current
+    if (!el) return
+    const y = e.touches[0].clientY
+    const s = snapHeights()
+    // Drag up (y decreases) → taller card
+    const h = Math.max(s.mini, Math.min(s.full, touchStartH.current + (touchStartY.current - y)))
+    el.style.maxHeight = `${h}px`
+    const dt = e.timeStamp - lastT.current
+    if (dt > 0) dragVy.current = (y - lastY.current) / dt
+    lastY.current = y
+    lastT.current = e.timeStamp
+  }, [])
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    const el = panelRef.current
+    if (!el) { touchStartY.current = null; return }
+    const dyTotal = e.changedTouches[0].clientY - (touchStartY.current ?? 0)
+    const s = snapHeights()
+    const curH = el.getBoundingClientRect().height
+    const v = dragVy.current
+
+    let target
+    if (Math.abs(dyTotal) < 6) {
+      // Tap the handle → expand one step (mini→peek→full, full→peek)
+      target = sheet === 'mini' ? 'peek' : sheet === 'peek' ? 'full' : 'peek'
+    } else if (v < -0.5) {
+      target = 'full'   // fast flick up → straight to full
+    } else if (v > 0.5) {
+      target = 'mini'   // fast flick down → collapse
+    } else {
+      // Settle on the nearest snap height to where the finger let go
+      const order = [['mini', s.mini], ['peek', s.peek], ['full', s.full]]
+      target = order.reduce((best, cur) =>
+        Math.abs(cur[1] - curH) < Math.abs(best[1] - curH) ? cur : best)[0]
+    }
+
+    // Animate from the drag position to the target, then hand back to the class
+    el.style.transition = ''
+    el.style.maxHeight = `${s[target]}px`
+    setSheet(target)
+    clearInlineTimer.current = setTimeout(() => {
+      if (panelRef.current && !draggingRef.current) panelRef.current.style.maxHeight = ''
+    }, 360)
+    touchStartY.current = null
+  }, [sheet])
 
   // ISS fetches the same detail endpoint so position loads without WebSocket
   const fetchesDetail = isFlight || icao24 === 'ISS'
@@ -496,6 +550,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       <div
         className={styles.dragZone}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div className={styles.dragHandle} />
