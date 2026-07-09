@@ -1616,37 +1616,63 @@ export default function CommandCenterOverlay({
     const grab = grabRef.current
     if (!grab) return
 
-    const drag = { startY: 0, dragging: false }
+    // Fluid drag: the sheet tracks the finger across the WHOLE range from any
+    // state, then snaps to the nearest of peek/half/full by position — with a
+    // velocity flick, so one gesture can go peek→full. (Was single-step: each
+    // drag advanced one state, so opening fully took several drags.)
+    const drag = { startY: 0, baseY: 0, dragging: false, vy: 0, lastY: 0, lastT: 0 }
+    const snapY = (state, h) =>
+      state === 'full' ? 0 : state === 'half' ? h - Math.round(window.innerHeight * 0.52) : h - PEEK_H
 
     const onStart = (e) => {
+      if (!streamRef.current) return
+      clearTimeout(drag.clearT)
       drag.startY   = e.touches[0].clientY
+      drag.baseY    = snapY(sheetStateRef.current, streamRef.current.clientHeight)
+      drag.lastY    = drag.startY
+      drag.lastT    = e.timeStamp
+      drag.vy       = 0
       drag.dragging = true
+      streamRef.current.style.transition = 'none'
     }
 
     const onMove = (e) => {
       if (!drag.dragging || !streamRef.current) return
       e.preventDefault()   // stop browser scroll fighting the drag
-      const dy    = e.touches[0].clientY - drag.startY
-      const h     = streamRef.current.clientHeight
-      const halfY = h - Math.round(window.innerHeight * 0.52)
-      streamRef.current.style.transition = 'none'
-      const s = sheetStateRef.current
-      if (s === 'peek' && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, h - PEEK_H + dy)}px)`
-      if (s === 'half' && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(h - PEEK_H, halfY + dy)}px)`
-      if (s === 'half' && dy < 0) streamRef.current.style.transform = `translateY(${Math.max(0, halfY + dy)}px)`
-      if (s === 'full' && dy > 0) streamRef.current.style.transform = `translateY(${Math.min(halfY, dy)}px)`
+      const y  = e.touches[0].clientY
+      const h  = streamRef.current.clientHeight
+      const ty = Math.max(0, Math.min(h - PEEK_H, drag.baseY + (y - drag.startY)))
+      streamRef.current.style.transform = `translateY(${ty}px)`
+      const dt = e.timeStamp - drag.lastT
+      if (dt > 0) drag.vy = (y - drag.lastY) / dt   // px/ms, + = downward
+      drag.lastY = y
+      drag.lastT = e.timeStamp
     }
 
     const onEnd = (e) => {
       if (!drag.dragging) return
       drag.dragging = false
-      if (streamRef.current) { streamRef.current.style.transition = ''; streamRef.current.style.transform = '' }
-      const dy = e.changedTouches[0].clientY - drag.startY
-      const s  = sheetStateRef.current
-      if (s === 'peek' && dy < -30) setSheetState('half')
-      if (s === 'half' && dy < -30) setSheetState('full')
-      if (s === 'half' && dy >  50) setSheetState('peek')
-      if (s === 'full' && dy >  60) setSheetState('half')
+      const el = streamRef.current
+      if (!el) return
+      const h     = el.clientHeight
+      const halfY = h - Math.round(window.innerHeight * 0.52)
+      const peekY = h - PEEK_H
+      const ty    = Math.max(0, Math.min(peekY, drag.baseY + (e.changedTouches[0].clientY - drag.startY)))
+      const v     = drag.vy
+      let target
+      if (v < -0.5) target = 'full'        // fast flick up
+      else if (v > 0.5) target = 'peek'    // fast flick down
+      else {
+        const opts = [['full', 0], ['half', halfY], ['peek', peekY]]
+        target = opts.reduce((b, c) => Math.abs(c[1] - ty) < Math.abs(b[1] - ty) ? c : b)[0]
+      }
+      // Animate from the drag position to the target, then hand back to the class
+      el.style.transition = ''
+      el.style.transform  = `translateY(${target === 'full' ? 0 : target === 'half' ? halfY : peekY}px)`
+      setSheetState(target)
+      drag.clearT = setTimeout(() => {
+        if (streamRef.current && !drag.dragging) streamRef.current.style.transform = ''
+      }, 460)
     }
 
     grab.addEventListener('touchstart', onStart, { passive: true })
