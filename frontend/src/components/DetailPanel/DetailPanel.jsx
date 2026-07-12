@@ -227,7 +227,7 @@ const ISS_IMAGES = [
   { src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/NGC_4414_%28NASA-med%29.jpg/800px-NGC_4414_%28NASA-med%29.jpg', alt: 'A spiral galaxy in deep space' },
 ]
 
-export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject }) {
+export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject, onSheetChange }) {
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -239,6 +239,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   // Mobile sheet: 'peek' (default ~38dvh) or 'mini' (collapsed strip ~80px)
   const [sheet, setSheet]     = useState('peek')
   const [closing, setClosing] = useState(false)
+  // Surface the mobile sheet state so App can layer the ALT/HDG readout
+  useEffect(() => { onSheetChange?.(sheet) }, [sheet, onSheetChange])
   const panelRef = useRef(null)
   const scrollerRef = useRef(null)
   const photoTriedReg = useRef(false)

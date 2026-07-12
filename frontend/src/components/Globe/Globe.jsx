@@ -906,7 +906,7 @@ function syncInstances(state, aircraft, selectedId, hoveredId, forceScale) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel, onScaleReady, showWeather }, ref) {
+export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraftClick, onAirportClick, onViewportChange, trackingId, solarData, padMarker, onInteract, onPlanetClick, onSkyObjectClick, onMoonSiteClick, neoData, onZoomChange, mobilePanel, tooltipDimmed, onScaleReady, showWeather }, ref) {
   const mountRef    = useRef(null)
   const int         = useRef({})
   const trailHist   = useRef(new Map())
@@ -3532,7 +3532,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       {hoverTooltip && createPortal(
         hoverTooltip.desi
           ? <DESITooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.desi} />
-          : <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} dimmed={mobilePanel && window.innerWidth < 768} />,
+          : <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} dimmed={tooltipDimmed && window.innerWidth < 768} />,
         document.body
       )}
 

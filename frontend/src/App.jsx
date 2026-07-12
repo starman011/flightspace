@@ -217,6 +217,7 @@ export default function App() {
   const [streamCollapsed, setStreamCollapsed] = useState(false)
   const [planesFleet, setPlanesFleet] = useState(null)
   const [feedSheet, setFeedSheet] = useState('peek')   // mobile space-feed sheet state
+  const [detailSheet, setDetailSheet] = useState('peek') // mobile flight-card sheet state
   // Bottom-left UI (locate + footer) dims and drops BENEATH whichever card/sheet is up
   const bottomUiDimmed = !!selectedIcao24 || !!selectedAirport || feedSheet !== 'peek'  // ICAO prefix handed to PlanesPage by the fleet card
   const [arActive, setArActive] = useState(false)
@@ -412,6 +413,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
   const openedFromProfileRef = useRef(false)
   const handlePanelClose = useCallback(() => {
+    setDetailSheet('peek')
     setSelectedIcao24(null)
     setTrackingId(null)
     globeRef.current?.drawTrail?.([])
@@ -912,6 +914,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onZoomChange={setZoomedIn}
         onScaleReady={handleScaleReady}
         mobilePanel={!!selectedIcao24}
+        tooltipDimmed={!!selectedIcao24 && detailSheet === 'full'}
         showWeather={showWeather}
       />
 
@@ -1007,6 +1010,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           icao24={selectedIcao24}
           liveData={aircraftWithShips.get(selectedIcao24)}
           onClose={handlePanelClose}
+          onSheetChange={setDetailSheet}
           onTrailData={handleTrailData}
           isAuthenticated={isAuthenticated}
           sessionToken={sessionToken}
