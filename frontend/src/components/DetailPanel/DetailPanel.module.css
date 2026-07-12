@@ -611,52 +611,61 @@
 /* ═══════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 767px) {
+  /* Transform-based sheet: the panel is ALWAYS laid out at full height and
+     the three states are pure translateY offsets. Dragging and state changes
+     never touch layout — compositor-only, so the swipe stays at frame rate
+     even with the heavy backdrop blur. (max-height animation reflowed +
+     repainted the whole blurred panel every frame = the old sluggishness.) */
   .panel {
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 38dvh;
-    height: auto;
+    height: 88dvh;
+    max-height: none;
     border-left: none;
     border-top: 1px solid rgba(200, 210, 225, 0.1);
     border-radius: var(--r-card) var(--r-card) 0 0;
     border-top-color: var(--glass-gloss);   /* signature gloss rim */
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.7);
     -webkit-overflow-scrolling: touch;
-    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    /* peek: 38dvh visible → offset = 88dvh − 38dvh */
+    transform: translateY(50dvh);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    animation: sheetUp 0.36s cubic-bezier(0.16, 1, 0.3, 1),
                nudgeHint 1.4s 1.2s ease-in-out 2;
   }
 
-  /* Mobile exit: slide the sheet straight down (overrides slideOutRight) */
+  /* Mobile exit: slide the sheet straight down (overrides slideOutRight).
+     No `from` — starts at the current transform, whatever state it's in. */
   .panel.closing { animation: sheetDown 0.24s cubic-bezier(0.4, 0, 1, 1) forwards; }
   @keyframes sheetDown {
-    from { transform: translateY(0);    opacity: 1; }
-    to   { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(100%); opacity: 0; }
   }
 
   @keyframes sheetUp {
-    from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+    from { transform: translateY(100%); opacity: 0.4; }
+    to   { transform: translateY(50dvh); opacity: 1; }
   }
 
+  /* Nudge rides on the peek offset so it never fights the state transform */
   @keyframes nudgeHint {
-    0%, 100% { transform: translateY(0); }
-    35%      { transform: translateY(-10px); }
-    65%      { transform: translateY(-4px); }
+    0%, 100% { transform: translateY(50dvh); }
+    35%      { transform: translateY(calc(50dvh - 10px)); }
+    65%      { transform: translateY(calc(50dvh - 4px)); }
   }
 
   /* ── Mini collapsed state ── */
   .panelMini {
-    max-height: 80px;
+    transform: translateY(calc(88dvh - 80px));
     overflow: hidden;
   }
 
   /* ── Full expanded state (swipe up / tap the handle) ── */
   .panelFull {
-    max-height: 88dvh;
+    transform: translateY(0);
   }
 
   /* ── Drag zone visible on mobile ── */

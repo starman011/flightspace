@@ -272,45 +272,50 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   }, [icao24, watchObject])
 
   /* ── Fluid swipe gesture for the mobile sheet ────────────────────────────
-     The card tracks the finger in real time (max-height follows the drag) and
-     snaps to the nearest state on release — with a velocity flick shortcut, so
-     a single drag can travel mini→full. The old version had no touchmove (card
-     felt dead) and stepped one state per gesture (needed several drags). */
+     Transform-based: the panel is laid out at full height and the drag moves
+     it with translateY only — compositor work, zero reflow/repaint, so it
+     tracks the finger at frame rate even with the backdrop blur. Snaps to the
+     nearest state on release, with a velocity flick (one drag → full). */
   const touchStartY   = useRef(null)
-  const touchStartH   = useRef(0)
+  const dragBaseTy    = useRef(0)
   const draggingRef   = useRef(false)
   const dragVy        = useRef(0)   // px/ms, + = downward
   const lastY         = useRef(0)
   const lastT         = useRef(0)
   const clearInlineTimer = useRef(null)
 
-  const snapHeights = () => {
+  // translateY offsets per state (panel height = 88dvh; peek shows 38dvh)
+  const snapOffsets = () => {
+    const H = panelRef.current?.getBoundingClientRect().height
+      || Math.round((window.innerHeight || 800) * 0.88)
     const vh = window.innerHeight || 800
-    return { mini: 80, peek: Math.round(vh * 0.38), full: Math.round(vh * 0.88) }
+    return { full: 0, peek: Math.max(0, H - Math.round(vh * 0.38)), mini: Math.max(0, H - 80) }
   }
 
   const handleTouchStart = useCallback((e) => {
     const el = panelRef.current
     if (!el) return
     clearTimeout(clearInlineTimer.current)
+    const s = snapOffsets()
     touchStartY.current = e.touches[0].clientY
-    touchStartH.current = el.getBoundingClientRect().height
+    dragBaseTy.current = s[sheet] ?? s.peek
     lastY.current = e.touches[0].clientY
     lastT.current = e.timeStamp
     dragVy.current = 0
     draggingRef.current = true
     el.style.transition = 'none'   // 1:1 finger tracking, no lag
-  }, [])
+    el.style.animation = 'none'    // kill entry/nudge keyframes mid-drag
+  }, [sheet])
 
   const handleTouchMove = useCallback((e) => {
     if (!draggingRef.current) return
     const el = panelRef.current
     if (!el) return
     const y = e.touches[0].clientY
-    const s = snapHeights()
-    // Drag up (y decreases) → taller card
-    const h = Math.max(s.mini, Math.min(s.full, touchStartH.current + (touchStartY.current - y)))
-    el.style.maxHeight = `${h}px`
+    const s = snapOffsets()
+    // Drag up (y decreases) → smaller offset → taller visible card
+    const ty = Math.max(s.full, Math.min(s.mini, dragBaseTy.current + (y - touchStartY.current)))
+    el.style.transform = `translateY(${ty}px)`
     const dt = e.timeStamp - lastT.current
     if (dt > 0) dragVy.current = (y - lastY.current) / dt
     lastY.current = y
@@ -323,8 +328,8 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     const el = panelRef.current
     if (!el) { touchStartY.current = null; return }
     const dyTotal = e.changedTouches[0].clientY - (touchStartY.current ?? 0)
-    const s = snapHeights()
-    const curH = el.getBoundingClientRect().height
+    const s = snapOffsets()
+    const curTy = Math.max(s.full, Math.min(s.mini, dragBaseTy.current + dyTotal))
     const v = dragVy.current
 
     let target
@@ -336,19 +341,22 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     } else if (v > 0.5) {
       target = 'mini'   // fast flick down → collapse
     } else {
-      // Settle on the nearest snap height to where the finger let go
-      const order = [['mini', s.mini], ['peek', s.peek], ['full', s.full]]
+      // Settle on the nearest snap offset to where the finger let go
+      const order = [['full', s.full], ['peek', s.peek], ['mini', s.mini]]
       target = order.reduce((best, cur) =>
-        Math.abs(cur[1] - curH) < Math.abs(best[1] - curH) ? cur : best)[0]
+        Math.abs(cur[1] - curTy) < Math.abs(best[1] - curTy) ? cur : best)[0]
     }
 
     // Animate from the drag position to the target, then hand back to the class
     el.style.transition = ''
-    el.style.maxHeight = `${s[target]}px`
+    el.style.transform = `translateY(${s[target]}px)`
     setSheet(target)
     clearInlineTimer.current = setTimeout(() => {
-      if (panelRef.current && !draggingRef.current) panelRef.current.style.maxHeight = ''
-    }, 360)
+      if (panelRef.current && !draggingRef.current) {
+        panelRef.current.style.transform = ''
+        panelRef.current.style.animation = ''
+      }
+    }, 480)
     touchStartY.current = null
   }, [sheet])
 
