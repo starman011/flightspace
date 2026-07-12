@@ -32,6 +32,8 @@ export const ROUTE_META = {
                      description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
   '/iss':          { title: 'ISS Live Tracker — International Space Station Location, Crew & Stream | ObjectTracer',
                      description: 'Track the International Space Station live on a real-time 3D globe. Live position, altitude, speed, crew manifest, and NASA 4K live stream.' },
+  '/engineering':  { title: 'Engineering Blog — How ObjectTracer Is Built | ObjectTracer',
+                     description: 'Weekly engineering deep dives from the ObjectTracer build: rendering 40,000 aircraft at 60fps, real-time pipelines, and the problems behind a live 3D globe.' },
   '/blog':         { title: 'Space Journal — Daily Astronomy & Space Imagery | ObjectTracer',
                      description: 'A daily space journal featuring NASA\'s Astronomy Picture of the Day — stunning cosmic imagery with the science behind each one.' },
   '/airline':      { title: 'Airline Flight Status & Live Tracker | ObjectTracer',
@@ -85,7 +87,12 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activePage === 'contact')  return '/contact'
   if (activePage === 'faq')      return '/faq'
   if (activePage === 'donate')   return '/donate'
-  if (activePage === 'blog')     return '/blog'
+  if (activePage === 'blog') {
+    // Preserve the deeper blog URLs the page manages itself (/engineering,
+    // /blog/:slug) — don't clobber them back to /blog on unrelated state syncs
+    const cur = typeof window !== 'undefined' ? window.location.pathname : '/blog'
+    return (cur === '/engineering' || cur.startsWith('/blog')) ? cur : '/blog'
+  }
   if (activePage === 'planes')   return '/planes'
   if (activePage === 'admin')    return '/admin'
   // Flight board: reflect the selected airport as /flights/{iata}; bare /flight otherwise.
@@ -245,6 +252,7 @@ export function parseInitialState(pathname) {
   if (pathname.startsWith('/launch/'))  return { ...base, launchPanelOpen: true }
   if (pathname.startsWith('/airport/') && pathname.split('/').length === 3) return base
   if (pathname === '/blog')             return { ...base, activePage: 'blog' }
+  if (pathname === '/engineering')      return { ...base, activePage: 'blog', blogTab: 'engineering' }
   if (pathname.startsWith('/blog/'))    return { ...base, activePage: 'blog', blogSlug: pathname.replace('/blog/', '') }
   return { ...base, notFound: true }
 }

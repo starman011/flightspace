@@ -1,0 +1,87 @@
+/* ── Engineering blog editor (admin) ─────────────────────────────────────── */
+
+.wrap { display: flex; flex-direction: column; gap: 28px; }
+
+.kicker {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(178, 255, 26, 0.7); margin: 0 0 4px;
+}
+
+.editor, .list { display: flex; flex-direction: column; gap: 10px; }
+
+.input, .textarea {
+  width: 100%;
+  background: rgba(10, 15, 22, 0.72);
+  border: 1px solid rgba(200, 214, 235, 0.12);
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: #e9f1f8;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus, .textarea:focus { border-color: rgba(178, 255, 26, 0.5); }
+.textarea { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; resize: vertical; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field span {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(201, 216, 236, 0.4);
+}
+
+.actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+.save {
+  border: none; border-radius: 999px; padding: 11px 24px;
+  background: #b2ff1a; color: #06121a;
+  font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: 0.05em;
+  cursor: pointer; transition: filter 0.15s;
+}
+.save:hover { filter: brightness(1.08); }
+.save:disabled { opacity: 0.5; cursor: default; }
+
+.ghost {
+  border: 1px solid rgba(200, 214, 235, 0.18); border-radius: 999px; padding: 10px 18px;
+  background: none; color: rgba(208, 224, 244, 0.75);
+  font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: 0.15s;
+}
+.ghost:hover { border-color: rgba(178, 255, 26, 0.5); color: #b2ff1a; }
+
+.danger {
+  border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 999px; padding: 10px 16px;
+  background: none; color: rgba(255, 140, 140, 0.85);
+  font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: 0.15s;
+}
+.danger:hover { border-color: rgba(255, 107, 107, 0.7); background: rgba(255, 107, 107, 0.08); }
+
+.msg { font-family: var(--font-mono); font-size: 12px; color: #b2ff1a; margin: 4px 0 0; }
+.empty { font-size: 13px; color: rgba(201, 216, 236, 0.5); }
+
+.item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: rgba(10, 15, 22, 0.6);
+  border: 1px solid rgba(200, 214, 235, 0.1);
+  border-radius: 14px; padding: 13px 16px;
+}
+.itemMain { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.itemTitle { font-family: var(--font-body); font-weight: 600; font-size: 14px; color: #e9f1f8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.itemMeta { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; color: rgba(201, 216, 236, 0.45); }
+.itemActions { display: flex; gap: 8px; flex: none; }
+
+.live {
+  color: #b2ff1a; border: 1px solid rgba(178, 255, 26, 0.4);
+  border-radius: 5px; padding: 1px 7px; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.queued {
+  color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 5px; padding: 1px 7px; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr; }
+  .item { flex-direction: column; align-items: stretch; }
+  .itemActions { justify-content: flex-end; }
+}

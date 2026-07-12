@@ -104,25 +104,46 @@ func (p *BlogPoller) upsert(ctx context.Context, e apodEntry) error {
 		mt = "image"
 	}
 	_, err := p.db.Exec(ctx,
-		`INSERT INTO blog_posts (slug, date, title, intro, explanation, image_url, hd_image_url, media_type, copyright)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NULLIF($9,''))
-		 ON CONFLICT (date) DO NOTHING`,
+		`INSERT INTO blog_posts (slug, date, title, intro, explanation, image_url, hd_image_url, media_type, copyright, category)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NULLIF($9,''),'journal')
+		 ON CONFLICT (date, category) DO NOTHING`,
 		slug, e.Date, e.Title, intro, e.Explanation, e.URL, e.HDURL, mt, e.Copyright)
 	return err
 }
 
+// publishDue flips queued posts live once their publish date arrives —
+// this is what delivers the weekly engineering series on schedule.
+func (p *BlogPoller) publishDue(ctx context.Context) {
+	tag, err := p.db.Exec(ctx,
+		`UPDATE blog_posts SET published = TRUE
+		 WHERE published = FALSE AND publish_on IS NOT NULL AND publish_on <= CURRENT_DATE`)
+	if err != nil {
+		log.Printf(`{"level":"error","service":"blog_poller","msg":"publish due failed","error":%q}`, err.Error())
+		return
+	}
+	if n := tag.RowsAffected(); n > 0 {
+		log.Printf(`{"level":"info","service":"blog_poller","msg":"published scheduled posts","count":%d}`, n)
+	}
+}
+
 // Start backfills ~365 days on boot, then refreshes every 24h.
+// Also publishes due scheduled posts hourly (weekly engineering series).
 func (p *BlogPoller) Start(ctx context.Context) {
 	log.Println(`{"level":"info","service":"blog_poller","msg":"starting"}`)
 	p.backfill(ctx)
+	p.publishDue(ctx)
 	ticker := time.NewTicker(24 * time.Hour)
+	pubTicker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
+	defer pubTicker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			p.daily(ctx)
+		case <-pubTicker.C:
+			p.publishDue(ctx)
 		}
 	}
 }

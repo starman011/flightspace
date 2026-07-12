@@ -108,6 +108,10 @@ func Setup(
 	// Resend inbound webhook (public; svix-verified when RESEND_WEBHOOK_SECRET is set)
 	mux.Handle("POST /api/v1/webhooks/resend",               rateLimit(http.HandlerFunc(admin.ResendWebhook)))
 	mux.Handle("GET /api/v1/admin/waitlist.csv", http.HandlerFunc(waitlist.Export))
+	// Engineering blog editor (admin-only; media by URL)
+	mux.Handle("POST /api/v1/admin/blog",          rateLimit(authReq(http.HandlerFunc(admin.UpsertBlogPost))))
+	mux.Handle("GET /api/v1/admin/blog",           rateLimit(authReq(http.HandlerFunc(admin.ListBlogPosts))))
+	mux.Handle("DELETE /api/v1/admin/blog/{slug}", rateLimit(authReq(http.HandlerFunc(admin.DeleteBlogPost))))
 
 	// DESI deep space catalog
 	mux.Handle("GET /api/v1/desi/galaxies", rateLimit(http.HandlerFunc(desi.GetGalaxies)))

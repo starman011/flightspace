@@ -116,3 +116,34 @@
 .loadMore:hover:not(:disabled) { background: rgba(178,255,26,0.18); }
 .loadMore:disabled { opacity: 0.5; cursor: default; }
 @media (max-width: 600px) { .feedTitle { font-size: 1.5rem; } .title { font-size: 1.4rem; } }
+
+/* ── Engineering tab additions ────────────────────────────────────────── */
+.tabs { display: flex; gap: 8px; margin-top: 14px; }
+.tabBtn {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+  padding: 7px 16px; border-radius: var(--r-pill, 999px);
+  border: 1px solid rgba(200, 214, 235, 0.14); background: rgba(140, 170, 210, 0.06);
+  color: rgba(208, 224, 244, 0.7); cursor: pointer; transition: 0.18s;
+}
+.tabBtn:hover { color: #eaf2ff; border-color: rgba(178, 255, 26, 0.4); }
+.tabOn { background: rgba(178, 255, 26, 0.1); border-color: rgba(178, 255, 26, 0.55); color: #b2ff1a; }
+
+.engTag {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #b2ff1a;
+  border: 1px solid rgba(178, 255, 26, 0.4); border-radius: 5px; padding: 2px 7px;
+}
+
+.videoWrap { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 18px 0; }
+.videoWrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 1px solid rgba(200, 214, 235, 0.12); border-radius: 14px; background: #000;
+}
+
+.tileEng {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 34px; font-weight: 600; color: rgba(178, 255, 26, 0.55);
+  background:
+    radial-gradient(80% 70% at 20% 15%, rgba(178, 255, 26, 0.10), transparent 60%),
+    linear-gradient(160deg, #0c1420, #060a10);
+}

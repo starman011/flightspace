@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -105,6 +105,9 @@ export default async function middleware(request) {
   }
   if (pathname === '/blog') {
     return renderBlogFeed()
+  }
+  if (pathname === '/engineering') {
+    return renderEngineeringFeed()
   }
   if (parts[0] === 'blog' && parts[1]) {
     return renderBlogPost(parts.slice(1).join('/'))
@@ -1807,6 +1810,34 @@ function relatedBlogHtml(p, all) {
     ${nav ? `<p>${nav}</p>` : ''}`
 }
 
+// /engineering — public home of the weekly engineering series (anyone can read;
+// only the admin can write, via the /admin Blog tab).
+async function renderEngineeringFeed() {
+  let posts = []
+  try {
+    const res = await fetch(`${API}/api/v1/blog?limit=50&category=engineering`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) { const d = await res.json(); posts = d.posts || [] }
+  } catch (_) {}
+
+  const canonical = `${SITE}/engineering`
+  const title = 'Engineering Blog — How ObjectTracer Is Built | ObjectTracer'
+  const desc  = 'Weekly engineering deep dives from the ObjectTracer build: rendering 40,000 aircraft at 60fps, real-time data pipelines, and the problems behind a live 3D globe.'
+  const items = posts.map(p =>
+    `<li><a href="${SITE}/blog/${esc(p.slug)}"><strong>${esc(p.title)}</strong><span>${esc(p.date)}</span></a></li>`
+  ).join('\n')
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Blog', name: 'ObjectTracer Engineering Blog',
+    url: canonical, description: desc,
+  }
+  const body = `
+    <h1>Engineering Blog</h1>
+    <p>How ObjectTracer is built — one hard problem a week, in depth. Real code, real dead ends, real numbers.</p>
+    ${posts.length ? `<ul class="cards">${items}</ul>` : '<p>The first deep dive lands soon.</p>'}
+    <h2>More from ObjectTracer</h2>
+    <p><a href="${SITE}/blog">Space Journal</a> · <a href="${SITE}/launches">Launches</a> · <a href="${SITE}/iss">ISS tracker</a> · <a href="${SITE}/">Live 3D globe</a></p>`
+  return html(canonical, title, desc, jsonLd, body, 'ENGINEERING')
+}
+
 async function renderBlogPost(slug) {
   let p = null, allPosts = []
   try {
@@ -1820,19 +1851,35 @@ async function renderBlogPost(slug) {
   if (!p) return // unknown slug → SPA
 
   const canonical = `${SITE}/blog/${slug}`
-  const title = `${p.title} — Space Journal | ObjectTracer`
-  const desc  = (p.explanation || p.intro || '').slice(0, 200)
+  const isEng = p.category === 'engineering'
+  const title = isEng
+    ? `${p.title} — ObjectTracer Engineering`
+    : `${p.title} — Space Journal | ObjectTracer`
+  const desc  = (p.intro || p.explanation || '').slice(0, 200)
   const img = p.image_url || `${SITE}/og-image.png`
   const jsonLd = {
-    '@context': 'https://schema.org', '@type': 'Article',
+    '@context': 'https://schema.org', '@type': isEng ? 'BlogPosting' : 'Article',
     headline: p.title, image: img, datePublished: p.date,
-    author: { '@type': 'Organization', name: 'NASA APOD' },
+    author: { '@type': 'Organization', name: isEng ? 'ObjectTracer' : 'NASA APOD' },
     publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
     url: canonical,
   }
-  const imgTag = p.media_type === 'image'
+  const imgTag = (isEng ? p.image_url : p.media_type === 'image')
     ? `<img src="${esc(img)}" alt="${esc(p.title)}" style="width:100%;border-radius:10px;margin:16px 0" />` : ''
-  const body = `
+
+  // Engineering posts: long-form with intentional line breaks + optional video
+  // embed; no NASA framing or credit. Journal posts unchanged.
+  const videoEmbed = isEng && p.video_url ? blogVideoEmbed(p.video_url) : ''
+  const body = isEng ? `
+    <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)} · ENGINEERING</p>
+    <h1>${esc(p.title)}</h1>
+    ${imgTag}
+    ${p.intro ? `<p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>` : ''}
+    ${videoEmbed}
+    <p style="white-space:pre-wrap">${esc(p.explanation)}</p>
+    <p style="font-size:.8rem;opacity:.6">ObjectTracer Engineering · building in public</p>
+    ${relatedBlogHtml(p, allPosts)}
+    <p><a href="${SITE}/blog">← All posts</a></p>` : `
     <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)}</p>
     <h1>${esc(p.title)}</h1>
     ${imgTag}
@@ -1843,8 +1890,30 @@ async function renderBlogPost(slug) {
     ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)} · Source: NASA APOD</p>` : `<p style="font-size:.8rem;opacity:.6">Source: NASA Astronomy Picture of the Day (public domain)</p>`}
     ${relatedBlogHtml(p, allPosts)}
     <p><a href="${SITE}/blog">← All Space Journal entries</a></p>`
-  // Article OG image is the actual APOD image (passed as ogImageOverride)
-  return html(canonical, title, desc, jsonLd, body, 'SPACE JOURNAL', img)
+  // Article OG image is the actual APOD/post image (passed as ogImageOverride)
+  return html(canonical, title, desc, jsonLd, body, isEng ? 'ENGINEERING' : 'SPACE JOURNAL', img)
+}
+
+// YouTube/Vimeo link → responsive iframe embed (empty string when unknown host)
+function blogVideoEmbed(url) {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    let src = null
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const id = u.searchParams.get('v') || (u.pathname.match(/\/(shorts|embed)\/([\w-]{6,})/) || [])[2]
+      if (id) src = `https://www.youtube.com/embed/${id}`
+    } else if (host === 'youtu.be') {
+      const id = u.pathname.slice(1).split('/')[0]
+      if (id) src = `https://www.youtube.com/embed/${id}`
+    } else if (host === 'vimeo.com') {
+      const id = (u.pathname.match(/\/(\d+)/) || [])[1]
+      if (id) src = `https://player.vimeo.com/video/${id}`
+    }
+    if (!src) return `<p><a href="${esc(url)}" rel="noopener">Watch the video</a></p>`
+    return `<div style="position:relative;width:100%;aspect-ratio:16/9;margin:16px 0">
+      <iframe src="${esc(src)}" style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:10px" allowfullscreen loading="lazy"></iframe></div>`
+  } catch (_) { return '' }
 }
 
 async function renderBlogSitemap() {

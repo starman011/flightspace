@@ -28,9 +28,20 @@ type blogPost struct {
 	HDImageURL  string  `json:"hd_image_url"`
 	MediaType   string  `json:"media_type"`
 	Copyright   *string `json:"copyright,omitempty"`
+	Category    string  `json:"category"`
+	VideoURL    string  `json:"video_url,omitempty"`
 }
 
-// GetBlogList serves a paginated feed (newest first).
+const blogCols = `slug, to_char(date,'YYYY-MM-DD'), title, intro, explanation,
+	image_url, hd_image_url, media_type, copyright, category, video_url`
+
+func scanPost(row interface{ Scan(...any) error }, p *blogPost) error {
+	return row.Scan(&p.Slug, &p.Date, &p.Title, &p.Intro, &p.Explanation,
+		&p.ImageURL, &p.HDImageURL, &p.MediaType, &p.Copyright, &p.Category, &p.VideoURL)
+}
+
+// GetBlogList serves a paginated feed of published posts (newest first).
+// Optional ?category=journal|engineering narrows the feed.
 func (c *BlogController) GetBlogList(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -47,11 +58,16 @@ func (c *BlogController) GetBlogList(w http.ResponseWriter, r *http.Request) {
 			offset = n
 		}
 	}
+	category := r.URL.Query().Get("category")
+	if category != "journal" && category != "engineering" {
+		category = "" // any
+	}
 
 	rows, err := c.db.Query(ctx,
-		`SELECT slug, to_char(date,'YYYY-MM-DD'), title, intro, explanation,
-		        image_url, hd_image_url, media_type, copyright
-		 FROM blog_posts ORDER BY date DESC LIMIT $1 OFFSET $2`, limit, offset)
+		`SELECT `+blogCols+`
+		 FROM blog_posts
+		 WHERE published = TRUE AND ($3 = '' OR category = $3)
+		 ORDER BY date DESC LIMIT $1 OFFSET $2`, limit, offset, category)
 	if err != nil {
 		http.Error(w, `{"error":"db"}`, http.StatusInternalServerError)
 		return
@@ -61,14 +77,15 @@ func (c *BlogController) GetBlogList(w http.ResponseWriter, r *http.Request) {
 	posts := []blogPost{}
 	for rows.Next() {
 		var p blogPost
-		if err := rows.Scan(&p.Slug, &p.Date, &p.Title, &p.Intro, &p.Explanation,
-			&p.ImageURL, &p.HDImageURL, &p.MediaType, &p.Copyright); err == nil {
+		if err := scanPost(rows, &p); err == nil {
 			posts = append(posts, p)
 		}
 	}
 
 	var total int
-	_ = c.db.QueryRow(ctx, `SELECT COUNT(*) FROM blog_posts`).Scan(&total)
+	_ = c.db.QueryRow(ctx,
+		`SELECT COUNT(*) FROM blog_posts WHERE published = TRUE AND ($1 = '' OR category = $1)`,
+		category).Scan(&total)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=300")
@@ -83,9 +100,8 @@ func (c *BlogController) GetFeatured(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	rows, err := c.db.Query(ctx,
-		`SELECT slug, to_char(date,'YYYY-MM-DD'), title, intro, explanation,
-		        image_url, hd_image_url, media_type, copyright
-		 FROM blog_posts WHERE media_type = 'image'
+		`SELECT `+blogCols+`
+		 FROM blog_posts WHERE media_type = 'image' AND published = TRUE
 		 ORDER BY date DESC LIMIT 30`)
 	if err != nil {
 		http.Error(w, `{"error":"db"}`, http.StatusInternalServerError)
@@ -96,8 +112,7 @@ func (c *BlogController) GetFeatured(w http.ResponseWriter, r *http.Request) {
 	posts := []blogPost{}
 	for rows.Next() {
 		var p blogPost
-		if err := rows.Scan(&p.Slug, &p.Date, &p.Title, &p.Intro, &p.Explanation,
-			&p.ImageURL, &p.HDImageURL, &p.MediaType, &p.Copyright); err == nil {
+		if err := scanPost(rows, &p); err == nil {
 			posts = append(posts, p)
 		}
 	}
@@ -116,19 +131,16 @@ func (c *BlogController) GetFeatured(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{"posts": posts})
 }
 
-// GetBlogPost serves a single post by slug.
+// GetBlogPost serves a single published post by slug.
 func (c *BlogController) GetBlogPost(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
 	slug := r.PathValue("slug")
 	var p blogPost
-	err := c.db.QueryRow(ctx,
-		`SELECT slug, to_char(date,'YYYY-MM-DD'), title, intro, explanation,
-		        image_url, hd_image_url, media_type, copyright
-		 FROM blog_posts WHERE slug = $1`, slug).
-		Scan(&p.Slug, &p.Date, &p.Title, &p.Intro, &p.Explanation,
-			&p.ImageURL, &p.HDImageURL, &p.MediaType, &p.Copyright)
+	err := scanPost(c.db.QueryRow(ctx,
+		`SELECT `+blogCols+`
+		 FROM blog_posts WHERE slug = $1 AND published = TRUE`, slug), &p)
 	if err != nil {
 		http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
 		return

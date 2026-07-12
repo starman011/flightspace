@@ -1169,7 +1169,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {activePage === 'faq' && <FAQPage onClose={() => setActivePage(null)} />}
       {activePage === 'donate' && <DonatePage onClose={() => setActivePage(null)} />}
       {activePage === 'waitlist' && <WaitlistPage onClose={() => setActivePage(null)} />}
-      {activePage === 'blog' && <BlogPage onClose={() => setActivePage(null)} initialSlug={init.blogSlug} />}
+      {activePage === 'blog' && <BlogPage onClose={() => setActivePage(null)} initialSlug={init.blogSlug} initialTab={init.blogTab} />}
       {activePage === 'flight' && (
         <FlightPage
           initialAirport={init.flightAirport}
