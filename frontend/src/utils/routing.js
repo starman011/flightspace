@@ -32,7 +32,7 @@ export const ROUTE_META = {
                      description: 'Help keep ObjectTracer free and running. Support real-time 3D tracking of flights, satellites, and space objects.' },
   '/iss':          { title: 'ISS Live Tracker — International Space Station Location, Crew & Stream | ObjectTracer',
                      description: 'Track the International Space Station live on a real-time 3D globe. Live position, altitude, speed, crew manifest, and NASA 4K live stream.' },
-  '/engineering':  { title: 'Engineering Blog — How ObjectTracer Is Built | ObjectTracer',
+  '/engineering':  { title: 'Engineering Blog: How ObjectTracer Is Built | ObjectTracer',
                      description: 'Weekly engineering deep dives from the ObjectTracer build: rendering 40,000 aircraft at 60fps, real-time pipelines, and the problems behind a live 3D globe.' },
   '/blog':         { title: 'Space Journal — Daily Astronomy & Space Imagery | ObjectTracer',
                      description: 'A daily space journal featuring NASA\'s Astronomy Picture of the Day — stunning cosmic imagery with the science behind each one.' },

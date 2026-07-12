@@ -57,7 +57,16 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
   const itemBase = (id) => tab === 'inbound' ? `${API}/api/v1/admin/inbound/${id}` : `${API}/api/v1/admin/messages/${id}`
 
   const load = useCallback(() => {
-    if (tab === 'arch' || tab === 'blog') { setItems([]); setState('ready'); return }  // own data / nothing to fetch
+    if (tab === 'arch' || tab === 'blog') {
+      // No list to fetch, but still verify the admin session — these tabs
+      // were reachable signed-out via the old skip.
+      setState('loading')
+      setItems([])
+      fetch(`${API}/api/v1/admin/me`, { credentials: 'include', headers: authH })
+        .then(r => setState(r.status === 200 ? 'ready' : 'denied'))
+        .catch(() => setState('denied'))
+      return
+    }
     setState('loading')
     setOpenId(null)
     fetch(listUrl, { credentials: 'include', headers: authH })
@@ -131,15 +140,17 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
           {state === 'ready' && <button className={styles.ghost} onClick={load}>Refresh</button>}
         </header>
 
+        {state === 'ready' && (
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${tab === 'inbound' ? styles.tabOn : ''}`} onClick={() => setTab('inbound')}>Received emails</button>
           <button className={`${styles.tab} ${tab === 'contact' ? styles.tabOn : ''}`} onClick={() => setTab('contact')}>Contact form</button>
           <button className={`${styles.tab} ${tab === 'blog' ? styles.tabOn : ''}`} onClick={() => setTab('blog')}>Blog</button>
           <button className={`${styles.tab} ${tab === 'arch' ? styles.tabOn : ''}`} onClick={() => setTab('arch')}>How it works</button>
         </div>
+        )}
 
-        {tab === 'arch' && <ArchitectureExplorer />}
-        {tab === 'blog' && <AdminBlog sessionToken={sessionToken} />}
+        {state === 'ready' && tab === 'arch' && <ArchitectureExplorer />}
+        {state === 'ready' && tab === 'blog' && <AdminBlog sessionToken={sessionToken} />}
 
         {tab === 'inbound' && state === 'ready' && (
           <div className={styles.syncRow}>

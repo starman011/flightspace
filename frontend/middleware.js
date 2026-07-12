@@ -1820,7 +1820,7 @@ async function renderEngineeringFeed() {
   } catch (_) {}
 
   const canonical = `${SITE}/engineering`
-  const title = 'Engineering Blog — How ObjectTracer Is Built | ObjectTracer'
+  const title = 'Engineering Blog: How ObjectTracer Is Built | ObjectTracer'
   const desc  = 'Weekly engineering deep dives from the ObjectTracer build: rendering 40,000 aircraft at 60fps, real-time data pipelines, and the problems behind a live 3D globe.'
   const items = posts.map(p =>
     `<li><a href="${SITE}/blog/${esc(p.slug)}"><strong>${esc(p.title)}</strong><span>${esc(p.date)}</span></a></li>`
@@ -1831,7 +1831,7 @@ async function renderEngineeringFeed() {
   }
   const body = `
     <h1>Engineering Blog</h1>
-    <p>How ObjectTracer is built — one hard problem a week, in depth. Real code, real dead ends, real numbers.</p>
+    <p>How ObjectTracer is built: one hard problem a week, in depth. Real code, real dead ends, real numbers.</p>
     ${posts.length ? `<ul class="cards">${items}</ul>` : '<p>The first deep dive lands soon.</p>'}
     <h2>More from ObjectTracer</h2>
     <p><a href="${SITE}/blog">Space Journal</a> · <a href="${SITE}/launches">Launches</a> · <a href="${SITE}/iss">ISS tracker</a> · <a href="${SITE}/">Live 3D globe</a></p>`
@@ -1853,8 +1853,8 @@ async function renderBlogPost(slug) {
   const canonical = `${SITE}/blog/${slug}`
   const isEng = p.category === 'engineering'
   const title = isEng
-    ? `${p.title} — ObjectTracer Engineering`
-    : `${p.title} — Space Journal | ObjectTracer`
+    ? `${p.title} | ObjectTracer Engineering`
+    : `${p.title}: Space Journal | ObjectTracer`
   const desc  = (p.intro || p.explanation || '').slice(0, 200)
   const img = p.image_url || `${SITE}/og-image.png`
   const jsonLd = {
@@ -1885,7 +1885,7 @@ async function renderBlogPost(slug) {
     ${imgTag}
     <p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>
     ${blogFraming(p)}
-    <h2>The science — from NASA's Astronomy Picture of the Day</h2>
+    <h2>The science, from NASA's Astronomy Picture of the Day</h2>
     <p>${esc(p.explanation)}</p>
     ${p.copyright ? `<p style="font-size:.8rem;opacity:.6">Image credit: ${esc(p.copyright)} · Source: NASA APOD</p>` : `<p style="font-size:.8rem;opacity:.6">Source: NASA Astronomy Picture of the Day (public domain)</p>`}
     ${relatedBlogHtml(p, allPosts)}

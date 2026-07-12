@@ -141,7 +141,7 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
               <p className={styles.date}>{formatDate(active.date)}</p>
               <h1 className={styles.title}>{active.title}</h1>
               <p className={styles.intro}>{active.intro}</p>
-              <h2 className={styles.sectionH}>The science — from NASA's Astronomy Picture of the Day</h2>
+              <h2 className={styles.sectionH}>The science, from NASA's Astronomy Picture of the Day</h2>
               <p className={styles.body}>{active.explanation}</p>
               {active.copyright && <p className={styles.credit}>Image credit: {active.copyright}</p>}
               <p className={styles.source}>Source: <a href={`https://apod.nasa.gov/apod/ap${active.date.replace(/-/g,'').slice(2)}.html`} target="_blank" rel="noopener noreferrer">NASA APOD</a></p>
@@ -160,7 +160,7 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
             <h1 className={styles.feedTitle}>{tab === 'engineering' ? 'Engineering Blog' : 'Space Journal'}</h1>
             <p className={styles.feedSub}>
               {tab === 'engineering'
-                ? 'How ObjectTracer is built — one problem a week, in depth'
+                ? 'How ObjectTracer is built: one problem a week, in depth'
                 : 'Daily cosmic imagery, powered by NASA APOD'}
             </p>
             <div className={styles.tabs}>
@@ -170,7 +170,7 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
           </header>
           {loading && <p className={styles.loading}>Loading…</p>}
           {!loading && tab === 'engineering' && posts.length === 0 && (
-            <p className={styles.loading}>First engineering post lands soon — one deep dive a week.</p>
+            <p className={styles.loading}>First engineering post lands soon. One deep dive a week.</p>
           )}
           <div className={styles.feedLayout}>
             <aside className={styles.rail}>

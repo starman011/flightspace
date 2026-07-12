@@ -53,12 +53,12 @@ func blogSlug(date, title string) string {
 // blogIntro picks a stable enthusiast intro line by hashing the date.
 func blogIntro(date, title string) string {
 	templates := []string{
-		"The universe showed off again today — %s. Here is what NASA captured:",
+		"The universe showed off again today: %s. Here is what NASA captured:",
 		"Another stunning view from the cosmos: %s. NASA explains:",
-		"Today's window into deep space — %s. The story behind the image:",
+		"Today's window into deep space: %s. The story behind the image:",
 		"Space never stops amazing us. Today: %s. Here is the science:",
-		"A fresh look at our universe — %s. NASA's take:",
-		"Look up and wonder — today's cosmic highlight is %s:",
+		"A fresh look at our universe: %s. NASA's take:",
+		"Look up and wonder. Today's cosmic highlight is %s:",
 	}
 	h := fnv.New32a()
 	h.Write([]byte(date))

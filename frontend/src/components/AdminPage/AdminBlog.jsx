@@ -65,7 +65,7 @@ export default function AdminBlog({ sessionToken }) {
       <div className={styles.editor}>
         <p className={styles.kicker}>{form.slug ? 'Edit post' : 'New engineering post'}</p>
 
-        <input className={styles.input} placeholder="Title — e.g. Week 2: making 40,000 aircraft clickable"
+        <input className={styles.input} placeholder="Title, e.g. Week 2: Making 40,000 Aircraft Clickable"
           value={form.title} onChange={set('title')} />
 
         <div className={styles.row}>
@@ -79,15 +79,15 @@ export default function AdminBlog({ sessionToken }) {
           </label>
         </div>
 
-        <input className={styles.input} placeholder="Intro — one-line hook shown under the title (optional)"
+        <input className={styles.input} placeholder="Intro: one-line hook shown under the title (optional)"
           value={form.intro} onChange={set('intro')} />
         <input className={styles.input} placeholder="Image URL (optional)"
           value={form.image_url} onChange={set('image_url')} />
-        <input className={styles.input} placeholder="Video URL — YouTube or Vimeo link (optional)"
+        <input className={styles.input} placeholder="Video URL: YouTube or Vimeo link (optional)"
           value={form.video_url} onChange={set('video_url')} />
 
         <textarea className={styles.textarea} rows={14}
-          placeholder={'Body — line breaks are preserved exactly as written.\n\nThe problem:\n1. ...\n\nThe solution:\n1. ...'}
+          placeholder={'Body. Line breaks are preserved exactly as written.\n\nThe problem:\n1. ...\n\nThe solution:\n1. ...'}
           value={form.body} onChange={set('body')} />
 
         <div className={styles.actions}>

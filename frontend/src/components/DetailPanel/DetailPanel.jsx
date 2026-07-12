@@ -256,12 +256,24 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   // Controlled close: play an exit animation, then unmount — prevents the
   // panel from flashing its base (desktop) layout for a frame on mobile.
   const requestClose = useCallback(() => {
+    // Mobile: slide down via the transform transition (works regardless of the
+    // inline animation:'none' a drag leaves behind, which blocks keyframes).
+    const el = panelRef.current
+    if (el && window.innerWidth < 768) {
+      clearTimeout(clearInlineTimer.current)
+      el.style.animation = 'none'
+      el.style.transform = 'translateY(110%)'
+    }
     setClosing(true)
     setTimeout(() => onClose?.(), 240)
   }, [onClose])
 
   // Reset sheet + closing when a new flight is selected
-  useEffect(() => { setSheet('peek'); setClosing(false) }, [icao24])
+  useEffect(() => {
+    setSheet('peek'); setClosing(false)
+    const el = panelRef.current
+    if (el) { el.style.transform = ''; el.style.animation = '' }   // fresh card, fresh entry
+  }, [icao24])
 
   // Social presence: tell server we're watching this object
   useEffect(() => {
@@ -351,10 +363,13 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     el.style.transition = ''
     el.style.transform = `translateY(${s[target]}px)`
     setSheet(target)
+    // NOTE: the inline animation:'none' set at touchstart is intentionally
+    // never cleared — restoring it would REPLAY the sheetUp entry keyframes
+    // (bottom -> peek), which showed as a jerk after dragging to full and a
+    // phantom "re-open" during close. The entry animation already ran at mount.
     clearInlineTimer.current = setTimeout(() => {
       if (panelRef.current && !draggingRef.current) {
         panelRef.current.style.transform = ''
-        panelRef.current.style.animation = ''
       }
     }, 480)
     touchStartY.current = null
