@@ -85,5 +85,6 @@
   opacity: 0.18;
   filter: blur(2px);
   pointer-events: none;
+  z-index: 20;   /* beneath the feed sheet (overlay z 25) and cards */
   transition: opacity 0.3s ease, filter 0.3s ease;
 }

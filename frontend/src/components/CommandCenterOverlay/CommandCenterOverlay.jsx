@@ -1555,6 +1555,7 @@ export default function CommandCenterOverlay({
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
   activeScale, onDistanceChange,
   liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle,
+  onSheetChange,
 }) {
   const isLive  = connectionStatus === 'connected'
   const { news } = useSpaceNews()
@@ -1607,6 +1608,8 @@ export default function CommandCenterOverlay({
   const grabRef       = useRef(null)
   const sheetStateRef = useRef(sheetState)
   useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])
+  // Surface the mobile sheet state so App can dim bottom-left UI beneath it
+  useEffect(() => { onSheetChange?.(sheetState) }, [sheetState, onSheetChange])
 
   const PEEK_H = 80  // px visible in peek: grab bar + filter row
 

@@ -215,7 +215,10 @@ export default function App() {
     return null
   })
   const [streamCollapsed, setStreamCollapsed] = useState(false)
-  const [planesFleet, setPlanesFleet] = useState(null)  // ICAO prefix handed to PlanesPage by the fleet card
+  const [planesFleet, setPlanesFleet] = useState(null)
+  const [feedSheet, setFeedSheet] = useState('peek')   // mobile space-feed sheet state
+  // Bottom-left UI (locate + footer) dims and drops BENEATH whichever card/sheet is up
+  const bottomUiDimmed = !!selectedIcao24 || !!selectedAirport || feedSheet !== 'peek'  // ICAO prefix handed to PlanesPage by the fleet card
   const [arActive, setArActive] = useState(false)
   const [skyHeading, setSkyHeading] = useState(null)   // { raHms, decDms } live readout
   const [skyLocated, setSkyLocated] = useState(false)  // user granted location → real-sky
@@ -919,6 +922,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         pinnedLaunch={pinnedLaunch}
         onUnpinLaunch={() => pinnedLaunch && pins.unpinLaunch(pinnedLaunch.id)}
         forceCollapsed={streamCollapsed || !!landing}
+        onSheetChange={setFeedSheet}
         onISSLink={{
           flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
           selectISS: ()         => setSelectedIcao24('ISS'),
@@ -1203,7 +1207,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       <SiteFooter
         active={!activePage && !launchPanelOpen && !profilePanelOpen && !focusedPad && !searchOpen}
-        dimmed={!!selectedIcao24 || !!selectedAirport}
+        dimmed={bottomUiDimmed}
       />
 
       {/* ── Locate me: geolocate + smooth-zoom to ~100 km above your location ── */}
@@ -1213,9 +1217,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           title="Zoom to my location"
           aria-label="Zoom to my location"
           style={{
-            position: 'fixed', left: 16, bottom: 118, zIndex: 690,
+            position: 'fixed', left: 16, bottom: 118,
+            zIndex: bottomUiDimmed ? 20 : 690,   /* beneath the feed sheet (overlay z 25) and cards */
             transition: 'opacity 0.3s ease, filter 0.3s ease',
-            ...((selectedIcao24 || selectedAirport) ? { opacity: 0.18, filter: 'blur(2px)', pointerEvents: 'none' } : {}),
+            ...(bottomUiDimmed ? { opacity: 0.18, filter: 'blur(2px)', pointerEvents: 'none' } : {}),
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(8,12,18,0.92)', backdropFilter: 'blur(14px)',
