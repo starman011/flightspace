@@ -2215,7 +2215,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Coalesce to at most one pick per frame, using the latest cursor position.
     let _hovX = 0, _hovY = 0, _hovRaf = 0
     const onMouseMove = e => {
-      _hovX = clientX; _hovY = clientY
+      _hovX = e.clientX; _hovY = e.clientY
       if (_hovRaf) return
       _hovRaf = requestAnimationFrame(() => { _hovRaf = 0; doHover(_hovX, _hovY) })
     }
