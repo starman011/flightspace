@@ -27,11 +27,30 @@ export function toEmbedUrl(url) {
   return null
 }
 
+// Topic derivation from title+body keywords — one filter set for both series,
+// no schema changes needed. A post can match several topics.
+const TOPICS = [
+  ['Rendering & GPU', ['instancedmesh', 'draw call', 'webgl', 'three.js', 'gpu', 'shader', 'render', 'fps']],
+  ['Performance',     ['performance', '60 fps', 'optimis', 'optimiz', 'stutter', 'bottleneck', 'memory']],
+  ['Real-time data',  ['websocket', 'real-time', 'ads-b', 'live aircraft', 'stream', 'redis']],
+  ['Galaxies & deep space', ['galaxy', 'nebula', 'cosmic', 'quasar', 'supernova', 'cluster', 'interstellar']],
+  ['Planets & moons', ['mars', 'jupiter', 'saturn', 'venus', 'mercury', 'neptune', 'planet', 'moon', 'lunar']],
+  ['Stars & the Sun', ['star', 'milky way', 'constellation', 'sun', 'aurora', 'eclipse', 'solar']],
+  ['Rockets & ISS',   ['rocket', 'launch', 'spacex', 'falcon', 'space station', ' iss ', 'astronaut']],
+  ['Comets & asteroids', ['comet', 'asteroid', 'meteor', 'near-earth']],
+]
+function postTopics(p) {
+  const t = `${p.title} ${p.intro || ''} ${p.explanation || ''}`.toLowerCase()
+  return TOPICS.filter(([, ws]) => ws.some(w => t.includes(w))).map(([k]) => k)
+}
+
 export default function BlogPage({ onClose, initialSlug, initialTab }) {
+  const [topic, setTopic] = useState(null)   // left-rail topic filter (null = all)
   const [tab, setTabState] = useState(initialTab === 'engineering' ? 'engineering' : 'journal')
   // Tab ↔ URL: /engineering is the public home of the weekly series
   const setTab = (t) => {
     setTabState(t)
+    setTopic(null)
     window.history.replaceState(null, '', t === 'engineering' ? '/engineering' : '/blog')
   }
   const [posts, setPosts] = useState([])
@@ -153,8 +172,24 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
           {!loading && tab === 'engineering' && posts.length === 0 && (
             <p className={styles.loading}>First engineering post lands soon — one deep dive a week.</p>
           )}
+          <div className={styles.feedLayout}>
+            <aside className={styles.rail}>
+              <p className={styles.railTitle}>Topics</p>
+              <button className={`${styles.railItem} ${topic === null ? styles.railOn : ''}`} onClick={() => setTopic(null)}>
+                All posts
+              </button>
+              {TOPICS.map(([k]) => {
+                const n = posts.filter(p => postTopics(p).includes(k)).length
+                if (n === 0) return null
+                return (
+                  <button key={k} className={`${styles.railItem} ${topic === k ? styles.railOn : ''}`} onClick={() => setTopic(topic === k ? null : k)}>
+                    {k} <span className={styles.railCount}>{n}</span>
+                  </button>
+                )
+              })}
+            </aside>
           <div className={styles.bento}>
-            {posts.map((p, i) => (
+            {(topic ? posts.filter(p => postTopics(p).includes(topic)) : posts).map((p, i) => (
               <button
                 key={p.slug}
                 className={`${styles.tile} ${styles[bentoSize(i)]}`}
@@ -174,6 +209,7 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
                 </div>
               </button>
             ))}
+          </div>
           </div>
           {!loading && posts.length < total && (
             <button className={styles.loadMore} onClick={loadMore} disabled={loadingMore}>

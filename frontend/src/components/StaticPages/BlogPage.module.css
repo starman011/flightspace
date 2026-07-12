@@ -147,3 +147,46 @@
     radial-gradient(80% 70% at 20% 15%, rgba(178, 255, 26, 0.10), transparent 60%),
     linear-gradient(160deg, #0c1420, #060a10);
 }
+
+/* ── Left topic rail + readability upgrade ───────────────────────────── */
+.feedLayout { display: grid; grid-template-columns: 210px 1fr; gap: 26px; align-items: start; }
+
+.rail {
+  position: sticky; top: 24px;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 16px 14px;
+  background: rgba(13, 19, 28, 0.6);
+  border: 1px solid rgba(200, 214, 235, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+}
+.railTitle {
+  font-family: var(--font-mono, monospace); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: rgba(178, 255, 26, 0.65); margin: 0 0 6px 4px;
+}
+.railItem {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  text-align: left; font-family: var(--font-body, sans-serif); font-size: 13px;
+  padding: 8px 11px; border-radius: 10px; border: 1px solid transparent;
+  background: none; color: rgba(208, 224, 244, 0.68); cursor: pointer; transition: 0.15s;
+}
+.railItem:hover { color: #eaf2ff; background: rgba(140, 170, 210, 0.08); }
+.railOn { background: rgba(178, 255, 26, 0.1); border-color: rgba(178, 255, 26, 0.4); color: #b2ff1a; }
+.railCount {
+  font-family: var(--font-mono, monospace); font-size: 10px;
+  color: rgba(201, 216, 236, 0.4); }
+.railOn .railCount { color: rgba(178, 255, 26, 0.7); }
+
+/* Article readability: measure, leading, hierarchy */
+.article { max-width: 720px; }
+.title { font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.015em; }
+.intro { font-size: 1.15rem; line-height: 1.6; }
+.body { font-size: 1.06rem; line-height: 1.8; color: rgba(214, 228, 244, 0.85); }
+.date { letter-spacing: 0.1em; text-transform: uppercase; }
+
+@media (max-width: 900px) {
+  .feedLayout { grid-template-columns: 1fr; }
+  .rail { position: static; flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .railTitle { width: 100%; }
+  .railItem { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(200, 214, 235, 0.14); }
+}

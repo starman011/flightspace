@@ -1778,7 +1778,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       div.addEventListener('mouseenter', () => { div.style.background = 'rgba(178,255,26,0.12)'; div.style.borderColor = 'rgba(178,255,26,0.9)'; div.style.color = '#b2ff1a'; div.style.boxShadow = '0 2px 12px rgba(0,0,0,0.7),0 0 14px rgba(178,255,26,0.25)' })
       div.addEventListener('mouseleave', () => { div.style.background = 'rgba(4,9,14,0.88)'; div.style.borderColor = 'rgba(178,255,26,0.45)'; div.style.color = 'rgba(178,255,26,0.85)'; div.style.boxShadow = '0 1px 8px rgba(0,0,0,0.6),0 0 6px rgba(178,255,26,0.1)' })
       labelContainer.appendChild(div)
-      return { div, nameEl: div.querySelector('[data-apname]'), nameShown: false, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata }
+      // Precompute world position + unit normal ONCE — the per-frame loop
+      // previously allocated two Vector3s per airport per frame (GC stutter).
+      const world = ll2v(a.lat, a.lon, PLACE_R)
+      return { div, nameEl: div.querySelector('[data-apname]'), nameShown: false, lat: a.lat, lon: a.lon, tier: a.tier, iata: a.iata, world, n: world.clone().normalize(), vis: false }
     })
 
     // ── Silver labels for familiar sky objects (galaxy scale only) ──
@@ -2917,17 +2920,23 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           const camDir = camera.position.clone().normalize()
           for (let i = 0; i < airportLabelEls.length; i++) {
             const al = airportLabelEls[i]
-            if (al.tier > tierCutoff) { al.div.style.display = 'none'; continue }
+            // Zero allocations + DOM writes only on visibility CHANGES —
+            // 930 labels every frame previously churned the GC and style engine.
+            const facing = al.tier <= tierCutoff && al.n.dot(camDir) >= 0.1
+            if (!facing) {
+              if (al.vis) { al.div.style.display = 'none'; al.vis = false }
+              continue
+            }
             if (al.nameShown !== showNames) {
               al.nameShown = showNames
               al.nameEl.style.display = showNames ? '' : 'none'
             }
-            const pos = ll2v(al.lat, al.lon, PLACE_R)
-            // Dot product: positive = facing camera, negative = behind globe
-            if (pos.clone().normalize().dot(camDir) < 0.1) { al.div.style.display = 'none'; continue }
-            _projV.copy(pos).project(camera)
-            if (_projV.z > 1) { al.div.style.display = 'none'; continue }
-            al.div.style.display = ''
+            _projV.copy(al.world).project(camera)
+            if (_projV.z > 1) {
+              if (al.vis) { al.div.style.display = 'none'; al.vis = false }
+              continue
+            }
+            if (!al.vis) { al.div.style.display = ''; al.vis = true }
             al.div.style.transform = `translate3d(${(_projV.x * halfW + halfW)|0}px,${(-_projV.y * halfH + halfH - 6)|0}px,0) translate(-50%,-100%)`
           }
         }
@@ -3049,8 +3058,15 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         if (_rmk) for (let i = 0; i < _rmk.length; i++) _rmk[i].scale.setScalar(_mCur)
       }
 
-      // Rebuild instance matrices when planeScale changes (separate from data updates)
-      if (int.current.needsInstanceRebuild && int.current.lastAircraft) {
+      // Rebuild instance matrices when planeScale changes (separate from data
+      // updates). Gated to once per 150ms: a continuous zoom crosses the 5%
+      // hysteresis repeatedly, and each rebuild recomputes 12K matrices +
+      // re-uploads ~4.6MB of instance buffers — back-to-back rebuilds were the
+      // zoom stutter. Sizes converge on the next gated pass (<150ms behind).
+      const _nowRb = Date.now()
+      if (int.current.needsInstanceRebuild && int.current.lastAircraft
+          && _nowRb - (int.current._lastScaleRebuild || 0) > 150) {
+        int.current._lastScaleRebuild = _nowRb
         int.current.needsInstanceRebuild = false
         syncInstances(int.current, int.current.lastAircraft, int.current.lastSelectedId, int.current.hoveredId, true)
       }
