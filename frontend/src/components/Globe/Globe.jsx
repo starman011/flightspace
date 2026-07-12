@@ -3532,7 +3532,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       {hoverTooltip && createPortal(
         hoverTooltip.desi
           ? <DESITooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.desi} />
-          : <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} />,
+          : <AircraftTooltip x={hoverTooltip.x} y={hoverTooltip.y} data={hoverTooltip.data} dimmed={mobilePanel && window.innerWidth < 768} />,
         document.body
       )}
 
@@ -3549,7 +3549,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
 // ── Hover tooltip ─────────────────────────────────────────────────────────────
 
-function AircraftTooltip({ x, y, data }) {
+function AircraftTooltip({ x, y, data, dimmed }) {
   if (!data) return null
 
   const cat      = data.cat || 'plane'
@@ -3572,7 +3572,12 @@ function AircraftTooltip({ x, y, data }) {
         left,
         top,
         pointerEvents: 'none',
-        zIndex: 9999,
+        // While the detail card is open (mobile sheet), the readout drops
+        // BEHIND the card (panel is z 200) and blurs out; restores on close.
+        zIndex: dimmed ? 190 : 9999,
+        opacity: dimmed ? 0.25 : 1,
+        filter: dimmed ? 'blur(2px)' : 'none',
+        transition: 'opacity 0.3s ease, filter 0.3s ease',
         background: 'rgba(8, 14, 24, 0.92)',
         border: '1px solid rgba(255, 215, 0, 0.55)',
         borderRadius: '4px',
