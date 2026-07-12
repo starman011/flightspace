@@ -629,7 +629,7 @@
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.7);
     -webkit-overflow-scrolling: touch;
     /* peek: 38dvh visible → offset = 88dvh − 38dvh */
-    transform: translateY(50dvh);
+    transform: translateY(var(--peek-ty, 50dvh));
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform;
     animation: sheetUp 0.36s cubic-bezier(0.16, 1, 0.3, 1);
@@ -644,7 +644,7 @@
 
   @keyframes sheetUp {
     from { transform: translateY(100%); opacity: 0.4; }
-    to   { transform: translateY(50dvh); opacity: 1; }
+    to   { transform: translateY(var(--peek-ty, 50dvh)); opacity: 1; }
   }
 
   /* ── Mini collapsed state ── */
@@ -655,7 +655,7 @@
 
   /* ── Full expanded state (swipe up / tap the handle) ── */
   .panelFull {
-    transform: translateY(0);
+    transform: translateY(var(--full-ty, 0px));
   }
 
   /* ── Drag zone visible on mobile ── */
@@ -1061,8 +1061,8 @@
 @media (max-width: 767px) {
   .scroller {
     flex: none;
-    height: calc(38dvh - 30px);   /* peek: visible sheet minus drag zone */
+    height: var(--peek-h, calc(38dvh - 30px));   /* peek: visible sheet minus drag zone */
     transition: height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .panelFull .scroller { height: calc(88dvh - 30px); }
+  .panelFull .scroller { height: var(--full-h, calc(88dvh - 30px)); }
 }

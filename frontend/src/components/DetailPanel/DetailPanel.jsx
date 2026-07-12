@@ -240,6 +240,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const [sheet, setSheet]     = useState('peek')
   const [closing, setClosing] = useState(false)
   const panelRef = useRef(null)
+  const scrollerRef = useRef(null)
   const photoTriedReg = useRef(false)
 
   // ISS detail can open without live WebSocket data (direct /iss URL).
@@ -296,12 +297,33 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const lastT         = useRef(0)
   const clearInlineTimer = useRef(null)
 
+  // Content-aware sheet metrics: the panel is a fixed 88dvh (stable transform
+  // math), but each state's VISIBLE height hugs the content, capped at the
+  // usual 38dvh/88dvh. Without this, short content left a slab of empty glass
+  // under the last button in the full state.
+  const DRAG_H = 30
+  const sheetMetrics = () => {
+    const vh = window.innerHeight || 800
+    const H = panelRef.current?.getBoundingClientRect().height || Math.round(vh * 0.88)
+    const content = scrollerRef.current ? scrollerRef.current.scrollHeight + DRAG_H : Infinity
+    const fullVis = Math.min(H, content)
+    const peekVis = Math.min(Math.round(vh * 0.38), content)
+    return { H, fullVis, peekVis }
+  }
+  useEffect(() => {
+    const el = panelRef.current
+    if (!el || typeof window === 'undefined' || window.innerWidth >= 768) return
+    const { H, fullVis, peekVis } = sheetMetrics()
+    el.style.setProperty('--full-ty', `${Math.max(0, H - fullVis)}px`)
+    el.style.setProperty('--full-h', `${fullVis - DRAG_H}px`)
+    el.style.setProperty('--peek-ty', `${Math.max(0, H - peekVis)}px`)
+    el.style.setProperty('--peek-h', `${peekVis - DRAG_H}px`)
+  })   // after every render: content height changes as detail/photo/route load
+
   // translateY offsets per state (panel height = 88dvh; peek shows 38dvh)
   const snapOffsets = () => {
-    const H = panelRef.current?.getBoundingClientRect().height
-      || Math.round((window.innerHeight || 800) * 0.88)
-    const vh = window.innerHeight || 800
-    return { full: 0, peek: Math.max(0, H - Math.round(vh * 0.38)), mini: Math.max(0, H - 80) }
+    const { H, fullVis, peekVis } = sheetMetrics()
+    return { full: Math.max(0, H - fullVis), peek: Math.max(0, H - peekVis), mini: Math.max(0, H - 80) }
   }
 
   const handleTouchStart = useCallback((e) => {
@@ -610,7 +632,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
       {/* ── Full peek content (hidden when mini) ── */}
       {!isMini && (
-        <div className={styles.scroller}>
+        <div className={styles.scroller} ref={scrollerRef}>
           {/* ── Hero: live stream for ISS, photo for aircraft ── */}
           {cat === 'satellite' && icao24 === 'ISS' ? (
             <ISSStream />
