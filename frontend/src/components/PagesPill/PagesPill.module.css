@@ -141,43 +141,70 @@
   to   { opacity: 1; max-width: 80px; margin-left: 0; }
 }
 
+.head, .menu, .menuInner { display: contents; }
+.current { display: none; }
+
 /* Mobile — collapsed chip that opens a VERTICAL menu (depth, not a line) */
 @media (max-width: 767px) {
   .pill {
     top: 12px;
     left: 12px;
-    gap: 2px;
-    padding: 4px;
-    max-width: 210px;
-    transition: border-radius 0.25s ease;
-  }
-
-  .btn {
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-  }
-
-  /* Collapsed: hamburger + the active page icon only */
-  .toggle { display: flex; width: 28px; height: 28px; }
-  .pill:not(.expanded) .btn:not(.active) { display: none; }
-  .pill:not(.expanded) .label { display: none; }
-  .pill:not(.expanded) .btn.active { width: 28px; padding: 0; }
-
-  /* Expanded: the pill grows DOWNWARD into a labeled menu */
-  .pill.expanded {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 8px;
-    border-radius: var(--r-card);
+    gap: 0;
+    padding: 4px;
+    width: 72px;                     /* chip: hamburger + current icon */
+    border-radius: 18px;             /* fixed sane radius — no 9999px tween glitch */
+    overflow: hidden;
+    transition: width 0.38s cubic-bezier(0.32, 1.2, 0.42, 1),
+                border-radius 0.3s ease;
+  }
+  .pill::before { border-radius: 18px; }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .toggle { display: flex; width: 28px; height: 28px; flex: none; }
+  .current {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #b2ff1a;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+  }
+
+  /* The menu is always in the DOM; its height morphs 0 -> content via the
+     grid-rows trick, so open/close reads as ONE entity growing from the chip
+     and shrinking back inside it. */
+  .menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.38s cubic-bezier(0.32, 1.2, 0.42, 1);
+  }
+  .menuInner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .pill.expanded {
     width: 186px;
+    border-radius: var(--r-card);
   }
   .pill.expanded::before { border-radius: var(--r-card); }
-  .pill.expanded .toggle {
-    align-self: flex-end;
-    margin-bottom: 2px;
-  }
-  .pill.expanded .btn {
+  .pill.expanded .menu { grid-template-rows: 1fr; }
+  .pill.expanded .current { opacity: 0; }
+  .pill.expanded .menuInner { padding-top: 4px; }
+
+  .btn {
     width: 100%;
     height: auto;
     justify-content: flex-start;
@@ -185,34 +212,38 @@
     padding: 10px 12px;
     border-radius: 12px;
     color: rgba(208, 224, 244, 0.7);
-    animation: rowIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s;
   }
-  .pill.expanded .label {
+  .pill.expanded .btn {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* Staggered settle as the menu grows */
+  .pill.expanded .btn:nth-child(1) { transition-delay: 0.05s; }
+  .pill.expanded .btn:nth-child(2) { transition-delay: 0.08s; }
+  .pill.expanded .btn:nth-child(3) { transition-delay: 0.11s; }
+  .pill.expanded .btn:nth-child(4) { transition-delay: 0.14s; }
+  .pill.expanded .btn:nth-child(5) { transition-delay: 0.17s; }
+  .pill.expanded .btn:nth-child(6) { transition-delay: 0.20s; }
+  .pill.expanded .btn:nth-child(7) { transition-delay: 0.23s; }
+  .pill.expanded .btn:nth-child(8) { transition-delay: 0.26s; }
+  .pill.expanded .btn:nth-child(9) { transition-delay: 0.29s; }
+
+  .label {
     display: inline;
     color: inherit;
     font-size: 12px;
     letter-spacing: 0.02em;
     animation: none;
   }
-  .pill.expanded .btn.active {
+  .btn.active {
     background: rgba(178, 255, 26, 0.1);
     border: 1px solid rgba(178, 255, 26, 0.35);
     color: #b2ff1a;
-  }
-
-  /* Staggered entrance: each row drops in a beat after the one above */
-  .pill.expanded .btn:nth-child(2) { animation-delay: 0.02s; }
-  .pill.expanded .btn:nth-child(3) { animation-delay: 0.05s; }
-  .pill.expanded .btn:nth-child(4) { animation-delay: 0.08s; }
-  .pill.expanded .btn:nth-child(5) { animation-delay: 0.11s; }
-  .pill.expanded .btn:nth-child(6) { animation-delay: 0.14s; }
-  .pill.expanded .btn:nth-child(7) { animation-delay: 0.17s; }
-  .pill.expanded .btn:nth-child(8) { animation-delay: 0.20s; }
-  .pill.expanded .btn:nth-child(9) { animation-delay: 0.23s; }
-  .pill.expanded .btn:nth-child(10) { animation-delay: 0.26s; }
-
-  @keyframes rowIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    width: 100%;
+    padding: 10px 12px;
+    gap: 11px;
   }
 }

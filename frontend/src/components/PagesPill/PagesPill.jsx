@@ -104,28 +104,37 @@ export default function PagesPill({
 
   return (
     <nav data-pagespill className={`${styles.pill} ${overPage ? styles.overPage : ''} ${expanded ? styles.expanded : ''}`} aria-label="Pages">
-      <button
-        className={styles.toggle}
-        onClick={() => setExpanded(e => !e)}
-        aria-label={expanded ? 'Show fewer' : 'Show all'}
-        title={expanded ? 'Show fewer' : 'Show all'}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          {expanded ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-        </svg>
-      </button>
-      {PAGES.map(page => (
+      <div className={styles.head}>
         <button
-          key={page.id}
-          className={`${styles.btn} ${isActive(page) ? styles.active : ''}`}
-          onClick={() => handleClick(page)}
-          title={page.label}
-          aria-label={page.label}
+          className={styles.toggle}
+          onClick={() => setExpanded(e => !e)}
+          aria-label={expanded ? 'Show fewer' : 'Show all'}
+          title={expanded ? 'Show fewer' : 'Show all'}
         >
-          <PageIcon id={page.id} />
-          <span className={styles.label}>{page.label}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {expanded ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+          </svg>
         </button>
-      ))}
+        <span className={styles.current} aria-hidden="true">
+          <PageIcon id={(PAGES.find(isActive) || PAGES[0]).id} />
+        </span>
+      </div>
+      <div className={styles.menu}>
+        <div className={styles.menuInner}>
+          {PAGES.map(page => (
+            <button
+              key={page.id}
+              className={`${styles.btn} ${isActive(page) ? styles.active : ''}`}
+              onClick={() => handleClick(page)}
+              title={page.label}
+              aria-label={page.label}
+            >
+              <PageIcon id={page.id} />
+              <span className={styles.label}>{page.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </nav>
   )
 }
