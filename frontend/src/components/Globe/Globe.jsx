@@ -943,6 +943,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     int.current.routeThickUniforms = []   // drop stale thickness uniforms
     int.current.routeMarkers = []
     int.current._routeScale = null
+    int.current._markerScale = null
     if (!points?.length && !routeData) return
 
     // ── Build full path: departure airport → DB trail → arrival airport ──
@@ -985,8 +986,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     // Fixed world-radius (zoom-independent) so the route tube never rebuilds on
     // zoom — thin, like the pill outline.
-    const tubeRadius   = 0.0016
-    const markerRadius = 0.0038
+    const tubeRadius   = 0.0022   // ~40% thicker route line at every zoom
+    const markerRadius = 0.0030   // smaller dep/arr dots (were blobs up close)
 
     // Altitude colour ramp: violet (low) → blue (high), normalised over 0–40k ft.
     const ALT_STOPS = [
@@ -1068,7 +1069,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // constant on-screen width, so it shrinks as you zoom in. No geometry
       // rebuild → instant, never laggy.
       const _cd0 = int.current.camera ? int.current.camera.position.length() : 3.5
-      const thick = { value: MathUtils.clamp((_cd0 - AC_R) / 3.5, 0.12, 2.4) }
+      const thick = { value: MathUtils.clamp((_cd0 - AC_R) / 3.5, 0.14, 5.0) }
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uThick = thick
         shader.uniforms.uBaseR = { value: tubeRadius }
@@ -1102,8 +1103,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       sMesh.position.copy(pos)
       sMesh.renderOrder = 22
       // Initial scale matches current zoom so the dot isn't huge for one frame.
+      // Markers use a far lower floor than the line: at ~6km altitude the old
+      // 0.14 floor rendered each airport dot as a multi-km blob.
       const _cd = int.current.camera ? int.current.camera.position.length() : 3.5
-      sMesh.scale.setScalar(MathUtils.clamp((_cd - AC_R) / 3.5, 0.14, 2.4))
+      sMesh.scale.setScalar(MathUtils.clamp((_cd - AC_R) / 3.5, 0.015, 2.4))
       scene.add(sMesh)
       objects.push(sMesh)
       routeMarkers.push(sMesh)
@@ -2206,16 +2209,26 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       return bestId
     }
 
+    // Hover picking is rAF-gated: screenPick projects ~12K entities and builds
+    // a fresh KDBush index per call — running that on every raw mousemove
+    // (120+/s on fast mice) burned main-thread time against the render loop.
+    // Coalesce to at most one pick per frame, using the latest cursor position.
+    let _hovX = 0, _hovY = 0, _hovRaf = 0
     const onMouseMove = e => {
+      _hovX = clientX; _hovY = clientY
+      if (_hovRaf) return
+      _hovRaf = requestAnimationFrame(() => { _hovRaf = 0; doHover(_hovX, _hovY) })
+    }
+    const doHover = (clientX, clientY) => {
       // ── DESI galaxy hover (galaxy scale) ─────────────────────────
       if (int.current.targetCameraScale === 'galaxy') {
-        const hit = desiLayer.hoverPick(e.clientX, e.clientY, camera, el)
+        const hit = desiLayer.hoverPick(clientX, clientY, camera, el)
         if (hit) {
           desiLayer.setHovered(hit.idx)
           renderer.domElement.classList.add(styles.hovered)
           const isQSO = hit.s === 'QSO'
           int.current.setHoverTooltip?.({
-            x: e.clientX, y: e.clientY,
+            x: clientX, y: clientY,
             desi: { type: isQSO ? 'Quasar' : 'Galaxy', z: hit.z, ra: hit.r, dec: hit.d },
           })
         } else {
@@ -2226,7 +2239,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         return
       }
 
-      const newId = screenPick(e.clientX, e.clientY, false)
+      const newId = screenPick(clientX, clientY, false)
       const prevId = int.current.hoveredId
 
       if (newId !== prevId) {
@@ -2253,13 +2266,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // Update tooltip
         if (newId) {
           const acData = int.current.lastAircraft?.get(newId)
-          int.current.setHoverTooltip?.({ x: e.clientX, y: e.clientY, data: acData ?? null, id: newId })
+          int.current.setHoverTooltip?.({ x: clientX, y: clientY, data: acData ?? null, id: newId })
         } else {
           int.current.setHoverTooltip?.(null)
         }
       } else if (newId) {
         // Update position while hovering same entity
-        int.current.setHoverTooltip?.(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : prev)
+        int.current.setHoverTooltip?.(prev => prev ? { ...prev, x: clientX, y: clientY } : prev)
       }
     }
     el.addEventListener('mousemove', onMouseMove)
@@ -3013,23 +3026,27 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // ── Route line + airport dots scale with zoom (constant-ish on screen) ──
-      // The dep→arr line and the departure/arrival dots keep a fixed world size,
-      // which looks far too big when zoomed in. Scale both with camera distance:
-      // the line via a shader uniform (no geometry rebuild), the dots via
-      // mesh.scale. Reference dist = 3.5 (full globe) → factor ≈ 1; closer → smaller.
-      // One shared, eased scalar drives both so they stay visually consistent.
+      // The line (shader uniform) and the dep/arr dots (mesh.scale) get SEPARATE
+      // eased scalars: the line keeps a visible floor so the route always reads,
+      // but the dots keep shrinking with zoom — the shared 0.14 floor previously
+      // made each airport dot a multi-km blob at ~6km viewing altitude.
       const _rtu = int.current.routeThickUniforms
       const _rmk = int.current.routeMarkers
       if ((_rtu && _rtu.length) || (_rmk && _rmk.length)) {
         const _camDist = camera.position.length()
-        // Upper clamp 5.0 (was 2.4): trail reads too thin at full zoom-out — now
-        // >2x thicker at maximum camera height. Lower clamp keeps it slim up close.
-        const _target  = MathUtils.clamp((_camDist - AC_R) / 3.5, 0.14, 5.0)
+        const _raw = (_camDist - AC_R) / 3.5
+        // Line: upper clamp 5.0 → >2x thicker at max zoom-out; slim up close.
+        const _target  = MathUtils.clamp(_raw, 0.14, 5.0)
         let _cur = int.current._routeScale
         _cur = (_cur == null) ? _target : _cur + (_target - _cur) * 0.35
         int.current._routeScale = _cur
+        // Dots: much lower floor — keep shrinking to near-airport zoom.
+        const _mTarget = MathUtils.clamp(_raw, 0.015, 2.4)
+        let _mCur = int.current._markerScale
+        _mCur = (_mCur == null) ? _mTarget : _mCur + (_mTarget - _mCur) * 0.35
+        int.current._markerScale = _mCur
         if (_rtu) for (let i = 0; i < _rtu.length; i++) _rtu[i].value = _cur
-        if (_rmk) for (let i = 0; i < _rmk.length; i++) _rmk[i].scale.setScalar(_cur)
+        if (_rmk) for (let i = 0; i < _rmk.length; i++) _rmk[i].scale.setScalar(_mCur)
       }
 
       // Rebuild instance matrices when planeScale changes (separate from data updates)
@@ -3192,6 +3209,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', onResize)
       el.removeEventListener('mousemove', onMouseMove)
+      if (_hovRaf) cancelAnimationFrame(_hovRaf)
       el.removeEventListener('mouseleave', onMouseLeave)
       el.removeEventListener('pointerdown', onPointerDown)
       el.removeEventListener('pointerup',   onPointerUp)
