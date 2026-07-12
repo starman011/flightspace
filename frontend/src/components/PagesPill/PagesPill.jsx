@@ -102,7 +102,7 @@ export default function PagesPill({
   }
 
   return (
-    <nav className={`${styles.pill} ${overPage ? styles.overPage : ''} ${expanded ? styles.expanded : ''}`} aria-label="Pages">
+    <nav data-pagespill className={`${styles.pill} ${overPage ? styles.overPage : ''} ${expanded ? styles.expanded : ''}`} aria-label="Pages">
       <button
         className={styles.toggle}
         onClick={() => setExpanded(e => !e)}
