@@ -595,7 +595,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
 
       {/* ── Full peek content (hidden when mini) ── */}
       {!isMini && (
-        <>
+        <div className={styles.scroller}>
           {/* ── Hero: live stream for ISS, photo for aircraft ── */}
           {cat === 'satellite' && icao24 === 'ISS' ? (
             <ISSStream />
@@ -896,7 +896,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </aside>
   )

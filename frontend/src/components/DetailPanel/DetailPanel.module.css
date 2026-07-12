@@ -18,9 +18,7 @@
   display: flex;
   flex-direction: column;
   font-family: var(--font-mono);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(200,210,225,0.1) transparent;
+  overflow: hidden;   /* scrolling lives in .scroller */
   box-shadow: -8px 0 48px rgba(0, 0, 0, 0.7);
 }
 
@@ -634,8 +632,7 @@
     transform: translateY(50dvh);
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform;
-    animation: sheetUp 0.36s cubic-bezier(0.16, 1, 0.3, 1),
-               nudgeHint 1.4s 1.2s ease-in-out 2;
+    animation: sheetUp 0.36s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* Mobile exit: slide the sheet straight down (overrides slideOutRight).
@@ -648,13 +645,6 @@
   @keyframes sheetUp {
     from { transform: translateY(100%); opacity: 0.4; }
     to   { transform: translateY(50dvh); opacity: 1; }
-  }
-
-  /* Nudge rides on the peek offset so it never fights the state transform */
-  @keyframes nudgeHint {
-    0%, 100% { transform: translateY(50dvh); }
-    35%      { transform: translateY(calc(50dvh - 10px)); }
-    65%      { transform: translateY(calc(50dvh - 4px)); }
   }
 
   /* ── Mini collapsed state ── */
@@ -1050,4 +1040,29 @@
   font-size: 10px;
   color: rgba(160, 170, 185, 0.5);
   white-space: nowrap;
+}
+
+
+/* ── Inner scroller — desktop fills the panel; mobile matches the visible
+     sheet height per state (panel is always 88dvh tall + translateY'd, so
+     without this the browser saw no overflow in peek → scrolling was dead,
+     and bottom action icons sat below the fold). ─────────────────────────── */
+.scroller {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200,210,225,0.1) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+  .scroller {
+    flex: none;
+    height: calc(38dvh - 30px);   /* peek: visible sheet minus drag zone */
+    transition: height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .panelFull .scroller { height: calc(88dvh - 30px); }
 }
