@@ -272,6 +272,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   // Reset sheet + closing when a new flight is selected
   useEffect(() => {
     setSheet('peek'); setClosing(false)
+    metricsRef.current = null   // new content, remeasure
     const el = panelRef.current
     if (el) { el.style.transform = ''; el.style.animation = '' }   // fresh card, fresh entry
   }, [icao24])
@@ -302,13 +303,22 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   // usual 38dvh/88dvh. Without this, short content left a slab of empty glass
   // under the last button in the full state.
   const DRAG_H = 30
+  // Cache the last real content measurement: in the mini state the scroller is
+  // unmounted, and without the cache the metrics regressed to the full-slab
+  // fallback — swipe up after a mini dip gave a tall card with an empty bottom.
+  const metricsRef = useRef(null)
   const sheetMetrics = () => {
     const vh = window.innerHeight || 800
     const H = panelRef.current?.getBoundingClientRect().height || Math.round(vh * 0.88)
-    const content = scrollerRef.current ? scrollerRef.current.scrollHeight + DRAG_H : Infinity
-    const fullVis = Math.min(H, content)
-    const peekVis = Math.min(Math.round(vh * 0.38), content)
-    return { H, fullVis, peekVis }
+    if (scrollerRef.current) {
+      const content = scrollerRef.current.scrollHeight + DRAG_H
+      metricsRef.current = {
+        fullVis: Math.min(H, content),
+        peekVis: Math.min(Math.round(vh * 0.38), content),
+      }
+    }
+    const m = metricsRef.current || { fullVis: H, peekVis: Math.round(vh * 0.38) }
+    return { H, fullVis: m.fullVis, peekVis: m.peekVis }
   }
   useEffect(() => {
     const el = panelRef.current

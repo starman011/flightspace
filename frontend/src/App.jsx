@@ -1201,7 +1201,10 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       <TourGuide />
       {pwa.showPrompt && <PWABanner onInstall={pwa.install} onDismiss={pwa.dismiss} />}
 
-      <SiteFooter active={!activePage && !selectedIcao24 && !selectedAirport && !launchPanelOpen && !profilePanelOpen && !focusedPad && !searchOpen} />
+      <SiteFooter
+        active={!activePage && !launchPanelOpen && !profilePanelOpen && !focusedPad && !searchOpen}
+        dimmed={!!selectedIcao24 || !!selectedAirport}
+      />
 
       {/* ── Locate me: geolocate + smooth-zoom to ~100 km above your location ── */}
       {!activePage && !focusedPad && (
@@ -1211,6 +1214,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           aria-label="Zoom to my location"
           style={{
             position: 'fixed', left: 16, bottom: 118, zIndex: 690,
+            transition: 'opacity 0.3s ease, filter 0.3s ease',
+            ...((selectedIcao24 || selectedAirport) ? { opacity: 0.18, filter: 'blur(2px)', pointerEvents: 'none' } : {}),
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(8,12,18,0.92)', backdropFilter: 'blur(14px)',

@@ -1069,7 +1069,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // constant on-screen width, so it shrinks as you zoom in. No geometry
       // rebuild → instant, never laggy.
       const _cd0 = int.current.camera ? int.current.camera.position.length() : 3.5
-      const thick = { value: MathUtils.clamp((_cd0 - AC_R) / 3.5, 0.14, 5.0) }
+      const thick = { value: MathUtils.clamp((_cd0 - AC_R) / 3.5, 0.002, 5.0) }
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uThick = thick
         shader.uniforms.uBaseR = { value: tubeRadius }
@@ -1106,7 +1106,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Markers use a far lower floor than the line: at ~6km altitude the old
       // 0.14 floor rendered each airport dot as a multi-km blob.
       const _cd = int.current.camera ? int.current.camera.position.length() : 3.5
-      sMesh.scale.setScalar(MathUtils.clamp((_cd - AC_R) / 3.5, 0.015, 2.4))
+      sMesh.scale.setScalar(MathUtils.clamp((_cd - AC_R) / 3.5, 0.003, 2.4))
       scene.add(sMesh)
       objects.push(sMesh)
       routeMarkers.push(sMesh)
@@ -3045,12 +3045,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         const _camDist = camera.position.length()
         const _raw = (_camDist - AC_R) / 3.5
         // Line: upper clamp 5.0 → >2x thicker at max zoom-out; slim up close.
-        const _target  = MathUtils.clamp(_raw, 0.14, 5.0)
+        const _target  = MathUtils.clamp(_raw, 0.002, 5.0)
         let _cur = int.current._routeScale
         _cur = (_cur == null) ? _target : _cur + (_target - _cur) * 0.35
         int.current._routeScale = _cur
         // Dots: much lower floor — keep shrinking to near-airport zoom.
-        const _mTarget = MathUtils.clamp(_raw, 0.015, 2.4)
+        const _mTarget = MathUtils.clamp(_raw, 0.003, 2.4)
         let _mCur = int.current._markerScale
         _mCur = (_mCur == null) ? _mTarget : _mCur + (_mTarget - _mCur) * 0.35
         int.current._markerScale = _mCur
