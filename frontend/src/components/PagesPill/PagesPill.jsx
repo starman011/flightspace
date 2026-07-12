@@ -75,6 +75,7 @@ export default function PagesPill({
   if (hidden) return null
 
   const handleClick = (page) => {
+    setExpanded(false)
     if (page.page) {
       onPageOpen?.(page.page)
       return
@@ -122,7 +123,7 @@ export default function PagesPill({
           aria-label={page.label}
         >
           <PageIcon id={page.id} />
-          {isActive(page) && <span className={styles.activeLabel}>{page.label}</span>}
+          <span className={styles.label}>{page.label}</span>
         </button>
       ))}
     </nav>

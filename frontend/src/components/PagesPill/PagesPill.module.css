@@ -52,13 +52,13 @@
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  opacity: 0.45;
+  opacity: 0.28;
   transition: opacity 0.3s;
   z-index: -1;
 }
 
 .pill:hover::before {
-  opacity: 0.75;
+  opacity: 0.55;
 }
 
 @keyframes pillFlow {
@@ -122,13 +122,17 @@
   background: rgba(178, 255, 26, 0.14);
 }
 
-.activeLabel {
+.label {
+  display: none;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #b2ff1a;
   white-space: nowrap;
+}
+.btn.active .label {
+  display: inline;
   animation: labelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -137,29 +141,78 @@
   to   { opacity: 1; max-width: 80px; margin-left: 0; }
 }
 
-/* Mobile — smaller, centered at top */
+/* Mobile — collapsed chip that opens a VERTICAL menu (depth, not a line) */
 @media (max-width: 767px) {
-  /* Left-anchored + icon-only so the pill expands rightward from the edge
-     and never reaches the top-right account/hamburger. */
   .pill {
     top: 12px;
     left: 12px;
-    gap: 0;
+    gap: 2px;
     padding: 4px;
+    max-width: 210px;
+    transition: border-radius 0.25s ease;
   }
 
   .btn {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
   }
 
-  /* No label expansion on mobile — keeps the pill a fixed, centered width */
-  .activeLabel { display: none; }
-  .btn.active { width: 24px; padding: 0; }
-
-  /* Collapsed by default: show only the active tile + the toggle.
-     Tap the toggle to reveal all tiles. */
-  .toggle { display: flex; width: 24px; height: 24px; }
+  /* Collapsed: hamburger + the active page icon only */
+  .toggle { display: flex; width: 28px; height: 28px; }
   .pill:not(.expanded) .btn:not(.active) { display: none; }
+  .pill:not(.expanded) .label { display: none; }
+  .pill:not(.expanded) .btn.active { width: 28px; padding: 0; }
+
+  /* Expanded: the pill grows DOWNWARD into a labeled menu */
+  .pill.expanded {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px;
+    border-radius: var(--r-card);
+    width: 186px;
+  }
+  .pill.expanded::before { border-radius: var(--r-card); }
+  .pill.expanded .toggle {
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+  .pill.expanded .btn {
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: rgba(208, 224, 244, 0.7);
+    animation: rowIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .pill.expanded .label {
+    display: inline;
+    color: inherit;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    animation: none;
+  }
+  .pill.expanded .btn.active {
+    background: rgba(178, 255, 26, 0.1);
+    border: 1px solid rgba(178, 255, 26, 0.35);
+    color: #b2ff1a;
+  }
+
+  /* Staggered entrance: each row drops in a beat after the one above */
+  .pill.expanded .btn:nth-child(2) { animation-delay: 0.02s; }
+  .pill.expanded .btn:nth-child(3) { animation-delay: 0.05s; }
+  .pill.expanded .btn:nth-child(4) { animation-delay: 0.08s; }
+  .pill.expanded .btn:nth-child(5) { animation-delay: 0.11s; }
+  .pill.expanded .btn:nth-child(6) { animation-delay: 0.14s; }
+  .pill.expanded .btn:nth-child(7) { animation-delay: 0.17s; }
+  .pill.expanded .btn:nth-child(8) { animation-delay: 0.20s; }
+  .pill.expanded .btn:nth-child(9) { animation-delay: 0.23s; }
+  .pill.expanded .btn:nth-child(10) { animation-delay: 0.26s; }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 }
