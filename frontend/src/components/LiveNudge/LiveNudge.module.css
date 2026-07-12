@@ -1,78 +1,69 @@
-/* ── Live nudge — springs out of the pages pill, collapses to a chip ───────── */
+/* ── Live nudge — card below the pages pill, collapses to a chip ───────────── */
 
-.wrap {
+/* Expanded card: title / message / Go Live stacked, grows in from the pill */
+.card {
   position: fixed;
   z-index: 60;
   display: flex;
-  align-items: stretch;
-  gap: 12px;
-  overflow: hidden;
-  white-space: nowrap;
+  flex-direction: column;
+  gap: 8px;
+  width: 264px;
+  max-width: calc(100vw - 24px);
+  padding: 14px 14px 12px 16px;
   background: var(--glass-fill);
   border: 1px solid var(--glass-line);
   border-top-color: var(--glass-gloss);   /* signature gloss rim */
-  border-radius: var(--r-pill);
+  border-radius: var(--r-card);
   box-shadow: var(--glass-shadow);
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
-  transform-origin: left center;
-  animation: nudgeSpring 0.55s cubic-bezier(0.34, 1.4, 0.64, 1);
-  transition: max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-              padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top left;
+  animation: cardGrow 0.5s cubic-bezier(0.34, 1.35, 0.64, 1);
 }
 
-@keyframes nudgeSpring {
-  from { opacity: 0; transform: scaleX(0.3); }
-  to   { opacity: 1; transform: scaleX(1); }
+@keyframes cardGrow {
+  from { opacity: 0; transform: scale(0.6) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Expanded: the big readable message + Go Live pill */
-.big {
-  max-width: 560px;
-  padding: 4px 4px 4px 18px;
-}
-
-/* Collapsed: compact pulsing chip beside the pill */
-.chip {
-  max-width: 130px;
-  padding: 4px;
-}
-
-.text {
+.head {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
+
 .title {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--on-surface, #eaf6ff);
   margin: 0;
 }
+
 .body {
   font-family: var(--font-body);
-  font-size: 11.5px;
-  color: rgba(195, 245, 255, 0.55);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(195, 245, 255, 0.6);
   margin: 0;
 }
 
 .cta {
-  flex: none;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 11px 0;
+  width: 100%;
   background: #b2ff1a;
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
-  align-self: stretch;
-  padding: 0 22px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -96,44 +87,43 @@
 
 .close {
   flex: none;
-  align-self: center;
   background: none;
   border: none;
   color: rgba(195, 245, 255, 0.35);
   font-size: 18px;
   line-height: 1;
-  padding: 2px 6px 2px 0;
+  padding: 0 2px;
   cursor: pointer;
   transition: color 0.15s;
 }
 .close:hover { color: rgba(195, 245, 255, 0.8); }
 
-/* Chip phase: whole capsule is the Go Live button */
-.chipBtn {
-  flex: 1;
+/* Collapsed chip: compact pulsing Go Live at the same anchor */
+.chip {
+  position: fixed;
+  z-index: 60;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 7px;
+  padding: 9px 16px;
   background: #b2ff1a;
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
-  padding: 0 16px;
+  box-shadow: var(--glass-shadow);
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   cursor: pointer;
+  transform-origin: top left;
+  animation: chipIn 0.4s cubic-bezier(0.34, 1.35, 0.64, 1);
   transition: filter 0.15s, box-shadow 0.15s;
 }
-.chipBtn:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(178, 255, 26, 0.45); }
-.chipLabel { line-height: 1; }
+.chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(178, 255, 26, 0.45); }
 
-@media (max-width: 640px) {
-  .big { max-width: calc(100vw - 140px); padding-left: 14px; }
-  .body { display: none; }           /* one line on small screens */
-  .cta { padding: 0 14px; }
-  .chip { max-width: 110px; }
+@keyframes chipIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
 }
