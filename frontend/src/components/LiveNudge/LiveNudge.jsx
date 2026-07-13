@@ -21,8 +21,21 @@ export default function LiveNudge({ visible, onGoLive }) {
     timersRef.current.forEach(clearTimeout)
     timersRef.current = []
     if (!visible || dismissed) { setPhase('hidden'); return }
-    timersRef.current.push(setTimeout(() => setPhase('big'), 500))
-    timersRef.current.push(setTimeout(() => setPhase('chip'), 500 + BIG_MS))
+    // Don't start while the welcome modal covers the screen (first sessions —
+    // the big phase used to burn out invisibly behind it, so mobile users
+    // only ever met the leftover chip). Poll until the greet is gone.
+    const start = () => {
+      timersRef.current.push(setTimeout(() => setPhase('big'), 500))
+      timersRef.current.push(setTimeout(() => setPhase('chip'), 500 + BIG_MS))
+    }
+    if (document.querySelector('[data-greet]')) {
+      const iv = setInterval(() => {
+        if (!document.querySelector('[data-greet]')) { clearInterval(iv); start() }
+      }, 300)
+      timersRef.current.push(iv)
+      return () => { clearInterval(iv); timersRef.current.forEach(clearTimeout) }
+    }
+    start()
     return () => timersRef.current.forEach(clearTimeout)
   }, [visible, dismissed])
 

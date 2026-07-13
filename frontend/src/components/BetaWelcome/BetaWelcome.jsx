@@ -38,7 +38,7 @@ export default function BetaWelcome() {
   if (!visible) return null
 
   return (
-    <div className={styles.overlay} onClick={() => setVisible(false)}>
+    <div data-greet className={styles.overlay} onClick={() => setVisible(false)}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <button className={styles.close} onClick={() => setVisible(false)} aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>

@@ -294,6 +294,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
      nearest state on release, with a velocity flick (one drag → full). */
   const touchStartY   = useRef(null)
   const dragBaseTy    = useRef(0)
+  const dragFromSheet = useRef('peek')
   const draggingRef   = useRef(false)
   const dragVy        = useRef(0)   // px/ms, + = downward
   const lastY         = useRef(0)
@@ -345,6 +346,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     const s = snapOffsets()
     touchStartY.current = e.touches[0].clientY
     dragBaseTy.current = s[sheet] ?? s.peek
+    dragFromSheet.current = sheet
     lastY.current = e.touches[0].clientY
     lastT.current = e.timeStamp
     dragVy.current = 0
@@ -379,15 +381,19 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     const v = dragVy.current
 
     let target
+    const from = dragFromSheet.current
+    const UP   = { mini: 'peek', peek: 'full', full: 'full' }
+    const DOWN = { full: 'peek', peek: 'mini', mini: 'mini' }
     if (Math.abs(dyTotal) < 6) {
       // Tap the handle → expand one step (mini→peek→full, full→peek)
-      target = sheet === 'mini' ? 'peek' : sheet === 'peek' ? 'full' : 'peek'
-    } else if (v < -0.5) {
-      target = 'full'   // fast flick up → straight to full
-    } else if (v > 0.5) {
-      target = 'mini'   // fast flick down → collapse
+      target = from === 'mini' ? 'peek' : from === 'peek' ? 'full' : 'peek'
+    } else if (v < -0.35) {
+      target = UP[from]     // flick up → next state up (one step — intuitive)
+    } else if (v > 0.35) {
+      target = DOWN[from]   // flick down → next state down
     } else {
-      // Settle on the nearest snap offset to where the finger let go
+      // Slow drag: settle on the nearest snap to where the finger let go —
+      // a long deliberate pull can still skip across the middle state.
       const order = [['full', s.full], ['peek', s.peek], ['mini', s.mini]]
       target = order.reduce((best, cur) =>
         Math.abs(cur[1] - curTy) < Math.abs(best[1] - curTy) ? cur : best)[0]
