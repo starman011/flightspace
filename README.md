@@ -1,6 +1,8 @@
 # ObjectTracer
 
-A real-time planetary observatory. One viewport that scales from individual aircraft to the entire solar system — tracking every commercial flight, satellite, ship, rocket launch, and near-Earth asteroid in motion right now.
+Everything moving above you, on one 3D globe. Commercial flights, ships, the ISS, satellites, rocket launches, near-Earth asteroids, and deep-space galaxies, live, in a single viewport that scales continuously from an aircraft on final approach to the outer solar system.
+
+It runs in a browser, updates in real time, and costs nothing to use or, at current scale, to operate. This document is the engineering story: how it is put together, and the interesting problems that came up along the way. It assumes you are comfortable with WebSockets, WebGL, and Go, and skips the parts that explain themselves.
 
 ---
 
@@ -73,21 +75,13 @@ A real-time planetary observatory. One viewport that scales from individual airc
 
 ## System architecture — deep dive
 
-### Pattern: Modular monolith
+### One binary
 
-ObjectTracer is a **modular monolith**, not a microservices system. A single Go binary contains all server-side logic — the WebSocket hub, every data-source poller, the REST API, authentication, and cleanup — wired together in `app.go` and started as a single process on Railway.
+The whole backend is a single Go process: the WebSocket hub, every data-source poller, the REST API, auth, and cleanup, wired together in `app.go` and deployed as one service on Railway.
 
-This was a deliberate choice, not an oversight:
+That keeps the parts that talk to each other in the same address space. A poller writing a new aircraft position and the hub reading it to build a delta are separated by a Redis write, not a network hop and a serialization boundary. There is one log stream to read and one thing to deploy. When a single region stops being enough, the natural next step is a hub-per-region split behind the shared Redis, but that day is not here.
 
-| | Microservices | ObjectTracer monolith |
-|---|---|---|
-| Operational overhead | High — N deployments, N logs, service mesh | One binary, one Railway service, one log stream |
-| Data locality | Cross-service calls for shared state | All pollers write to the same Redis instance in-process |
-| Latency | Network hop between services | Zero — hub fan-out is an in-process channel write |
-| Free-tier fit | Multiple always-on services burn quota fast | One Railway instance covers everything |
-| Scalability ceiling | Horizontal per service | Vertical + a future hub-per-region split when needed |
-
-The code is still **modular** — each poller (`aircraft.go`, `satellite_poller.go`, `solar_poller.go`, etc.) is an isolated struct with its own ticker and context. Adding or removing a data source is a two-line change in `app.go`. The monolith boundary is deployment, not design.
+Inside the binary the code is modular where it matters. Each poller (`aircraft.go`, `satellite_poller.go`, `solar_poller.go`, and so on) is a self-contained struct with its own ticker and context; adding or dropping a data source is a couple of lines in `app.go`. The single boundary is the deployment unit.
 
 ---
 
@@ -180,26 +174,28 @@ State is local to hooks — there is no global store (no Redux, no Zustand). The
 
 ---
 
-### Why this stack
+### The stack, and what each piece is doing
 
-**Go for the backend** — not because it's trendy, but because the workload is exactly what Go excels at: thousands of concurrent WebSocket connections, each a lightweight goroutine, with no shared mutable state between them. The alternative (Node.js) would require more careful async juggling and significantly more memory per connection. Python was never in contention — the poller tick latency and GIL would hurt.
+**Go** handles the connection fan-out. The shape of the workload is thousands of long-lived WebSocket connections, each a cheap goroutine, sharing no mutable state. That is Go's home turf, and a goroutine per connection stays readable in a way an event-loop equivalent does not.
 
-**`net/http` directly, no framework** — Go's stdlib router is fast and predictable. There are only ~12 routes; a framework would add indirection without benefit. Every dependency is intentional: `pgx` (typed Postgres, no ORM reflection), `go-redis` (thin wrapper around the RESP protocol), `gorilla/websocket` (the only mature WS library in Go), `golang-jwt` (stateless auth).
+**`net/http` with no framework.** About a dozen routes on the Go 1.22 pattern router. The direct dependencies earn their place: `pgx` for typed Postgres without ORM reflection, `go-redis` over the RESP protocol, `gorilla/websocket`, and `golang-jwt` for stateless sessions. Nothing sits between a request and its handler.
 
-**React 18 + Vite** — Concurrent mode's `startTransition` and `Suspense` are actively used (lazy-loaded Globe, Suspense-safe navigation). Vite's build is fast enough that the full production bundle rebuilds in under 2 seconds. No Next.js — there's no SSR benefit for a real-time canvas app; adding a server layer would only slow cold-start without improving anything visible.
+**React 18 + Vite** on the front. `startTransition` and `Suspense` carry the lazy-loaded scenes and keep navigation from janking the render loop. The production bundle builds in about two seconds, which matters more than it sounds when you iterate on a 3D scene all day. There is no SSR server for the app shell because a live WebGL canvas has nothing to server-render; the SEO landing pages are handled separately at the edge (see the SEO notes).
 
-**Three.js over a mapping library** — Leaflet/Mapbox render a 2D tile map. Three.js renders a 3D rotating globe, a solar system, and 12,000 instanced meshes in one WebGL context. The scene switches between Earth and solar system without a page load or a second canvas. A mapping library can't do this.
+**Three.js, not a map library.** Leaflet and Mapbox draw a flat tile map. This needed a real sphere you can tilt and orbit, tens of thousands of instanced aircraft in one draw path, and a camera that flies out to the solar system in the same WebGL context without swapping canvases. That is a rendering problem, not a mapping one.
 
-**Redis over in-memory Go maps** — Live positions need to survive backend restarts without clients seeing a blank globe. Redis HSET gives O(1) field-level writes per ICAO, automatic TTL eviction for aircraft that stop broadcasting, and a clean separation between the poller goroutines (writers) and the Hub (reader). If we later need multiple Hub instances, Redis already works as a pub-sub bus.
+**Redis as the live-state tier.** Positions have to survive a backend restart without every client seeing a blank globe, so they live in Redis, not process memory. HSET gives O(1) per-object writes keyed by ICAO, TTL evicts aircraft that go quiet on their own, and it cleanly separates the pollers (writers) from the hub (reader). It also happens to be the pub-sub bus a future multi-hub deployment would need.
 
-**Railway + Vercel + Cloudflare** — All free tier on current traffic. Railway runs the persistent Go process and the managed PostgreSQL + Redis add-ons. Vercel hosts the static frontend with global edge CDN. Cloudflare sits in front of both for DDoS protection and TLS. The entire production stack costs $0/month at current scale.
+**Railway, Vercel, Cloudflare**, all on free tiers at current traffic. Railway runs the Go process and its managed Postgres and Redis; Vercel serves the frontend from the edge; Cloudflare fronts both for TLS and abuse protection. Production runs at $0/month for now, and the architecture upgrades by adding capacity, not by rewriting.
 
 ---
 
-## Engineering decisions, by problem
+## Problems worth writing down
 
-### Rendering 12,000 aircraft without frame drops
-**Technique: GPU instanced rendering + single-draw-call pick geometry**
+The rest of this is the interesting part: the specific problems that did not have an obvious answer, and what each one turned into. Most of them are invisible when they work and very visible when they do not.
+
+### Rendering tens of thousands of aircraft without dropping frames
+**GPU instancing, with a separate geometry just for picking**
 
 Each aircraft category (plane, heavy regional, helicopter, satellite, ship) gets its own Three.js `InstancedMesh`. All instances share one shader program and one draw call per category — the GPU handles per-instance transforms. Position buffers use `DynamicDrawUsage` so WebGL keeps them in fast-path memory for frequent writes. Module-level scratch `Vector3` and `Matrix4` objects are reused every frame to eliminate GC pauses during the render loop.
 
