@@ -164,24 +164,80 @@
 .accentText { color: #b2ff1a }
 
 /* ── FAQ — clean full-page list (no cards) ────────────────────────────────── */
-.faqItem {
-  padding: 26px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.faqItem:first-child { padding-top: 6px }
-.faqItem:last-child { border-bottom: none }
-.faqQ {
-  font-family: var(--font-display);
-  font-size: 21px;
+/* ── FAQ accordion — accessible, grid-morph reveal (no layout animation) ── */
+.faqSection { margin-bottom: 34px; }
+.faqSectionTitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -0.012em;
-  margin-bottom: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(178, 255, 26, 0.7);
+  margin: 0 0 6px;
 }
+
+.faqItem { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
+/* The question is the toggle button — full-width, keyboard-focusable */
+.faqQ {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 44px;          /* touch target */
+  padding: 18px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.94);
+  letter-spacing: -0.012em;
+  transition: color 0.18s ease;
+}
+.faqQ:hover { color: #fff; }
+.faqQ:focus-visible {
+  outline: 2px solid rgba(178, 255, 26, 0.7);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.faqChevron {
+  flex: none;
+  color: rgba(178, 255, 26, 0.7);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faqChevronOpen { transform: rotate(180deg); }
+
+/* Reveal via grid-template-rows 0fr -> 1fr (compositor-safe auto-height) */
+.faqAnswer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faqAnswerOpen { grid-template-rows: 1fr; }
 .faqA {
+  overflow: hidden;
+  min-height: 0;
   font-size: 15.5px;
-  color: rgba(206, 216, 230, 0.7);
+  color: rgba(206, 216, 230, 0.72);
   line-height: 1.72;
+  margin: 0;
+  padding-bottom: 0;
+}
+.faqAnswerOpen .faqA { padding-bottom: 16px; }
+
+.faqFoot {
+  margin-top: 8px;
+  font-size: 14.5px;
+  color: rgba(206, 216, 230, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faqChevron, .faqAnswer { transition: none; }
 }
 
 /* ── Form ─────────────────────────────────────────────────────────────────── */
