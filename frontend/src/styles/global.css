@@ -81,3 +81,31 @@ input:focus {
 [aria-label="Dismiss" i] {
   color: #ff6b6b !important;
 }
+
+/* ═══ Global accessibility + motion (design audit 2026-07) ═══════════════════
+   S1 reduced-motion, S2 focus-visible — applied once, app-wide. */
+
+/* S2: visible keyboard focus. Mouse/touch users never see it (:focus-visible),
+   keyboard users always do. Glass inputs that null their outline get a ring
+   via box-shadow instead. */
+:focus-visible {
+  outline: 2px solid rgba(178, 255, 26, 0.75);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(178, 255, 26, 0.28);
+}
+
+/* S1: honor prefers-reduced-motion everywhere. Decorative loops and slide/scale
+   entrances collapse to near-instant; nothing MOVES by default under reduce. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

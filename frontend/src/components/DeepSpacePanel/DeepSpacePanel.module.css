@@ -7,7 +7,7 @@
   background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  z-index: 60;
+  z-index: var(--z-panel);   /* was 60 — below nav pills; audit S5 */
   overflow-y: auto;
   /* center content on ultra-wide screens: cap the readable column at 1400px */
   padding: var(--space-8) max(var(--space-10), calc((100vw - 1400px) / 2));

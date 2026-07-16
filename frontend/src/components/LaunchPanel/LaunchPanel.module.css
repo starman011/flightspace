@@ -10,7 +10,7 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-left: 1px solid rgba(200, 210, 225, 0.08);
-  z-index: 80;
+  z-index: var(--z-panel);   /* was 80 — below nav pills; audit S5 */
   display: flex;
   flex-direction: column;
   transform: translateX(100%);

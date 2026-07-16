@@ -117,4 +117,14 @@
 
   /* ── Layout — updated by JS when sidebar opens/closes ──────────────────── */
   --sidebar-w: 256px;
+
+  /* ── Z-bands (design audit 2026-07) — depth is fixed bands, never ad hoc.
+     New components pick a band; they do not invent numbers between them. */
+  --z-globe:   0;      /* the 3D canvas */
+  --z-overlay: 25;     /* command-center overlay / space feed */
+  --z-nav:     70;     /* nav pills, live nudge */
+  --z-panel:   200;    /* side panels, bottom sheets, cards, tooltips-over-cards */
+  --z-banner:  600;    /* context banners over panels */
+  --z-page:    4000;   /* full-screen page overlays */
+  --z-toast:   9000;   /* transient toasts, top of everything */
 }
