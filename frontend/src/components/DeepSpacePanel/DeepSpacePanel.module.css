@@ -4,9 +4,9 @@
   position: fixed;
   inset: 0;   /* true full-screen — the old var(--sidebar-w) offset left a dead
                  strip after the sidebar component was removed */
-  background: rgba(8, 12, 20, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(13, 19, 28, 0.94);   /* reading surface — DESIGN §1.2 */
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
   z-index: var(--z-panel);   /* was 60 — below nav pills; audit S5 */
   overflow-y: auto;
   /* center content on ultra-wide screens: cap the readable column at 1400px */
@@ -104,7 +104,7 @@
   width: 100%;
   background: rgba(12, 18, 28, 0.8);
   border: 1px solid rgba(200, 210, 225, 0.1);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   padding: var(--space-4) var(--space-4) var(--space-4) 48px;
   font-family: var(--font-mono);
   font-size: var(--text-label-md);
@@ -116,7 +116,7 @@
 }
 
 .searchInput::placeholder { color: rgba(160, 170, 185, 0.35); }
-.searchInput:focus { border-color: rgba(129, 140, 248, 0.4); }
+.searchInput:focus { border-color: rgba(178, 255, 26, 0.4); }
 
 .filterBtn {
   display: flex;
@@ -124,7 +124,7 @@
   gap: var(--space-2);
   background: rgba(44, 57, 71, 0.6);
   border: 1px solid rgba(200, 210, 225, 0.1);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   padding: var(--space-3) var(--space-5);
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
@@ -171,7 +171,7 @@
 
 .riskCard {
   background: rgba(44, 57, 71, 0.45);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   padding: var(--space-5);
   position: relative;
   overflow: hidden;
@@ -291,7 +291,7 @@
 .entityThumb {
   aspect-ratio: 16 / 10;
   background: rgba(44, 57, 71, 0.5);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   overflow: hidden;
   margin-bottom: var(--space-4);
   position: relative;
@@ -300,7 +300,7 @@
 }
 
 .entityCard:hover .entityThumb {
-  border-color: rgba(129, 140, 248, 0.3);
+  border-color: rgba(178, 255, 26, 0.3);
 }
 
 .entityGradient {
@@ -353,7 +353,7 @@
   transition: color var(--duration-fast);
 }
 
-.entityCard:hover .entityName { color: #818cf8; }
+.entityCard:hover .entityName { color: #b2ff1a; }
 
 .entityCoord {
   font-family: var(--font-mono);
@@ -415,7 +415,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(200, 210, 225, 0.08);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   overflow: hidden;
   margin-bottom: var(--space-10);
 }
@@ -443,7 +443,7 @@
 }
 
 .neoRow:last-child { border-bottom: none; }
-.neoRow:hover { background: rgba(129, 140, 248, 0.04); }
+.neoRow:hover { background: rgba(178, 255, 26, 0.04); }
 
 .neoRowPha {
   border-left: 2px solid rgba(239, 68, 68, 0.5);
@@ -529,7 +529,7 @@
   gap: var(--space-2);
   background: rgba(12, 18, 28, 0.6);
   border: 1px solid rgba(200, 210, 225, 0.08);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-tight);
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -541,14 +541,14 @@
 }
 
 .viewTab:hover {
-  color: #818cf8;
-  border-color: rgba(129, 140, 248, 0.2);
+  color: #b2ff1a;
+  border-color: rgba(178, 255, 26, 0.2);
 }
 
 .viewTabActive {
-  color: #818cf8;
-  border-color: rgba(129, 140, 248, 0.28);
-  background: rgba(129, 140, 248, 0.08);
+  color: #b2ff1a;
+  border-color: rgba(178, 255, 26, 0.28);
+  background: rgba(178, 255, 26, 0.08);
 }
 
 /* ── Solar Map Layout ────────────────────────────────────────────────────── */
@@ -569,7 +569,7 @@
 .asteroidDetail {
   background: rgba(44, 57, 71, 0.5);
   border: 1px solid rgba(200, 210, 225, 0.08);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
   padding: var(--space-5);
   overflow-y: auto;
   display: flex;
@@ -609,7 +609,7 @@
 
 .detailCell {
   background: rgba(12, 18, 28, 0.6);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-tight);
   padding: var(--space-3);
 }
 
@@ -634,7 +634,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(129, 140, 248, 0.45);
+  color: rgba(178, 255, 26, 0.45);
   margin-top: var(--space-2);
 }
 
@@ -649,19 +649,19 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: rgba(129, 140, 248, 0.04);
-  border: 1px solid rgba(129, 140, 248, 0.1);
-  border-radius: var(--radius-md);
+  background: rgba(178, 255, 26, 0.04);
+  border: 1px solid rgba(178, 255, 26, 0.1);
+  border-radius: var(--r-tight);
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #818cf8;
+  color: #b2ff1a;
   text-decoration: none;
   transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 
 .refLink:hover {
-  background: rgba(129, 140, 248, 0.1);
-  border-color: rgba(129, 140, 248, 0.22);
+  background: rgba(178, 255, 26, 0.1);
+  border-color: rgba(178, 255, 26, 0.22);
 }
 
 .noSelect {
@@ -678,7 +678,7 @@
   letter-spacing: 0.1em;
   text-align: center;
   border: 1px solid rgba(200, 210, 225, 0.06);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-inset);
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
