@@ -123,22 +123,24 @@
 }
 
 .label {
-  display: none;
+  display: grid;
+  grid-template-columns: 0fr;   /* collapsed — morph to 1fr, no display toggle / max-width keyframe replay */
+  overflow: hidden;
+  opacity: 0;
+  margin-left: 0;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #b2ff1a;
   white-space: nowrap;
+  transition: grid-template-columns 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease, margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .btn.active .label {
-  display: inline;
-  animation: labelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes labelIn {
-  from { opacity: 0; max-width: 0; margin-left: -4px; }
-  to   { opacity: 1; max-width: 80px; margin-left: 0; }
+  grid-template-columns: 1fr;
+  opacity: 1;
+  margin-left: 5px;
 }
 
 .head, .menu, .menuInner { display: contents; }
