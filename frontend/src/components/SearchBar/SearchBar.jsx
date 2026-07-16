@@ -29,6 +29,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
 
@@ -105,7 +106,16 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
   const handleChange = (e) => {
     const val = e.target.value
     setQuery(val)
+    setActiveIndex(-1)
     search(val)
+  }
+
+  // Combobox keyboard nav: arrows move the active row, Enter selects it.
+  const handleKeyDown = (e) => {
+    if (!results.length) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => (i + 1) % results.length) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => (i - 1 + results.length) % results.length) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelect(results[activeIndex]) }
   }
 
   const handleSelect = (result) => {
@@ -126,6 +136,12 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
             className={styles.input}
             value={query}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            role="combobox"
+            aria-expanded={results.length > 0}
+            aria-controls="search-results"
+            aria-activedescendant={activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
+            aria-autocomplete="list"
             placeholder={isDeepSpace
               ? 'search galaxy name, NGC, Messier, target ID...'
               : 'search city, airport, flight, callsign...'
@@ -137,15 +153,18 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
         </div>
 
         {results.length > 0 && (
-          <ul className={styles.results}>
+          <ul className={styles.results} id="search-results" role="listbox">
             {results.map((r, i) => (
               r._type === 'airport' ? (
-                <li key={`apt-${r.iata}`} className={styles.result} onClick={() => handleSelect(r)}>
+                <li key={`apt-${r.iata}`} role="option" id={`search-opt-${i}`} aria-selected={i === activeIndex}>
+                  <button type="button" className={`${styles.result} ${i === activeIndex ? styles.resultActive : ''}`} onClick={() => handleSelect(r)} aria-label={`${r.city} airport ${r.iata}`}>
                   <span className={styles.callsign}>{r.city} ({r.iata})</span>
                   <span className={styles.type}>{r.name} · Arrivals &amp; Departures</span>
+                  </button>
                 </li>
               ) : r._type === 'galaxy' ? (
-                <li key={r.targetid || r.name || i} className={styles.result} onClick={() => handleSelect(r)}>
+                <li key={r.targetid || r.name || i} role="option" id={`search-opt-${i}`} aria-selected={i === activeIndex}>
+                  <button type="button" className={`${styles.result} ${i === activeIndex ? styles.resultActive : ''}`} onClick={() => handleSelect(r)} aria-label={r.name || `DESI ${r.targetid}`}>
                   <span className={styles.callsign}>{r.name || `DESI ${r.targetid}`}</span>
                   <span className={styles.type}>
                     {r.spectype === 'QSO' ? 'Quasar' : 'Galaxy'}
@@ -154,9 +173,11 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
                   {r.z > 0 && (
                     <span className={styles.alt}>z={r.z.toFixed(3)}</span>
                   )}
+                  </button>
                 </li>
               ) : (
-                <li key={r.icao24} className={styles.result} onClick={() => handleSelect(r)}>
+                <li key={r.icao24} role="option" id={`search-opt-${i}`} aria-selected={i === activeIndex}>
+                  <button type="button" className={`${styles.result} ${i === activeIndex ? styles.resultActive : ''}`} onClick={() => handleSelect(r)} aria-label={r.callsign ?? r.icao24}>
                   <span className={styles.callsign}>
                     {r.airline_iata && (
                       <img
@@ -175,6 +196,7 @@ export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale
                   {r.altitude != null && (
                     <span className={styles.alt}>{Math.round(r.altitude).toLocaleString()} ft</span>
                   )}
+                  </button>
                 </li>
               )
             ))}
