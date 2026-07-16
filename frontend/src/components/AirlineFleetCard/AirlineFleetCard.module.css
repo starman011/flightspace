@@ -4,20 +4,19 @@
   position: fixed;
   top: 76px;
   right: 12px;
-  z-index: 380;              /* above the command-center overlay (25), below the banner (600) */
+  z-index: var(--z-panel);   /* was 380 — snap to a band (audit) */
   width: 264px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 16px;
-  background: rgba(8, 12, 18, 0.94);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(200, 210, 225, 0.1);
-  border-radius: 20px;
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: 1px solid var(--glass-line);
+  border-top-color: var(--glass-gloss);   /* signature gloss rim */
+  border-radius: var(--r-card);
+  box-shadow: var(--glass-shadow);
   animation: fleetCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

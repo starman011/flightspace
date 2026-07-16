@@ -3580,7 +3580,7 @@ function AircraftTooltip({ x, y, data, dimmed }) {
         transition: 'opacity 0.3s ease, filter 0.3s ease',
         background: 'rgba(8, 14, 24, 0.92)',
         border: '1px solid rgba(255, 215, 0, 0.55)',
-        borderRadius: '4px',
+        borderRadius: 'var(--r-tight)',
         padding: '7px 11px 8px',
         minWidth: '130px',
         backdropFilter: 'blur(6px)',
@@ -3639,7 +3639,7 @@ function DESITooltip({ x, y, data }) {
     <div style={{
       position: 'fixed', left, top, pointerEvents: 'none', zIndex: 9999,
       background: 'rgba(8, 10, 22, 0.94)', border: `1px solid ${borderColor}`,
-      borderRadius: '4px', padding: '7px 11px 8px', minWidth: '140px',
+      borderRadius: 'var(--r-tight)', padding: '7px 11px 8px', minWidth: '140px',
       backdropFilter: 'blur(6px)',
       boxShadow: `0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px ${borderColor.replace('0.55', '0.12')}`,
       fontFamily: "'Space Mono', 'Courier New', monospace",
