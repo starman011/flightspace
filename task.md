@@ -5,22 +5,24 @@ Full findings: multi-agent audit vs design/DESIGN.md (nav, cards/sheets, pages, 
 Five systemic issues repeat across the app; fix globally first, then per-component.
 
 ### Systemic (fix once, fixes everywhere)
-- [ ] S1. Reduced-motion: only AirportBoard honors it. Add ONE global
+- [x] S1. Reduced-motion: only AirportBoard honors it. Add ONE global
   `@media (prefers-reduced-motion: reduce)` guard (tokens/global) killing all
   infinite loops (pillFlow, scalePillFlow, sonarPing, livePulse, ctaDot,
   heroDrift, kenburns, gradientFlow, fleetPulse) + reducing entrances to opacity fade.
-- [ ] S2. Focus-visible: none in the app. Add global ring (2px lime, offset 2px)
+- [x] S2. Focus-visible: none in the app. Add global ring (2px lime, offset 2px)
   on button/a/input/textarea/[role=button]; box-shadow variant for glass inputs.
-- [ ] S3. Keyboard access: content rows are `<div onClick>` (asteroid table, flight
+- [x] S3. Keyboard access: content rows are `<div onClick>` (asteroid table, flight
   rows, search results, airport rows, tour dots). Convert to `<button>`/role+key handlers.
-- [ ] S4. 44px touch targets on mobile: closes (28-36px), pill toggles, sheet-state
+- [x] S4. 44px touch targets on mobile: closes (28-36px), pill toggles, sheet-state
   toggle (28), filterIconBtn, mapToggle (~19), PWABanner buttons. Grow hit areas via ::after inset.
-- [ ] S5. Z-band tokens: define --z-overlay/nav/panel/page in tokens.css; snap all
+- [x] S5. Z-band tokens: define --z-overlay/nav/panel/page in tokens.css; snap all
   rogue values (60, 80, 85, 300, 380, 500, 600) to a band. LaunchPanel/ProfilePanel/DeepSpacePanel
   are below nav band → nav floats over open panels.
 
 ### Glass + tokens sweep
-- [ ] Gloss-rim + glass tokens on every floating surface missing it: SearchBar palette,
+- [~] Gloss-rim + glass tokens (done: SearchBar, AirportPanel, DetailPanel, LaunchPanel,
+  ProfilePanel, DeepSpacePanel, AirlineFleetCard, tooltips; remaining: TopRightPill dropdown,
+  BottomBar popover/tooltip, WaitlistPopup, PWABanner, FlightPage/Planes cards). Orig list:
   4 side panels (DetailPanel/AirportPanel/LaunchPanel/ProfilePanel), TopRightPill dropdown,
   BottomBar popover/tooltip, AircraftTooltip/DESITooltip, AirlineFleetCard, WaitlistPopup,
   PWABanner, DeepSpacePanel, FlightPage/Planes cards.
@@ -28,20 +30,20 @@ Five systemic issues repeat across the app; fix globally first, then per-compone
   with --r-card/inset/tight/pill across LaunchPanel, ProfilePanel, DeepSpacePanel, ContextBanner, banners.
 
 ### Rogue accents + emoji (constitution violations)
-- [ ] Kill non-lime interactive accents: AirportPanel blue #4C8CE4, DeepSpacePanel indigo
+- [x] Kill non-lime interactive accents: AirportPanel blue #4C8CE4, DeepSpacePanel indigo
   #818cf8, WaitlistPage indigo gradient border → lime. Keep red only for genuine hazard.
-- [ ] Remove emoji: ContextBanner ✈ default, AirportPanel 🛬 + ↗/✓/× textContent swap,
+- [x] Remove emoji: ContextBanner ✈ default, AirportPanel 🛬 + ↗/✓/× textContent swap,
   DeepSpaceGuide 👆🖱🔄 → inline SVGs.
 
 ### Motion-rule violations (the "sluggish" pattern)
-- [ ] WarpOverlay animates width/height 1→900px per frame → fixed-size + transform:scale.
+- [x] WarpOverlay animates width/height 1→900px per frame → fixed-size + transform:scale.
 - [ ] BottomBar label reveal tweens max-width on blurred pill; PagesPill labelIn animates
   max-width + display toggle; mobile width tween → grid 0fr/1fr morph.
 - [ ] BottomBar collapse/expand abrupt + `transition: all` + filter animation → crossfade/FLIP;
   suppress auto-collapse while focus inside or popover open.
-- [ ] AirportPanel: NO mobile block (renders 360px rail on phone) → bottom sheet like siblings.
-- [ ] ProfilePanel `if(!open) return null` kills slide transition → keep mounted, class-driven.
-- [ ] BlogPage tiles `animation: forwards` replays on tab/filter/load-more → run once.
+- [x] AirportPanel: NO mobile block (renders 360px rail on phone) → bottom sheet like siblings.
+- [x] ProfilePanel `if(!open) return null` kills slide transition → keep mounted, class-driven.
+- [x] BlogPage tiles `animation: forwards` replays on tab/filter/load-more → run once.
 - [ ] Modals (BetaWelcome/WaitlistPopup/PWABanner) vanish in one frame → orchestrated exit.
 
 ### Apple-polish enhancements (subtle motion, transform/opacity only)
