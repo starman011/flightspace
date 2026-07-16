@@ -58,6 +58,11 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [total, setTotal] = useState(0)
+  const [settled, setSettled] = useState(false)
+
+  // After the first entrance completes, stop the tile animation so it never
+  // replays on tab switch / topic filter / load-more (keyframe-replay bug class).
+  useEffect(() => { const t = setTimeout(() => setSettled(true), 800); return () => clearTimeout(t) }, [])
 
   // Load first page of the current tab
   useEffect(() => {
@@ -192,8 +197,8 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
             {(topic ? posts.filter(p => postTopics(p).includes(topic)) : posts).map((p, i) => (
               <button
                 key={p.slug}
-                className={`${styles.tile} ${styles[bentoSize(i)]}`}
-                style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}
+                className={`${styles.tile} ${styles[bentoSize(i)]} ${settled ? styles.tileSettled : ''}`}
+                style={settled ? undefined : { animationDelay: `${Math.min(i, 12) * 45}ms` }}
                 onClick={() => openPost(p.slug)}
               >
                 {p.image_url

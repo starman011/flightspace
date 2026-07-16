@@ -3710,9 +3710,9 @@ function WarpOverlay() {
       {/* Central light burst */}
       <div style={{
         position: 'absolute', top: '50%', left: '50%',
-        width: '1px', height: '1px',
+        width: '900px', height: '900px', marginLeft: '-450px', marginTop: '-450px',
         background: 'radial-gradient(circle, rgba(200,220,255,0.5) 0%, transparent 70%)',
-        transform: 'translate(-50%,-50%)',
+        willChange: 'transform, opacity',
         animation: `burstScale ${dur} ease-in-out forwards`,
       }} />
 
@@ -3747,10 +3747,10 @@ function WarpOverlay() {
           100% { opacity: 0; }
         }
         @keyframes burstScale {
-          0%   { width: 1px; height: 1px; opacity: 0; }
-          30%  { width: 300px; height: 300px; opacity: 0.4; }
-          60%  { width: 600px; height: 600px; opacity: 0.15; }
-          100% { width: 900px; height: 900px; opacity: 0; }
+          0%   { transform: scale(0.002); opacity: 0; }
+          30%  { transform: scale(0.33);  opacity: 0.4; }
+          60%  { transform: scale(0.67);  opacity: 0.15; }
+          100% { transform: scale(1);     opacity: 0; }
         }
         @keyframes streak {
           0%   { opacity: 0; transform: rotate(var(--r, 0deg)) scaleY(1) translateY(0); }
