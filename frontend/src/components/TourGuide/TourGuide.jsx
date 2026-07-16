@@ -6,15 +6,15 @@ import styles from './TourGuide.module.css'
 // key lets everyone see the fixed guide once.
 const STORAGE_KEY = 'fs_tour_done_v2'
 
-// A centered, fully-responsive card carousel — no element measurement, so it
+// A centered, fully-responsive card carousel, no element measurement, so it
 // renders identically and correctly on desktop and mobile. Copy adapts the
 // interaction verb (click vs tap) per device.
 const STEPS = [
   {
     icon:  'public',
     title: 'Welcome to ObjectTracer',
-    body:  'A live 3D globe for everything above the horizon — aircraft, ships, the ISS, satellites, rockets and asteroids. Here are the four things worth knowing.',
-    mBody: 'A live 3D globe for everything above the horizon — flights, ships, the ISS, satellites, rockets and asteroids. Four quick things to know.',
+    body:  'A live 3D globe for everything above the horizon, aircraft, ships, the ISS, satellites, rockets and asteroids. Here are the four things worth knowing.',
+    mBody: 'A live 3D globe for everything above the horizon, flights, ships, the ISS, satellites, rockets and asteroids. Four quick things to know.',
   },
   {
     icon:  'wifi_tethering',
@@ -25,13 +25,13 @@ const STEPS = [
   {
     icon:  'search',
     title: 'Search anything',
-    body:  'Use Search to look up any flight by callsign, aircraft type or ICAO code — the globe flies straight to it.',
-    mBody: 'Tap Search to find any flight by callsign, aircraft type or ICAO code — the globe flies right to it.',
+    body:  'Use Search to look up any flight by callsign, aircraft type or ICAO code, the globe flies straight to it.',
+    mBody: 'Tap Search to find any flight by callsign, aircraft type or ICAO code, the globe flies right to it.',
   },
   {
     icon:  'tune',
     title: 'Filter & explore',
-    body:  'Use the bottom dock to filter by satellites, flights, launches, asteroids or ships — and switch scale from Earth out to deep space.',
+    body:  'Use the bottom dock to filter by satellites, flights, launches, asteroids or ships, and switch scale from Earth out to deep space.',
     mBody: 'Swipe up the bottom bar for filters (satellites, flights, launches, asteroids, ships) plus live space data, and switch scale from Earth to deep space.',
   },
 ]

@@ -19,12 +19,12 @@ export default function DeepSpaceGuide({ onClose }) {
         <div className={styles.sectionTitle}>What You're Seeing</div>
         <p className={styles.body}>
           Every dot is a <strong>real galaxy or quasar</strong> observed by the
-          Dark Energy Spectroscopic Instrument (DESI) — the most powerful
+          Dark Energy Spectroscopic Instrument (DESI), the most powerful
           galaxy survey ever built. You're looking at 100,000 objects sampled
           from 14.7 million in the full catalog.
         </p>
         <p className={styles.body}>
-          Their positions are <strong>astronomically accurate</strong> — mapped
+          Their positions are <strong>astronomically accurate</strong>, mapped
           from Right Ascension, Declination, and redshift into a true 3D
           distribution of the observable universe.
         </p>
@@ -41,23 +41,23 @@ export default function DeepSpaceGuide({ onClose }) {
         <div className={styles.legendItems}>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ background: 'hsl(187, 80%, 58%)' }} />
-            <span>z {'<'} 0.3 — under 4 billion light-years</span>
+            <span>z {'<'} 0.3, under 4 billion light-years</span>
           </div>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ background: 'hsl(223, 75%, 55%)' }} />
-            <span>z ≈ 0.5 — around 6 billion light-years</span>
+            <span>z ≈ 0.5, around 6 billion light-years</span>
           </div>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ background: 'hsl(260, 70%, 50%)' }} />
-            <span>z ≈ 1.0 — about 10 billion light-years</span>
+            <span>z ≈ 1.0, about 10 billion light-years</span>
           </div>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ background: 'hsl(310, 60%, 42%)' }} />
-            <span>z {'>'} 2.0 — over 12 billion light-years</span>
+            <span>z {'>'} 2.0, over 12 billion light-years</span>
           </div>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ background: 'hsl(30, 85%, 50%)' }} />
-            <span>Quasars — supermassive black holes</span>
+            <span>Quasars, supermassive black holes</span>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function DeepSpaceGuide({ onClose }) {
         <div className={styles.sectionTitle}>What is Redshift?</div>
         <p className={styles.body}>
           The universe is expanding. As light travels through expanding space,
-          its wavelength <strong>stretches</strong> — shifting from blue toward
+          its wavelength <strong>stretches</strong>, shifting from blue toward
           red. The farther away an object is, the more its light has stretched.
         </p>
         <p className={styles.body}>
@@ -134,7 +134,7 @@ export default function DeepSpaceGuide({ onClose }) {
       <div className={styles.section}>
         <div className={styles.sectionTitle}>The Cosmic Web</div>
         <p className={styles.body}>
-          Galaxies aren't randomly scattered — they form an immense web-like
+          Galaxies aren't randomly scattered, they form an immense web-like
           structure. Dense clusters connect via <strong>filaments</strong>,
           separated by vast empty <strong>voids</strong>. This large-scale
           structure formed from tiny density ripples in the early universe,
@@ -142,7 +142,7 @@ export default function DeepSpaceGuide({ onClose }) {
         </p>
         <p className={styles.body}>
           DESI is mapping this structure to measure how <strong>dark
-          energy</strong> drives the accelerating expansion of the universe —
+          energy</strong> drives the accelerating expansion of the universe,
           one of the deepest mysteries in physics.
         </p>
       </div>
@@ -172,7 +172,7 @@ export default function DeepSpaceGuide({ onClose }) {
 
       {/* ── Attribution ───────────────────────────────────────────────── */}
       <div className={styles.attribution}>
-        Data: DESI Data Release 1 — NOIRLab Astro Data Lab<br />
+        Data: DESI Data Release 1, NOIRLab Astro Data Lab<br />
         DESI Collaboration, 2024
       </div>
     </div>
