@@ -4,16 +4,43 @@
   right: 0;
   width: 360px;
   height: 100dvh;
-  background: rgba(8, 12, 20, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-left: 1px solid rgba(200, 210, 225, 0.08);
-  z-index: 200;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border-left: 1px solid var(--glass-line);
+  border-top: 1px solid var(--glass-gloss);   /* signature gloss rim */
+  z-index: var(--z-panel);
   display: flex;
   flex-direction: column;
   font-family: var(--font-mono);
   overflow: hidden;
-  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--glass-shadow);
+  animation: apSlideIn 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes apSlideIn {
+  from { opacity: 0.4; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Mobile: bottom sheet, matching DetailPanel/LaunchPanel/ProfilePanel */
+@media (max-width: 767px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 82dvh;
+    border-left: none;
+    border-top: 1px solid var(--glass-gloss);
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+    animation: apSheetUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes apSheetUp {
+    from { opacity: 0.4; transform: translateY(100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 }
 
 .header {
@@ -31,7 +58,7 @@
 .iata {
   font-size: 18px;
   font-weight: 600;
-  color: #4C8CE4;
+  color: #b2ff1a;
   letter-spacing: 0.12em;
 }
 
@@ -93,15 +120,15 @@
 }
 .tabBtn:hover { color: rgba(200, 210, 225, 0.65); }
 .tabActive {
-  color: #4C8CE4;
-  border-bottom-color: rgba(76, 140, 228, 0.5);
+  color: #b2ff1a;
+  border-bottom-color: rgba(178, 255, 26, 0.5);
 }
 
 .tabBadge {
   font-size: 9px;
   font-weight: 600;
-  color: rgba(76, 140, 228, 0.8);
-  background: rgba(76, 140, 228, 0.1);
+  color: rgba(178, 255, 26, 0.8);
+  background: rgba(178, 255, 26, 0.1);
   border-radius: 8px;
   padding: 1px 6px;
   min-width: 18px;
@@ -147,13 +174,13 @@
 }
 .rowDep { grid-template-columns: 1fr 60px 60px; }
 .row:hover {
-  background: rgba(76, 140, 228, 0.06);
+  background: rgba(178, 255, 26, 0.06);
 }
 
 .callsign {
   display: flex;
   flex-direction: column;
-  color: rgba(76, 140, 228, 0.85);
+  color: rgba(178, 255, 26, 0.85);
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -173,21 +200,21 @@
   width: 100%;
   margin-top: 10px;
   padding: 14px 16px;
-  border: 1px solid rgba(76, 140, 228, 0.4);
+  border: 1px solid rgba(178, 255, 26, 0.4);
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(76, 140, 228, 0.22), rgba(76, 140, 228, 0.1));
+  background: linear-gradient(180deg, rgba(178, 255, 26, 0.22), rgba(178, 255, 26, 0.1));
   color: #eaf2ff;
   cursor: pointer;
   text-align: left;
   transition: filter 0.15s, box-shadow 0.15s, transform 0.1s;
 }
-.fullBoardBtn:hover { filter: brightness(1.1); box-shadow: 0 0 24px rgba(76, 140, 228, 0.28); }
+.fullBoardBtn:hover { filter: brightness(1.1); box-shadow: 0 0 24px rgba(178, 255, 26, 0.28); }
 .fullBoardBtn:active { transform: translateY(1px); }
-.fullBoardIcon { font-size: 22px; flex: none; }
+.fullBoardIcon { display: flex; flex: none; }
 .fullBoardBtn > span:nth-child(2) { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .fullBoardBtn strong { font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
 .fullBoardBtn small { font-family: var(--font-body); font-size: 11px; color: rgba(200, 215, 240, 0.6); margin-top: 2px; }
-.fullBoardArrow { font-size: 18px; color: rgba(158, 197, 255, 0.9); flex: none; }
+.fullBoardArrow { display: flex; color: rgba(178, 255, 26, 0.9); flex: none; }
 
 .eta {
   color: rgba(45, 212, 191, 0.8);

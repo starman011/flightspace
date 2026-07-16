@@ -11,6 +11,7 @@ const AIRPORT_LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 export default function AirportPanel({ iata, onClose, onFlightClick }) {
   const [tab, setTab] = useState('arrivals')
   const [boardOpen, setBoardOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [arrivals, setArrivals] = useState([])
   const [departures, setDepartures] = useState([])
   const [loading, setLoading] = useState(true)
@@ -79,13 +80,18 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
               fontFamily: 'var(--font-mono)' }}>{airportInfo.city}</span>
           )}
         </div>
-        <button className={styles.share} onClick={() => {
+        <button className={styles.share} aria-label="Copy airport link" title="Copy link" onClick={() => {
           const url = `${window.location.origin}/airport/${iata}`
           navigator.clipboard.writeText(url).then(() => {
-            const btn = document.activeElement
-            if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '↗' }, 1500) }
+            setCopied(true); setTimeout(() => setCopied(false), 1500)
           }).catch(() => {})
-        }} title="Copy link">↗</button>
+        }}>
+          {copied ? (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" /></svg>
+          )}
+        </button>
         <button className={styles.close} onClick={onClose} aria-label="Close">&times;</button>
       </div>
 
@@ -159,12 +165,16 @@ export default function AirportPanel({ iata, onClose, onFlightClick }) {
       )}
 
       <button className={styles.fullBoardBtn} onClick={() => setBoardOpen(true)}>
-        <span className={styles.fullBoardIcon}>🛬</span>
+        <span className={styles.fullBoardIcon}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 19h18M4 15l16-4M8.5 11.8L7 7l2 .3 2 3.2M13 9.9l5-1.4a1.5 1.5 0 0 0-.8-2.9l-2 .5" /></svg>
+        </span>
         <span>
           <strong>Full {cityName} flight board</strong>
           <small>Live + recent arrivals &amp; departures · city guide</small>
         </span>
-        <span className={styles.fullBoardArrow}>→</span>
+        <span className={styles.fullBoardArrow}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </span>
       </button>
     </div>
   )
