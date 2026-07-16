@@ -3,7 +3,23 @@ import { useState } from 'react'
 // Top context banner shown when arriving via an SEO landing page
 // (/airline/*, /route/*, /city/*, /flights/*). Tells the visitor exactly
 // what they're looking at so the page never feels like a generic homepage.
-export default function ContextBanner({ icon = '✈', logo, label, sublabel, count, onClear }) {
+// Minimalist SVG glyph per landing kind (no emoji — constitution Art. 2.2)
+function KindIcon({ kind }) {
+  const p = {
+    region:    <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18" /></>,
+    city:      <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />,
+    satellite: <><path d="M4 13l7-7M11 6l3 3M8 9l3 3" /><circle cx="17.5" cy="17.5" r="2.5" /><path d="M13 15l2 2" /></>,
+    airline:   <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />,
+  }[kind] || <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />
+  const stroke = kind === 'region' || kind === 'satellite'
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24"
+      fill={stroke ? 'none' : 'currentColor'} stroke={stroke ? 'currentColor' : 'none'}
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>
+  )
+}
+
+export default function ContextBanner({ kind, logo, label, sublabel, count, onClear }) {
   const [closed, setClosed] = useState(false)
   if (closed) return null
 
@@ -47,7 +63,7 @@ export default function ContextBanner({ icon = '✈', logo, label, sublabel, cou
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
       ) : (
-        <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+        <span style={{ display: 'flex', flexShrink: 0, color: 'var(--primary-container, #b2ff1a)' }}><KindIcon kind={kind} /></span>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>

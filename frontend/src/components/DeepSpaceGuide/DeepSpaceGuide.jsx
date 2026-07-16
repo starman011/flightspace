@@ -110,15 +110,21 @@ export default function DeepSpaceGuide({ onClose }) {
         <div className={styles.sectionTitle}>How to Explore</div>
         <div className={styles.tipList}>
           <div className={styles.tip}>
-            <span className={styles.tipIcon}>👆</span>
+            <span className={styles.tipIcon}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11V6a2 2 0 0 1 4 0v5" /><path d="M13 8a2 2 0 0 1 4 0v4a6 6 0 0 1-6 6h-1a5 5 0 0 1-4-2l-2.5-3.5a1.5 1.5 0 0 1 2.4-1.8L8 12" /></svg>
+            </span>
             <span><strong>Hover</strong> any dot to preview its type and distance</span>
           </div>
           <div className={styles.tip}>
-            <span className={styles.tipIcon}>🖱</span>
-            <span><strong>Click</strong> a dot for full data — distance, lookback time, velocity, spectral info</span>
+            <span className={styles.tipIcon}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4l7 16 2.5-6.5L20 11z" /></svg>
+            </span>
+            <span><strong>Click</strong> a dot for full data: distance, lookback time, velocity, spectral info</span>
           </div>
           <div className={styles.tip}>
-            <span className={styles.tipIcon}>🔄</span>
+            <span className={styles.tipIcon}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
+            </span>
             <span><strong>Drag</strong> to rotate the view and see the 3D distribution</span>
           </div>
         </div>

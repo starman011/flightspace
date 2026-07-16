@@ -748,7 +748,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {landing && (
         <ContextBanner
-          icon={landing.kind === 'region' ? '🌍' : landing.kind === 'city' ? '🛫' : landing.kind === 'satellite' ? '🛰' : '✈'}
+          kind={landing.kind}
           logo={landing.kind === 'airline' && landing.iata ? `https://pics.avs.io/44/44/${landing.iata}@2x.png` : undefined}
           label={
             landing.kind === 'airline' ? `${landing.name} — Live Flights`
