@@ -9,8 +9,6 @@ export default function ProfilePanel({
 }) {
   const [tab, setTab] = useState('flights')
 
-  if (!open) return null
-
   // Separate satellites (ISS etc.) from regular flights
   const SAT_IDS = new Set(['ISS'])
   const flights = trackedFlights.filter(f => !SAT_IDS.has(f.icao24))

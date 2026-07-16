@@ -6,20 +6,22 @@
   right: 0;
   width: 400px;
   height: 100dvh;
-  background: rgba(12, 16, 22, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-left: 1px solid rgba(59, 73, 76, 0.15);
+  background: rgba(13, 19, 28, 0.93);   /* reading surface — DESIGN §1.2 */
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border-left: 1px solid var(--glass-line);
+  border-top: 1px solid var(--glass-gloss);   /* signature gloss rim */
   z-index: var(--z-panel);   /* was 85 — below nav pills; audit S5 */
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
   overflow: hidden;
-  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--glass-shadow);
 }
 
-.open { transform: translateX(0); }
+.open { transform: translateX(0); pointer-events: auto; }
 
 /* ── Banner ───────────────────────────────────────────────────────────────── */
 
