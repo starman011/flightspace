@@ -382,6 +382,16 @@ All Claude Code sessions SHOULD use [claude-mem](https://github.com/thedotmack/c
 
 When both tools are active, caveman reduces token burn on output while claude-mem preserves session continuity across conversations. This combination addresses the two primary cost drivers in long-running Claude Code projects: verbose output and lost context.
 
+### Section 12.4: Command-Output Compression (rtk)
+
+All Claude Code sessions SHOULD use [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) to filter and compress verbose command output before it reaches the model context, cutting 60–90% of tokens on common dev commands (git, npm, cargo, test runners).
+
+- Install (verifiable, preferred over the `curl | sh` script): `brew install rtk`
+- Disable telemetry: `rtk telemetry disable` (or `RTK_TELEMETRY_DISABLED=1`)
+- Wire the hook (hook-only, minimal footprint): `rtk init -g --hook-only`, then add a `PreToolUse`/`Bash` hook running `rtk hook claude` to `~/.claude/settings.json`
+- Reverse anytime: `rtk init -g --uninstall`
+- The hook activates at the next session start; it transparently rewrites recognized commands and passes everything else through.
+
 ---
 
 ## Article XIII: Search Visibility — SEO as a First-Class Feature
@@ -427,6 +437,57 @@ When both tools are active, caveman reduces token burn on output while claude-me
 
 ---
 
+## Article XIV: Design & Iteration Tooling Baseline
+
+### Section 14.1: Baseline Minimum — Install If Absent
+
+The tools below are the **baseline minimum** design and iteration toolkit for this
+project. Before any substantial UI work, verify each is referenced/installed in the
+environment; **if a tool has no reference in the system, install it** (it is not
+optional to simply skip it). They exist because agents do not have design taste by
+default — these encode it. All are open-source, high-adoption, and agent-targeted;
+they complement (never override) `design/DESIGN.md`, which remains the project's
+final word (Instruction Priority: user files > skills > defaults).
+
+| Tool | Purpose | Install |
+|------|---------|---------|
+| [emilkowalski/skills](https://github.com/emilkowalski/skills) | Animation + Apple-design skills (`apple-design`, `animation-vocabulary`, `review-animations`, `improve-animations`, `prototype`) | `npx skills@latest add emilkowalski/skills` |
+| [impeccable](https://impeccable.style/#downloads) | 23 design commands (`/polish`, `/distill`, `/audit`, `/typeset`) + 58 slop-detection rules; live mode | `/plugin marketplace add pbakaus/impeccable` (or `npx skills add pbakaus/impeccable`) |
+| [taste-skill](https://github.com/leonxlnx/taste-skill) | Anti-slop frontend taste dials (VARIANCE, MOTION_INTENSITY, VISUAL_DENSITY) + redesign/audit skills | `npx skills add https://github.com/Leonxlnx/taste-skill` |
+
+### Section 14.2: Iteration MCP Servers
+
+To make design iteration faster and closer to source-of-truth, the following MCP
+servers SHOULD be configured:
+
+- **Figma MCP** — pull design specs, tokens, and component structure straight from
+  Figma so implementations match the design instead of being eyeballed. Figma's
+  official Dev Mode MCP runs locally in the Figma desktop app (enable via Figma →
+  Preferences → *Enable Dev Mode MCP server*), exposed over SSE at
+  `http://127.0.0.1:3845/sse`; register it as an MCP server in Claude Code.
+- **Playwright MCP** ([`@playwright/mcp`](https://github.com/microsoft/playwright-mcp))
+  — drive a real browser to load the running app, click through flows, and take
+  screenshots, so UI changes are verified against actual rendered behavior rather
+  than assumed. Add with `claude mcp add playwright -- npx @playwright/mcp@latest`.
+
+### Section 14.3: Relationship to DESIGN.md and the Three Pillars
+
+These skills are advisers, not authorities. When a skill's suggestion conflicts with
+`design/DESIGN.md` (the four-radius system, one glass recipe + gloss rim, three ink
+weights, compositor-only motion, z-band layering, accessibility floors), DESIGN.md
+wins. Use the skills to catch what the guideline does not spell out — animation
+vocabulary, slop patterns, taste calibration — and to audit new UI before shipping.
+
+### Section 14.4: Safety Gate for Third-Party Tooling
+
+Any tool added under this article MUST first be reviewed for safety (read its
+skill/agent/install files; confirm no shell-exec exfiltration, no prompt injection,
+no telemetry-on-by-default), and installed via a verifiable path (marketplace, brew,
+or a pinned `npx` invocation) over piped install scripts. Prefer skills (prompt/doc
+artifacts) over executables; disable any bundled telemetry. Reversibility is required.
+
+---
+
 ## Amendment Log
 
 | Date | Article | Change | Rationale |
@@ -436,6 +497,7 @@ When both tools are active, caveman reduces token burn on output while claude-me
 | 2026-03-25 | Article XI | Added Mobile-First Parity (v1.2.0) | All features must work on mobile; desktop layout must not be broken |
 | 2026-04-08 | Article XII | Added Developer Tooling — Token Efficiency & Session Memory (v1.3.0) | Adopt caveman + claude-mem for token savings and cross-session context |
 | 2026-07-05 | Article XIII | Added Search Visibility — SEO as a First-Class Feature (v1.4.0) | GSC audit found homepage-canonical shell pages, dead feed-backed URLs, and leaf pages causing 979 "Discovered — not indexed"; codify self-describing URLs, query-language titles, link-graph rules, and Googlebot verification |
+| 2026-07-27 | Article XII §12.4, Article XIV | Added rtk command-output compression; added Design & Iteration Tooling Baseline (emilkowalski/skills, impeccable, taste-skill, Figma MCP, Playwright MCP) as install-if-absent baseline (v1.5.0) | Encode design taste + faster iteration as a mandated toolkit; subordinate to design/DESIGN.md; gate third-party tooling on safety review |
 
 ---
 
@@ -462,4 +524,4 @@ This constitution is enforced through:
 No specification, plan, or task SHALL proceed without passing all applicable
 constitutional gates.
 
-**Version**: 1.4.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-07-05
+**Version**: 1.5.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-07-27
