@@ -507,7 +507,7 @@
 .replayBtn:hover {
   background: rgba(99, 102, 241, 0.15);
   border-color: rgba(139, 92, 246, 0.4);
-  color: #a78bfa;
+  color: var(--violet);
 }
 
 .scrubberWrap {

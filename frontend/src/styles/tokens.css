@@ -19,6 +19,8 @@
   --teal-rgb:   45, 212, 191;
   --amber:      #fbbf24;              /* highlights / alerts */
   --amber-rgb:  251, 191, 36;
+  --violet:     #a78bfa;              /* deep-space / launches accent */
+  --violet-rgb: 167, 139, 250;
 
   /* Themeable neutrals (dark theme defaults — values match the literals they
      replaced, so the DARK theme looks identical to before) */
@@ -172,39 +174,41 @@
   /* Palette: BLUE + GREEN + WHITE. Blue drives links/actions/focus, green is
      the brand highlight (active nav / LIVE-adjacent), ink is navy-tinted so
      even the text carries a cool blue cast. */
-  --green:      #4e9000;              /* readable green for text/borders */
+  --green:      #3f7a00;              /* readable green for text/borders */
   --green-rgb:  188, 228, 25;         /* vivid #bce419 lime for fills/tints */
-  --blue:       #0043f0;              /* the desertcart blue — sings on white */
+  --blue:       #0043f0;              /* the desertcart blue — the theme's spine */
   --blue-rgb:   0, 67, 240;
   --teal:       #0d9488;              /* deep teal — readable on white */
   --teal-rgb:   13, 148, 136;
   --amber:      #b45309;              /* deep amber — readable on white */
   --amber-rgb:  180, 83, 9;
+  --violet:     #6d28d9;              /* deep violet — readable on white */
+  --violet-rgb: 109, 40, 217;
 
-  --ink-rgb:            24, 32, 54;     /* navy-tinted ink */
-  --ink-muted-rgb:      92, 104, 132;   /* muted captions */
-  --ink-cool-rgb:       20, 62, 150;    /* cool/blue text */
-  --surface-rgb:        255, 255, 255;  /* white glass */
-  --surface-deep-rgb:   240, 244, 252;  /* faint blue-white */
-  --surface-raised-rgb: 230, 237, 249;  /* raised chips, blue tint */
-  --line-rgb:           20, 40, 90;     /* structural hairlines / dividers */
-  --gloss-rgb:          20, 40, 90;     /* "gloss"/hairline -> subtle navy line */
-  --text-strong:        #0a1836;        /* navy headings */
-  --page-bg:            #f4f7fe;        /* faint blue-white pages */
+  --ink-rgb:            22, 34, 66;     /* navy-tinted ink */
+  --ink-muted-rgb:      86, 100, 140;   /* muted captions */
+  --ink-cool-rgb:       0, 67, 240;     /* cool text -> the blue */
+  --surface-rgb:        227, 237, 255;  /* blue-tinted glass (not stark white) */
+  --surface-deep-rgb:   210, 225, 252;  /* deeper blue-white */
+  --surface-raised-rgb: 216, 229, 252;  /* raised chips, blue */
+  --line-rgb:           30, 64, 150;    /* blue hairlines / dividers */
+  --gloss-rgb:          20, 45, 110;    /* "gloss"/hairline -> blue line */
+  --text-strong:        #061640;        /* deep navy headings */
+  --page-bg:            #dbe7ff;        /* clearly blue page wash */
 
   /* Legacy semantic tokens some components still use directly */
-  --on-surface:         #182036;
-  --on-surface-variant: #566188;
-  --surface:            #f4f7fe;
-  --surface-dim:        #eaf0fb;
-  --surface-container-low:     #eef3fc;
-  --surface-container:         #e6edf8;
-  --surface-container-high:    #dde7f5;
-  --primary-container:  #4e9000;
-  --glass-fill:   rgba(255, 255, 255, 0.82);
-  --glass-fill-2: rgba(255, 255, 255, 0.62);
-  --glass-line:   rgba(20, 40, 90, 0.12);
-  --glass-gloss:  rgba(255, 255, 255, 0.9);
+  --on-surface:         #16223f;
+  --on-surface-variant: #4a5788;
+  --surface:            #dbe7ff;
+  --surface-dim:        #cddcfb;
+  --surface-container-low:     #e2ecff;
+  --surface-container:         #d6e3fc;
+  --surface-container-high:    #c8d9f8;
+  --primary-container:  #0043f0;        /* blue — used by several active states */
+  --glass-fill:   rgba(230, 240, 255, 0.86);
+  --glass-fill-2: rgba(222, 234, 255, 0.66);
+  --glass-line:   rgba(30, 64, 150, 0.18);
+  --glass-gloss:  rgba(255, 255, 255, 0.95);
   --glass-shadow-nav:   0 6px 20px rgba(20, 40, 90, 0.10), 0 1px 3px rgba(20, 40, 90, 0.08);
   --glass-shadow:       0 14px 44px rgba(20, 40, 90, 0.15), 0 2px 8px rgba(20, 40, 90, 0.10);
   --glass-shadow-modal: 0 30px 80px rgba(20, 40, 90, 0.22), 0 6px 18px rgba(20, 40, 90, 0.12);

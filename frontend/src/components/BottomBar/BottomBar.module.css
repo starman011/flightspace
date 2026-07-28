@@ -156,7 +156,7 @@
     #6366f1,
     #8b5cf6,
     #3b82f6,
-    #a78bfa,
+    var(--violet),
     #6366f1
   );
   background-size: 300% 300%;

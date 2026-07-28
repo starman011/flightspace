@@ -806,8 +806,8 @@
 
 /* Upcoming — zero decoration; pure type */
 .meteorsUpcoming {
-  background: rgba(167, 139, 250, 0.04);
-  border: 1px solid rgba(167, 139, 250, 0.1);
+  background: rgba(var(--violet-rgb), 0.04);
+  border: 1px solid rgba(var(--violet-rgb), 0.1);
   border-radius: 12px;
   padding: 8px 12px 6px;
   flex-shrink: 0;
@@ -818,7 +818,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: rgba(167, 139, 250, 0.65);
+  color: rgba(var(--violet-rgb), 0.65);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -837,8 +837,8 @@
   cursor: pointer;
   transition: background 0.12s;
 }
-.meteorsUpcomingRow:hover   { background: rgba(167, 139, 250, 0.07); }
-.meteorsUpcomingActive      { background: rgba(167, 139, 250, 0.12) !important; }
+.meteorsUpcomingRow:hover   { background: rgba(var(--violet-rgb), 0.07); }
+.meteorsUpcomingActive      { background: rgba(var(--violet-rgb), 0.12) !important; }
 
 .meteorsUpcomingName {
   font-family: var(--font-mono);
@@ -1634,7 +1634,7 @@
     inset: 0;
     border-radius: 16px 0 0 16px;
     padding: 1.5px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #3b82f6, #a78bfa, #6366f1);
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #3b82f6, var(--violet), #6366f1);
     background-size: 200% 100%;
     animation: feedTabFlow 8s linear infinite;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -1929,7 +1929,7 @@
   .streamClosed .grabBar {
     width: 46px;
     height: 5px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #a78bfa, #6366f1);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, var(--violet), #6366f1);
     background-size: 300% 300%;
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.45);
     animation: grabFlow 8s ease-in-out infinite, grabPull 1.8s ease-in-out infinite;
@@ -2710,7 +2710,7 @@
 .feedCardTeal   { border-top-color: rgba(var(--teal-rgb), 0.6); }
 .feedCardSteel  { border-top-color: rgba(76,  140, 228, 0.6); }
 .feedCardAmber  { border-top-color: rgba(var(--amber-rgb), 0.6); }
-.feedCardViolet { border-top-color: rgba(167, 139, 250, 0.6); }
+.feedCardViolet { border-top-color: rgba(var(--violet-rgb), 0.6); }
 .feedCardAPOD   { border-top-color: rgba(var(--ink-rgb), 0.2); }
 .feedCardIndigo { border-top-color: rgba(129, 140, 248, 0.6); }
 .feedCardQuote  {
@@ -2948,24 +2948,24 @@
 /* ── Meteor card ── */
 .feedMeteorName {
   font: 700 19px/1 system-ui, -apple-system, sans-serif;
-  color: #a78bfa;
+  color: var(--violet);
   letter-spacing: -0.01em;
   margin-bottom: 4px;
 }
 .feedMeteorSub {
   font: 400 10px/1.4 system-ui, -apple-system, sans-serif;
-  color: rgba(167, 139, 250, 0.55);
+  color: rgba(var(--violet-rgb), 0.55);
   margin-bottom: 10px;
 }
 .feedMeteorBar {
   height: 3px;
-  background: rgba(167, 139, 250, 0.14);
+  background: rgba(var(--violet-rgb), 0.14);
   border-radius: 2px;
   overflow: hidden;
 }
 .feedMeteorFill {
   height: 100%;
-  background: linear-gradient(to right, #a78bfa, #c084fc);
+  background: linear-gradient(to right, var(--violet), #c084fc);
   border-radius: 2px;
   transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3155,7 +3155,7 @@
 /* Meteor expand */
 .feedExpandMeteorCard {
   background: rgba(var(--surface-raised-rgb), 0.6);
-  border: 1px solid rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(var(--violet-rgb), 0.1);
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 6px;

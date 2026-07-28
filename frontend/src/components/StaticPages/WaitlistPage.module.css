@@ -243,7 +243,7 @@
   inset: 0;
   border-radius: 16px;
   padding: 1.5px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #a78bfa, #6366f1);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, var(--violet), #6366f1);
   background-size: 300% 300%;
   animation: gradientFlow 8s ease-in-out infinite;
   -webkit-mask:
