@@ -31,6 +31,7 @@ import { CAM_SOLAR, CAM_EARTH, CAM_GALAXY, CAM_MOON, CAM_TWEEN_MS, CAM_MOON_TWEE
 import { createMoonScene } from './MoonScene.js'
 import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
+import { segmentOccludedBySphere } from './pickOcclusion.js'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
 import { SKY_OBJECTS } from './skyObjects.js'
@@ -2203,13 +2204,28 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       const cx = clientX - rect.left, cy = clientY - rect.top
       const nearby = index.range(cx - tapR, cy - tapR, cx + tapR, cy + tapR)
 
-      let bestId = null, bestDist = Infinity
+      // Screen distance alone ignores depth: a satellite on the far hemisphere
+      // (behind the Earth) or one sitting over a plane on the near side would
+      // steal the click. So (1) cull anything occluded by the globe, and
+      // (2) prefer a real aircraft/ship under the cursor — only fall back to a
+      // satellite when no aircraft is within the tap radius.
+      const camPos = camera.position
+      const occR = EARTH_R * 0.999
+      const i2i = int.current.idToInstance
+      let bestAcId = null, bestAcDist = Infinity     // aircraft + ships (preferred)
+      let bestSatId = null, bestSatDist = Infinity   // satellites (fallback)
       for (const idx of nearby) {
         const dx = xs[idx] - cx, dy = ys[idx] - cy
         const d = dx * dx + dy * dy
-        if (d < bestDist && d <= tapR * tapR) { bestDist = d; bestId = ids[idx] }
+        if (d > tapR * tapR) continue
+        const px = acPos[idx * 3], py = acPos[idx * 3 + 1], pz = acPos[idx * 3 + 2]
+        if (segmentOccludedBySphere(camPos.x, camPos.y, camPos.z, px, py, pz, occR)) continue
+        const id = ids[idx]
+        if (i2i?.get(id)?.cat === 'satellite') {
+          if (d < bestSatDist) { bestSatDist = d; bestSatId = id }
+        } else if (d < bestAcDist) { bestAcDist = d; bestAcId = id }
       }
-      return bestId
+      return bestAcId ?? bestSatId
     }
 
     // Hover picking is rAF-gated: screenPick projects ~12K entities and builds
