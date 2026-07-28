@@ -78,9 +78,20 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: rgba(200, 210, 225, 0.35);
+  color: rgba(200, 210, 225, 0.5);   /* legible icon bar, not ghost-faint */
   cursor: pointer;
   transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+
+/* Hairline splitting scale icons from content icons — makes the row read
+   as a deliberate two-section bar. */
+.groupDivider {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  align-self: center;
+  background: var(--glass-line);
+  flex-shrink: 0;
 }
 
 /* Mobile collapse toggle — hidden on desktop */
@@ -169,6 +180,7 @@
     align-items: center;
     gap: 4px;
   }
+  .groupDivider { display: none; }   /* the vertical menu doesn't need the section rule */
   .toggle { display: flex; width: 28px; height: 28px; flex: none; }
   .current {
     display: flex;

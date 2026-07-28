@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import styles from './PagesPill.module.css'
 import { FilterIcon } from '../BottomBar/BottomBar'
 
@@ -121,17 +121,22 @@ export default function PagesPill({
       </div>
       <div className={styles.menu}>
         <div className={styles.menuInner}>
-          {PAGES.map(page => (
-            <button
-              key={page.id}
-              className={`${styles.btn} ${isActive(page) ? styles.active : ''}`}
-              onClick={() => handleClick(page)}
-              title={page.label}
-              aria-label={page.label}
-            >
-              <PageIcon id={page.id} />
-              <span className={styles.label}>{page.label}</span>
-            </button>
+          {PAGES.map((page, i) => (
+            <Fragment key={page.id}>
+              {/* Hairline between the scale group (Earth…Deep Space) and the
+                 content group (Launches…Journal) so the bar reads as two
+                 intentional sections, not a floating pile of faint icons. */}
+              {i === 4 && <span className={styles.groupDivider} aria-hidden="true" />}
+              <button
+                className={`${styles.btn} ${isActive(page) ? styles.active : ''}`}
+                onClick={() => handleClick(page)}
+                title={page.label}
+                aria-label={page.label}
+              >
+                <PageIcon id={page.id} />
+                <span className={styles.label}>{page.label}</span>
+              </button>
+            </Fragment>
           ))}
         </div>
       </div>
