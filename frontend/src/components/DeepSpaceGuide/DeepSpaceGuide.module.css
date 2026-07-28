@@ -9,7 +9,7 @@
   background: rgba(8, 12, 18, 0.94);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-top: 1.5px solid rgba(180, 130, 255, 0.34);
   border-radius: 20px;
   padding: 20px;
@@ -21,7 +21,7 @@
     0 8px 40px rgba(0, 0, 0, 0.6),
     0 2px 8px rgba(0, 0, 0, 0.35),
     0 0 36px rgba(150, 110, 255, 0.07),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    0 1px 0 rgba(var(--gloss-rgb), 0.04) inset;
   animation: slideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   scrollbar-width: thin;
   scrollbar-color: rgba(180, 130, 255, 0.2) transparent;
@@ -61,7 +61,7 @@
   font-family: var(--font-mono);
   font-size: 19px;
   font-weight: 700;
-  color: #eff1fb;
+  color: var(--text-strong);
   margin: 0;
   letter-spacing: -0.01em;
   line-height: 1.1;
@@ -80,7 +80,7 @@
 .close {
   background: none;
   border: none;
-  color: rgba(195, 245, 255, 0.4);
+  color: rgba(var(--ink-cool-rgb), 0.4);
   font-size: 14px;
   cursor: pointer;
   padding: 4px;
@@ -89,7 +89,7 @@
   margin-top: 2px;
   transition: color 0.15s;
 }
-.close:hover { color: rgba(195, 245, 255, 0.9); }
+.close:hover { color: rgba(var(--ink-cool-rgb), 0.9); }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
 
@@ -148,7 +148,7 @@
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.08em;
-  color: rgba(195, 210, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   text-transform: uppercase;
   margin-top: -2px;
 }
@@ -165,7 +165,7 @@
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  color: rgba(195, 210, 255, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
 }
 
 .legendDot {
@@ -207,7 +207,7 @@
 .infoBody {
   font-size: 11px;
   line-height: 1.6;
-  color: rgba(195, 210, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   margin: 0;
 }
 
@@ -224,7 +224,7 @@
   align-items: flex-start;
   gap: 8px;
   font-size: 11px;
-  color: rgba(195, 210, 255, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
   line-height: 1.5;
 }
 .tip strong { color: rgba(195, 220, 255, 0.85); }
@@ -265,7 +265,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(195, 210, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin-top: 4px;
 }
 

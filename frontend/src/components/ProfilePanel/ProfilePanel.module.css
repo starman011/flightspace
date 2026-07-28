@@ -6,7 +6,7 @@
   right: 0;
   width: 400px;
   height: 100dvh;
-  background: rgba(13, 19, 28, 0.93);   /* reading surface — DESIGN §1.2 */
+  background: rgba(var(--surface-rgb), 0.93);   /* reading surface — DESIGN §1.2 */
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
   border-left: 1px solid var(--glass-line);
@@ -44,7 +44,7 @@
 .bannerFallback {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(163,230,53,0.12) 0%, rgba(12,16,22,1) 70%);
+  background: linear-gradient(135deg, rgba(var(--green-rgb), 0.12) 0%, rgba(12,16,22,1) 70%);
 }
 
 .bannerOverlay {
@@ -64,9 +64,9 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--gloss-rgb), 0.12);
   border-radius: 50%;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--gloss-rgb), 0.7);
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -74,8 +74,8 @@
 }
 .closeBtn:hover {
   background: rgba(0, 0, 0, 0.6);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  border-color: rgba(var(--gloss-rgb), 0.25);
+  color: var(--text-strong);
 }
 
 /* ── Profile identity ────────────────────────────────────────────────────── */
@@ -103,7 +103,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(163, 230, 53, 0.1);
+  background: rgba(var(--green-rgb), 0.1);
 }
 
 .avatarImg {
@@ -116,7 +116,7 @@
   font-family: var(--font-mono);
   font-size: 22px;
   font-weight: 700;
-  color: #a3e635;
+  color: var(--green);
 }
 
 .title {
@@ -130,7 +130,7 @@
 
 .subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--gloss-rgb), 0.3);
   margin: 3px 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -162,15 +162,15 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--gloss-rgb), 0.35);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.tab:hover { color: rgba(255, 255, 255, 0.6); }
+.tab:hover { color: rgba(var(--gloss-rgb), 0.6); }
 
 .tabActive {
-  color: #a3e635;
-  border-bottom-color: #a3e635;
+  color: var(--green);
+  border-bottom-color: var(--green);
 }
 
 .tabBadge {
@@ -178,8 +178,8 @@
   min-width: 16px;
   height: 16px;
   border-radius: 8px;
-  background: rgba(163, 230, 53, 0.12);
-  color: #a3e635;
+  background: rgba(var(--green-rgb), 0.12);
+  color: var(--green);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -194,7 +194,7 @@
   overflow-x: hidden;
   padding: 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(163, 230, 53, 0.1) transparent;
+  scrollbar-color: rgba(var(--green-rgb), 0.1) transparent;
 }
 
 /* ── Section ──────────────────────────────────────────────────────────────── */
@@ -209,7 +209,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(195, 245, 255, 0.35);
+  color: rgba(var(--ink-cool-rgb), 0.35);
   margin: 0 0 10px 4px;
   display: flex;
   align-items: center;
@@ -237,7 +237,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(var(--gloss-rgb), 0.02);
   border: 1px solid rgba(59, 73, 76, 0.12);
   border-radius: 12px;
   margin-bottom: 8px;
@@ -245,8 +245,8 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .card:hover {
-  background: rgba(163, 230, 53, 0.04);
-  border-color: rgba(163, 230, 53, 0.15);
+  background: rgba(var(--green-rgb), 0.04);
+  border-color: rgba(var(--green-rgb), 0.15);
 }
 
 .cardLeft {
@@ -261,13 +261,13 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(163, 230, 53, 0.06);
-  border: 1px solid rgba(163, 230, 53, 0.12);
+  background: rgba(var(--green-rgb), 0.06);
+  border: 1px solid rgba(var(--green-rgb), 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(163, 230, 53, 0.6);
+  color: rgba(var(--green-rgb), 0.6);
 }
 
 .cardIconLaunch {
@@ -314,7 +314,7 @@
 
 .cardSub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--gloss-rgb), 0.3);
   margin: 2px 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -328,14 +328,14 @@
   margin-top: 3px;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(163, 230, 53, 0.6);
+  color: rgba(var(--green-rgb), 0.6);
 }
 
 .telSep {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(var(--gloss-rgb), 0.15);
   flex-shrink: 0;
 }
 
@@ -348,7 +348,7 @@
   justify-content: center;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(var(--gloss-rgb), 0.15);
   cursor: pointer;
   border-radius: 6px;
   transition: color 0.1s, background 0.1s;
@@ -371,7 +371,7 @@
 .empty p {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(var(--gloss-rgb), 0.2);
   line-height: 1.6;
   max-width: 220px;
 }

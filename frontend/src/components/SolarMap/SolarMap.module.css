@@ -38,14 +38,14 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(195,245,255,0.45);
+  color: rgba(var(--ink-cool-rgb), 0.45);
 }
 
 .dotCyan {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(163,230,53,0.8);
+  background: rgba(var(--green-rgb), 0.8);
 }
 
 .dotRed {
@@ -65,7 +65,7 @@
 .legendHint {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(195,245,255,0.2);
+  color: rgba(var(--ink-cool-rgb), 0.2);
   letter-spacing: 0.05em;
   border-left: 1px solid rgba(59,73,76,0.3);
   padding-left: 12px;

@@ -10,7 +10,7 @@
   background: rgba(8, 12, 18, 0.94);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-top: 1.5px solid rgba(180, 130, 255, 0.34);   /* deep-space violet flavour */
   border-radius: 20px;
   padding: 20px;
@@ -22,7 +22,7 @@
     0 8px 40px rgba(0, 0, 0, 0.6),
     0 2px 8px rgba(0, 0, 0, 0.35),
     0 0 36px rgba(150, 110, 255, 0.07),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    0 1px 0 rgba(var(--gloss-rgb), 0.04) inset;
   animation: slideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -56,7 +56,7 @@
   font-family: var(--font-mono);
   font-size: 22px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -77,7 +77,7 @@
 .close {
   background: none;
   border: none;
-  color: rgba(195, 245, 255, 0.4);
+  color: rgba(var(--ink-cool-rgb), 0.4);
   font-size: 14px;
   cursor: pointer;
   padding: 4px;
@@ -86,13 +86,13 @@
   margin-top: 2px;
   transition: color 0.15s;
 }
-.close:hover { color: rgba(195, 245, 255, 0.9); }
+.close:hover { color: rgba(var(--ink-cool-rgb), 0.9); }
 
 .stats {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid rgba(163, 230, 53, 0.1);
+  border: 1px solid rgba(var(--green-rgb), 0.1);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -106,7 +106,7 @@
 }
 
 .statRow:nth-child(odd) {
-  background: rgba(163, 230, 53, 0.03);
+  background: rgba(var(--green-rgb), 0.03);
 }
 
 .statLabel {
@@ -114,7 +114,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: rgba(195, 245, 255, 0.45);
+  color: rgba(var(--ink-cool-rgb), 0.45);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -122,7 +122,7 @@
 .statValue {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(195, 245, 255, 0.85);
+  color: rgba(var(--ink-cool-rgb), 0.85);
   text-align: right;
 }
 
@@ -130,14 +130,14 @@
   font-family: var(--font-body, sans-serif);
   font-size: 12.5px;
   line-height: 1.65;
-  color: rgba(195, 245, 255, 0.6);
+  color: rgba(var(--ink-cool-rgb), 0.6);
   margin: 0;
 }
 
 /* ── Scrollbar ── */
 .panel::-webkit-scrollbar { width: 4px; }
 .panel::-webkit-scrollbar-track { background: transparent; }
-.panel::-webkit-scrollbar-thumb { background: rgba(163, 230, 53, 0.15); border-radius: 2px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(var(--green-rgb), 0.15); border-radius: 2px; }
 
 /* ── Mobile ── */
 @media (max-width: 600px) {

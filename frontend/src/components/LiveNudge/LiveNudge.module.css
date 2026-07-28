@@ -46,7 +46,7 @@
   font-family: var(--font-body);
   font-size: 12.5px;
   line-height: 1.5;
-  color: rgba(195, 245, 255, 0.6);
+  color: rgba(var(--ink-cool-rgb), 0.6);
   margin: 0;
 }
 
@@ -58,7 +58,7 @@
   margin-top: 4px;
   padding: 11px 0;
   width: 100%;
-  background: #a3e635;
+  background: var(--green);
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
@@ -70,7 +70,7 @@
   cursor: pointer;
   transition: filter 0.15s, box-shadow 0.15s;
 }
-.cta:hover { filter: brightness(1.08); box-shadow: 0 0 20px rgba(163, 230, 53, 0.4); }
+.cta:hover { filter: brightness(1.08); box-shadow: 0 0 20px rgba(var(--green-rgb), 0.4); }
 
 .ctaDot {
   width: 7px;
@@ -89,14 +89,14 @@
   flex: none;
   background: none;
   border: none;
-  color: rgba(195, 245, 255, 0.35);
+  color: rgba(var(--ink-cool-rgb), 0.35);
   font-size: 18px;
   line-height: 1;
   padding: 0 2px;
   cursor: pointer;
   transition: color 0.15s;
 }
-.close:hover { color: rgba(195, 245, 255, 0.8); }
+.close:hover { color: rgba(var(--ink-cool-rgb), 0.8); }
 
 /* Collapsed chip: compact pulsing Go Live at the same anchor */
 .chip {
@@ -106,7 +106,7 @@
   align-items: center;
   gap: 7px;
   padding: 9px 16px;
-  background: #a3e635;
+  background: var(--green);
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
@@ -121,7 +121,7 @@
   animation: chipIn 0.36s var(--ease-spring-soft);
   transition: filter 0.15s, box-shadow 0.15s;
 }
-.chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(163, 230, 53, 0.45); }
+.chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(var(--green-rgb), 0.45); }
 
 @keyframes chipIn {
   from { opacity: 0; transform: scale(0.5); }

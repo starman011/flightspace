@@ -41,8 +41,8 @@
   inset: 0;
   border-radius: 50%;
   border: 1.5px solid transparent;
-  border-top-color: rgba(163, 230, 53, 0.8);
-  border-right-color: rgba(163, 230, 53, 0.15);
+  border-top-color: rgba(var(--green-rgb), 0.8);
+  border-right-color: rgba(var(--green-rgb), 0.15);
   animation: spin 1.4s linear infinite;
 }
 
@@ -52,7 +52,7 @@
   inset: 8px;
   border-radius: 50%;
   border: 1px solid transparent;
-  border-top-color: rgba(163, 230, 53, 0.35);
+  border-top-color: rgba(var(--green-rgb), 0.35);
   animation: spinReverse 2.2s linear infinite;
 }
 
@@ -60,8 +60,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(163, 230, 53, 0.9);
-  box-shadow: 0 0 12px rgba(163, 230, 53, 0.6), 0 0 30px rgba(163, 230, 53, 0.2);
+  background: rgba(var(--green-rgb), 0.9);
+  box-shadow: 0 0 12px rgba(var(--green-rgb), 0.6), 0 0 30px rgba(var(--green-rgb), 0.2);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
@@ -85,7 +85,7 @@
   font-weight: 500;
   letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--gloss-rgb), 0.6);
   margin: 0;
   user-select: none;
   animation: fadeSlideUp 0.6s ease 0.2s both;
@@ -96,7 +96,7 @@
   font-family: 'Georgia', serif;
   font-style: italic;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--gloss-rgb), 0.35);
   text-align: center;
   max-width: 32ch;
   line-height: 1.55;

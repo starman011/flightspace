@@ -30,13 +30,13 @@
   cursor: pointer;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    0 1px 0 rgba(var(--gloss-rgb), 0.03) inset;
 }
 .collapsed:hover {
-  border-color: rgba(200, 210, 225, 0.15);
+  border-color: rgba(var(--ink-rgb), 0.15);
   box-shadow:
     0 6px 28px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    0 1px 0 rgba(var(--gloss-rgb), 0.05) inset;
 }
 
 .preview {
@@ -46,13 +46,13 @@
   padding: 4px 6px;
   border: none;
   background: transparent;
-  color: rgba(200, 210, 225, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .preview:hover {
-  color: rgba(200, 210, 225, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .previewIcons {
@@ -65,8 +65,8 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #a3e635;
-  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(var(--green-rgb), 0.5);
   margin-left: 2px;
 }
 
@@ -101,7 +101,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(200, 210, 225, 0.2);
+  color: rgba(var(--ink-rgb), 0.2);
   margin-bottom: 2px;
   white-space: nowrap;
   user-select: none;
@@ -109,7 +109,7 @@
 }
 
 .section:hover .sectionLabel {
-  color: rgba(200, 210, 225, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
 }
 
 .sectionRow {
@@ -127,8 +127,8 @@
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(200, 210, 225, 0.12) 30%,
-    rgba(200, 210, 225, 0.12) 70%,
+    rgba(var(--ink-rgb), 0.12) 30%,
+    rgba(var(--ink-rgb), 0.12) 70%,
     transparent 100%
   );
   flex-shrink: 0;
@@ -197,7 +197,7 @@
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: rgba(200, 210, 225, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   cursor: pointer;
   transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
               background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -206,8 +206,8 @@
 }
 
 .btn:hover {
-  color: rgba(200, 210, 225, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(var(--ink-rgb), 0.85);
+  background: rgba(var(--gloss-rgb), 0.06);
   transform: translateY(-1px);
 }
 
@@ -217,12 +217,12 @@
 }
 
 .btn.active {
-  color: #a3e635;
-  background: rgba(163, 230, 53, 0.06);
+  color: var(--green);
+  background: rgba(var(--green-rgb), 0.06);
 }
 .btn.active:hover {
-  background: rgba(163, 230, 53, 0.12);
-  box-shadow: 0 0 16px rgba(163, 230, 53, 0.08);
+  background: rgba(var(--green-rgb), 0.12);
+  box-shadow: 0 0 16px rgba(var(--green-rgb), 0.08);
 }
 
 /* ── Expandable icon + label ─────────────────────────────────────────────── */
@@ -269,7 +269,7 @@
 }
 
 .expandable:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--gloss-rgb), 0.06);
   transform: translateY(-1px);
 }
 
@@ -284,16 +284,16 @@
   grid-template-columns: 1fr;
   opacity: 1;
   margin-left: 5px;
-  color: #a3e635;
+  color: var(--green);
 }
 
 .expandable.active {
-  background: rgba(163, 230, 53, 0.06);
+  background: rgba(var(--green-rgb), 0.06);
 }
 
 .expandable.active:hover {
-  background: rgba(163, 230, 53, 0.12);
-  box-shadow: 0 0 16px rgba(163, 230, 53, 0.08);
+  background: rgba(var(--green-rgb), 0.12);
+  box-shadow: 0 0 16px rgba(var(--green-rgb), 0.08);
 }
 
 /* ── First-visit intro: all labels visible briefly ───────────────────────── */
@@ -316,8 +316,8 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: #a3e635;
-  box-shadow: 0 0 8px rgba(163, 230, 53, 0.7);
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(var(--green-rgb), 0.7);
   animation: dotAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -351,7 +351,7 @@
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.65),
     0 4px 12px rgba(0, 0, 0, 0.3),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    0 1px 0 rgba(var(--gloss-rgb), 0.04) inset;
 
   animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 70;
@@ -371,8 +371,8 @@
   width: 10px;
   height: 10px;
   background: rgba(10, 14, 20, 0.96);
-  border-right: 1px solid rgba(200, 210, 225, 0.1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.1);
+  border-right: 1px solid rgba(var(--ink-rgb), 0.1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.1);
 }
 
 .popoverTitle {
@@ -380,7 +380,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(200, 210, 225, 0.3);
+  color: rgba(var(--ink-rgb), 0.3);
   padding: 3px 10px 6px;
   margin: 0;
 }
@@ -404,32 +404,32 @@
 }
 
 .popoverItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: rgba(var(--gloss-rgb), 0.06);
+  color: var(--text-strong);
   transform: translateX(2px);
 }
 
 .popoverItemActive:hover {
-  background: rgba(163, 230, 53, 0.08);
-  color: #a3e635;
+  background: rgba(var(--green-rgb), 0.08);
+  color: var(--green);
 }
 
 .popoverDot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(200, 210, 225, 0.2);
+  background: rgba(var(--ink-rgb), 0.2);
   flex-shrink: 0;
   transition: background 0.15s, box-shadow 0.15s;
 }
 
 .popoverItem:hover .popoverDot {
-  background: rgba(200, 210, 225, 0.6);
+  background: rgba(var(--ink-rgb), 0.6);
 }
 
 .popoverItemActive:hover .popoverDot {
-  background: #a3e635;
-  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(var(--green-rgb), 0.5);
 }
 
 /* ── Collapse button ─────────────────────────────────────────────────────── */
@@ -445,22 +445,22 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: rgba(200, 210, 225, 0.2);
+  color: rgba(var(--ink-rgb), 0.2);
   cursor: pointer;
   transition: color 0.2s, background 0.2s, transform 0.2s;
   flex-shrink: 0;
 }
 
 .collapseBtn:hover {
-  color: rgba(200, 210, 225, 0.6);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(var(--ink-rgb), 0.6);
+  background: rgba(var(--gloss-rgb), 0.05);
   transform: translateY(1px);
 }
 
 /* ── Audio toggle ────────────────────────────────────────────────────────── */
 
 .audioOn {
-  color: rgba(200, 210, 225, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
 }
 
 /* ── LIVE toggle ──────────────────────────────────────────────────────────── */
@@ -472,7 +472,7 @@
 }
 
 .liveBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--gloss-rgb), 0.06);
 }
 
 /* Sonar ping when LIVE is OFF */
@@ -485,7 +485,7 @@
   position: absolute;
   inset: 0;
   border-radius: 12px;
-  border: 1px solid rgba(163, 230, 53, 0.4);
+  border: 1px solid rgba(var(--green-rgb), 0.4);
   animation: sonarPingBar 2.4s ease-out infinite;
   pointer-events: none;
 }
@@ -500,7 +500,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(163, 230, 53, 0.2);
+  background: rgba(var(--green-rgb), 0.2);
   transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
 }
 
@@ -542,7 +542,7 @@
 }
 
 .liveLabelOff {
-  color: rgba(200, 210, 225, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .liveLabelOn {
@@ -589,9 +589,9 @@
   transform: translateX(-50%) rotate(45deg);
   width: 7px;
   height: 7px;
-  background: rgba(6, 10, 16, 0.96);
-  border-right: 1px solid rgba(200, 210, 225, 0.1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(var(--surface-deep-rgb), 0.96);
+  border-right: 1px solid rgba(var(--ink-rgb), 0.1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.1);
 }
 
 .btnWrap:hover .tooltip,

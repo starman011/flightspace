@@ -47,19 +47,19 @@
   letter-spacing: 0.04em;
   padding: 7px 13px;
   border-radius: 999px;
-  border: 1px solid rgba(200, 210, 225, 0.14);
-  background: rgba(140, 170, 210, 0.06);
-  color: rgba(208, 224, 244, 0.7);
+  border: 1px solid rgba(var(--ink-rgb), 0.14);
+  background: rgba(var(--ink-rgb), 0.06);
+  color: rgba(var(--ink-rgb), 0.7);
   cursor: pointer;
   transition: 0.18s;
 }
 
-.pick:hover { border-color: rgba(163, 230, 53, 0.4); color: #eaf2ff; }
+.pick:hover { border-color: rgba(var(--green-rgb), 0.4); color: var(--text-strong); }
 
 .pickOn {
-  border-color: rgba(163, 230, 53, 0.6);
-  background: rgba(163, 230, 53, 0.1);
-  color: #a3e635;
+  border-color: rgba(var(--green-rgb), 0.6);
+  background: rgba(var(--green-rgb), 0.1);
+  color: var(--green);
 }
 
 /* Flow header + transport controls */
@@ -75,7 +75,7 @@
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 15px;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .flowTag {
@@ -83,7 +83,7 @@
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  color: rgba(163, 230, 53, 0.65);
+  color: rgba(var(--green-rgb), 0.65);
   margin-top: 2px;
 }
 
@@ -96,14 +96,14 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid rgba(200, 210, 225, 0.16);
-  background: rgba(140, 170, 210, 0.07);
-  color: rgba(208, 224, 244, 0.75);
+  border: 1px solid rgba(var(--ink-rgb), 0.16);
+  background: rgba(var(--ink-rgb), 0.07);
+  color: rgba(var(--ink-rgb), 0.75);
   cursor: pointer;
   transition: 0.15s;
 }
 
-.ctl:hover { border-color: rgba(163, 230, 53, 0.5); color: #a3e635; }
+.ctl:hover { border-color: rgba(var(--green-rgb), 0.5); color: var(--green); }
 
 /* Step list */
 .steps {
@@ -153,13 +153,13 @@
   flex: 1;
   min-height: 18px;
   margin-top: 4px;
-  background: linear-gradient(180deg, var(--hue), rgba(200, 210, 225, 0.12));
+  background: linear-gradient(180deg, var(--hue), rgba(var(--ink-rgb), 0.12));
   opacity: 0.5;
 }
 
 /* Step card */
 .card {
-  border: 1px solid rgba(200, 210, 225, 0.1);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px;
   background: rgba(10, 15, 22, 0.72);
   padding: 12px 14px;
@@ -202,7 +202,7 @@
   font-family: var(--font-mono);
   font-size: 12.5px;
   font-weight: 600;
-  color: #eaf2ff;
+  color: var(--text-strong);
   margin: 8px 0 4px;
   overflow-wrap: anywhere;
 }
@@ -211,9 +211,9 @@
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.6;
-  color: rgba(163, 230, 53, 0.85);
+  color: rgba(var(--green-rgb), 0.85);
   background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: 10px;
   padding: 10px 12px;
   margin: 8px 0;

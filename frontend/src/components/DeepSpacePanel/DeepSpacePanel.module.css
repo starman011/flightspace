@@ -4,7 +4,7 @@
   position: fixed;
   inset: 0;   /* true full-screen — the old var(--sidebar-w) offset left a dead
                  strip after the sidebar component was removed */
-  background: rgba(13, 19, 28, 0.94);   /* reading surface — DESIGN §1.2 */
+  background: rgba(var(--surface-rgb), 0.94);   /* reading surface — DESIGN §1.2 */
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
   z-index: var(--z-panel);   /* was 60 — below nav pills; audit S5 */
@@ -18,7 +18,7 @@
     opacity var(--duration-panel) var(--ease-panel),
     transform var(--duration-panel) var(--ease-panel);
   scrollbar-width: thin;
-  scrollbar-color: rgba(200, 210, 225, 0.08) transparent;
+  scrollbar-color: rgba(var(--ink-rgb), 0.08) transparent;
 }
 
 .panel.open {
@@ -63,7 +63,7 @@
   font-size: clamp(2.5rem, 4vw, 4.5rem);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #F3F2EC;
+  color: var(--text-strong);
   line-height: 1;
   margin-bottom: var(--space-4);
 }
@@ -71,7 +71,7 @@
 .pageDesc {
   font-family: var(--font-body);
   font-size: var(--text-body-lg);
-  color: rgba(200, 210, 225, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
   max-width: 560px;
   line-height: 1.6;
   margin-bottom: var(--space-8);
@@ -96,46 +96,46 @@
   top: 50%;
   transform: translateY(-50%);
   font-size: 18px;
-  color: rgba(160, 170, 185, 0.4);
+  color: rgba(var(--ink-muted-rgb), 0.4);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  background: rgba(12, 18, 28, 0.8);
-  border: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(var(--surface-rgb), 0.8);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: var(--r-inset);
   padding: var(--space-4) var(--space-4) var(--space-4) 48px;
   font-family: var(--font-mono);
   font-size: var(--text-label-md);
-  color: #F3F2EC;
+  color: var(--text-strong);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   outline: none;
   transition: border-color var(--duration-fast);
 }
 
-.searchInput::placeholder { color: rgba(160, 170, 185, 0.35); }
-.searchInput:focus { border-color: rgba(163, 230, 53, 0.4); }
+.searchInput::placeholder { color: rgba(var(--ink-muted-rgb), 0.35); }
+.searchInput:focus { border-color: rgba(var(--green-rgb), 0.4); }
 
 .filterBtn {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background: rgba(44, 57, 71, 0.6);
-  border: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(var(--surface-raised-rgb), 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: var(--r-inset);
   padding: var(--space-3) var(--space-5);
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
-  color: rgba(200, 210, 225, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background var(--duration-fast);
 }
 
-.filterBtn:hover { background: rgba(44, 57, 71, 0.8); }
+.filterBtn:hover { background: rgba(var(--surface-raised-rgb), 0.8); }
 
 /* ── Risk Assessment ─────────────────────────────────────────────────────── */
 
@@ -150,14 +150,14 @@
   font-family: var(--font-mono);
   font-size: var(--text-headline);
   font-weight: 600;
-  color: #F3F2EC;
+  color: var(--text-strong);
   letter-spacing: -0.02em;
 }
 
 .sectionMeta {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -170,12 +170,12 @@
 }
 
 .riskCard {
-  background: rgba(44, 57, 71, 0.45);
+  background: rgba(var(--surface-raised-rgb), 0.45);
   border-radius: var(--r-inset);
   padding: var(--space-5);
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(200, 210, 225, 0.07);
+  border: 1px solid rgba(var(--ink-rgb), 0.07);
 }
 
 .riskIcon {
@@ -191,7 +191,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(160, 170, 185, 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.42);
   margin-bottom: 4px;
 }
 
@@ -199,14 +199,14 @@
   font-family: var(--font-mono);
   font-size: var(--text-display-md);
   font-weight: 700;
-  color: #F3F2EC;
+  color: var(--text-strong);
   margin-bottom: var(--space-4);
 }
 
 .riskBar {
   width: 100%;
   height: 4px;
-  background: rgba(200, 210, 225, 0.08);
+  background: rgba(var(--ink-rgb), 0.08);
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: var(--space-4);
@@ -244,15 +244,15 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(44, 57, 71, 0.7);
-  border: 2px solid rgba(8, 12, 20, 0.9);
+  background: rgba(var(--surface-raised-rgb), 0.7);
+  border: 2px solid rgba(var(--surface-deep-rgb), 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 8px;
   font-family: var(--font-mono);
   font-weight: 700;
-  color: rgba(220, 220, 220, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   margin-left: -8px;
 }
 
@@ -261,7 +261,7 @@
 .avatarLabel {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
   margin-left: var(--space-3);
 }
 
@@ -290,23 +290,23 @@
 
 .entityThumb {
   aspect-ratio: 16 / 10;
-  background: rgba(44, 57, 71, 0.5);
+  background: rgba(var(--surface-raised-rgb), 0.5);
   border-radius: var(--r-inset);
   overflow: hidden;
   margin-bottom: var(--space-4);
   position: relative;
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   transition: border-color var(--duration-fast);
 }
 
 .entityCard:hover .entityThumb {
-  border-color: rgba(163, 230, 53, 0.3);
+  border-color: rgba(var(--green-rgb), 0.3);
 }
 
 .entityGradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(8, 12, 20, 0.9), transparent);
+  background: linear-gradient(to top, rgba(var(--surface-deep-rgb), 0.9), transparent);
 }
 
 .entityBg {
@@ -319,7 +319,7 @@
 
 .entityBg.nebula   { background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(34,239,126,0.05)); }
 .entityBg.asteroid { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(120,0,8,0.05)); }
-.entityBg.galaxy   { background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(200,210,225,0.04)); }
+.entityBg.galaxy   { background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(var(--ink-rgb), 0.04)); }
 
 .entityTag {
   position: absolute;
@@ -336,7 +336,7 @@
 
 .tagNebula   { color: rgba(129,140,248,0.9); border-color: rgba(129,140,248,0.2); background: rgba(129,140,248,0.08); }
 .tagAsteroid { color: rgba(239,68,68,0.9);   border-color: rgba(239,68,68,0.2);   background: rgba(239,68,68,0.08); }
-.tagGalaxy   { color: rgba(200,210,225,0.7);  border-color: rgba(200,210,225,0.15); background: rgba(200,210,225,0.05); }
+.tagGalaxy   { color: rgba(var(--ink-rgb), 0.7);  border-color: rgba(var(--ink-rgb), 0.15); background: rgba(var(--ink-rgb), 0.05); }
 
 .entityMeta {
   display: flex;
@@ -348,17 +348,17 @@
   font-family: var(--font-mono);
   font-size: var(--text-title);
   font-weight: 700;
-  color: #F3F2EC;
+  color: var(--text-strong);
   margin-bottom: 4px;
   transition: color var(--duration-fast);
 }
 
-.entityCard:hover .entityName { color: #a3e635; }
+.entityCard:hover .entityName { color: var(--green); }
 
 .entityCoord {
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
 }
 
 .entityStat {
@@ -368,7 +368,7 @@
 .entityStatLabel {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.42);
   text-transform: uppercase;
   margin-bottom: 2px;
 }
@@ -377,7 +377,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-label-md);
   font-weight: 700;
-  color: rgba(220, 220, 220, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 /* ── PHA warning in page description ─────────────────────────────────────── */
@@ -390,7 +390,7 @@
 .riskUnit {
   font-size: 0.5em;
   font-weight: 400;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
 }
 
 /* ── Empty / loading state ───────────────────────────────────────────────── */
@@ -402,7 +402,7 @@
   justify-content: center;
   gap: var(--space-3);
   padding: var(--space-10) 0;
-  color: rgba(160, 170, 185, 0.3);
+  color: rgba(var(--ink-muted-rgb), 0.3);
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
   text-transform: uppercase;
@@ -414,7 +414,7 @@
 .neoTable {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: var(--r-inset);
   overflow: hidden;
   margin-bottom: var(--space-10);
@@ -424,13 +424,13 @@
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1.4fr 1.4fr 0.7fr;
   padding: var(--space-3) var(--space-5);
-  background: rgba(44, 57, 71, 0.6);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.08);
+  background: rgba(var(--surface-raised-rgb), 0.6);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.08);
   font-family: var(--font-mono);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
 }
 
 .neoRow {
@@ -438,12 +438,12 @@
   grid-template-columns: 2fr 1.2fr 1fr 1.4fr 1.4fr 0.7fr;
   align-items: center;
   padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.05);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.05);
   transition: background var(--duration-fast);
 }
 
 .neoRow:last-child { border-bottom: none; }
-.neoRow:hover { background: rgba(163, 230, 53, 0.04); }
+.neoRow:hover { background: rgba(var(--green-rgb), 0.04); }
 
 .neoRowPha {
   border-left: 2px solid rgba(239, 68, 68, 0.5);
@@ -453,7 +453,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-label-md);
   font-weight: 600;
-  color: #F3F2EC;
+  color: var(--text-strong);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -475,14 +475,14 @@
 .neoVal {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(200, 210, 225, 0.75);
+  color: rgba(var(--ink-rgb), 0.75);
   letter-spacing: 0.02em;
 }
 
 .neoMeta {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
 }
 
 /* Risk badge */
@@ -527,28 +527,28 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background: rgba(12, 18, 28, 0.6);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  background: rgba(var(--surface-rgb), 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: var(--r-tight);
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(160, 170, 185, 0.35);
+  color: rgba(var(--ink-muted-rgb), 0.35);
   cursor: pointer;
   transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 
 .viewTab:hover {
-  color: #a3e635;
-  border-color: rgba(163, 230, 53, 0.2);
+  color: var(--green);
+  border-color: rgba(var(--green-rgb), 0.2);
 }
 
 .viewTabActive {
-  color: #a3e635;
-  border-color: rgba(163, 230, 53, 0.28);
-  background: rgba(163, 230, 53, 0.08);
+  color: var(--green);
+  border-color: rgba(var(--green-rgb), 0.28);
+  background: rgba(var(--green-rgb), 0.08);
 }
 
 /* ── Solar Map Layout ────────────────────────────────────────────────────── */
@@ -567,8 +567,8 @@
 /* ── Asteroid Detail Card ────────────────────────────────────────────────── */
 
 .asteroidDetail {
-  background: rgba(44, 57, 71, 0.5);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: var(--r-inset);
   padding: var(--space-5);
   overflow-y: auto;
@@ -581,7 +581,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-title);
   font-weight: 700;
-  color: #F3F2EC;
+  color: var(--text-strong);
   line-height: 1.2;
 }
 
@@ -608,7 +608,7 @@
 }
 
 .detailCell {
-  background: rgba(12, 18, 28, 0.6);
+  background: rgba(var(--surface-rgb), 0.6);
   border-radius: var(--r-tight);
   padding: var(--space-3);
 }
@@ -618,7 +618,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
   margin-bottom: 4px;
 }
 
@@ -626,7 +626,7 @@
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
-  color: rgba(200, 210, 225, 0.88);
+  color: rgba(var(--ink-rgb), 0.88);
 }
 
 .detailSection {
@@ -634,7 +634,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(163, 230, 53, 0.45);
+  color: rgba(var(--green-rgb), 0.45);
   margin-top: var(--space-2);
 }
 
@@ -649,19 +649,19 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: rgba(163, 230, 53, 0.04);
-  border: 1px solid rgba(163, 230, 53, 0.1);
+  background: rgba(var(--green-rgb), 0.04);
+  border: 1px solid rgba(var(--green-rgb), 0.1);
   border-radius: var(--r-tight);
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #a3e635;
+  color: var(--green);
   text-decoration: none;
   transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 
 .refLink:hover {
-  background: rgba(163, 230, 53, 0.1);
-  border-color: rgba(163, 230, 53, 0.22);
+  background: rgba(var(--green-rgb), 0.1);
+  border-color: rgba(var(--green-rgb), 0.22);
 }
 
 .noSelect {
@@ -671,13 +671,13 @@
   justify-content: center;
   gap: var(--space-3);
   height: 100%;
-  color: rgba(160, 170, 185, 0.2);
+  color: rgba(var(--ink-muted-rgb), 0.2);
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: center;
-  border: 1px solid rgba(200, 210, 225, 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.06);
   border-radius: var(--r-inset);
 }
 

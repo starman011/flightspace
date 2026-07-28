@@ -3,9 +3,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.55);
+  background: rgba(var(--gloss-rgb), 0.05);
+  border: 1px solid rgba(var(--gloss-rgb), 0.1);
+  color: rgba(var(--gloss-rgb), 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,20 +14,20 @@
   flex-shrink: 0;
 }
 .btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: rgba(var(--gloss-rgb), 0.09);
+  border-color: rgba(var(--gloss-rgb), 0.18);
+  color: var(--text-strong);
 }
 
 .btnAuth {
   background: rgba(0, 180, 255, 0.1);
-  border-color: rgba(163, 230, 53, 0.25);
-  color: rgba(163, 230, 53, 0.85);
+  border-color: rgba(var(--green-rgb), 0.25);
+  color: rgba(var(--green-rgb), 0.85);
 }
 .btnAuth:hover {
   background: rgba(0, 180, 255, 0.16);
-  border-color: rgba(163, 230, 53, 0.4);
-  color: #a3e635;
+  border-color: rgba(var(--green-rgb), 0.4);
+  color: var(--green);
 }
 
 .icon {
@@ -64,7 +64,7 @@
   min-width: 14px;
   height: 14px;
   border-radius: 7px;
-  background: #a3e635;
+  background: var(--green);
   color: #050a0f;
   font-size: 9px;
   font-weight: 700;

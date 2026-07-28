@@ -13,9 +13,9 @@
   background: rgba(8, 14, 22, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(163, 230, 53, 0.15);
+  border: 1px solid rgba(var(--green-rgb), 0.15);
   border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(163, 230, 53, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--green-rgb), 0.04);
 
   font-family: var(--font-mono);
   animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -33,14 +33,14 @@
 }
 
 .icon {
-  color: rgba(163, 230, 53, 0.6);
+  color: rgba(var(--green-rgb), 0.6);
   flex-shrink: 0;
   display: flex;
 }
 
 .text {
   font-size: 12px;
-  color: rgba(200, 220, 240, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   white-space: nowrap;
 }
 
@@ -57,15 +57,15 @@
   letter-spacing: 0.08em;
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(163, 230, 53, 0.3);
-  background: rgba(163, 230, 53, 0.08);
-  color: #a3e635;
+  border: 1px solid rgba(var(--green-rgb), 0.3);
+  background: rgba(var(--green-rgb), 0.08);
+  color: var(--green);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .installBtn:hover {
-  background: rgba(163, 230, 53, 0.15);
-  border-color: rgba(163, 230, 53, 0.5);
+  background: rgba(var(--green-rgb), 0.15);
+  border-color: rgba(var(--green-rgb), 0.5);
 }
 
 .dismissBtn {
@@ -80,7 +80,7 @@
   transition: color 0.15s;
 }
 .dismissBtn:hover {
-  color: rgba(200, 220, 240, 0.7);
+  color: rgba(var(--ink-rgb), 0.7);
 }
 
 @media (max-width: 640px) {

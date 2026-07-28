@@ -17,7 +17,7 @@
   display: flex;
   gap: 3px;
   background: rgba(0, 0, 20, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(var(--gloss-rgb), 0.10);
   border-radius: 4px;
   padding: 3px;
   z-index: 55;
@@ -35,7 +35,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.mapToggle button:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255,255,255,0.85); }
+.mapToggle button:hover { background: rgba(var(--gloss-rgb), 0.07); color: rgba(var(--gloss-rgb), 0.85); }
 .mapToggle button.active { background: rgba(80, 160, 255, 0.20); color: #50b4ff; }
 
 /* Camera HUD — altitude + scale bar, portalled to body */
@@ -136,9 +136,9 @@
 
 /* The object currently centred under the reticle — highlighted. */
 .skyLabelActive {
-  color: #a3e635 !important;
+  color: var(--green) !important;
   opacity: 1 !important;
   font-size: 13px;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(163, 230, 53, 0.65), 0 0 3px rgba(0, 0, 0, 0.95);
+  text-shadow: 0 0 12px rgba(var(--green-rgb), 0.65), 0 0 3px rgba(0, 0, 0, 0.95);
 }

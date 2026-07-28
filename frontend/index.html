@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
+    <!-- Apply saved theme before first paint (no flash). Dark is the default. -->
+    <script>
+      try { if (localStorage.getItem('ot-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
+    </script>
+
     <!-- ── Primary SEO ──────────────────────────────────────────────── -->
     <title>ObjectTracer — Live Flight &amp; Space Tracker</title>
     <meta name="description"

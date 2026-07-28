@@ -10,7 +10,7 @@
   right: 0;
   height: 100dvh;
   width: 360px;
-  background: rgba(13, 19, 28, 0.93);   /* reading surface — higher opacity than control glass (DESIGN §1.2) */
+  background: rgba(var(--surface-rgb), 0.93);   /* reading surface — higher opacity than control glass (DESIGN §1.2) */
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
   border-left: 1px solid var(--glass-line);
@@ -33,15 +33,15 @@
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(200, 210, 225, 0.2);
+  background: rgba(var(--ink-rgb), 0.2);
   margin: 10px auto 6px;
   flex-shrink: 0;
   animation: handlePulse 1.8s 1.4s ease-in-out 2;
 }
 
 @keyframes handlePulse {
-  0%, 100% { background: rgba(200, 210, 225, 0.2); transform: scaleX(1); }
-  40%      { background: rgba(200, 210, 225, 0.55); transform: scaleX(1.15); }
+  0%, 100% { background: rgba(var(--ink-rgb), 0.2); transform: scaleX(1); }
+  40%      { background: rgba(var(--ink-rgb), 0.55); transform: scaleX(1.15); }
 }
 
 /* ── Close ───────────────────────────────────────────────────────────────── */
@@ -51,10 +51,10 @@
   top: 12px;
   right: 12px;
   z-index: 10;
-  background: rgba(8, 12, 20, 0.7);
+  background: rgba(var(--surface-deep-rgb), 0.7);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(200, 210, 225, 0.1);
-  color: rgba(200, 210, 225, 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: rgba(var(--ink-rgb), 0.6);
   font-size: 18px;
   width: 32px;
   height: 32px;
@@ -66,9 +66,9 @@
   transition: all 0.15s;
 }
 .closeBtn:hover {
-  background: rgba(200, 210, 225, 0.08);
-  border-color: rgba(200, 210, 225, 0.22);
-  color: #F3F2EC;
+  background: rgba(var(--ink-rgb), 0.08);
+  border-color: rgba(var(--ink-rgb), 0.22);
+  color: var(--text-strong);
 }
 
 /* ── Mini collapsed strip (mobile only, hidden on desktop) ───────────── */
@@ -82,7 +82,7 @@
 .hero {
   position: relative;
   flex-shrink: 0;
-  background: rgba(8, 12, 20, 1);
+  background: rgba(var(--surface-deep-rgb), 1);
 }
 
 .heroImg { opacity: 0; transition: opacity 0.3s ease; }
@@ -97,7 +97,7 @@
 .heroPlaceholder {
   width: 100%;
   height: 170px;
-  background: linear-gradient(145deg, rgba(8,12,20,1) 0%, rgba(12,18,30,1) 50%, rgba(8,12,20,1) 100%);
+  background: linear-gradient(145deg, rgba(var(--surface-deep-rgb), 1) 0%, rgba(12,18,30,1) 50%, rgba(var(--surface-deep-rgb), 1) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,7 +106,7 @@
 .heroIcon {
   font-size: 52px;
   opacity: 0.12;
-  color: rgba(200, 210, 225, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
 }
 
 .photoCredit {
@@ -114,8 +114,8 @@
   bottom: 8px;
   left: 10px;
   font-size: 9px;
-  color: rgba(200, 210, 225, 0.4);
-  background: rgba(8, 12, 20, 0.55);
+  color: rgba(var(--ink-rgb), 0.4);
+  background: rgba(var(--surface-deep-rgb), 0.55);
   backdrop-filter: blur(6px);
   padding: 2px 7px;
   border-radius: 6px;
@@ -126,8 +126,8 @@
 
 .identity {
   padding: 16px 20px 12px;
-  background: rgba(8, 12, 20, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.07);
+  background: rgba(var(--surface-deep-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.07);
   flex-shrink: 0;
 }
 
@@ -149,14 +149,14 @@
   font-family: var(--font-mono);
   font-size: 24px;
   font-weight: 700;
-  color: #F3F2EC;
+  color: var(--text-strong);
   letter-spacing: 0.02em;
 }
 
 .typeCode {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(160, 170, 185, 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.45);
   letter-spacing: 0.06em;
 }
 
@@ -166,7 +166,7 @@
   gap: 6px 12px;
   margin-top: 4px;
   font-size: 11px;
-  color: rgba(160, 170, 185, 0.38);
+  color: rgba(var(--ink-muted-rgb), 0.38);
   letter-spacing: 0.02em;
 }
 
@@ -178,15 +178,15 @@
   gap: 6px;
   margin-top: 8px;
   font-size: 11px;
-  color: rgba(200, 210, 225, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
   letter-spacing: 0.03em;
 }
 .viewerDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #a3e635;
-  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(var(--green-rgb), 0.5);
   animation: viewerPulse 2s ease-in-out infinite;
 }
 @keyframes viewerPulse {
@@ -198,7 +198,7 @@
 
 .state {
   padding: 10px 20px;
-  color: rgba(160, 170, 185, 0.4);
+  color: rgba(var(--ink-muted-rgb), 0.4);
   font-size: 11px;
 }
 
@@ -206,8 +206,8 @@
 
 .routeCard {
   padding: 18px 20px;
-  background: rgba(12, 18, 28, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.07);
+  background: rgba(var(--surface-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.07);
   flex-shrink: 0;
 }
 
@@ -237,7 +237,7 @@
 
 .airportName {
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.38);
+  color: rgba(var(--ink-muted-rgb), 0.38);
   letter-spacing: 0.02em;
   line-height: 1.3;
   overflow: hidden;
@@ -287,7 +287,7 @@
 
 .routeDist {
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.35);
+  color: rgba(var(--ink-muted-rgb), 0.35);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -298,8 +298,8 @@
   gap: 8px;
   margin-top: 14px;
   padding: 8px 14px;
-  background: rgba(44, 57, 71, 0.5);
-  border: 1px solid rgba(200, 210, 225, 0.08);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: 10px;
 }
 
@@ -307,7 +307,7 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: rgba(160, 170, 185, 0.4);
+  color: rgba(var(--ink-muted-rgb), 0.4);
   text-transform: uppercase;
 }
 
@@ -324,8 +324,8 @@
 
 .posCard {
   padding: 14px 20px;
-  background: rgba(12, 18, 28, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.07);
+  background: rgba(var(--surface-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.07);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -342,12 +342,12 @@
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(160, 170, 185, 0.38);
+  color: rgba(var(--ink-muted-rgb), 0.38);
 }
 
 .posValue {
   font-size: 13px;
-  color: rgba(220, 220, 220, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   font-variant-numeric: tabular-nums;
 }
 
@@ -355,8 +355,8 @@
 
 .telemetry {
   padding: 14px 20px;
-  background: rgba(8, 12, 20, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.07);
+  background: rgba(var(--surface-deep-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.07);
   flex-shrink: 0;
 }
 
@@ -368,8 +368,8 @@
 }
 
 .telemCell {
-  background: rgba(44, 57, 71, 0.5);
-  border: 1px solid rgba(200, 210, 225, 0.06);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.06);
   border-radius: 10px;
   padding: 10px 14px;
   display: flex;
@@ -381,14 +381,14 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: rgba(160, 170, 185, 0.4);
+  color: rgba(var(--ink-muted-rgb), 0.4);
   text-transform: uppercase;
 }
 
 .telemVal {
   font-size: 17px;
   font-weight: 600;
-  color: #F3F2EC;
+  color: var(--text-strong);
   font-variant-numeric: tabular-nums;
 }
 
@@ -402,7 +402,7 @@
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.38);
+  color: rgba(var(--ink-muted-rgb), 0.38);
   letter-spacing: 0.04em;
 }
 
@@ -410,8 +410,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #a3e635;
-  box-shadow: 0 0 8px rgba(163, 230, 53, 0.4);
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(var(--green-rgb), 0.4);
   animation: pulse 2s ease-in-out infinite;
   flex-shrink: 0;
 }
@@ -426,18 +426,18 @@
 
 .statusText {
   font-weight: 600;
-  color: rgba(220, 220, 220, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
   text-transform: uppercase;
 }
 
 .statusMeta {
-  color: rgba(160, 170, 185, 0.28);
+  color: rgba(var(--ink-muted-rgb), 0.28);
 }
 
 .statusEta {
   margin-left: auto;
   font-weight: 600;
-  color: rgba(220, 220, 220, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
 }
 
 /* ── Flight History / Playback ────────────────────────────────────────── */
@@ -445,7 +445,7 @@
 .historySection {
   padding: 12px 20px;
   background: rgba(10, 15, 22, 1);
-  border-top: 1px solid rgba(200, 210, 225, 0.04);
+  border-top: 1px solid rgba(var(--ink-rgb), 0.04);
 }
 
 .historyTitle {
@@ -458,7 +458,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(160, 170, 185, 0.35);
+  color: rgba(var(--ink-muted-rgb), 0.35);
 }
 
 .historyItem {
@@ -467,7 +467,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(200, 210, 225, 0.04);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.04);
 }
 
 .historyItem:last-child {
@@ -480,12 +480,12 @@
   gap: 2px;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(200, 210, 225, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .historyMeta span:first-child {
   font-weight: 600;
-  color: rgba(200, 210, 225, 0.62);
+  color: rgba(var(--ink-rgb), 0.62);
   font-size: 11px;
 }
 
@@ -560,19 +560,19 @@
   display: flex;
   gap: 8px;
   padding: 14px 20px;
-  background: rgba(12, 18, 28, 1);
+  background: rgba(var(--surface-rgb), 1);
   flex-shrink: 0;
 }
 
 .trackBtn {
   flex: 1;
-  background: rgba(44, 57, 71, 0.5);
-  border: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: rgba(200, 210, 225, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
   padding: 11px 0;
   letter-spacing: 0.06em;
   border-radius: 10px;
@@ -580,32 +580,32 @@
   text-align: center;
 }
 .trackBtn:hover {
-  background: rgba(44, 57, 71, 0.7);
-  border-color: rgba(200, 210, 225, 0.2);
-  color: #F3F2EC;
+  background: rgba(var(--surface-raised-rgb), 0.7);
+  border-color: rgba(var(--ink-rgb), 0.2);
+  color: var(--text-strong);
 }
 .trackBtnActive {
-  background: rgba(163, 230, 53, 0.08);
-  border-color: rgba(163, 230, 53, 0.28);
-  color: #a3e635;
+  background: rgba(var(--green-rgb), 0.08);
+  border-color: rgba(var(--green-rgb), 0.28);
+  color: var(--green);
 }
 .trackBtnActive:hover {
-  background: rgba(163, 230, 53, 0.14);
+  background: rgba(var(--green-rgb), 0.14);
 }
 
 .fitBtn {
-  background: rgba(44, 57, 71, 0.5);
-  border: 1px solid rgba(200, 210, 225, 0.1);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  color: rgba(200, 210, 225, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   padding: 11px 18px;
   border-radius: 10px;
   transition: all 0.15s;
 }
-.fitBtn:hover { border-color: rgba(200, 210, 225, 0.22); color: #F3F2EC; }
+.fitBtn:hover { border-color: rgba(var(--ink-rgb), 0.22); color: var(--text-strong); }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* ── Mobile: bottom sheet with peek / mini states                     ─ */
@@ -626,7 +626,7 @@
     height: 88dvh;
     max-height: none;
     border-left: none;
-    border-top: 1px solid rgba(200, 210, 225, 0.1);
+    border-top: 1px solid rgba(var(--ink-rgb), 0.1);
     border-radius: var(--r-card) var(--r-card) 0 0;
     border-top-color: var(--glass-gloss);   /* signature gloss rim */
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.7);
@@ -693,7 +693,7 @@
     font-family: var(--font-mono);
     font-size: 16px;
     font-weight: 700;
-    color: #F3F2EC;
+    color: var(--text-strong);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -701,7 +701,7 @@
 
   .miniType {
     font-size: 10px;
-    color: rgba(160, 170, 185, 0.35);
+    color: rgba(var(--ink-muted-rgb), 0.35);
     letter-spacing: 0.06em;
     flex-shrink: 0;
   }
@@ -722,7 +722,7 @@
   }
 
   .miniPlane {
-    color: rgba(160, 170, 185, 0.35);
+    color: rgba(var(--ink-muted-rgb), 0.35);
     transform: rotate(90deg);
     flex-shrink: 0;
   }
@@ -730,11 +730,11 @@
   .miniEta {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(220, 220, 220, 0.5);
+    color: rgba(var(--ink-rgb), 0.5);
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
     padding-left: 6px;
-    border-left: 1px solid rgba(200, 210, 225, 0.08);
+    border-left: 1px solid rgba(var(--ink-rgb), 0.08);
   }
 
   /* ── Close button repositioned ── */
@@ -824,7 +824,7 @@
 /* ── ISS Live Stream ── */
 .issStream {
   position: relative;
-  background: rgba(8, 12, 20, 1);
+  background: rgba(var(--surface-deep-rgb), 1);
   border-bottom: 1px solid rgba(58,154,255,0.12);
 }
 
@@ -846,7 +846,7 @@
   font-size: 8px;
   letter-spacing: 0.1em;
   color: rgba(58,154,255,0.9);
-  background: rgba(8,12,20,0.8);
+  background: rgba(var(--surface-deep-rgb), 0.8);
   backdrop-filter: blur(8px);
   padding: 3px 8px;
   border-radius: 4px;
@@ -856,7 +856,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #a3e635;
+  background: var(--green);
   animation: livePulse 1.5s ease-in-out infinite;
 }
 
@@ -887,9 +887,9 @@
 }
 .streamControls button, .streamControls a {
   width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-  background: rgba(8,12,20,0.82); backdrop-filter: blur(8px);
+  background: rgba(var(--surface-deep-rgb), 0.82); backdrop-filter: blur(8px);
   border: 1px solid rgba(58,154,255,0.25); border-radius: 6px;
-  color: rgba(195,245,255,0.85); font-size: 12px; cursor: pointer; text-decoration: none;
+  color: rgba(var(--ink-cool-rgb), 0.85); font-size: 12px; cursor: pointer; text-decoration: none;
   transition: background .15s, border-color .15s;
 }
 .streamControls button:hover, .streamControls a:hover {
@@ -910,12 +910,12 @@
 .theaterPanel .issIframe { height: min(56vh, 620px); }
 .theaterBar {
   display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-  background: rgba(8,12,20,0.9); border-top: 1px solid rgba(58,154,255,0.12);
+  background: rgba(var(--surface-deep-rgb), 0.9); border-top: 1px solid rgba(58,154,255,0.12);
 }
 .theaterBar button, .theaterBar a {
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
   background: rgba(58,154,255,0.08); border: 1px solid rgba(58,154,255,0.25);
-  border-radius: 7px; color: rgba(195,245,255,0.9); font-size: 14px; cursor: pointer; text-decoration: none;
+  border-radius: 7px; color: rgba(var(--ink-cool-rgb), 0.9); font-size: 14px; cursor: pointer; text-decoration: none;
 }
 .theaterBar button:hover, .theaterBar a:hover { background: rgba(58,154,255,0.2); }
 
@@ -942,8 +942,8 @@
 /* ── ISS Crew ── */
 .issCrew {
   padding: 10px 16px;
-  background: rgba(12, 18, 28, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.06);
+  background: rgba(var(--surface-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .issLabel {
@@ -969,22 +969,22 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: rgba(44, 57, 71, 0.5);
+  background: rgba(var(--surface-raised-rgb), 0.5);
   border-radius: 6px;
-  border: 1px solid rgba(200, 210, 225, 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .crewName {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(220, 220, 220, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 /* ── ISS Specs ── */
 .issSpecs {
   padding: 10px 16px;
-  background: rgba(8, 12, 20, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.08);
+  background: rgba(var(--surface-deep-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 .specsGrid {
@@ -997,29 +997,29 @@
   display: flex;
   justify-content: space-between;
   padding: 3px 8px;
-  background: rgba(44, 57, 71, 0.4);
+  background: rgba(var(--surface-raised-rgb), 0.4);
   border-radius: 4px;
 }
 
 .specLabel {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(160, 170, 185, 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.42);
   letter-spacing: 0.05em;
 }
 
 .specValue {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(220, 220, 220, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   font-weight: 500;
 }
 
 /* ── ISS Missions ── */
 .issMissions {
   padding: 10px 16px;
-  background: rgba(12, 18, 28, 1);
-  border-bottom: 1px solid rgba(200, 210, 225, 0.06);
+  background: rgba(var(--surface-rgb), 1);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .missionRow {
@@ -1027,7 +1027,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 8px;
-  border-bottom: 1px solid rgba(200, 210, 225, 0.05);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.05);
 }
 
 .missionRow:last-child { border-bottom: none; }
@@ -1035,13 +1035,13 @@
 .missionName {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(220, 220, 220, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .missionDate {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(160, 170, 185, 0.5);
+  color: rgba(var(--ink-muted-rgb), 0.5);
   white-space: nowrap;
 }
 
@@ -1057,7 +1057,7 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(200,210,225,0.1) transparent;
+  scrollbar-color: rgba(var(--ink-rgb), 0.1) transparent;
   -webkit-overflow-scrolling: touch;
 }
 

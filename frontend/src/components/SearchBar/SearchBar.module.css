@@ -35,7 +35,7 @@
   align-items: center;
   padding: var(--space-3) var(--space-4);
   gap: var(--space-2);
-  border-bottom: 1px solid rgba(163, 230, 53, 0.08);
+  border-bottom: 1px solid rgba(var(--green-rgb), 0.08);
 }
 
 .prefix {
@@ -71,7 +71,7 @@
   max-height: 260px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(163, 230, 53, 0.1) transparent;
+  scrollbar-color: rgba(var(--green-rgb), 0.1) transparent;
 }
 
 .result {
@@ -95,8 +95,8 @@
 
 .result:hover,
 .resultActive {
-  background: rgba(163, 230, 53, 0.07);
-  border-left-color: rgba(163, 230, 53, 0.45);
+  background: rgba(var(--green-rgb), 0.07);
+  border-left-color: rgba(var(--green-rgb), 0.45);
 }
 .result:focus-visible { outline: none; }   /* the active-row highlight is the focus signal */
 
@@ -114,7 +114,7 @@
   height: 16px;
   border-radius: 3px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(var(--gloss-rgb), 0.9);
   flex-shrink: 0;
 }
 

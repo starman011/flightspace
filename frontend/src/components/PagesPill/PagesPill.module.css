@@ -78,7 +78,7 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: rgba(200, 210, 225, 0.5);   /* legible icon bar, not ghost-faint */
+  color: rgba(var(--ink-rgb), 0.5);   /* legible icon bar, not ghost-faint */
   cursor: pointer;
   transition: color 0.2s, background 0.2s, transform 0.2s;
 }
@@ -105,14 +105,14 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: rgba(163, 230, 53, 0.75);
+  color: rgba(var(--green-rgb), 0.75);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .btn:hover {
-  color: rgba(200, 210, 225, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(var(--ink-rgb), 0.85);
+  background: rgba(var(--gloss-rgb), 0.06);
   transform: translateY(-1px);
 }
 
@@ -122,15 +122,15 @@
 }
 
 .btn.active {
-  color: #a3e635;
-  background: rgba(163, 230, 53, 0.08);
+  color: var(--green);
+  background: rgba(var(--green-rgb), 0.08);
   width: auto;
   padding: 0 10px;
   gap: 5px;
 }
 
 .btn.active:hover {
-  background: rgba(163, 230, 53, 0.14);
+  background: rgba(var(--green-rgb), 0.14);
 }
 
 .label {
@@ -143,7 +143,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #a3e635;
+  color: var(--green);
   white-space: nowrap;
   transition: grid-template-columns 0.28s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.2s ease, margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -188,7 +188,7 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    color: #a3e635;
+    color: var(--green);
     opacity: 1;
     transition: opacity 0.2s ease;
   }
@@ -225,7 +225,7 @@
     gap: 11px;
     padding: 10px 12px;
     border-radius: 12px;
-    color: rgba(208, 224, 244, 0.7);
+    color: rgba(var(--ink-rgb), 0.7);
     opacity: 0;
     transform: translateY(-6px);
     transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s;
@@ -253,9 +253,9 @@
     animation: none;
   }
   .btn.active {
-    background: rgba(163, 230, 53, 0.1);
-    border: 1px solid rgba(163, 230, 53, 0.35);
-    color: #a3e635;
+    background: rgba(var(--green-rgb), 0.1);
+    border: 1px solid rgba(var(--green-rgb), 0.35);
+    color: var(--green);
     width: 100%;
     padding: 10px 12px;
     gap: 11px;

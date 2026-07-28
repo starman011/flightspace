@@ -10,6 +10,19 @@ export default function TopRightPill({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
+  // Light / dark theme — persisted, applied to <html data-theme>. Dark is default.
+  const [light, setLight] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light'
+  )
+  const toggleTheme = () => {
+    const el = document.documentElement
+    const next = el.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+    if (next === 'light') el.setAttribute('data-theme', 'light')
+    else el.removeAttribute('data-theme')
+    try { localStorage.setItem('ot-theme', next) } catch { /* private mode */ }
+    setLight(next === 'light')
+  }
+
   // Close menu on outside click
   useEffect(() => {
     if (!menuOpen) return
@@ -89,6 +102,15 @@ export default function TopRightPill({
       {/* Dropdown */}
       {menuOpen && (
         <div className={styles.dropdown}>
+          <button className={styles.menuItem} onClick={toggleTheme}>
+            {light ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            )}
+            {light ? 'Dark mode' : 'Light mode'}
+          </button>
+          <span className={styles.menuDivider} />
           <button className={styles.menuItem} onClick={() => { setMenuOpen(false); onPageOpen?.('waitlist') }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>

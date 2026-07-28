@@ -3,6 +3,31 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* ═══ THEME LAYER ════════════════════════════════════════════════════════
+     Two themes, one dark (default) + one light. The 3D globe stays dark in
+     both; only the UI chrome (panels, pages, pills, feed, modals) responds.
+     Neutrals are stored as bare "r, g, b" tuples so components keep their own
+     alpha:  color: rgba(var(--ink-rgb), 0.6).  Flipping a tuple reskins every
+     surface that uses it. Brand = GREEN primary + BLUE accent (desertcart). */
+
+  /* Brand */
+  --green:      #bce419;              /* primary — deals/active/LIVE-adjacent */
+  --green-rgb:  188, 228, 25;
+  --blue:       #4d7bff;              /* accent — links/secondary (lightened for dark bg) */
+  --blue-rgb:   77, 123, 255;
+
+  /* Themeable neutrals (dark theme defaults — values match the literals they
+     replaced, so the DARK theme looks identical to before) */
+  --ink-rgb:            200, 210, 225;  /* primary text */
+  --ink-muted-rgb:      160, 170, 185;  /* muted captions */
+  --ink-cool-rgb:       195, 245, 255;  /* cool/cyan text (deep-space panels) */
+  --surface-rgb:        13, 19, 28;     /* glass fills */
+  --surface-deep-rgb:   8, 12, 20;      /* deeper fills, identity strips */
+  --surface-raised-rgb: 44, 57, 71;     /* raised chips, badges */
+  --gloss-rgb:          255, 255, 255;  /* top-rim gloss + white highlights */
+  --text-strong:        #f3f2ec;        /* headings */
+  --page-bg:            #0f1419;        /* full-screen reading pages */
+
   /* ── Surfaces — Stitch exact values ────────────────────────────────────── */
   --surface-dim:               #0f1419;
   --surface:                   #0f1419;
@@ -132,4 +157,42 @@
   --z-banner:  600;    /* context banners over panels */
   --z-page:    4000;   /* full-screen page overlays */
   --z-toast:   9000;   /* transient toasts, top of everything */
+}
+
+/* ═══ LIGHT THEME ══════════════════════════════════════════════════════════
+   White UI over the (still-dark) globe. Neutrals invert: light ink -> dark
+   ink, dark glass -> white glass, white gloss -> a faint dark hairline.
+   Brand green deepens for contrast on white; blue is the vivid desertcart blue. */
+[data-theme='light'] {
+  --green:      #5f9e00;              /* deeper on white so text/borders read */
+  --green-rgb:  95, 158, 0;
+  --blue:       #0043f0;              /* the desertcart blue — sings on white */
+  --blue-rgb:   0, 67, 240;
+
+  --ink-rgb:            28, 34, 46;     /* dark slate ink */
+  --ink-muted-rgb:      90, 100, 118;   /* muted captions */
+  --ink-cool-rgb:       40, 70, 110;    /* cool text */
+  --surface-rgb:        255, 255, 255;  /* white glass */
+  --surface-deep-rgb:   244, 246, 250;  /* faint grey */
+  --surface-raised-rgb: 232, 236, 243;  /* raised chips */
+  --gloss-rgb:          18, 28, 48;     /* "gloss"/hairline becomes a subtle dark line */
+  --text-strong:        #0d1220;
+  --page-bg:            #f7f8fb;
+
+  /* Legacy semantic tokens some components still use directly */
+  --on-surface:         #1c222e;
+  --on-surface-variant: #4a5568;
+  --surface:            #f7f8fb;
+  --surface-dim:        #eef1f6;
+  --surface-container-low:     #f0f2f7;
+  --surface-container:         #e9edf3;
+  --surface-container-high:    #e1e6ee;
+  --primary-container:  #5f9e00;
+  --glass-fill:   rgba(255, 255, 255, 0.82);
+  --glass-fill-2: rgba(255, 255, 255, 0.62);
+  --glass-line:   rgba(18, 28, 48, 0.12);
+  --glass-gloss:  rgba(255, 255, 255, 0.9);
+  --glass-shadow-nav:   0 6px 20px rgba(20, 30, 55, 0.10), 0 1px 3px rgba(20, 30, 55, 0.08);
+  --glass-shadow:       0 14px 44px rgba(20, 30, 55, 0.14), 0 2px 8px rgba(20, 30, 55, 0.10);
+  --glass-shadow-modal: 0 30px 80px rgba(20, 30, 55, 0.20), 0 6px 18px rgba(20, 30, 55, 0.12);
 }
