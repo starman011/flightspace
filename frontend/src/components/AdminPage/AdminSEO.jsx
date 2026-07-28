@@ -26,11 +26,11 @@ const TASKS = [
     improves: 'LCP / INP / CLS' },
 
   // ── Next up ────────────────────────────────────────────────────────────
-  { cat: 'Content / E-E-A-T', pri: 'P0', status: 'input', title: 'Named Person author on Engineering blog',
-    detail: 'Engineering posts use an Organization author. A real Person author (name + role) is a strong expertise/experience signal. Needs your name + title.',
+  { cat: 'Content / E-E-A-T', pri: 'P0', status: 'done', title: 'Named Person author on Engineering blog',
+    detail: 'Engineering posts now credit Md Saqlain Khan, Founder & CTO — as schema.org Person (jobTitle + worksFor) and a visible byline.',
     improves: 'E-E-A-T' },
-  { cat: 'Schema',     pri: 'P0', status: 'todo', title: 'BreadcrumbList on entity pages',
-    detail: 'Add Home > Section > Page breadcrumbs to flight/airport/airline SSR (blog already has it).',
+  { cat: 'Schema',     pri: 'P0', status: 'done', title: 'BreadcrumbList on entity pages',
+    detail: 'Home > Section > Page breadcrumbs now emitted on flight, airport, and airline SSR (blog already had it).',
     improves: 'SERP breadcrumbs' },
   { cat: 'Technical',  pri: 'P0', status: 'todo', title: 'Bot-render /faq, /about, /contact',
     detail: 'These are SPA-only for crawlers today. Add to the SSR matcher; render FAQPage schema on /faq.',

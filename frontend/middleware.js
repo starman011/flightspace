@@ -166,10 +166,14 @@ async function renderFlight(raw) {
 
   const canonical = `${SITE}/flight/${icao24}`
 
-  const jsonLd = { '@context': 'https://schema.org', '@type': 'Flight', identifier: icao24, flightNumber: callsign, url: canonical }
-  if (operator)   jsonLd.provider          = { '@type': 'Airline', name: operator }
-  if (originName) jsonLd.departureAirport  = { '@type': 'Airport', name: originName, ...(originIATA ? { iataCode: originIATA } : {}) }
-  if (destName)   jsonLd.arrivalAirport    = { '@type': 'Airport', name: destName,   ...(destIATA   ? { iataCode: destIATA   } : {}) }
+  const flightLd = { '@type': 'Flight', identifier: icao24, flightNumber: callsign, url: canonical }
+  if (operator)   flightLd.provider          = { '@type': 'Airline', name: operator }
+  if (originName) flightLd.departureAirport  = { '@type': 'Airport', name: originName, ...(originIATA ? { iataCode: originIATA } : {}) }
+  if (destName)   flightLd.arrivalAirport    = { '@type': 'Airport', name: destName,   ...(destIATA   ? { iataCode: destIATA   } : {}) }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    flightLd,
+    crumbLd([['Home', `${SITE}/`], ['Live Flights', `${SITE}/flight`], [`${callsign} flight`, canonical]]),
+  ] }
 
   const rows = [
     operator && `<tr><th>Airline</th><td>${esc(operator)}</td></tr>`,
@@ -252,6 +256,7 @@ async function renderAirport(iata) {
         ...(country ? { address: { '@type': 'PostalAddress', addressLocality: cityName, addressCountry: country } } : {}),
         ...(full ? { geo: { '@type': 'GeoCoordinates', latitude: full.lat, longitude: full.lon } } : {}) },
       { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      crumbLd([['Home', `${SITE}/`], [`${fullName} (${iata})`, canonical]]),
     ],
   }
 
@@ -417,6 +422,7 @@ async function renderAirline(slug) {
     '@graph': [
       { '@type': 'Airline', name: airline.name, iataCode: airline.iata, icaoCode: airline.icao, url: canonical },
       { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      crumbLd([['Home', `${SITE}/`], [`${airline.name} flights`, canonical]]),
     ],
   }
 
@@ -1871,7 +1877,10 @@ async function renderBlogPost(slug) {
         dateModified: p.updated_at || p.date,   // freshness signal
         wordCount,
         inLanguage: 'en',
-        author: { '@type': 'Organization', name: isEng ? 'ObjectTracer' : 'NASA APOD' },
+        author: isEng
+          ? { '@type': 'Person', name: 'Md Saqlain Khan', jobTitle: 'Founder & CTO',
+              worksFor: { '@type': 'Organization', name: 'ObjectTracer' }, url: `${SITE}/about` }
+          : { '@type': 'Organization', name: 'NASA APOD' },
         publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
         mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
         isPartOf: { '@type': isEng ? 'Blog' : 'CreativeWorkSeries',
@@ -1899,6 +1908,7 @@ async function renderBlogPost(slug) {
   const body = isEng ? `
     <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)} · ENGINEERING</p>
     <h1>${esc(p.title)}</h1>
+    <p style="font-size:.85rem;opacity:.75">By <strong>Md Saqlain Khan</strong>, Founder &amp; CTO, ObjectTracer</p>
     ${imgTag}
     ${p.intro ? `<p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>` : ''}
     ${videoEmbed}
@@ -2077,4 +2087,14 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+// schema.org BreadcrumbList from [name, url] pairs — surfaces SERP breadcrumbs.
+function crumbLd(items) {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map(([name, item], i) => ({
+      '@type': 'ListItem', position: i + 1, name, item,
+    })),
+  }
 }
