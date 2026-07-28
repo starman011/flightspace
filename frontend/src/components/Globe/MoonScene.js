@@ -60,7 +60,7 @@ export const LANDING_SITES = [
 // visual is correct). Period derived from a = (R + alt), µ_moon = 4902.8 km³/s².
 
 export const LUNAR_ORBITERS = [
-  { id: 'lro',         name: 'LRO',          agency: 'NASA',  altKm: 50,   inclDeg: 90,   raanDeg: 0,   color: 0xb2ff1a, launched: '2009-06-18', desc: 'Lunar Reconnaissance Orbiter — mapping the Moon at sub-meter resolution since 2009.' },
+  { id: 'lro',         name: 'LRO',          agency: 'NASA',  altKm: 50,   inclDeg: 90,   raanDeg: 0,   color: 0xa3e635, launched: '2009-06-18', desc: 'Lunar Reconnaissance Orbiter — mapping the Moon at sub-meter resolution since 2009.' },
   { id: 'chandra2',    name: 'Chandrayaan-2', agency: 'ISRO',  altKm: 100,  inclDeg: 90,   raanDeg: 60,  color: 0xff8a3d, launched: '2019-07-22', desc: 'Indian polar orbiter — high-resolution imaging and mineral mapping.' },
   { id: 'danuri',      name: 'Danuri (KPLO)', agency: 'KARI',  altKm: 100,  inclDeg: 90,   raanDeg: 120, color: 0xffd24a, launched: '2022-08-05', desc: 'Korean Pathfinder Lunar Orbiter — first Korean lunar mission, polar mapping.' },
   { id: 'queqiao2',    name: 'Queqiao-2',     agency: 'CNSA',  altKm: 4200, inclDeg: 28.5, raanDeg: 200, color: 0xff5577, launched: '2024-03-20', desc: 'Chinese far-side relay satellite supporting Chang\'e missions.' },

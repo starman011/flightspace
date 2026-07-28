@@ -13,9 +13,9 @@
   background: rgba(8, 14, 22, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(178, 255, 26, 0.15);
+  border: 1px solid rgba(163, 230, 53, 0.15);
   border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(178, 255, 26, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(163, 230, 53, 0.04);
 
   font-family: var(--font-mono);
   animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -33,7 +33,7 @@
 }
 
 .icon {
-  color: rgba(178, 255, 26, 0.6);
+  color: rgba(163, 230, 53, 0.6);
   flex-shrink: 0;
   display: flex;
 }
@@ -57,15 +57,15 @@
   letter-spacing: 0.08em;
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(178, 255, 26, 0.3);
-  background: rgba(178, 255, 26, 0.08);
-  color: #b2ff1a;
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  background: rgba(163, 230, 53, 0.08);
+  color: #a3e635;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .installBtn:hover {
-  background: rgba(178, 255, 26, 0.15);
-  border-color: rgba(178, 255, 26, 0.5);
+  background: rgba(163, 230, 53, 0.15);
+  border-color: rgba(163, 230, 53, 0.5);
 }
 
 .dismissBtn {

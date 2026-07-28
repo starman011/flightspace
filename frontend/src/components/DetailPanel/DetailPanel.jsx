@@ -153,13 +153,13 @@ function ISSCrew() {
   return (
     <div className={styles.issCrew}>
       <div className={styles.issLabel}>
-        <span className="material-symbols-outlined" style={{ fontSize: 11, color: 'rgba(178,255,26,0.6)' }}>group</span>
+        <span className="material-symbols-outlined" style={{ fontSize: 11, color: 'rgba(163,230,53,0.6)' }}>group</span>
         CREW ON BOARD · {crew.length}
       </div>
       <div className={styles.crewGrid}>
         {crew.map(c => (
           <div key={c.name} className={styles.crewMember}>
-            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(178,255,26,0.5)' }}>person</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(163,230,53,0.5)' }}>person</span>
             <span className={styles.crewName}>{c.name}</span>
           </div>
         ))}
@@ -192,7 +192,7 @@ function ISSMissions() {
   return (
     <div className={styles.issMissions}>
       <div className={styles.issLabel}>
-        <span className="material-symbols-outlined" style={{ fontSize: 11, color: 'rgba(178,255,26,0.6)' }}>rocket_launch</span>
+        <span className="material-symbols-outlined" style={{ fontSize: 11, color: 'rgba(163,230,53,0.6)' }}>rocket_launch</span>
         UPCOMING ISS MISSIONS
       </div>
       {missions.map((m, i) => (

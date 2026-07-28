@@ -34,8 +34,8 @@ export default function FlightLanding({ icao24, onEnable }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(4,9,14,0.93)',
       backgroundImage: `
-        linear-gradient(rgba(178,255,26,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(178,255,26,0.04) 1px, transparent 1px)
+        linear-gradient(rgba(163,230,53,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(163,230,53,0.04) 1px, transparent 1px)
       `,
       backgroundSize: '40px 40px',
       backdropFilter: 'blur(4px)',
@@ -43,11 +43,11 @@ export default function FlightLanding({ icao24, onEnable }) {
 
       {/* Radar ring decoration */}
       <div style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%',
-        border: '1px solid rgba(178,255,26,0.06)', pointerEvents: 'none' }} />
+        border: '1px solid rgba(163,230,53,0.06)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', width: 280, height: 280, borderRadius: '50%',
-        border: '1px solid rgba(178,255,26,0.06)', pointerEvents: 'none' }} />
+        border: '1px solid rgba(163,230,53,0.06)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%',
-        border: '1px solid rgba(178,255,26,0.08)', pointerEvents: 'none' }} />
+        border: '1px solid rgba(163,230,53,0.08)', pointerEvents: 'none' }} />
 
       <div style={{
         position: 'relative', zIndex: 1,
@@ -84,7 +84,7 @@ export default function FlightLanding({ icao24, onEnable }) {
         {operator && (
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 12,
-            color: 'rgba(178,255,26,0.7)', letterSpacing: '0.1em',
+            color: 'rgba(163,230,53,0.7)', letterSpacing: '0.1em',
             textTransform: 'uppercase', marginBottom: 4,
           }}>{operator}</div>
         )}
@@ -104,24 +104,24 @@ export default function FlightLanding({ icao24, onEnable }) {
           onClick={onEnable}
           style={{
             padding: '14px 36px',
-            background: 'linear-gradient(135deg, #b2ff1a 0%, #00e5ff 100%)',
+            background: 'linear-gradient(135deg, #a3e635 0%, #00e5ff 100%)',
             border: 'none', borderRadius: 10, cursor: 'pointer',
             fontFamily: 'var(--font-mono)', fontWeight: 700,
             fontSize: 14, letterSpacing: '0.1em', textTransform: 'uppercase',
             color: '#050a0f',
             boxShadow: `
-              0 0 30px rgba(178,255,26,0.35),
+              0 0 30px rgba(163,230,53,0.35),
               0 0 60px rgba(0,229,255,0.15),
               0 4px 20px rgba(0,0,0,0.5)
             `,
             transition: 'all 0.2s ease',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 0 50px rgba(178,255,26,0.55), 0 0 90px rgba(0,229,255,0.25), 0 4px 24px rgba(0,0,0,0.6)'
+            e.currentTarget.style.boxShadow = '0 0 50px rgba(163,230,53,0.55), 0 0 90px rgba(0,229,255,0.25), 0 4px 24px rgba(0,0,0,0.6)'
             e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(178,255,26,0.35), 0 0 60px rgba(0,229,255,0.15), 0 4px 20px rgba(0,0,0,0.5)'
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(163,230,53,0.35), 0 0 60px rgba(0,229,255,0.15), 0 4px 20px rgba(0,0,0,0.5)'
             e.currentTarget.style.transform = 'none'
           }}
         >

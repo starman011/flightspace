@@ -71,8 +71,8 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(178, 255, 26, 0.07);
-  border: 1px solid rgba(178, 255, 26, 0.18);
+  background: rgba(163, 230, 53, 0.07);
+  border: 1px solid rgba(163, 230, 53, 0.18);
 }
 
 .statValue {
@@ -80,7 +80,7 @@
   font-weight: 700;
   font-size: 30px;
   line-height: 1;
-  color: #b2ff1a;
+  color: #a3e635;
 }
 
 .statLabel {
@@ -91,15 +91,15 @@
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.75);
+  color: rgba(163, 230, 53, 0.75);
 }
 
 .liveDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 6px #b2ff1a;
+  background: #a3e635;
+  box-shadow: 0 0 6px #a3e635;
   animation: fleetPulse 2s infinite;
 }
 
@@ -123,9 +123,9 @@
   gap: 8px;
   padding: 11px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(178, 255, 26, 0.35);
-  background: rgba(178, 255, 26, 0.1);
-  color: #b2ff1a;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  background: rgba(163, 230, 53, 0.1);
+  color: #a3e635;
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 12px;
@@ -135,8 +135,8 @@
 }
 
 .cta:hover {
-  background: rgba(178, 255, 26, 0.18);
-  border-color: rgba(178, 255, 26, 0.6);
+  background: rgba(163, 230, 53, 0.18);
+  border-color: rgba(163, 230, 53, 0.6);
   transform: translateY(-1px);
 }
 

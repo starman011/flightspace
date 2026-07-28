@@ -32,7 +32,7 @@
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #b2ff1a;
+  color: #a3e635;
   margin: 0;
   display: flex;
   align-items: center;
@@ -42,10 +42,10 @@
 .wordmarkDot {
   width: 6px;
   height: 6px;
-  background: #b2ff1a;
+  background: #a3e635;
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.6);
+  box-shadow: 0 0 6px rgba(163, 230, 53, 0.6);
 }
 
 .closeBtn {
@@ -120,7 +120,7 @@
   font-size: 9px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.4);
+  color: rgba(163, 230, 53, 0.4);
   margin: 0;
 }
 
@@ -152,7 +152,7 @@
   font-size: 9px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.35);
+  color: rgba(163, 230, 53, 0.35);
   margin: 0;
 }
 
@@ -176,8 +176,8 @@
 }
 
 .card:hover {
-  border-color: rgba(178, 255, 26, 0.15);
-  background: rgba(178, 255, 26, 0.03);
+  border-color: rgba(163, 230, 53, 0.15);
+  background: rgba(163, 230, 53, 0.03);
 }
 
 .icon {
@@ -186,10 +186,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(178, 255, 26, 0.08);
-  border: 1px solid rgba(178, 255, 26, 0.18);
+  background: rgba(163, 230, 53, 0.08);
+  border: 1px solid rgba(163, 230, 53, 0.18);
   border-radius: 7px;
-  color: rgba(178, 255, 26, 0.8);
+  color: rgba(163, 230, 53, 0.8);
   flex-shrink: 0;
 }
 
@@ -214,9 +214,9 @@
   font-family: var(--font-mono);
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #b2ff1a;
-  background: rgba(178, 255, 26, 0.1);
-  border: 1px solid rgba(178, 255, 26, 0.2);
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.1);
+  border: 1px solid rgba(163, 230, 53, 0.2);
   border-radius: 3px;
   padding: 1px 4px;
   vertical-align: middle;
@@ -297,7 +297,7 @@
   font-size: 9px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.4);
+  color: rgba(163, 230, 53, 0.4);
   margin: 0;
 }
 
@@ -336,17 +336,17 @@
 }
 
 .input:focus {
-  border-color: rgba(178, 255, 26, 0.35);
-  box-shadow: 0 0 0 3px rgba(178, 255, 26, 0.06);
+  border-color: rgba(163, 230, 53, 0.35);
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.06);
 }
 
 .submitBtn {
   width: 100%;
   padding: 13px 20px;
-  background: rgba(178, 255, 26, 0.08);
-  border: 1px solid rgba(178, 255, 26, 0.3);
+  background: rgba(163, 230, 53, 0.08);
+  border: 1px solid rgba(163, 230, 53, 0.3);
   border-radius: 10px;
-  color: #b2ff1a;
+  color: #a3e635;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -361,9 +361,9 @@
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: rgba(178, 255, 26, 0.14);
-  border-color: rgba(178, 255, 26, 0.5);
-  box-shadow: 0 0 16px rgba(178, 255, 26, 0.08);
+  background: rgba(163, 230, 53, 0.14);
+  border-color: rgba(163, 230, 53, 0.5);
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.08);
 }
 
 .submitBtn:disabled {
@@ -374,8 +374,8 @@
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(178, 255, 26, 0.25);
-  border-top-color: #b2ff1a;
+  border: 2px solid rgba(163, 230, 53, 0.25);
+  border-top-color: #a3e635;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
@@ -387,15 +387,15 @@
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: rgba(178, 255, 26, 0.05);
-  border: 1px solid rgba(178, 255, 26, 0.2);
+  background: rgba(163, 230, 53, 0.05);
+  border: 1px solid rgba(163, 230, 53, 0.2);
   border-radius: 10px;
 }
 
 .successText {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: #b2ff1a;
+  color: #a3e635;
   margin: 0;
 }
 
@@ -434,7 +434,7 @@
   font-size: 9px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.3);
+  color: rgba(163, 230, 53, 0.3);
   margin: 0;
 }
 
@@ -458,7 +458,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(178, 255, 26, 0.35);
+  background: rgba(163, 230, 53, 0.35);
   flex-shrink: 0;
   margin-top: 4px;
 }
@@ -490,12 +490,12 @@
 }
 
 .shareLink {
-  color: rgba(178, 255, 26, 0.5);
+  color: rgba(163, 230, 53, 0.5);
   text-decoration: none;
 }
 
 .shareLink:hover {
-  color: rgba(178, 255, 26, 0.75);
+  color: rgba(163, 230, 53, 0.75);
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────── */
@@ -540,7 +540,7 @@
     font-size: 19px;
     color: #eef5ff;
     background: rgba(8, 12, 20, 0.85);
-    border-color: rgba(178, 255, 26, 0.4);
+    border-color: rgba(163, 230, 53, 0.4);
   }
 
   /* Single scroll container = .body; inner columns grow naturally */

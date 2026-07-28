@@ -105,7 +105,7 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: rgba(178, 255, 26, 0.75);
+  color: rgba(163, 230, 53, 0.75);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -122,15 +122,15 @@
 }
 
 .btn.active {
-  color: #b2ff1a;
-  background: rgba(178, 255, 26, 0.08);
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.08);
   width: auto;
   padding: 0 10px;
   gap: 5px;
 }
 
 .btn.active:hover {
-  background: rgba(178, 255, 26, 0.14);
+  background: rgba(163, 230, 53, 0.14);
 }
 
 .label {
@@ -143,7 +143,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #b2ff1a;
+  color: #a3e635;
   white-space: nowrap;
   transition: grid-template-columns 0.28s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.2s ease, margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -188,7 +188,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    color: #b2ff1a;
+    color: #a3e635;
     opacity: 1;
     transition: opacity 0.2s ease;
   }
@@ -253,9 +253,9 @@
     animation: none;
   }
   .btn.active {
-    background: rgba(178, 255, 26, 0.1);
-    border: 1px solid rgba(178, 255, 26, 0.35);
-    color: #b2ff1a;
+    background: rgba(163, 230, 53, 0.1);
+    border: 1px solid rgba(163, 230, 53, 0.35);
+    color: #a3e635;
     width: 100%;
     padding: 10px 12px;
     gap: 11px;

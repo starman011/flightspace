@@ -174,7 +174,7 @@ export default function DeepSpacePanel({ open, onClose }) {
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(178,255,26,0.06)', border: '1px solid rgba(178,255,26,0.15)',
+              background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.15)',
               borderRadius: 8, color: 'rgba(195,245,255,0.6)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 4,
               fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em',

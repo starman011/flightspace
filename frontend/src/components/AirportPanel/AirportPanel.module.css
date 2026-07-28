@@ -58,7 +58,7 @@
 .iata {
   font-size: 18px;
   font-weight: 600;
-  color: #b2ff1a;
+  color: #a3e635;
   letter-spacing: 0.12em;
 }
 
@@ -120,15 +120,15 @@
 }
 .tabBtn:hover { color: rgba(200, 210, 225, 0.65); }
 .tabActive {
-  color: #b2ff1a;
-  border-bottom-color: rgba(178, 255, 26, 0.5);
+  color: #a3e635;
+  border-bottom-color: rgba(163, 230, 53, 0.5);
 }
 
 .tabBadge {
   font-size: 9px;
   font-weight: 600;
-  color: rgba(178, 255, 26, 0.8);
-  background: rgba(178, 255, 26, 0.1);
+  color: rgba(163, 230, 53, 0.8);
+  background: rgba(163, 230, 53, 0.1);
   border-radius: 8px;
   padding: 1px 6px;
   min-width: 18px;
@@ -174,13 +174,13 @@
 }
 .rowDep { grid-template-columns: 1fr 60px 60px; }
 .row:hover {
-  background: rgba(178, 255, 26, 0.06);
+  background: rgba(163, 230, 53, 0.06);
 }
 
 .callsign {
   display: flex;
   flex-direction: column;
-  color: rgba(178, 255, 26, 0.85);
+  color: rgba(163, 230, 53, 0.85);
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -200,21 +200,21 @@
   width: 100%;
   margin-top: 10px;
   padding: 14px 16px;
-  border: 1px solid rgba(178, 255, 26, 0.4);
+  border: 1px solid rgba(163, 230, 53, 0.4);
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(178, 255, 26, 0.22), rgba(178, 255, 26, 0.1));
+  background: linear-gradient(180deg, rgba(163, 230, 53, 0.22), rgba(163, 230, 53, 0.1));
   color: #eaf2ff;
   cursor: pointer;
   text-align: left;
   transition: filter 0.15s, box-shadow 0.15s, transform 0.1s;
 }
-.fullBoardBtn:hover { filter: brightness(1.1); box-shadow: 0 0 24px rgba(178, 255, 26, 0.28); }
+.fullBoardBtn:hover { filter: brightness(1.1); box-shadow: 0 0 24px rgba(163, 230, 53, 0.28); }
 .fullBoardBtn:active { transform: translateY(1px); }
 .fullBoardIcon { display: flex; flex: none; }
 .fullBoardBtn > span:nth-child(2) { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .fullBoardBtn strong { font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
 .fullBoardBtn small { font-family: var(--font-body); font-size: 11px; color: rgba(200, 215, 240, 0.6); margin-top: 2px; }
-.fullBoardArrow { display: flex; color: rgba(178, 255, 26, 0.9); flex: none; }
+.fullBoardArrow { display: flex; color: rgba(163, 230, 53, 0.9); flex: none; }
 
 .eta {
   color: rgba(45, 212, 191, 0.8);

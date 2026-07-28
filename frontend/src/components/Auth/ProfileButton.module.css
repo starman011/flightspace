@@ -21,13 +21,13 @@
 
 .btnAuth {
   background: rgba(0, 180, 255, 0.1);
-  border-color: rgba(178, 255, 26, 0.25);
-  color: rgba(178, 255, 26, 0.85);
+  border-color: rgba(163, 230, 53, 0.25);
+  color: rgba(163, 230, 53, 0.85);
 }
 .btnAuth:hover {
   background: rgba(0, 180, 255, 0.16);
-  border-color: rgba(178, 255, 26, 0.4);
-  color: #b2ff1a;
+  border-color: rgba(163, 230, 53, 0.4);
+  color: #a3e635;
 }
 
 .icon {
@@ -64,7 +64,7 @@
   min-width: 14px;
   height: 14px;
   border-radius: 7px;
-  background: #b2ff1a;
+  background: #a3e635;
   color: #050a0f;
   font-size: 9px;
   font-weight: 700;

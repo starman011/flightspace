@@ -92,7 +92,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid rgba(178, 255, 26, 0.1);
+  border: 1px solid rgba(163, 230, 53, 0.1);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -106,7 +106,7 @@
 }
 
 .statRow:nth-child(odd) {
-  background: rgba(178, 255, 26, 0.03);
+  background: rgba(163, 230, 53, 0.03);
 }
 
 .statLabel {
@@ -137,7 +137,7 @@
 /* ── Scrollbar ── */
 .panel::-webkit-scrollbar { width: 4px; }
 .panel::-webkit-scrollbar-track { background: transparent; }
-.panel::-webkit-scrollbar-thumb { background: rgba(178, 255, 26, 0.15); border-radius: 2px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(163, 230, 53, 0.15); border-radius: 2px; }
 
 /* ── Mobile ── */
 @media (max-width: 600px) {

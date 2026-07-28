@@ -65,8 +65,8 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  background: #a3e635;
+  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
   margin-left: 2px;
 }
 
@@ -217,12 +217,12 @@
 }
 
 .btn.active {
-  color: #b2ff1a;
-  background: rgba(178, 255, 26, 0.06);
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.06);
 }
 .btn.active:hover {
-  background: rgba(178, 255, 26, 0.12);
-  box-shadow: 0 0 16px rgba(178, 255, 26, 0.08);
+  background: rgba(163, 230, 53, 0.12);
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.08);
 }
 
 /* ── Expandable icon + label ─────────────────────────────────────────────── */
@@ -284,16 +284,16 @@
   grid-template-columns: 1fr;
   opacity: 1;
   margin-left: 5px;
-  color: #b2ff1a;
+  color: #a3e635;
 }
 
 .expandable.active {
-  background: rgba(178, 255, 26, 0.06);
+  background: rgba(163, 230, 53, 0.06);
 }
 
 .expandable.active:hover {
-  background: rgba(178, 255, 26, 0.12);
-  box-shadow: 0 0 16px rgba(178, 255, 26, 0.08);
+  background: rgba(163, 230, 53, 0.12);
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.08);
 }
 
 /* ── First-visit intro: all labels visible briefly ───────────────────────── */
@@ -316,8 +316,8 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 8px rgba(178, 255, 26, 0.7);
+  background: #a3e635;
+  box-shadow: 0 0 8px rgba(163, 230, 53, 0.7);
   animation: dotAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -410,8 +410,8 @@
 }
 
 .popoverItemActive:hover {
-  background: rgba(178, 255, 26, 0.08);
-  color: #b2ff1a;
+  background: rgba(163, 230, 53, 0.08);
+  color: #a3e635;
 }
 
 .popoverDot {
@@ -428,8 +428,8 @@
 }
 
 .popoverItemActive:hover .popoverDot {
-  background: #b2ff1a;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  background: #a3e635;
+  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
 }
 
 /* ── Collapse button ─────────────────────────────────────────────────────── */
@@ -485,7 +485,7 @@
   position: absolute;
   inset: 0;
   border-radius: 12px;
-  border: 1px solid rgba(178, 255, 26, 0.4);
+  border: 1px solid rgba(163, 230, 53, 0.4);
   animation: sonarPingBar 2.4s ease-out infinite;
   pointer-events: none;
 }
@@ -500,7 +500,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(178, 255, 26, 0.2);
+  background: rgba(163, 230, 53, 0.2);
   transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
 }
 

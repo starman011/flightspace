@@ -18,7 +18,7 @@ export default function WindLegend() {
       style={{
         position: 'fixed', bottom: 92, left: 16, zIndex: 500,
         background: 'rgba(6,12,18,0.82)', backdropFilter: 'blur(14px)',
-        border: '1px solid rgba(178,255,26,0.18)', borderRadius: 12,
+        border: '1px solid rgba(163,230,53,0.18)', borderRadius: 12,
         padding: '10px 12px 9px', width: 188,
         boxShadow: '0 6px 24px rgba(0,0,0,0.4)',
         fontFamily: 'var(--font-mono, monospace)',
@@ -30,7 +30,7 @@ export default function WindLegend() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
         fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase',
-        color: 'rgba(178,255,26,0.85)', fontWeight: 700,
+        color: 'rgba(163,230,53,0.85)', fontWeight: 700,
       }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M3 8h11a3 3 0 1 0-3-3" /><path d="M3 12h15a3 3 0 1 1-3 3" /><path d="M3 16h7a3 3 0 1 1-3 3" />

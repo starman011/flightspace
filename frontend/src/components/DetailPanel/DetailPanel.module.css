@@ -185,8 +185,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  background: #a3e635;
+  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
   animation: viewerPulse 2s ease-in-out infinite;
 }
 @keyframes viewerPulse {
@@ -410,8 +410,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 8px rgba(178, 255, 26, 0.4);
+  background: #a3e635;
+  box-shadow: 0 0 8px rgba(163, 230, 53, 0.4);
   animation: pulse 2s ease-in-out infinite;
   flex-shrink: 0;
 }
@@ -585,12 +585,12 @@
   color: #F3F2EC;
 }
 .trackBtnActive {
-  background: rgba(178, 255, 26, 0.08);
-  border-color: rgba(178, 255, 26, 0.28);
-  color: #b2ff1a;
+  background: rgba(163, 230, 53, 0.08);
+  border-color: rgba(163, 230, 53, 0.28);
+  color: #a3e635;
 }
 .trackBtnActive:hover {
-  background: rgba(178, 255, 26, 0.14);
+  background: rgba(163, 230, 53, 0.14);
 }
 
 .fitBtn {
@@ -856,7 +856,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #b2ff1a;
+  background: #a3e635;
   animation: livePulse 1.5s ease-in-out infinite;
 }
 

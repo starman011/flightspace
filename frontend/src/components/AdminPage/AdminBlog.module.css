@@ -4,7 +4,7 @@
 
 .kicker {
   font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(178, 255, 26, 0.7); margin: 0 0 4px;
+  text-transform: uppercase; color: rgba(163, 230, 53, 0.7); margin: 0 0 4px;
 }
 
 .editor, .list { display: flex; flex-direction: column; gap: 10px; }
@@ -21,7 +21,7 @@
   outline: none;
   transition: border-color 0.15s;
 }
-.input:focus, .textarea:focus { border-color: rgba(178, 255, 26, 0.5); }
+.input:focus, .textarea:focus { border-color: rgba(163, 230, 53, 0.5); }
 .textarea { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; resize: vertical; }
 
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -35,7 +35,7 @@
 
 .save {
   border: none; border-radius: 999px; padding: 11px 24px;
-  background: #b2ff1a; color: #06121a;
+  background: #a3e635; color: #06121a;
   font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: 0.05em;
   cursor: pointer; transition: filter 0.15s;
 }
@@ -47,7 +47,7 @@
   background: none; color: rgba(208, 224, 244, 0.75);
   font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: 0.15s;
 }
-.ghost:hover { border-color: rgba(178, 255, 26, 0.5); color: #b2ff1a; }
+.ghost:hover { border-color: rgba(163, 230, 53, 0.5); color: #a3e635; }
 
 .danger {
   border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 999px; padding: 10px 16px;
@@ -56,7 +56,7 @@
 }
 .danger:hover { border-color: rgba(255, 107, 107, 0.7); background: rgba(255, 107, 107, 0.08); }
 
-.msg { font-family: var(--font-mono); font-size: 12px; color: #b2ff1a; margin: 4px 0 0; }
+.msg { font-family: var(--font-mono); font-size: 12px; color: #a3e635; margin: 4px 0 0; }
 .empty { font-size: 13px; color: rgba(201, 216, 236, 0.5); }
 
 .item {
@@ -72,7 +72,7 @@
 .itemActions { display: flex; gap: 8px; flex: none; }
 
 .live {
-  color: #b2ff1a; border: 1px solid rgba(178, 255, 26, 0.4);
+  color: #a3e635; border: 1px solid rgba(163, 230, 53, 0.4);
   border-radius: 5px; padding: 1px 7px; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
 }
 .queued {

@@ -100,23 +100,23 @@ function PadFocusBadge({ launch, onExit }) {
       position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
       zIndex: 200, display: 'flex', alignItems: 'center', gap: 16,
       background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(18px)',
-      border: '1px solid rgba(178,255,26,0.3)', borderRadius: 12,
-      padding: '12px 20px', boxShadow: '0 0 40px rgba(178,255,26,0.12)',
+      border: '1px solid rgba(163,230,53,0.3)', borderRadius: 12,
+      padding: '12px 20px', boxShadow: '0 0 40px rgba(163,230,53,0.12)',
     }}>
       {/* Pulsing ping dot */}
       <div style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
         <div style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          background: '#b2ff1a', animation: 'padPing 1.6s ease-out infinite',
+          background: '#a3e635', animation: 'padPing 1.6s ease-out infinite',
         }} />
         <div style={{
-          position: 'absolute', inset: 0, borderRadius: '50%', background: '#b2ff1a',
+          position: 'absolute', inset: 0, borderRadius: '50%', background: '#a3e635',
         }} />
       </div>
 
       <div>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
-          letterSpacing: '0.1em', color: 'rgba(178,255,26,0.6)', marginBottom: 3 }}>
+          letterSpacing: '0.1em', color: 'rgba(163,230,53,0.6)', marginBottom: 3 }}>
           Launch Pad · Locked
         </p>
         <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14,
@@ -129,8 +129,8 @@ function PadFocusBadge({ launch, onExit }) {
       </div>
 
       <button onClick={onExit} style={{
-        background: 'rgba(178,255,26,0.08)', border: '1px solid rgba(178,255,26,0.2)',
-        borderRadius: 8, color: 'rgba(178,255,26,0.7)', fontFamily: 'var(--font-mono)',
+        background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)',
+        borderRadius: 8, color: 'rgba(163,230,53,0.7)', fontFamily: 'var(--font-mono)',
         fontSize: 11, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
         letterSpacing: '0.06em',
       }}>
@@ -797,16 +797,16 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           background: 'rgba(5,10,15,0.95)', backdropFilter: 'blur(20px)',
           fontFamily: 'var(--font-body)', color: '#fff', textAlign: 'center', padding: 32,
         }}>
-          <p style={{ fontSize: 64, fontWeight: 700, fontFamily: 'var(--font-display)', color: '#b2ff1a', margin: 0 }}>404</p>
+          <p style={{ fontSize: 64, fontWeight: 700, fontFamily: 'var(--font-display)', color: '#a3e635', margin: 0 }}>404</p>
           <p style={{ fontSize: 18, color: 'rgba(200,210,225,0.7)', marginTop: 8 }}>Page not found</p>
           <p style={{ fontSize: 13, color: 'rgba(200,210,225,0.4)', maxWidth: 400, marginTop: 12 }}>
-            The page <code style={{ color: '#b2ff1a' }}>{window.location.pathname}</code> doesn't exist.
+            The page <code style={{ color: '#a3e635' }}>{window.location.pathname}</code> doesn't exist.
           </p>
           <button
             onClick={() => { window.location.href = '/' }}
             style={{
-              marginTop: 24, padding: '10px 28px', border: '1px solid rgba(178,255,26,0.3)',
-              borderRadius: 8, background: 'rgba(178,255,26,0.08)', color: '#b2ff1a',
+              marginTop: 24, padding: '10px 28px', border: '1px solid rgba(163,230,53,0.3)',
+              borderRadius: 8, background: 'rgba(163,230,53,0.08)', color: '#a3e635',
               fontFamily: 'var(--font-mono)', fontSize: 13, cursor: 'pointer',
             }}
           >
@@ -1087,14 +1087,14 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           style={{
             position: 'fixed', bottom: 88, left: '50%', transform: 'translateX(-50%)',
             zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
-            background: arActive ? 'rgba(178,255,26,0.18)' : 'rgba(6,12,18,0.85)',
+            background: arActive ? 'rgba(163,230,53,0.18)' : 'rgba(6,12,18,0.85)',
             backdropFilter: 'blur(16px)',
-            border: `1px solid ${arActive ? 'rgba(178,255,26,0.5)' : 'rgba(178,255,26,0.2)'}`,
+            border: `1px solid ${arActive ? 'rgba(163,230,53,0.5)' : 'rgba(163,230,53,0.2)'}`,
             borderRadius: 12, padding: '10px 20px', cursor: 'pointer',
-            color: arActive ? '#b2ff1a' : 'rgba(195,245,255,0.7)',
+            color: arActive ? '#a3e635' : 'rgba(195,245,255,0.7)',
             fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
             letterSpacing: '0.08em', textTransform: 'uppercase',
-            boxShadow: arActive ? '0 0 30px rgba(178,255,26,0.15)' : 'none',
+            boxShadow: arActive ? '0 0 30px rgba(163,230,53,0.15)' : 'none',
             transition: 'all 0.2s ease',
           }}
         >
@@ -1114,8 +1114,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <div style={{
           position: 'fixed', top: 'calc(50% + 44px)', left: '50%', transform: 'translateX(-50%)',
           zIndex: 201, fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.1em',
-          color: 'rgba(178,255,26,0.85)', background: 'rgba(6,12,18,0.7)', backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(178,255,26,0.2)', borderRadius: 999, padding: '5px 12px', pointerEvents: 'none',
+          color: 'rgba(163,230,53,0.85)', background: 'rgba(6,12,18,0.7)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(163,230,53,0.2)', borderRadius: 999, padding: '5px 12px', pointerEvents: 'none',
         }}>
           ◌ loading sky imagery…
         </div>
@@ -1126,7 +1126,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
           zIndex: 201, maxWidth: 'min(80vw, 320px)', textAlign: 'center',
           background: 'rgba(6,12,18,0.9)', backdropFilter: 'blur(14px)',
-          border: '1px solid rgba(178,255,26,0.3)', borderRadius: 14,
+          border: '1px solid rgba(163,230,53,0.3)', borderRadius: 14,
           padding: '16px 20px', color: 'rgba(220,230,245,0.95)',
           fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5,
           boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
@@ -1146,8 +1146,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             position: 'fixed', bottom: 90, right: 14, zIndex: 201,
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: 'rgba(6,12,18,0.85)', backdropFilter: 'blur(14px)',
-            border: '1px solid rgba(178,255,26,0.3)', borderRadius: 11,
-            padding: '9px 13px', cursor: 'pointer', color: '#b2ff1a',
+            border: '1px solid rgba(163,230,53,0.3)', borderRadius: 11,
+            padding: '9px 13px', cursor: 'pointer', color: '#a3e635',
             fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
             letterSpacing: '0.06em', textTransform: 'uppercase',
           }}
@@ -1161,7 +1161,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           position: 'fixed', bottom: 140, left: '50%', transform: 'translateX(-50%)',
           zIndex: 201, maxWidth: 'min(86vw, 420px)', textAlign: 'center',
           background: 'rgba(6,12,18,0.92)', backdropFilter: 'blur(14px)',
-          border: '1px solid rgba(178,255,26,0.25)', borderRadius: 12,
+          border: '1px solid rgba(163,230,53,0.25)', borderRadius: 12,
           padding: '10px 16px', color: 'rgba(215,225,240,0.92)',
           fontFamily: 'var(--font-body)', fontSize: 12.5, lineHeight: 1.5,
           boxShadow: '0 10px 36px rgba(0,0,0,0.5)',
@@ -1228,8 +1228,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(8,12,18,0.92)', backdropFilter: 'blur(14px)',
-            border: `1px solid ${locating ? 'rgba(178,255,26,0.6)' : 'rgba(178,255,26,0.22)'}`,
-            color: locating ? '#b2ff1a' : 'rgba(195,245,255,0.75)',
+            border: `1px solid ${locating ? 'rgba(163,230,53,0.6)' : 'rgba(163,230,53,0.22)'}`,
+            color: locating ? '#a3e635' : 'rgba(195,245,255,0.75)',
             cursor: 'pointer', boxShadow: '0 4px 18px rgba(0,0,0,0.4)',
             transition: 'border-color 0.2s, color 0.2s',
             animation: locating ? 'padPing 1.2s ease-in-out infinite' : 'none',
@@ -1246,7 +1246,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <div style={{
           position: 'fixed', left: 64, bottom: 72, zIndex: 690, maxWidth: 'min(70vw, 280px)',
           background: 'rgba(8,12,18,0.94)', backdropFilter: 'blur(14px)',
-          border: '1px solid rgba(178,255,26,0.25)', borderRadius: 10,
+          border: '1px solid rgba(163,230,53,0.25)', borderRadius: 10,
           padding: '8px 12px', color: 'rgba(215,235,245,0.92)',
           fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: 1.4,
           boxShadow: '0 6px 22px rgba(0,0,0,0.5)',
@@ -1269,36 +1269,36 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
               to { transform: rotate(360deg); }
             }
             @keyframes livePulse {
-              0%, 100% { box-shadow: 0 0 6px #b2ff1a, 0 0 0 0 rgba(178,255,26,0.4); }
-              50%       { box-shadow: 0 0 10px #b2ff1a, 0 0 12px 4px rgba(178,255,26,0.15); }
+              0%, 100% { box-shadow: 0 0 6px #a3e635, 0 0 0 0 rgba(163,230,53,0.4); }
+              50%       { box-shadow: 0 0 10px #a3e635, 0 0 12px 4px rgba(163,230,53,0.15); }
             }
           `}</style>
           <div style={{
             position: 'fixed', bottom: 96, left: '50%',
             zIndex: 9000, display: 'flex', alignItems: 'center', gap: 12,
             background: 'rgba(6,12,18,0.88)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(178,255,26,0.35)', borderRadius: 100,
+            border: '1px solid rgba(163,230,53,0.35)', borderRadius: 100,
             padding: '10px 20px 10px 12px',
-            boxShadow: '0 4px 32px rgba(0,0,0,0.5), 0 0 20px rgba(178,255,26,0.1)',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.5), 0 0 20px rgba(163,230,53,0.1)',
             animation: 'liveToastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
           }}>
             {/* Spinner ring */}
             <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
               <div style={{
                 position: 'absolute', inset: 0, borderRadius: '50%',
-                border: '2px solid rgba(178,255,26,0.12)',
+                border: '2px solid rgba(163,230,53,0.12)',
               }} />
               <div style={{
                 position: 'absolute', inset: 0, borderRadius: '50%',
                 border: '2px solid transparent',
-                borderTopColor: '#b2ff1a',
+                borderTopColor: '#a3e635',
                 animation: 'liveSpin 0.8s linear infinite',
               }} />
               {/* Center dot */}
               <div style={{
                 position: 'absolute', top: '50%', left: '50%',
                 transform: 'translate(-50%,-50%)',
-                width: 6, height: 6, borderRadius: '50%', background: '#b2ff1a',
+                width: 6, height: 6, borderRadius: '50%', background: '#a3e635',
                 animation: 'livePulse 1.2s ease infinite',
               }} />
             </div>
@@ -1306,7 +1306,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <span style={{
                 fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
-                color: '#b2ff1a', letterSpacing: '0.12em', textTransform: 'uppercase',
+                color: '#a3e635', letterSpacing: '0.12em', textTransform: 'uppercase',
               }}>Live Tracking</span>
               <span style={{
                 fontFamily: 'var(--font-mono)', fontSize: 10,

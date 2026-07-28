@@ -41,8 +41,8 @@
   inset: 0;
   border-radius: 50%;
   border: 1.5px solid transparent;
-  border-top-color: rgba(178, 255, 26, 0.8);
-  border-right-color: rgba(178, 255, 26, 0.15);
+  border-top-color: rgba(163, 230, 53, 0.8);
+  border-right-color: rgba(163, 230, 53, 0.15);
   animation: spin 1.4s linear infinite;
 }
 
@@ -52,7 +52,7 @@
   inset: 8px;
   border-radius: 50%;
   border: 1px solid transparent;
-  border-top-color: rgba(178, 255, 26, 0.35);
+  border-top-color: rgba(163, 230, 53, 0.35);
   animation: spinReverse 2.2s linear infinite;
 }
 
@@ -60,8 +60,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(178, 255, 26, 0.9);
-  box-shadow: 0 0 12px rgba(178, 255, 26, 0.6), 0 0 30px rgba(178, 255, 26, 0.2);
+  background: rgba(163, 230, 53, 0.9);
+  box-shadow: 0 0 12px rgba(163, 230, 53, 0.6), 0 0 30px rgba(163, 230, 53, 0.2);
   animation: pulse 1.4s ease-in-out infinite;
 }
 

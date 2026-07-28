@@ -66,7 +66,7 @@
 
 .logo {
   font-size: 28px;
-  color: rgba(178, 255, 26, 0.8);
+  color: rgba(163, 230, 53, 0.8);
   margin-bottom: 12px;
   line-height: 1;
 }
@@ -179,8 +179,8 @@
 }
 .input::placeholder { color: rgba(255, 255, 255, 0.2); }
 .input:focus {
-  border-color: rgba(178, 255, 26, 0.4);
-  background: rgba(178, 255, 26, 0.03);
+  border-color: rgba(163, 230, 53, 0.4);
+  background: rgba(163, 230, 53, 0.03);
 }
 
 .error {
@@ -197,7 +197,7 @@
   width: 100%;
   padding: 12px;
   background: linear-gradient(135deg, rgba(0, 180, 255, 0.85), rgba(0, 120, 220, 0.85));
-  border: 1px solid rgba(178, 255, 26, 0.3);
+  border: 1px solid rgba(163, 230, 53, 0.3);
   border-radius: 12px;
   color: #fff;
   font-size: 14px;
@@ -224,14 +224,14 @@
 .switchBtn {
   background: none;
   border: none;
-  color: rgba(178, 255, 26, 0.8);
+  color: rgba(163, 230, 53, 0.8);
   font-size: 13px;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.switchBtn:hover { color: #b2ff1a; }
+.switchBtn:hover { color: #a3e635; }
 
 /* ── Perks ───────────────────────────────────────────────────────────────── */
 .perks {
@@ -270,6 +270,6 @@
   position: absolute;
   left: 0;
   font-size: 8px;
-  color: rgba(178, 255, 26, 0.5);
+  color: rgba(163, 230, 53, 0.5);
   top: 2px;
 }

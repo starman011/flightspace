@@ -5,7 +5,7 @@ From impeccable `critique` (degraded single-context) + slop detector + apple-des
 lenses. Goal: move from "clean & compliant" to best-in-class. Ordered by leverage.
 
 ### Tier 1 — Identity elevation (biggest visual lift)
-- [ ] T1. Accent discipline: lime #b2ff1a is acid/"gamer". Reserve pure lime for LIVE
+- [x] T1. Accent discipline: lime #b2ff1a is acid/"gamer". Reserve pure lime for LIVE
   state only; introduce a calmer primary (e.g. desaturated ice/cyan) for general
   interactive, so the palette reads "premium observatory" not "hacker terminal".
   Collapse the 3 accent families (lime + teal route + violet deep-space) to one

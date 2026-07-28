@@ -27,12 +27,12 @@
 
 /* When an object is centred — lime ring + soft glow ("snapped"). */
 .locked {
-  border-color: rgba(178, 255, 26, 0.9);
-  box-shadow: 0 0 18px rgba(178, 255, 26, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  border-color: rgba(163, 230, 53, 0.9);
+  box-shadow: 0 0 18px rgba(163, 230, 53, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
   transform: scale(0.86);
   transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s;
 }
-.locked::before, .locked::after { background: rgba(178, 255, 26, 0.9); }
+.locked::before, .locked::after { background: rgba(163, 230, 53, 0.9); }
 
 .target {
   position: fixed;
@@ -43,8 +43,8 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #b2ff1a;
-  text-shadow: 0 0 12px rgba(178, 255, 26, 0.5), 0 0 3px rgba(0, 0, 0, 0.9);
+  color: #a3e635;
+  text-shadow: 0 0 12px rgba(163, 230, 53, 0.5), 0 0 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -72,7 +72,7 @@
 .coord { color: #d8dde6; }
 .sep { color: rgba(216, 221, 230, 0.4); }
 .live {
-  color: #b2ff1a;
+  color: #a3e635;
   font-size: 9.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;

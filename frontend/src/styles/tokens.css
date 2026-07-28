@@ -16,7 +16,7 @@
 
   /* ── Primary ───────────────────────────────────────────────────────────── */
   --primary:           #c3f5ff;
-  --primary-container: #b2ff1a;
+  --primary-container: #a3e635;
   --on-primary:        #00363d;
   --on-primary-container: #00626e;
 
@@ -38,7 +38,7 @@
   --outline:            #849396;
 
   /* ── Gradients ─────────────────────────────────────────────────────────── */
-  --gradient-starlight: linear-gradient(135deg, #c3f5ff 0%, #b2ff1a 100%);
+  --gradient-starlight: linear-gradient(135deg, #c3f5ff 0%, #a3e635 100%);
 
   /* ── Glassmorphism — Stitch spec ────────────────────────────────────────── */
   --glass-bg:     rgba(48, 53, 59, 0.4);

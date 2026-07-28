@@ -62,7 +62,7 @@
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase;
-  color: #b2ff1a;
+  color: #a3e635;
   text-shadow: 0 2px 14px rgba(0,0,0,0.5);
 }
 .coverTitle {
@@ -113,7 +113,7 @@
 }
 .locSec { min-height: 100dvh; display: flex; align-items: center; justify-content: center }
 .locCard { width: min(640px, 92vw); padding: 44px 42px }
-.locEyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #b2ff1a; margin-bottom: 16px }
+.locEyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #a3e635; margin-bottom: 16px }
 .locTitle { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5vw, 50px); line-height: 0.96; letter-spacing: -0.02em }
 .locSub { font-family: var(--font-body); font-size: 15px; color: rgba(208,224,244,0.66); margin-top: 16px; line-height: 1.6; max-width: 46ch }
 .locActions { display: flex; align-items: center; gap: 14px; margin-top: 28px; flex-wrap: wrap }
@@ -126,7 +126,7 @@
   background: rgba(140,170,210,0.06); outline: none;
   transition: border-color 0.18s;
 }
-.locInput:focus { border-color: rgba(178,255,26,0.45) }
+.locInput:focus { border-color: rgba(163,230,53,0.45) }
 .locInput::placeholder { color: rgba(208,224,244,0.4) }
 .locChips { display: flex; align-items: center; gap: 10px; margin-top: 22px; flex-wrap: wrap }
 .locChips > span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(208,224,244,0.4) }
@@ -148,12 +148,12 @@
 .btn {
   display: inline-flex; align-items: center; gap: 10px;
   padding: 15px 24px; border-radius: 14px;
-  border: 1px solid rgba(178,255,26,0.35);
-  background: rgba(178,255,26,0.10); color: #b2ff1a;
+  border: 1px solid rgba(163,230,53,0.35);
+  background: rgba(163,230,53,0.10); color: #a3e635;
   font-family: var(--font-mono); font-weight: 600; font-size: 13px; letter-spacing: 0.04em;
   cursor: pointer; transition: background 0.18s, border-color 0.18s, transform 0.18s, box-shadow 0.18s;
 }
-.btn:hover { background: rgba(178,255,26,0.16); border-color: rgba(178,255,26,0.55); transform: translateY(-1px); box-shadow: 0 10px 30px rgba(178,255,26,0.14) }
+.btn:hover { background: rgba(163,230,53,0.16); border-color: rgba(163,230,53,0.55); transform: translateY(-1px); box-shadow: 0 10px 30px rgba(163,230,53,0.14) }
 .btn svg { width: 17px; height: 17px }
 .btnGhost {
   display: inline-flex; align-items: center; gap: 8px;
@@ -182,7 +182,7 @@
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 20px }
 .gallery img { width: 100%; height: 116px; object-fit: cover; border-radius: 12px; display: block; border: 1px solid rgba(180,205,235,0.10) }
 .guideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 24px }
-.guideCol h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #b2ff1a; margin: 0 0 10px }
+.guideCol h4 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #a3e635; margin: 0 0 10px }
 .guideCol ul { list-style: none; padding: 0; margin: 0 }
 .guideCol li { font-family: var(--font-body); font-size: 14.5px; color: rgba(208,224,244,0.8); padding: 8px 0; border-bottom: 1px solid rgba(180,205,235,0.08) }
 .guideCol li:last-child { border-bottom: none }
@@ -196,7 +196,7 @@
 .nchip:hover { color: #eaf2ff; border-color: rgba(180,215,245,0.32) }
 .tabs { display: flex; gap: 8px; padding: 16px 26px 6px }
 .tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(208,224,244,0.62); padding: 9px 16px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer }
-.tabOn { color: #05080e; background: #b2ff1a; border-color: #b2ff1a; font-weight: 700 }
+.tabOn { color: #05080e; background: #a3e635; border-color: #a3e635; font-weight: 700 }
 .head { display: grid; grid-template-columns: 1.4fr 1.7fr 1fr 0.9fr; gap: 14px; padding: 14px 26px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(208,224,244,0.4); border-bottom: 1px solid rgba(180,205,235,0.16) }
 .row { display: grid; grid-template-columns: 1.4fr 1.7fr 1fr 0.9fr; gap: 14px; padding: 16px 26px; align-items: center; border-bottom: 1px solid rgba(180,205,235,0.07); cursor: pointer; transition: background 0.15s }
 .row:hover { background: rgba(140,170,210,0.06) }
@@ -229,7 +229,7 @@
   font-family: var(--font-body); font-size: 13.5px;
   color: rgba(208, 224, 244, 0.7); text-decoration: none; transition: color 0.15s;
 }
-.footerLink:hover { color: #b2ff1a }
+.footerLink:hover { color: #a3e635 }
 .footerBottom {
   max-width: 1100px; margin: 36px auto 0; padding-top: 22px;
   border-top: 1px solid rgba(180, 205, 235, 0.1);
@@ -239,7 +239,7 @@
 }
 .footerBottomLinks { display: flex; gap: 16px }
 .footerBottomLinks a { color: rgba(208, 224, 244, 0.6); text-decoration: none }
-.footerBottomLinks a:hover { color: #b2ff1a }
+.footerBottomLinks a:hover { color: #a3e635 }
 
 @media (max-width: 680px) {
   .cover { height: 100svh }

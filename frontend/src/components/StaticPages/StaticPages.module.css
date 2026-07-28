@@ -114,7 +114,7 @@
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #b2ff1a;
+  color: #a3e635;
 }
 .heroTitle {
   font-family: var(--font-display);
@@ -149,7 +149,7 @@
 }
 .body h3:first-child { margin-top: 0 }
 .body p { margin: 0 0 16px }
-.body a { color: #b2ff1a; text-decoration: none }
+.body a { color: #a3e635; text-decoration: none }
 .body a:hover { text-decoration: underline }
 .body ul { margin: 0 0 16px; padding-left: 2px; list-style: none }
 .body li { position: relative; margin-bottom: 12px; padding-left: 22px }
@@ -159,9 +159,9 @@
   left: 2px; top: 10px;
   width: 6px; height: 6px;
   border-radius: 999px;
-  background: #b2ff1a;
+  background: #a3e635;
 }
-.accentText { color: #b2ff1a }
+.accentText { color: #a3e635 }
 
 /* ── FAQ — clean full-page list (no cards) ────────────────────────────────── */
 /* ── FAQ accordion — accessible, grid-morph reveal (no layout animation) ── */
@@ -172,7 +172,7 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(178, 255, 26, 0.7);
+  color: rgba(163, 230, 53, 0.7);
   margin: 0 0 6px;
 }
 
@@ -200,14 +200,14 @@
 }
 .faqQ:hover { color: #fff; }
 .faqQ:focus-visible {
-  outline: 2px solid rgba(178, 255, 26, 0.7);
+  outline: 2px solid rgba(163, 230, 53, 0.7);
   outline-offset: 4px;
   border-radius: 8px;
 }
 
 .faqChevron {
   flex: none;
-  color: rgba(178, 255, 26, 0.7);
+  color: rgba(163, 230, 53, 0.7);
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .faqChevronOpen { transform: rotate(180deg); }
@@ -268,7 +268,7 @@
 }
 .formInput:focus,
 .formTextarea:focus {
-  border-color: rgba(178, 255, 26, 0.45);
+  border-color: rgba(163, 230, 53, 0.45);
   background: rgba(255, 255, 255, 0.06);
 }
 .formTextarea { resize: vertical; min-height: 132px }
@@ -279,10 +279,10 @@
   align-items: center;
   gap: 10px;
   padding: 14px 26px;
-  border: 1px solid rgba(178, 255, 26, 0.4);
+  border: 1px solid rgba(163, 230, 53, 0.4);
   border-radius: 14px;
-  background: rgba(178, 255, 26, 0.10);
-  color: #b2ff1a;
+  background: rgba(163, 230, 53, 0.10);
+  color: #a3e635;
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 13px;
@@ -294,9 +294,9 @@
 .donateBtn { font-size: 14px }
 .formSubmit:hover,
 .donateBtn:hover {
-  background: rgba(178, 255, 26, 0.16);
-  border-color: rgba(178, 255, 26, 0.6);
-  box-shadow: 0 10px 34px rgba(178, 255, 26, 0.16);
+  background: rgba(163, 230, 53, 0.16);
+  border-color: rgba(163, 230, 53, 0.6);
+  box-shadow: 0 10px 34px rgba(163, 230, 53, 0.16);
   transform: translateY(-1px);
 }
 

@@ -58,7 +58,7 @@
   margin-top: 4px;
   padding: 11px 0;
   width: 100%;
-  background: #b2ff1a;
+  background: #a3e635;
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
@@ -70,7 +70,7 @@
   cursor: pointer;
   transition: filter 0.15s, box-shadow 0.15s;
 }
-.cta:hover { filter: brightness(1.08); box-shadow: 0 0 20px rgba(178, 255, 26, 0.4); }
+.cta:hover { filter: brightness(1.08); box-shadow: 0 0 20px rgba(163, 230, 53, 0.4); }
 
 .ctaDot {
   width: 7px;
@@ -106,7 +106,7 @@
   align-items: center;
   gap: 7px;
   padding: 9px 16px;
-  background: #b2ff1a;
+  background: #a3e635;
   color: #06121a;
   border: none;
   border-radius: var(--r-pill);
@@ -121,7 +121,7 @@
   animation: chipIn 0.36s var(--ease-spring-soft);
   transition: filter 0.15s, box-shadow 0.15s;
 }
-.chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(178, 255, 26, 0.45); }
+.chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(163, 230, 53, 0.45); }
 
 @keyframes chipIn {
   from { opacity: 0; transform: scale(0.5); }

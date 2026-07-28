@@ -29,9 +29,9 @@ export default function ContextBanner({ kind, logo, label, sublabel, count, onCl
         position: 'fixed', top: 14, left: '50%', transform: 'translateX(-50%)',
         zIndex: 600, display: 'flex', alignItems: 'center', gap: 12,
         background: 'rgba(6,12,18,0.86)', backdropFilter: 'blur(18px)',
-        border: '1px solid rgba(178,255,26,0.35)', borderRadius: 100,
+        border: '1px solid rgba(163,230,53,0.35)', borderRadius: 100,
         padding: 8, maxWidth: '92vw',
-        boxShadow: '0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(178,255,26,0.08)',
+        boxShadow: '0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(163,230,53,0.08)',
         animation: 'ctxBannerIn 0.44s cubic-bezier(0.34, 1.2, 0.64, 1)',
       }}
     >
@@ -45,12 +45,12 @@ export default function ContextBanner({ kind, logo, label, sublabel, count, onCl
       {count != null && (
         <span style={{
           display: 'flex', alignItems: 'center', gap: 5,
-          background: 'rgba(178,255,26,0.12)', borderRadius: 100,
+          background: 'rgba(163,230,53,0.12)', borderRadius: 100,
           padding: '4px 11px', flexShrink: 0,
-          fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, color: '#b2ff1a',
+          fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, color: '#a3e635',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b2ff1a',
-            boxShadow: '0 0 6px #b2ff1a' }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635',
+            boxShadow: '0 0 6px #a3e635' }} />
           {count} live
         </span>
       )}
@@ -63,7 +63,7 @@ export default function ContextBanner({ kind, logo, label, sublabel, count, onCl
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
       ) : (
-        <span style={{ display: 'flex', flexShrink: 0, color: 'var(--primary-container, #b2ff1a)' }}><KindIcon kind={kind} /></span>
+        <span style={{ display: 'flex', flexShrink: 0, color: 'var(--primary-container, #a3e635)' }}><KindIcon kind={kind} /></span>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
@@ -75,7 +75,7 @@ export default function ContextBanner({ kind, logo, label, sublabel, count, onCl
         {sublabel && (
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: 10,
-            color: 'rgba(178,255,26,0.75)', letterSpacing: '0.04em',
+            color: 'rgba(163,230,53,0.75)', letterSpacing: '0.04em',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{sublabel}</span>
         )}

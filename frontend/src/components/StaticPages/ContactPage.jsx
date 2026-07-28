@@ -48,7 +48,7 @@ export default function ContactPage({ onClose }) {
         <div className={styles.body}>
           {status === 'done' ? (
             <>
-              <p style={{ color: '#b2ff1a', fontFamily: 'var(--font-mono)', fontSize: 13, marginBottom: 8 }}>
+              <p style={{ color: '#a3e635', fontFamily: 'var(--font-mono)', fontSize: 13, marginBottom: 8 }}>
                 Message sent.
               </p>
               <p>We'll get back to you at <strong>{email}</strong>. We read every message.</p>

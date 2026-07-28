@@ -223,7 +223,7 @@ export default function WaitlistPage({ onClose }) {
             {status === 'done' ? (
               <div className={styles.success}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="#b2ff1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  stroke="#a3e635" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 <p className={styles.successText}>You're in. Welcome aboard.</p>

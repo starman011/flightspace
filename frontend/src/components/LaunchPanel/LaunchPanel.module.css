@@ -430,8 +430,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #b2ff1a;
-  box-shadow: 0 0 6px rgba(178, 255, 26, 0.5);
+  background: #a3e635;
+  box-shadow: 0 0 6px rgba(163, 230, 53, 0.5);
   animation: viewerPulse 2s ease-in-out infinite;
 }
 @keyframes viewerPulse {

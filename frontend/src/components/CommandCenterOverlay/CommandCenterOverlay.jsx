@@ -623,7 +623,7 @@ function NewsStack({ news, loadMore, hasMore, fetching, expanded }) {
               {item.summary && <p className={styles.newsExpandedSummary}>{item.summary}</p>}
               <p className={styles.newsExpandedAge}>{timeAgo(item.published_at)}</p>
             </div>
-            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(178,255,26,0.35)', flexShrink: 0, marginTop: 2 }}>open_in_new</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'rgba(163,230,53,0.35)', flexShrink: 0, marginTop: 2 }}>open_in_new</span>
           </div>
         ))}
         {hasMore && (
@@ -1702,7 +1702,7 @@ export default function CommandCenterOverlay({
         <svg className={styles.gridSvg}>
           <defs>
             <pattern id="cc-grid" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#b2ff1a" strokeWidth="0.5" />
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#a3e635" strokeWidth="0.5" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#cc-grid)" />
@@ -1720,7 +1720,7 @@ export default function CommandCenterOverlay({
         >
           <span className={`${styles.dot} ${isLive ? styles.dotLive : styles.dotOff}`} />
           <span className={styles.heroDockLabel}>Observer</span>
-          <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(178,255,26,0.55)' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'rgba(163,230,53,0.55)' }}>
             expand_less
           </span>
         </button>
@@ -1789,7 +1789,7 @@ export default function CommandCenterOverlay({
           onClick={() => { userToggledFeedRef.current = true; setDesktopOpen(d => d === 'collapsed' ? 'open' : 'collapsed') }}
           title={desktopOpen === 'collapsed' ? 'Open Feed' : 'Collapse Feed'}
         >
-          <span className={`material-symbols-outlined ${styles.desktopTabChev}`} style={{ fontSize: 14, color: 'rgba(178,255,26,0.5)' }}>
+          <span className={`material-symbols-outlined ${styles.desktopTabChev}`} style={{ fontSize: 14, color: 'rgba(163,230,53,0.5)' }}>
             {desktopOpen === 'collapsed' ? 'chevron_left' : 'chevron_right'}
           </span>
           <span className={styles.desktopTabLabel}>Feed</span>

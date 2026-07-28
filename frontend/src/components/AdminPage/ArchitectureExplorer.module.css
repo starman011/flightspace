@@ -54,12 +54,12 @@
   transition: 0.18s;
 }
 
-.pick:hover { border-color: rgba(178, 255, 26, 0.4); color: #eaf2ff; }
+.pick:hover { border-color: rgba(163, 230, 53, 0.4); color: #eaf2ff; }
 
 .pickOn {
-  border-color: rgba(178, 255, 26, 0.6);
-  background: rgba(178, 255, 26, 0.1);
-  color: #b2ff1a;
+  border-color: rgba(163, 230, 53, 0.6);
+  background: rgba(163, 230, 53, 0.1);
+  color: #a3e635;
 }
 
 /* Flow header + transport controls */
@@ -83,7 +83,7 @@
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  color: rgba(178, 255, 26, 0.65);
+  color: rgba(163, 230, 53, 0.65);
   margin-top: 2px;
 }
 
@@ -103,7 +103,7 @@
   transition: 0.15s;
 }
 
-.ctl:hover { border-color: rgba(178, 255, 26, 0.5); color: #b2ff1a; }
+.ctl:hover { border-color: rgba(163, 230, 53, 0.5); color: #a3e635; }
 
 /* Step list */
 .steps {
@@ -211,7 +211,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.6;
-  color: rgba(178, 255, 26, 0.85);
+  color: rgba(163, 230, 53, 0.85);
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(200, 210, 225, 0.08);
   border-radius: 10px;

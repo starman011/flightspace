@@ -11,7 +11,7 @@ const LAYERS = {
   network:    { label: 'NETWORK',    hue: '#94a3b8', tip: 'What HTTP itself does between browser and server' },
   router:     { label: 'ROUTER',     hue: '#c4b5fd', tip: 'Matches method + URL to a handler function' },
   middleware: { label: 'MIDDLEWARE', hue: '#fbbf24', tip: 'Wraps handlers — runs before them (rate limit, auth, CORS)' },
-  controller: { label: 'CONTROLLER', hue: '#b2ff1a', tip: 'Handler: parses the request, orchestrates, writes the response' },
+  controller: { label: 'CONTROLLER', hue: '#a3e635', tip: 'Handler: parses the request, orchestrates, writes the response' },
   service:    { label: 'SERVICE',    hue: '#5eead4', tip: 'Business rules — validation, decisions (inline here)' },
   repository: { label: 'REPOSITORY', hue: '#60a5fa', tip: 'The code that talks to the database (inline here, via pgx)' },
   postgres:   { label: 'POSTGRES',   hue: '#818cf8', tip: 'The database engine itself' },
