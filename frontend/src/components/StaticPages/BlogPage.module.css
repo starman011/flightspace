@@ -193,3 +193,7 @@
 
 /* After first load, tiles render at rest — no entrance replay on filter/tab */
 .tileSettled { animation: none; opacity: 1; transform: none; }
+
+/* Fade tile images in on load — no pop when the APOD/eng image resolves */
+.tileImg { opacity: 0; transition: opacity 0.35s ease; }
+.imgLoaded { opacity: 1 !important; }

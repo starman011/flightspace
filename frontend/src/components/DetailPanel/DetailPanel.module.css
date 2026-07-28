@@ -85,6 +85,8 @@
   background: rgba(8, 12, 20, 1);
 }
 
+.heroImg { opacity: 0; transition: opacity 0.3s ease; }
+.imgLoaded { opacity: 1 !important; }
 .heroImg {
   width: 100%;
   height: 210px;

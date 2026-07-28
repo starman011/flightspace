@@ -663,6 +663,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                   alt="aircraft"
                   loading="lazy"
                   referrerPolicy="no-referrer"
+                  onLoad={e => e.currentTarget.classList.add(styles.imgLoaded)}
                   onError={() => setPhoto(null)}
                 />
               ) : (

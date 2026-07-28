@@ -202,7 +202,7 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
                 onClick={() => openPost(p.slug)}
               >
                 {p.image_url
-                  ? <img className={styles.tileImg} src={p.image_url} alt={p.title} loading="lazy" />
+                  ? <img className={styles.tileImg} src={p.image_url} alt={p.title} loading="lazy" onLoad={e => e.currentTarget.classList.add(styles.imgLoaded)} />
                   : p.category === 'engineering'
                     ? <div className={styles.tileEng}>{'{ }'}</div>
                     : <div className={styles.tileVideo}>▶</div>}
