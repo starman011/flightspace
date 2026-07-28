@@ -1,6 +1,6 @@
 .overlay {
   position: fixed; inset: 0; z-index: 4000;
-  background: #050a0f; overflow-y: auto;
+  background: var(--page-bg); overflow-y: auto;
   font-family: var(--font-body, system-ui, sans-serif); color: var(--text-strong);
 }
 .close {
