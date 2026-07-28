@@ -167,7 +167,7 @@
     align-items: stretch;
     gap: 0;
     padding: 4px;
-    width: 72px;                     /* chip: hamburger + current icon */
+    width: 86px;                     /* chip: bigger hamburger + current icon */
     border-radius: 18px;             /* fixed sane radius — no 9999px tween glitch */
     overflow: hidden;
     transition: width 0.38s cubic-bezier(0.32, 1.2, 0.42, 1),
@@ -181,13 +181,13 @@
     gap: 4px;
   }
   .groupDivider { display: none; }   /* the vertical menu doesn't need the section rule */
-  .toggle { display: flex; width: 28px; height: 28px; flex: none; }
+  .toggle { display: flex; width: 36px; height: 36px; flex: none; }
   .current {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     color: #a3e635;
     opacity: 1;
     transition: opacity 0.2s ease;
