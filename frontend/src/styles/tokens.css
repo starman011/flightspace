@@ -171,43 +171,43 @@
    ink, dark glass -> white glass, white gloss -> a faint dark hairline.
    Brand green deepens for contrast on white; blue is the vivid desertcart blue. */
 [data-theme='light'] {
-  /* Palette: BLUE + GREEN + WHITE. Blue drives links/actions/focus, green is
-     the brand highlight (active nav / LIVE-adjacent), ink is navy-tinted so
-     even the text carries a cool blue cast. */
-  --green:      #3f7a00;              /* readable green for text/borders */
-  --green-rgb:  188, 228, 25;         /* vivid #bce419 lime for fills/tints */
-  --blue:       #0043f0;              /* the desertcart blue — the theme's spine */
+  /* Palette: BLUE + BLACK text + WHITE. Blue #0043f0 is the DOMINANT color —
+     the brand/active/primary role (what is green in dark) becomes blue here.
+     Text is near-black on the light-blue surfaces; white on solid-blue fills. */
+  --green:      #0043f0;              /* brand/active -> blue in the light theme */
+  --green-rgb:  0, 67, 240;
+  --blue:       #0043f0;              /* the desertcart blue — the spine */
   --blue-rgb:   0, 67, 240;
-  --teal:       #0d9488;              /* deep teal — readable on white */
-  --teal-rgb:   13, 148, 136;
+  --teal:       #0d6ea8;              /* deep blue-teal, readable on white */
+  --teal-rgb:   13, 110, 168;
   --amber:      #b45309;              /* deep amber — readable on white */
   --amber-rgb:  180, 83, 9;
-  --violet:     #6d28d9;              /* deep violet — readable on white */
-  --violet-rgb: 109, 40, 217;
+  --violet:     #3730c0;              /* deep blue-violet, readable on white */
+  --violet-rgb: 55, 48, 192;
 
-  --ink-rgb:            22, 34, 66;     /* navy-tinted ink */
-  --ink-muted-rgb:      86, 100, 140;   /* muted captions */
-  --ink-cool-rgb:       0, 67, 240;     /* cool text -> the blue */
-  --surface-rgb:        227, 237, 255;  /* blue-tinted glass (not stark white) */
-  --surface-deep-rgb:   210, 225, 252;  /* deeper blue-white */
-  --surface-raised-rgb: 216, 229, 252;  /* raised chips, blue */
-  --line-rgb:           30, 64, 150;    /* blue hairlines / dividers */
-  --gloss-rgb:          20, 45, 110;    /* "gloss"/hairline -> blue line */
-  --text-strong:        #061640;        /* deep navy headings */
-  --page-bg:            #dbe7ff;        /* clearly blue page wash */
+  --ink-rgb:            17, 22, 33;      /* near-black text */
+  --ink-muted-rgb:      84, 92, 110;     /* grey muted captions */
+  --ink-cool-rgb:       0, 67, 240;      /* cool text -> the blue */
+  --surface-rgb:        224, 235, 255;   /* light-blue glass (blue-dominant, not white) */
+  --surface-deep-rgb:   204, 222, 252;   /* deeper blue */
+  --surface-raised-rgb: 212, 227, 253;   /* raised chips, blue */
+  --line-rgb:           0, 67, 240;      /* blue hairlines / dividers */
+  --gloss-rgb:          0, 60, 210;      /* "gloss"/hairline -> blue line */
+  --text-strong:        #08101f;         /* near-black headings */
+  --page-bg:            #cbdcff;         /* dominant blue page wash */
 
   /* Legacy semantic tokens some components still use directly */
-  --on-surface:         #16223f;
-  --on-surface-variant: #4a5788;
-  --surface:            #dbe7ff;
-  --surface-dim:        #cddcfb;
-  --surface-container-low:     #e2ecff;
-  --surface-container:         #d6e3fc;
-  --surface-container-high:    #c8d9f8;
-  --primary-container:  #0043f0;        /* blue — used by several active states */
-  --glass-fill:   rgba(230, 240, 255, 0.86);
-  --glass-fill-2: rgba(222, 234, 255, 0.66);
-  --glass-line:   rgba(30, 64, 150, 0.18);
+  --on-surface:         #11151f;        /* near-black */
+  --on-surface-variant: #44506e;
+  --surface:            #cbdcff;
+  --surface-dim:        #bcd2fb;
+  --surface-container-low:     #d8e6ff;
+  --surface-container:         #cadcfc;
+  --surface-container-high:    #bcd2f8;
+  --primary-container:  #0043f0;        /* blue — active/primary states */
+  --glass-fill:   rgba(222, 235, 255, 0.88);
+  --glass-fill-2: rgba(210, 227, 255, 0.7);
+  --glass-line:   rgba(0, 67, 240, 0.22);
   --glass-gloss:  rgba(255, 255, 255, 0.95);
   --glass-shadow-nav:   0 6px 20px rgba(20, 40, 90, 0.10), 0 1px 3px rgba(20, 40, 90, 0.08);
   --glass-shadow:       0 14px 44px rgba(20, 40, 90, 0.15), 0 2px 8px rgba(20, 40, 90, 0.10);
