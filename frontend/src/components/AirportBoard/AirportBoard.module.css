@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: #06090f;
+  background: rgb(var(--surface-deep-rgb));
 }
 
 .board {
@@ -13,7 +13,7 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, rgba(10, 15, 22, 0.99), rgba(7, 11, 17, 1));
+  background: linear-gradient(180deg, rgba(var(--surface-rgb), 0.99), rgba(7, 11, 17, 1));
   overflow: hidden;
   transform-origin: center center;
   animation: expand 0.42s var(--ease-camera) both;

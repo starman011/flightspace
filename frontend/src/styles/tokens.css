@@ -24,6 +24,7 @@
   --surface-rgb:        13, 19, 28;     /* glass fills */
   --surface-deep-rgb:   8, 12, 20;      /* deeper fills, identity strips */
   --surface-raised-rgb: 44, 57, 71;     /* raised chips, badges */
+  --line-rgb:           59, 73, 76;     /* structural hairlines / dividers */
   --gloss-rgb:          255, 255, 255;  /* top-rim gloss + white highlights */
   --text-strong:        #f3f2ec;        /* headings */
   --page-bg:            #0f1419;        /* full-screen reading pages */
@@ -178,6 +179,7 @@
   --surface-rgb:        255, 255, 255;  /* white glass */
   --surface-deep-rgb:   240, 244, 252;  /* faint blue-white */
   --surface-raised-rgb: 230, 237, 249;  /* raised chips, blue tint */
+  --line-rgb:           20, 40, 90;     /* structural hairlines / dividers */
   --gloss-rgb:          20, 40, 90;     /* "gloss"/hairline -> subtle navy line */
   --text-strong:        #0a1836;        /* navy headings */
   --page-bg:            #f4f7fe;        /* faint blue-white pages */

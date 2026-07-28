@@ -99,10 +99,10 @@
 }
 
 .statCard {
-  background: rgba(23, 28, 34, 0.65);
+  background: rgba(var(--surface-raised-rgb), 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(59, 73, 76, 0.15);
+  border: 1px solid rgba(var(--line-rgb), 0.15);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
 }
@@ -134,10 +134,10 @@
 /* Focused entity card */
 
 .focusCard {
-  background: rgba(23, 28, 34, 0.65);
+  background: rgba(var(--surface-raised-rgb), 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(59, 73, 76, 0.15);
+  border: 1px solid rgba(var(--line-rgb), 0.15);
   box-shadow: inset 2px 0 0 -1px rgba(var(--green-rgb), 0.55);   /* soft left accent, not a slop side-tab */
   border-radius: var(--radius-lg);
   padding: var(--space-5);
@@ -336,7 +336,7 @@
   width: 360px;
 
   /* Match pill glass exactly */
-  background: rgba(8, 12, 18, 0.94);
+  background: rgba(var(--surface-deep-rgb), 0.94);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
 
@@ -537,7 +537,7 @@
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  background: #020508;
+  background: rgb(var(--surface-deep-rgb));
   min-height: 200px;
 }
 .apodStack::after {
@@ -640,7 +640,7 @@
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  background: #0a040a;
+  background: rgb(var(--surface-deep-rgb));
   min-height: 200px;
 }
 .solarStack::after {
@@ -844,7 +844,7 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   letter-spacing: -0.01em;
 }
 
@@ -871,7 +871,7 @@
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  background: #030810;
+  background: rgb(var(--surface-deep-rgb));
   background-size: cover;
   background-position: center;
 }
@@ -989,7 +989,7 @@
   font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 600;
-  color: rgba(223, 232, 245, 0.82);
+  color: rgba(var(--ink-rgb), 0.82);
   line-height: 1.35;
   letter-spacing: -0.01em;
   display: -webkit-box;
@@ -1093,7 +1093,7 @@
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  background: linear-gradient(165deg, #020b1e 0%, #030e22 55%, #020710 100%);
+  background: linear-gradient(165deg, rgb(var(--surface-deep-rgb)) 0%, rgb(var(--surface-deep-rgb)) 55%, rgb(var(--surface-deep-rgb)) 100%);
 }
 .cometHero::after {
   content: '';
@@ -1104,7 +1104,7 @@
   transition: box-shadow 0.2s;
   pointer-events: none;
 }
-.cometHero:hover::after { box-shadow: inset 0 0 0 1px rgba(180,210,255,0.18); }
+.cometHero:hover::after { box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.18); }
 
 /* CSS starfield + comet streak via box-shadow */
 .cometStars {
@@ -1165,7 +1165,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(180, 210, 255, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
 }
 
 .cometDesc {
@@ -1244,7 +1244,7 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.82);
+  color: rgba(var(--ink-rgb), 0.82);
   flex: 1;
   letter-spacing: -0.01em;
 }
@@ -1415,7 +1415,7 @@
 
 .pinnedSep {
   font-size: 1.2rem;
-  color: rgba(59, 73, 76, 0.6);
+  color: rgba(var(--line-rgb), 0.6);
   font-weight: 100;
   padding: 0 2px;
 }
@@ -1516,7 +1516,7 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  background: rgba(23, 28, 34, 0.7);
+  background: rgba(var(--surface-raised-rgb), 0.7);
   border: 1px solid rgba(var(--ink-rgb), 0.15);
   border-radius: 10px;
   color: rgba(var(--ink-rgb), 0.5);
@@ -1624,7 +1624,7 @@
 
   /* ── Collapsed pull-tab: pill gradient border + "pull me" animation ─────── */
   .streamDesktopCollapsed .desktopTab {
-    background: rgba(10, 14, 20, 0.94);
+    background: rgba(var(--surface-rgb), 0.94);
     animation: feedTabPull 2.2s ease-in-out infinite;
   }
   /* Animated gradient ring (same palette as the scale pill) drawn via mask */
@@ -1897,7 +1897,7 @@
   .mobileSheetDividerLine {
     flex: 1;
     height: 1px;
-    background: rgba(59, 73, 76, 0.3);
+    background: rgba(var(--line-rgb), 0.3);
   }
 
   .mobileSheetDividerLabel {
@@ -2076,7 +2076,7 @@
 
 .showerCard {
   background: rgba(5, 10, 20, 0.75);
-  border: 1px solid rgba(59, 73, 76, 0.22);
+  border: 1px solid rgba(var(--line-rgb), 0.22);
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
@@ -2096,7 +2096,7 @@
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.92);
+  color: rgba(var(--ink-rgb), 0.92);
   letter-spacing: -0.01em;
   margin-bottom: 2px;
 }
@@ -2162,7 +2162,7 @@
 
 .showerZhrBar {
   height: 2px;
-  background: rgba(59, 73, 76, 0.3);
+  background: rgba(var(--line-rgb), 0.3);
   border-radius: 1px;
   overflow: hidden;
 }
@@ -2256,7 +2256,7 @@
 
 .kpChartWrap {
   background: rgba(5, 10, 20, 0.6);
-  border: 1px solid rgba(59, 73, 76, 0.2);
+  border: 1px solid rgba(var(--line-rgb), 0.2);
   border-radius: 12px;
   padding: 12px 14px;
   flex-shrink: 0;
@@ -2320,7 +2320,7 @@
 
 .solarCycleCard {
   background: rgba(5, 10, 20, 0.6);
-  border: 1px solid rgba(59, 73, 76, 0.2);
+  border: 1px solid rgba(var(--line-rgb), 0.2);
   border-radius: 12px;
   padding: 12px 14px;
   flex-shrink: 0;
@@ -2330,7 +2330,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin-bottom: 6px;
 }
 
@@ -2414,7 +2414,7 @@
   align-items: flex-start;
   gap: 10px;
   background: rgba(5, 8, 18, 0.7);
-  border: 1px solid rgba(59, 73, 76, 0.18);
+  border: 1px solid rgba(var(--line-rgb), 0.18);
   border-radius: 12px;
   padding: 11px 12px;
   cursor: pointer;
@@ -2449,7 +2449,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.88);
+  color: rgba(var(--ink-rgb), 0.88);
   line-height: 1.3;
   letter-spacing: -0.01em;
   margin-bottom: 3px;
@@ -2511,7 +2511,7 @@
 
 .cometExpandedCard {
   background: rgba(var(--surface-deep-rgb), 0.8);
-  border: 1px solid rgba(180, 210, 255, 0.1);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 8px;
@@ -2529,7 +2529,7 @@
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 800;
-  color: rgba(223, 232, 245, 0.9);
+  color: rgba(var(--ink-rgb), 0.9);
   letter-spacing: -0.01em;
   margin-bottom: 2px;
 }
@@ -2539,7 +2539,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(180, 210, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
 }
 
 .cometExpandedPeri {
@@ -2589,7 +2589,7 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: rgba(var(--green-rgb), 0.38);
-  border-bottom: 1px solid rgba(59, 73, 76, 0.2);
+  border-bottom: 1px solid rgba(var(--line-rgb), 0.2);
 }
 
 .planetsExpandedRow {
@@ -2598,7 +2598,7 @@
   align-items: center;
   padding: 7px 12px;
   transition: background 0.12s;
-  border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+  border-bottom: 1px solid rgba(var(--line-rgb), 0.1);
 }
 .planetsExpandedRow:last-child { border-bottom: none; }
 .planetsExpandedRow:hover { background: rgba(var(--green-rgb), 0.04); }
@@ -2610,7 +2610,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
-  color: rgba(223, 232, 245, 0.82);
+  color: rgba(var(--ink-rgb), 0.82);
 }
 
 .planetsExpandedSky {

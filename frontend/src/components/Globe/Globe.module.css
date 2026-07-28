@@ -1,7 +1,7 @@
 .globe {
   position: fixed;
   inset: 0;
-  background: #0f1419;
+  background: rgb(var(--surface-rgb));
   overflow: hidden;
 }
 .globe canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
@@ -27,7 +27,7 @@
 .mapToggle button {
   background: transparent;
   border: none;
-  color: rgba(180, 210, 255, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
   font-size: 11px;
   letter-spacing: 0.04em;
   padding: 4px 11px;
@@ -114,7 +114,7 @@
   font-family: 'Space Mono', 'Courier New', monospace;
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: rgba(180, 210, 255, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
 }
 
 .skyLabel {

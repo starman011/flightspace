@@ -21,7 +21,7 @@
   padding: 26px;
   border-radius: 22px;
   border: 1px solid rgba(var(--ink-rgb), 0.14);
-  background: linear-gradient(180deg, rgba(20, 26, 34, 0.96), rgba(10, 14, 20, 0.98));
+  background: linear-gradient(180deg, rgba(20, 26, 34, 0.96), rgba(var(--surface-rgb), 0.98));
   box-shadow: var(--glass-shadow-modal);
   animation: pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -86,7 +86,7 @@
   border: none;
   border-radius: 14px;
   background: var(--green);
-  color: #05080e;
+  color: rgb(var(--surface-deep-rgb));
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 14px;

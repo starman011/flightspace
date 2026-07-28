@@ -65,7 +65,7 @@
   height: 14px;
   border-radius: 7px;
   background: var(--green);
-  color: #050a0f;
+  color: rgb(var(--surface-deep-rgb));
   font-size: 9px;
   font-weight: 700;
   display: flex;

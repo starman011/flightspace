@@ -10,7 +10,7 @@
   font-family: var(--font-body);
   font-size: 12.5px;
   line-height: 1.55;
-  color: rgba(200, 215, 235, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
   margin: 0;
 }
 
@@ -161,7 +161,7 @@
 .card {
   border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px;
-  background: rgba(10, 15, 22, 0.72);
+  background: rgba(var(--surface-rgb), 0.72);
   padding: 12px 14px;
   margin-bottom: 10px;
   transition: border-color 0.3s, background 0.3s;
@@ -194,7 +194,7 @@
 .file {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(200, 215, 235, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   overflow-wrap: anywhere;
 }
 
@@ -225,7 +225,7 @@
   font-family: var(--font-body);
   font-size: 12px;
   line-height: 1.55;
-  color: rgba(200, 215, 235, 0.68);
+  color: rgba(var(--ink-rgb), 0.68);
   margin: 0;
 }
 

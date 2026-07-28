@@ -170,7 +170,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #06121a;
+  color: rgb(var(--surface-deep-rgb));
   cursor: pointer;
   transition: filter 0.15s, box-shadow 0.15s, transform 0.1s;
 }

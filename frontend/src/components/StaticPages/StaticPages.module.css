@@ -61,7 +61,7 @@
   justify-content: center;
   border: 1px solid rgba(var(--gloss-rgb), 0.14);
   border-radius: 999px;
-  background: rgba(14, 18, 26, 0.55);
+  background: rgba(var(--surface-rgb), 0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: rgba(232, 238, 248, 0.85);
@@ -70,7 +70,7 @@
 }
 .closeBtn:hover,
 .heroClose:hover {
-  background: rgba(26, 32, 44, 0.82);
+  background: rgba(var(--surface-raised-rgb), 0.82);
   color: var(--text-strong);
   transform: scale(1.06);
 }
@@ -99,7 +99,7 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(5, 8, 14, 0.08) 22%, rgba(5, 8, 14, 0.52) 58%, #05080e 100%);
+  background: linear-gradient(180deg, rgba(var(--surface-deep-rgb), 0.08) 22%, rgba(var(--surface-deep-rgb), 0.52) 58%, rgb(var(--surface-deep-rgb)) 100%);
 }
 .heroText {
   position: absolute;

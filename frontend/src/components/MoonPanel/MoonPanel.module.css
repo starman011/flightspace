@@ -10,7 +10,7 @@
   max-height: calc(100dvh - 88px);
   overflow-y: auto;
 
-  background: rgba(8, 12, 18, 0.94);
+  background: rgba(var(--surface-deep-rgb), 0.94);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
 
@@ -232,7 +232,7 @@
   border-radius: 14px;
   border: 1px solid rgba(var(--ink-rgb), 0.16);
   background:
-    radial-gradient(130% 130% at 28% 18%, rgba(var(--ink-rgb), 0.10), rgba(8, 12, 18, 0.15));
+    radial-gradient(130% 130% at 28% 18%, rgba(var(--ink-rgb), 0.10), rgba(var(--surface-deep-rgb), 0.15));
   animation: phaseCardIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes phaseCardIn {

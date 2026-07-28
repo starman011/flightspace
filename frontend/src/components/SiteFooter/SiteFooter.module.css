@@ -3,7 +3,7 @@
   position: fixed; left: 16px; bottom: 20px; z-index: 690;
   display: flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-  background: rgba(6, 12, 18, 0.82); backdrop-filter: blur(14px);
+  background: rgba(var(--surface-deep-rgb), 0.82); backdrop-filter: blur(14px);
   border: 1px solid rgba(var(--green-rgb), 0.28);
   color: rgba(var(--green-rgb), 0.9);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
@@ -16,7 +16,7 @@
 
 .footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 700;
-  background: rgba(4, 9, 14, 0.96);
+  background: rgba(var(--surface-deep-rgb), 0.96);
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(var(--green-rgb), 0.22);
   transform: translateY(100%);
@@ -31,7 +31,7 @@
 .handle {
   position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
   width: 56px; height: 22px; border: none; cursor: pointer;
-  background: rgba(4, 9, 14, 0.96); border-radius: 8px 8px 0 0;
+  background: rgba(var(--surface-deep-rgb), 0.96); border-radius: 8px 8px 0 0;
   border: 1px solid rgba(var(--green-rgb), 0.22); border-bottom: none;
   display: flex; align-items: center; justify-content: center;
   color: rgba(var(--green-rgb), 0.75); transition: color .18s, background .18s;

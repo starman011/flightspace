@@ -59,7 +59,7 @@
   padding: 11px 0;
   width: 100%;
   background: var(--green);
-  color: #06121a;
+  color: rgb(var(--surface-deep-rgb));
   border: none;
   border-radius: var(--r-pill);
   font-family: var(--font-mono);
@@ -107,7 +107,7 @@
   gap: 7px;
   padding: 9px 16px;
   background: var(--green);
-  color: #06121a;
+  color: rgb(var(--surface-deep-rgb));
   border: none;
   border-radius: var(--r-pill);
   box-shadow: var(--glass-shadow);

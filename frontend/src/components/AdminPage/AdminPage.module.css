@@ -5,7 +5,7 @@
   overflow-y: auto;
   background:
     radial-gradient(120% 70% at 50% -8%, rgba(28, 54, 84, 0.30), transparent 55%),
-    linear-gradient(180deg, #070b12 0%, #05080e 100%);
+    linear-gradient(180deg, rgb(var(--surface-deep-rgb)) 0%, rgb(var(--surface-deep-rgb)) 100%);
   color: var(--text-strong);
   animation: fadeIn 0.28s ease;
 }
@@ -15,10 +15,10 @@
   position: fixed; top: 20px; right: 20px; z-index: 4;
   width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
   border: 1px solid rgba(var(--gloss-rgb), 0.14); border-radius: 999px;
-  background: rgba(14,18,26,0.6); backdrop-filter: blur(14px);
+  background: rgba(var(--surface-rgb), 0.6); backdrop-filter: blur(14px);
   color: rgba(230,236,246,0.85); cursor: pointer; transition: 0.18s;
 }
-.close:hover { background: rgba(26,32,44,0.85); color: var(--text-strong) }
+.close:hover { background: rgba(var(--surface-raised-rgb), 0.85); color: var(--text-strong) }
 .close svg { width: 16px; height: 16px }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: clamp(40px, 8vh, 88px) 20px 80px }
@@ -26,7 +26,7 @@
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 26px }
 .kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--green); margin-bottom: 10px }
 .title { font-family: var(--font-display); font-size: clamp(26px, 5vw, 40px); font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px }
-.badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #05080e; background: var(--green); padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em }
+.badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: rgb(var(--surface-deep-rgb)); background: var(--green); padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em }
 
 .info { font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.5); padding: 20px 0 }
 
@@ -34,7 +34,7 @@
 .tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: rgba(var(--ink-rgb), 0.6);
   padding: 9px 15px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer }
 .tab:hover { color: var(--text-strong) }
-.tabOn { color: #05080e; background: var(--green); border-color: var(--green); font-weight: 700 }
+.tabOn { color: rgb(var(--surface-deep-rgb)); background: var(--green); border-color: var(--green); font-weight: 700 }
 
 .syncRow { display: flex; gap: 8px; margin-bottom: 16px }
 .syncInput { flex: 1; min-width: 0; box-sizing: border-box; padding: 10px 14px; border-radius: 10px;
@@ -57,7 +57,7 @@
 .meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0 }
 .time { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.4) }
 .pill { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px }
-.pillNew { color: #05080e; background: var(--green) }
+.pillNew { color: rgb(var(--surface-deep-rgb)); background: var(--green) }
 .pillReplied { color: #5fd38a; border: 1px solid rgba(95,211,138,0.4) }
 
 .body { padding: 4px 18px 18px; border-top: 1px solid rgba(var(--ink-rgb), 0.08) }
@@ -72,12 +72,12 @@
 .textarea:focus { border-color: rgba(var(--green-rgb), 0.45) }
 
 .actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px }
-.primary { font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; color: #05080e; background: var(--green); border: none; padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: 0.18s }
+.primary { font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; color: rgb(var(--surface-deep-rgb)); background: var(--green); border: none; padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: 0.18s }
 .primary:hover { filter: brightness(1.08) }
 .primary:disabled { opacity: 0.45; cursor: not-allowed }
 .ghost { font-family: var(--font-mono); font-size: 12px; color: rgba(var(--ink-rgb), 0.6); text-decoration: none; padding: 10px 14px; border: 1px solid rgba(var(--ink-rgb), 0.16); border-radius: 12px; background: none; cursor: pointer }
-.ghost:hover { color: var(--text-strong); border-color: rgba(180,215,245,0.32) }
+.ghost:hover { color: var(--text-strong); border-color: rgba(var(--ink-rgb), 0.32) }
 
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 5;
   font-family: var(--font-mono); font-size: 13px; color: var(--text-strong); padding: 12px 20px; border-radius: 12px;
-  background: rgba(14,20,28,0.92); border: 1px solid rgba(180,215,245,0.24); backdrop-filter: blur(14px) }
+  background: rgba(14,20,28,0.92); border: 1px solid rgba(var(--ink-rgb), 0.24); backdrop-filter: blur(14px) }

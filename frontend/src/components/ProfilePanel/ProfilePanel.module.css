@@ -88,7 +88,7 @@
   margin-top: -28px;
   position: relative;
   z-index: 1;
-  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
+  border-bottom: 1px solid rgba(var(--line-rgb), 0.15);
   flex-shrink: 0;
 }
 
@@ -142,7 +142,7 @@
 .tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid rgba(59, 73, 76, 0.15);
+  border-bottom: 1px solid rgba(var(--line-rgb), 0.15);
   flex-shrink: 0;
   padding: 0 24px;
 }
@@ -238,7 +238,7 @@
   justify-content: space-between;
   padding: 12px 14px;
   background: rgba(var(--gloss-rgb), 0.02);
-  border: 1px solid rgba(59, 73, 76, 0.12);
+  border: 1px solid rgba(var(--line-rgb), 0.12);
   border-radius: 12px;
   margin-bottom: 8px;
   cursor: pointer;
@@ -381,7 +381,7 @@
 .footer {
   flex-shrink: 0;
   padding: 12px 16px;
-  border-top: 1px solid rgba(59, 73, 76, 0.15);
+  border-top: 1px solid rgba(var(--line-rgb), 0.15);
 }
 
 .signOutBtn {

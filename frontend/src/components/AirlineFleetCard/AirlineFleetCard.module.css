@@ -62,7 +62,7 @@
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  color: rgba(200, 215, 235, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
 }
 
 .stat {
@@ -112,7 +112,7 @@
   font-family: var(--font-body);
   font-size: 11.5px;
   line-height: 1.5;
-  color: rgba(200, 215, 235, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
   margin: 0;
 }
 

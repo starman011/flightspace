@@ -370,7 +370,7 @@
   transform: translateX(-50%) rotate(45deg);
   width: 10px;
   height: 10px;
-  background: rgba(10, 14, 20, 0.96);
+  background: rgba(var(--surface-rgb), 0.96);
   border-right: 1px solid rgba(var(--ink-rgb), 0.1);
   border-bottom: 1px solid rgba(var(--ink-rgb), 0.1);
 }

@@ -11,8 +11,8 @@
 
 .input, .textarea {
   width: 100%;
-  background: rgba(10, 15, 22, 0.72);
-  border: 1px solid rgba(200, 214, 235, 0.12);
+  background: rgba(var(--surface-rgb), 0.72);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
   border-radius: 12px;
   padding: 11px 14px;
   color: var(--text-strong);
@@ -35,7 +35,7 @@
 
 .save {
   border: none; border-radius: 999px; padding: 11px 24px;
-  background: var(--green); color: #06121a;
+  background: var(--green); color: rgb(var(--surface-deep-rgb));
   font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: 0.05em;
   cursor: pointer; transition: filter 0.15s;
 }
@@ -43,7 +43,7 @@
 .save:disabled { opacity: 0.5; cursor: default; }
 
 .ghost {
-  border: 1px solid rgba(200, 214, 235, 0.18); border-radius: 999px; padding: 10px 18px;
+  border: 1px solid rgba(var(--ink-rgb), 0.18); border-radius: 999px; padding: 10px 18px;
   background: none; color: rgba(var(--ink-rgb), 0.75);
   font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: 0.15s;
 }
@@ -61,8 +61,8 @@
 
 .item {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: rgba(10, 15, 22, 0.6);
-  border: 1px solid rgba(200, 214, 235, 0.1);
+  background: rgba(var(--surface-rgb), 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px; padding: 13px 16px;
 }
 .itemMain { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

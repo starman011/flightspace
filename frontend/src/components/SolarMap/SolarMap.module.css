@@ -5,8 +5,8 @@
   min-height: 480px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(59,73,76,0.15);
-  background: #060c12;
+  border: 1px solid rgba(var(--line-rgb), 0.15);
+  background: rgb(var(--surface-deep-rgb));
 }
 
 .canvas {
@@ -23,11 +23,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: rgba(6,12,18,0.7);
+  background: rgba(var(--surface-deep-rgb), 0.7);
   border-radius: var(--radius-pill);
   padding: 5px 12px;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(59,73,76,0.15);
+  border: 1px solid rgba(var(--line-rgb), 0.15);
 }
 
 .legendItem {
@@ -67,6 +67,6 @@
   font-size: 9px;
   color: rgba(var(--ink-cool-rgb), 0.2);
   letter-spacing: 0.05em;
-  border-left: 1px solid rgba(59,73,76,0.3);
+  border-left: 1px solid rgba(var(--line-rgb), 0.3);
   padding-left: 12px;
 }
