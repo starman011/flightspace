@@ -18,7 +18,7 @@
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
   transform-origin: top left;
-  animation: cardGrow 0.5s cubic-bezier(0.34, 1.35, 0.64, 1);
+  animation: cardGrow 0.44s var(--ease-spring-soft);
 }
 
 @keyframes cardGrow {
@@ -118,7 +118,7 @@
   text-transform: uppercase;
   cursor: pointer;
   transform-origin: top left;
-  animation: chipIn 0.4s cubic-bezier(0.34, 1.35, 0.64, 1);
+  animation: chipIn 0.36s var(--ease-spring-soft);
   transition: filter 0.15s, box-shadow 0.15s;
 }
 .chip:hover { filter: brightness(1.08); box-shadow: 0 0 18px rgba(178, 255, 26, 0.45); }

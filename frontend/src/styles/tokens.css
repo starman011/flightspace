@@ -103,6 +103,7 @@
   --ease-camera:  cubic-bezier(0.16, 1, 0.3, 1);
   --ease-panel:   cubic-bezier(0.4, 0, 0.2, 1);
   --ease-drift:   linear;
+  --ease-spring-soft: cubic-bezier(0.34, 1.2, 0.64, 1);   /* calibrated pop-in, no toy bounce */
 
   --duration-camera: 1400ms;
   --duration-panel:  500ms;

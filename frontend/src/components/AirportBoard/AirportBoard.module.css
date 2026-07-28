@@ -16,7 +16,7 @@
   background: linear-gradient(180deg, rgba(10, 15, 22, 0.99), rgba(7, 11, 17, 1));
   overflow: hidden;
   transform-origin: center center;
-  animation: expand 0.5s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+  animation: expand 0.42s var(--ease-camera) both;
 }
 /* The card expands from a smaller card → fills the entire screen, with a slight overshoot. */
 @keyframes expand {

@@ -138,7 +138,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(59, 73, 76, 0.15);
-  border-left: 4px solid var(--primary-container);
+  box-shadow: inset 2px 0 0 -1px rgba(178, 255, 26, 0.55);   /* soft left accent, not a slop side-tab */
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   position: relative;
@@ -1015,7 +1015,7 @@
   flex: 1;
   background: rgba(251, 191, 36, 0.04);
   border: 1px solid rgba(251, 191, 36, 0.12);
-  border-left: 3px solid rgba(251, 191, 36, 0.5);
+  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.5);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -2639,7 +2639,7 @@
 .quoteExpandedCard {
   background: rgba(251, 191, 36, 0.03);
   border: 1px solid rgba(251, 191, 36, 0.1);
-  border-left: 3px solid rgba(251, 191, 36, 0.35);
+  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.35);
   border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
@@ -2715,7 +2715,7 @@
 .feedCardIndigo { border-top-color: rgba(129, 140, 248, 0.6); }
 .feedCardQuote  {
   border-top-color: rgba(251, 191, 36, 0.45);
-  border-left: 2px solid rgba(251, 191, 36, 0.3);
+  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.3);
 }
 
 /* ── Card head row ── */

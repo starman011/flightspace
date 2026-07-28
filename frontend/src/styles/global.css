@@ -109,3 +109,8 @@ textarea:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+/* Press feedback — tactile confirm on tap/click; the biggest felt polish on
+   mobile where there is no hover. Gentle scale, module :active rules override. */
+button:active:not(:disabled) { transform: scale(0.97); }
+button { transition: transform 0.13s var(--ease-camera); }

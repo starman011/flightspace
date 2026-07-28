@@ -160,7 +160,7 @@
     #6366f1
   );
   background-size: 300% 300%;
-  animation: scalePillFlow 10s ease-in-out infinite;
+  /* static gradient edge — was scalePillFlow infinite */
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);

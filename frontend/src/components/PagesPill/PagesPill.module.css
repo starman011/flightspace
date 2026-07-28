@@ -43,7 +43,7 @@
     #6366f1
   );
   background-size: 300% 300%;
-  animation: pillFlow 10s ease-in-out infinite;
+  /* static gradient edge — was pillFlow infinite (busy/gamer tell) */
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);

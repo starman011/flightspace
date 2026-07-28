@@ -32,7 +32,7 @@ export default function ContextBanner({ kind, logo, label, sublabel, count, onCl
         border: '1px solid rgba(178,255,26,0.35)', borderRadius: 100,
         padding: 8, maxWidth: '92vw',
         boxShadow: '0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(178,255,26,0.08)',
-        animation: 'ctxBannerIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        animation: 'ctxBannerIn 0.44s cubic-bezier(0.34, 1.2, 0.64, 1)',
       }}
     >
       <style>{`
