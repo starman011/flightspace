@@ -164,35 +164,38 @@
    ink, dark glass -> white glass, white gloss -> a faint dark hairline.
    Brand green deepens for contrast on white; blue is the vivid desertcart blue. */
 [data-theme='light'] {
-  --green:      #5f9e00;              /* deeper on white so text/borders read */
-  --green-rgb:  95, 158, 0;
+  /* Palette: BLUE + GREEN + WHITE. Blue drives links/actions/focus, green is
+     the brand highlight (active nav / LIVE-adjacent), ink is navy-tinted so
+     even the text carries a cool blue cast. */
+  --green:      #4e9000;              /* readable green for text/borders */
+  --green-rgb:  188, 228, 25;         /* vivid #bce419 lime for fills/tints */
   --blue:       #0043f0;              /* the desertcart blue — sings on white */
   --blue-rgb:   0, 67, 240;
 
-  --ink-rgb:            28, 34, 46;     /* dark slate ink */
-  --ink-muted-rgb:      90, 100, 118;   /* muted captions */
-  --ink-cool-rgb:       40, 70, 110;    /* cool text */
+  --ink-rgb:            24, 32, 54;     /* navy-tinted ink */
+  --ink-muted-rgb:      92, 104, 132;   /* muted captions */
+  --ink-cool-rgb:       20, 62, 150;    /* cool/blue text */
   --surface-rgb:        255, 255, 255;  /* white glass */
-  --surface-deep-rgb:   244, 246, 250;  /* faint grey */
-  --surface-raised-rgb: 232, 236, 243;  /* raised chips */
-  --gloss-rgb:          18, 28, 48;     /* "gloss"/hairline becomes a subtle dark line */
-  --text-strong:        #0d1220;
-  --page-bg:            #f7f8fb;
+  --surface-deep-rgb:   240, 244, 252;  /* faint blue-white */
+  --surface-raised-rgb: 230, 237, 249;  /* raised chips, blue tint */
+  --gloss-rgb:          20, 40, 90;     /* "gloss"/hairline -> subtle navy line */
+  --text-strong:        #0a1836;        /* navy headings */
+  --page-bg:            #f4f7fe;        /* faint blue-white pages */
 
   /* Legacy semantic tokens some components still use directly */
-  --on-surface:         #1c222e;
-  --on-surface-variant: #4a5568;
-  --surface:            #f7f8fb;
-  --surface-dim:        #eef1f6;
-  --surface-container-low:     #f0f2f7;
-  --surface-container:         #e9edf3;
-  --surface-container-high:    #e1e6ee;
-  --primary-container:  #5f9e00;
+  --on-surface:         #182036;
+  --on-surface-variant: #566188;
+  --surface:            #f4f7fe;
+  --surface-dim:        #eaf0fb;
+  --surface-container-low:     #eef3fc;
+  --surface-container:         #e6edf8;
+  --surface-container-high:    #dde7f5;
+  --primary-container:  #4e9000;
   --glass-fill:   rgba(255, 255, 255, 0.82);
   --glass-fill-2: rgba(255, 255, 255, 0.62);
-  --glass-line:   rgba(18, 28, 48, 0.12);
+  --glass-line:   rgba(20, 40, 90, 0.12);
   --glass-gloss:  rgba(255, 255, 255, 0.9);
-  --glass-shadow-nav:   0 6px 20px rgba(20, 30, 55, 0.10), 0 1px 3px rgba(20, 30, 55, 0.08);
-  --glass-shadow:       0 14px 44px rgba(20, 30, 55, 0.14), 0 2px 8px rgba(20, 30, 55, 0.10);
-  --glass-shadow-modal: 0 30px 80px rgba(20, 30, 55, 0.20), 0 6px 18px rgba(20, 30, 55, 0.12);
+  --glass-shadow-nav:   0 6px 20px rgba(20, 40, 90, 0.10), 0 1px 3px rgba(20, 40, 90, 0.08);
+  --glass-shadow:       0 14px 44px rgba(20, 40, 90, 0.15), 0 2px 8px rgba(20, 40, 90, 0.10);
+  --glass-shadow-modal: 0 30px 80px rgba(20, 40, 90, 0.22), 0 6px 18px rgba(20, 40, 90, 0.12);
 }

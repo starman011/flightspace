@@ -101,10 +101,10 @@
 .body { font-size: 1rem; line-height: 1.7; color: rgba(var(--ink-rgb), 0.78); white-space: pre-wrap; }
 .credit { margin-top: 20px; font-size: 0.8rem; color: rgba(var(--ink-rgb), 0.5); }
 .source { margin-top: 6px; font-size: 0.8rem; }
-.source a, .credit a { color: var(--green); }
+.source a, .credit a { color: var(--blue); }
 .sectionH { font-family: var(--font-display, sans-serif); font-weight: 600; font-size: 1.05rem; color: var(--text-strong); margin: 26px 0 10px; }
 .explore { font-size: 0.92rem; color: rgba(var(--ink-rgb), 0.7); line-height: 1.9; }
-.explore a { color: var(--green); text-decoration: none; }
+.explore a { color: var(--blue); text-decoration: none; }
 .explore a:hover { text-decoration: underline; }
 .loadMore {
   display: block; margin: 28px auto 0; padding: 11px 28px;

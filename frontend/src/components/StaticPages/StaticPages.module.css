@@ -149,7 +149,7 @@
 }
 .body h3:first-child { margin-top: 0 }
 .body p { margin: 0 0 16px }
-.body a { color: var(--green); text-decoration: none }
+.body a { color: var(--blue); text-decoration: none }
 .body a:hover { text-decoration: underline }
 .body ul { margin: 0 0 16px; padding-left: 2px; list-style: none }
 .body li { position: relative; margin-bottom: 12px; padding-left: 22px }
