@@ -1,5 +1,57 @@
 # ObjectTracer Feature Roadmap
 
+## BEST-IN-CLASS DESIGN BACKLOG — 2026-07-28
+From impeccable `critique` (degraded single-context) + slop detector + apple-design/emil
+lenses. Goal: move from "clean & compliant" to best-in-class. Ordered by leverage.
+
+### Tier 1 — Identity elevation (biggest visual lift)
+- [ ] T1. Accent discipline: lime #b2ff1a is acid/"gamer". Reserve pure lime for LIVE
+  state only; introduce a calmer primary (e.g. desaturated ice/cyan) for general
+  interactive, so the palette reads "premium observatory" not "hacker terminal".
+  Collapse the 3 accent families (lime + teal route + violet deep-space) to one
+  disciplined interactive accent + category tints.
+- [ ] T2. Typography hierarchy: everything is font-mono → flat, terminal-flat. Pair a
+  refined display/text face for titles + body (Space Grotesk already loaded / add one),
+  keep mono for numeric/data ONLY. Set a real type scale + optical sizing on large titles.
+- [ ] T3. Layered depth: all glass islands read the same elevation. Grade shadow/blur/
+  scale subtly across z-bands (nav < panel < modal) so the eye reads hierarchy; add a
+  faint inner-highlight gradient beyond the top rim for true material depth.
+
+### Tier 2 — Slop removal (detector-confirmed AI tells)
+- [ ] T4. Side-tab accent borders (detector ×4): CommandCenterOverlay feed cards use
+  3–4px lime/amber `border-left`. The single most recognizable AI tell. Replace with a
+  left inset dot, a tinted fill, or nothing.
+- [ ] T5. Bounce/elastic easing (detector ×7): cubic-bezier overshoot ≥1.4 on pills/
+  nudge/dropdown/AirportBoard reads toy. Tune to ease-out-expo or gentle spring (≤1.2).
+- [ ] T6. Gradient text (detector ×1): MoonPanel:146 — remove; solid ink.
+- [ ] T7. Layout-property animation (detector ×8): remaining max-width/width/height
+  transitions (BottomBar:253, DetailPanel:1066, MoonPanel:535, TourGuide:117) → transform
+  or grid-rows morph.
+- [ ] T8. Delete stale duplicate files: `CommandCenterOverlay 2.jsx`, `.module 2.css`
+  (same class as the DeepSpacePanel 2 dupes already removed) — they drift + inflate scans.
+
+### Tier 3 — Density & composition
+- [ ] T9. Chrome restraint / "island soup": too many floating surfaces compete with the
+  globe. Desktop: merge/hide secondary islands by default (WindLegend, FleetCard on idle);
+  auto-fade chrome after N s of no interaction, reveal on move — let the globe breathe.
+- [ ] T10. Mobile thumb-zone: BottomBar + sheet + Go-Live chip + locate all crowd the
+  bottom. Rationalize into one bottom system; raise reading type from 10–11px.
+- [ ] T11. Spacing rhythm: enforce the 4/8/12/16/24 scale everywhere; kill remaining
+  literal paddings so vertical rhythm is uniform.
+- [ ] T12. One icon system: mix of Material Symbols font + inline SVG. Standardize on
+  inline SVG (consistent 1.6–2 stroke, sizes) app-wide.
+
+### Tier 4 — States & finish
+- [ ] T13. Deliberate empty/no-result/error states (search no-match, feed empty, no
+  flights in view, offline) — with personality, not blank text.
+- [ ] T14. Contrast pass: caption alphas 0.34–0.40 on glass over bright globe regions may
+  fail 4.5:1; verify + lift where needed.
+- [ ] T15. Motion language unification: entrances vary (translateY / scale / translateX).
+  Standardize enter/exit per surface-type from token easings + durations.
+- [ ] T16. Consolidate DESIGN.md: root `DESIGN.md` (old "SkyDot/Astral Observer") conflicts
+  with `design/DESIGN.md` (current Apple-glass system). Retire/merge the stale one.
+
+
 ## APPLE-DESIGN AUDIT BACKLOG — 2026-07-16
 Full findings: multi-agent audit vs design/DESIGN.md (nav, cards/sheets, pages, globe HUD).
 Five systemic issues repeat across the app; fix globally first, then per-component.
