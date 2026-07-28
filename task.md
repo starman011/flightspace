@@ -18,16 +18,16 @@ lenses. Goal: move from "clean & compliant" to best-in-class. Ordered by leverag
   faint inner-highlight gradient beyond the top rim for true material depth.
 
 ### Tier 2 — Slop removal (detector-confirmed AI tells)
-- [ ] T4. Side-tab accent borders (detector ×4): CommandCenterOverlay feed cards use
+- [x] T4. Side-tab accent borders (detector ×4): CommandCenterOverlay feed cards use
   3–4px lime/amber `border-left`. The single most recognizable AI tell. Replace with a
   left inset dot, a tinted fill, or nothing.
-- [ ] T5. Bounce/elastic easing (detector ×7): cubic-bezier overshoot ≥1.4 on pills/
+- [x] T5. Bounce/elastic easing (detector ×7): cubic-bezier overshoot ≥1.4 on pills/
   nudge/dropdown/AirportBoard reads toy. Tune to ease-out-expo or gentle spring (≤1.2).
-- [ ] T6. Gradient text (detector ×1): MoonPanel:146 — remove; solid ink.
-- [ ] T7. Layout-property animation (detector ×8): remaining max-width/width/height
+- [x] T6. Gradient text (detector ×1): MoonPanel:146 — remove; solid ink.
+- [x] T7. Layout-property animation (detector ×8): remaining max-width/width/height
   transitions (BottomBar:253, DetailPanel:1066, MoonPanel:535, TourGuide:117) → transform
   or grid-rows morph.
-- [ ] T8. Delete stale duplicate files: `CommandCenterOverlay 2.jsx`, `.module 2.css`
+- [x] T8. Delete stale duplicate files: `CommandCenterOverlay 2.jsx`, `.module 2.css`
   (same class as the DeepSpacePanel 2 dupes already removed) — they drift + inflate scans.
 
 ### Tier 3 — Density & composition
