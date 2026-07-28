@@ -10,10 +10,10 @@ lenses. Goal: move from "clean & compliant" to best-in-class. Ordered by leverag
   interactive, so the palette reads "premium observatory" not "hacker terminal".
   Collapse the 3 accent families (lime + teal route + violet deep-space) to one
   disciplined interactive accent + category tints.
-- [ ] T2. Typography hierarchy: everything is font-mono → flat, terminal-flat. Pair a
+- [x] T2. Typography hierarchy: everything is font-mono → flat, terminal-flat. Pair a
   refined display/text face for titles + body (Space Grotesk already loaded / add one),
   keep mono for numeric/data ONLY. Set a real type scale + optical sizing on large titles.
-- [ ] T3. Layered depth: all glass islands read the same elevation. Grade shadow/blur/
+- [x] T3. Layered depth: all glass islands read the same elevation. Grade shadow/blur/
   scale subtly across z-bands (nav < panel < modal) so the eye reads hierarchy; add a
   faint inner-highlight gradient beyond the top rim for true material depth.
 

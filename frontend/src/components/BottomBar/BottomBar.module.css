@@ -17,7 +17,7 @@
   border-top-color: var(--glass-gloss);   /* signature gloss rim */
   border-radius: var(--r-pill);
 
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow-nav);
 
   transition: transform 0.5s var(--ease-camera), opacity 0.5s var(--ease-camera);
 }

@@ -15,7 +15,7 @@
   border-top-color: var(--glass-gloss);   /* signature gloss rim */
   border-radius: var(--r-pill);
 
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow-nav);
 }
 
 /* ── Profile side ─────────────────────────────────────────────────────────── */

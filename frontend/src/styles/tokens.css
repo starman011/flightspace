@@ -97,7 +97,11 @@
   --glass-line:   rgba(200, 214, 235, 0.10);/* hairline border */
   --glass-gloss:  rgba(255, 255, 255, 0.16);/* top-edge rim — THE signature */
   --glass-blur-lg: blur(20px) saturate(150%);
-  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  /* Elevation tiers — graded so the eye reads hierarchy (nav < panel < modal).
+     Floating chrome sits close to the surface; reading panels lift; modals own the room. */
+  --glass-shadow-nav:   0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);   /* panel default */
+  --glass-shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.6), 0 6px 18px rgba(0, 0, 0, 0.4);
 
   /* ── Motion ────────────────────────────────────────────────────────────── */
   --ease-camera:  cubic-bezier(0.16, 1, 0.3, 1);
