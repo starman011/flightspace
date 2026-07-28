@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import styles from './AdminPage.module.css'
 import ArchitectureExplorer from './ArchitectureExplorer'
 import AdminBlog from './AdminBlog'
+import AdminSEO from './AdminSEO'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -57,7 +58,7 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
   const itemBase = (id) => tab === 'inbound' ? `${API}/api/v1/admin/inbound/${id}` : `${API}/api/v1/admin/messages/${id}`
 
   const load = useCallback(() => {
-    if (tab === 'arch' || tab === 'blog') {
+    if (tab === 'arch' || tab === 'blog' || tab === 'seo') {
       // No list to fetch, but still verify the admin session — these tabs
       // were reachable signed-out via the old skip.
       setState('loading')
@@ -145,12 +146,14 @@ export default function AdminPage({ onClose, isAuthenticated, sessionToken, onSi
           <button className={`${styles.tab} ${tab === 'inbound' ? styles.tabOn : ''}`} onClick={() => setTab('inbound')}>Received emails</button>
           <button className={`${styles.tab} ${tab === 'contact' ? styles.tabOn : ''}`} onClick={() => setTab('contact')}>Contact form</button>
           <button className={`${styles.tab} ${tab === 'blog' ? styles.tabOn : ''}`} onClick={() => setTab('blog')}>Blog</button>
+          <button className={`${styles.tab} ${tab === 'seo' ? styles.tabOn : ''}`} onClick={() => setTab('seo')}>SEO</button>
           <button className={`${styles.tab} ${tab === 'arch' ? styles.tabOn : ''}`} onClick={() => setTab('arch')}>How it works</button>
         </div>
         )}
 
         {state === 'ready' && tab === 'arch' && <ArchitectureExplorer />}
         {state === 'ready' && tab === 'blog' && <AdminBlog sessionToken={sessionToken} />}
+        {state === 'ready' && tab === 'seo' && <AdminSEO />}
 
         {tab === 'inbound' && state === 'ready' && (
           <div className={styles.syncRow}>

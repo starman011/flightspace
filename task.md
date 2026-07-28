@@ -254,3 +254,25 @@ Five systemic issues repeat across the app; fix globally first, then per-compone
 - [x] ISS crew proxy — backend endpoint to avoid mixed content
 - [x] ISS live stream auto-discovery — YouTube scraper with keyword validation
 - [x] Font update — monospace for smaller text/headings
+
+## SEO IMPROVEMENT BACKLOG — 2026-07-28 (claude-seo methodology; reviewable in /admin → SEO)
+
+Sequenced by impact. Shipped items reflect current production.
+
+### Shipped
+- [x] Per-route SSR for crawlers (edge middleware) — crawlability/indexation
+- [x] Entity JSON-LD: Flight / Airport / Airline / Launch (+ FAQPage on entity pages)
+- [x] Blog/Article @graph enriched: dateModified, description, wordCount, mainEntityOfPage, series, BreadcrumbList
+- [x] Sitemaps (main + launches + blog) with lastmod; robots.txt
+- [x] Per-route canonical + OG/Twitter
+- [x] Core Web Vitals baseline (boot trim, compositor motion, lazy-chunk reload recovery)
+
+### Open — prioritized
+- [ ] P0 Named Person author on Engineering blog (E-E-A-T) — NEEDS name + title from owner
+- [ ] P0 BreadcrumbList on entity pages (flight/airport/airline)
+- [ ] P0 Bot-render /faq, /about, /contact (add to SSR matcher; FAQPage schema on /faq)
+- [ ] P1 Answer-block formatting (question H2 + 40–60 word lead; 134–167 word citable passages) for AI search
+- [ ] P1 Image SEO pass (alt text, width/height for CLS, WebP/AVIF)
+- [ ] P1 Organization sameAs (socials) + VideoObject on engineering posts with embeds
+- [ ] P1 CWV field-data + Coverage monitoring after each deploy
+- [ ] P2 RSS feed + blog pagination crawl signals
