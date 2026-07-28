@@ -1857,12 +1857,38 @@ async function renderBlogPost(slug) {
     : `${p.title}: Space Journal | ObjectTracer`
   const desc  = (p.intro || p.explanation || '').slice(0, 200)
   const img = p.image_url || `${SITE}/og-image.png`
+  const wordCount = (p.explanation || '').split(/\s+/).filter(Boolean).length
   const jsonLd = {
-    '@context': 'https://schema.org', '@type': isEng ? 'BlogPosting' : 'Article',
-    headline: p.title, image: img, datePublished: p.date,
-    author: { '@type': 'Organization', name: isEng ? 'ObjectTracer' : 'NASA APOD' },
-    publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
-    url: canonical,
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': isEng ? 'BlogPosting' : 'Article',
+        '@id': `${canonical}#article`,
+        headline: p.title,
+        description: desc,
+        image: img,
+        datePublished: p.date,
+        dateModified: p.updated_at || p.date,   // freshness signal
+        wordCount,
+        inLanguage: 'en',
+        author: { '@type': 'Organization', name: isEng ? 'ObjectTracer' : 'NASA APOD' },
+        publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+        isPartOf: { '@type': isEng ? 'Blog' : 'CreativeWorkSeries',
+          name: isEng ? 'ObjectTracer Engineering' : 'Space Journal',
+          url: isEng ? `${SITE}/engineering` : `${SITE}/blog` },
+        url: canonical,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: isEng ? 'Engineering' : 'Space Journal',
+            item: isEng ? `${SITE}/engineering` : `${SITE}/blog` },
+          { '@type': 'ListItem', position: 3, name: p.title, item: canonical },
+        ],
+      },
+    ],
   }
   const imgTag = (isEng ? p.image_url : p.media_type === 'image')
     ? `<img src="${esc(img)}" alt="${esc(p.title)}" style="width:100%;border-radius:10px;margin:16px 0" />` : ''
