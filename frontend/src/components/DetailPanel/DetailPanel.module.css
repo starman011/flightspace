@@ -230,7 +230,7 @@
   font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 700;
-  color: #2DD4BF;
+  color: var(--teal);
   letter-spacing: 0.04em;
   line-height: 1;
 }
@@ -269,18 +269,18 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.routeDotLeft  { background: rgba(45, 212, 191, 0.5); }
-.routeDotRight { background: rgba(45, 212, 191, 0.5); }
+.routeDotLeft  { background: rgba(var(--teal-rgb), 0.5); }
+.routeDotRight { background: rgba(var(--teal-rgb), 0.5); }
 
 .routeDash {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(45,212,191,0.1), rgba(45,212,191,0.25), rgba(45,212,191,0.1));
+  background: linear-gradient(90deg, rgba(var(--teal-rgb), 0.1), rgba(var(--teal-rgb), 0.25), rgba(var(--teal-rgb), 0.1));
 }
 
 .routePlane {
   flex-shrink: 0;
-  color: rgba(45, 212, 191, 0.55);
+  color: rgba(var(--teal-rgb), 0.55);
   margin: 0 -2px;
   transform: rotate(90deg);
 }
@@ -315,7 +315,7 @@
   font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 700;
-  color: #2DD4BF;
+  color: var(--teal);
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
@@ -717,7 +717,7 @@
     font-family: var(--font-mono);
     font-size: 13px;
     font-weight: 700;
-    color: rgba(45, 212, 191, 0.75);
+    color: rgba(var(--teal-rgb), 0.75);
     letter-spacing: 0.04em;
   }
 

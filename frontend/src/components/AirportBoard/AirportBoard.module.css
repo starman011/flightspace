@@ -103,7 +103,7 @@
 
 .flight { color: #9ec5ff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .peer { color: rgba(220, 230, 245, 0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.time { color: rgba(45, 212, 191, 0.85); }
+.time { color: rgba(var(--teal-rgb), 0.85); }
 .alt { color: rgba(160, 175, 200, 0.55); text-align: right; }
 
 .empty { padding: 14px 4px; font-family: var(--font-body); font-size: 13px; color: rgba(180, 195, 220, 0.45); }

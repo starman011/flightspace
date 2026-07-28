@@ -15,6 +15,10 @@
   --green-rgb:  188, 228, 25;
   --blue:       #4d7bff;              /* accent — links/secondary (lightened for dark bg) */
   --blue-rgb:   77, 123, 255;
+  --teal:       #2dd4bf;              /* route / navigation data */
+  --teal-rgb:   45, 212, 191;
+  --amber:      #fbbf24;              /* highlights / alerts */
+  --amber-rgb:  251, 191, 36;
 
   /* Themeable neutrals (dark theme defaults — values match the literals they
      replaced, so the DARK theme looks identical to before) */
@@ -172,6 +176,10 @@
   --green-rgb:  188, 228, 25;         /* vivid #bce419 lime for fills/tints */
   --blue:       #0043f0;              /* the desertcart blue — sings on white */
   --blue-rgb:   0, 67, 240;
+  --teal:       #0d9488;              /* deep teal — readable on white */
+  --teal-rgb:   13, 148, 136;
+  --amber:      #b45309;              /* deep amber — readable on white */
+  --amber-rgb:  180, 83, 9;
 
   --ink-rgb:            24, 32, 54;     /* navy-tinted ink */
   --ink-muted-rgb:      92, 104, 132;   /* muted captions */

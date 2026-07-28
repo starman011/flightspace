@@ -1013,9 +1013,9 @@
 
 .quoteStack {
   flex: 1;
-  background: rgba(251, 191, 36, 0.04);
-  border: 1px solid rgba(251, 191, 36, 0.12);
-  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.5);
+  background: rgba(var(--amber-rgb), 0.04);
+  border: 1px solid rgba(var(--amber-rgb), 0.12);
+  box-shadow: inset 2px 0 0 -1px rgba(var(--amber-rgb), 0.5);
   border-radius: 14px;
   padding: 20px 18px;
   display: flex;
@@ -1027,14 +1027,14 @@
   min-height: 160px;
 }
 .quoteStack:hover {
-  border-left-color: rgba(251, 191, 36, 0.8);
-  background: rgba(251, 191, 36, 0.07);
+  border-left-color: rgba(var(--amber-rgb), 0.8);
+  background: rgba(var(--amber-rgb), 0.07);
 }
 
 .quoteStackMark {
   font-family: Georgia, serif;
   font-size: 3.5rem;
-  color: rgba(251, 191, 36, 0.18);
+  color: rgba(var(--amber-rgb), 0.18);
   line-height: 0.8;
   margin-top: -4px;
   user-select: none;
@@ -1052,7 +1052,7 @@
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(251, 191, 36, 0.7);
+  color: rgba(var(--amber-rgb), 0.7);
   letter-spacing: 0.01em;
 }
 
@@ -2637,9 +2637,9 @@
 .quotesExpanded::-webkit-scrollbar { display: none; }
 
 .quoteExpandedCard {
-  background: rgba(251, 191, 36, 0.03);
-  border: 1px solid rgba(251, 191, 36, 0.1);
-  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.35);
+  background: rgba(var(--amber-rgb), 0.03);
+  border: 1px solid rgba(var(--amber-rgb), 0.1);
+  box-shadow: inset 2px 0 0 -1px rgba(var(--amber-rgb), 0.35);
   border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
@@ -2647,14 +2647,14 @@
   transition: border-left-color 0.15s, background 0.15s;
 }
 .quoteExpandedCard:active {
-  border-left-color: rgba(251, 191, 36, 0.75);
-  background: rgba(251, 191, 36, 0.07);
+  border-left-color: rgba(var(--amber-rgb), 0.75);
+  background: rgba(var(--amber-rgb), 0.07);
 }
 
 .quoteExpandedMark {
   font-family: Georgia, serif;
   font-size: 2.5rem;
-  color: rgba(251, 191, 36, 0.14);
+  color: rgba(var(--amber-rgb), 0.14);
   line-height: 0.8;
   user-select: none;
 }
@@ -2678,7 +2678,7 @@
 /* ════════════════════════════════════════════════════════════════════════════
    Space Feed — vertical scrollable card feed
    Palette: #2C3947 cards · var(--text-strong) primary text · #DCDCDC secondary
-            #3A9AFF ISS · #4C8CE4 news · #2DD4BF flights
+            #3A9AFF ISS · #4C8CE4 news · var(--teal) flights
    ════════════════════════════════════════════════════════════════════════════ */
 
 .feedScroll {
@@ -2707,15 +2707,15 @@
 .feedCard:hover { background: rgba(52, 67, 84, 0.9); }
 
 .feedCardBlue   { border-top-color: rgba(58,  154, 255, 0.6); }
-.feedCardTeal   { border-top-color: rgba(45,  212, 191, 0.6); }
+.feedCardTeal   { border-top-color: rgba(var(--teal-rgb), 0.6); }
 .feedCardSteel  { border-top-color: rgba(76,  140, 228, 0.6); }
-.feedCardAmber  { border-top-color: rgba(251, 191, 36,  0.6); }
+.feedCardAmber  { border-top-color: rgba(var(--amber-rgb), 0.6); }
 .feedCardViolet { border-top-color: rgba(167, 139, 250, 0.6); }
 .feedCardAPOD   { border-top-color: rgba(var(--ink-rgb), 0.2); }
 .feedCardIndigo { border-top-color: rgba(129, 140, 248, 0.6); }
 .feedCardQuote  {
-  border-top-color: rgba(251, 191, 36, 0.45);
-  box-shadow: inset 2px 0 0 -1px rgba(251, 191, 36, 0.3);
+  border-top-color: rgba(var(--amber-rgb), 0.45);
+  box-shadow: inset 2px 0 0 -1px rgba(var(--amber-rgb), 0.3);
 }
 
 /* ── Card head row ── */
@@ -2856,7 +2856,7 @@
 }
 .feedFlightMore {
   font: 400 9px/1 system-ui, -apple-system, sans-serif;
-  color: rgba(45, 212, 191, 0.5);
+  color: rgba(var(--teal-rgb), 0.5);
   margin-top: 2px;
 }
 
@@ -3032,7 +3032,7 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 44px;
   line-height: 0.6;
-  color: rgba(251, 191, 36, 0.25);
+  color: rgba(var(--amber-rgb), 0.25);
   margin-bottom: 6px;
   user-select: none;
 }
@@ -3043,7 +3043,7 @@
 }
 .feedQuoteAuthor {
   font: 500 10px/1 system-ui, -apple-system, sans-serif;
-  color: rgba(251, 191, 36, 0.55);
+  color: rgba(var(--amber-rgb), 0.55);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -3181,7 +3181,7 @@
 /* Quote expand */
 .feedExpandQuoteCard {
   background: rgba(var(--surface-raised-rgb), 0.6);
-  border-left: 2px solid rgba(251, 191, 36, 0.3);
+  border-left: 2px solid rgba(var(--amber-rgb), 0.3);
   border-radius: 0 10px 10px 0;
   padding: 10px 14px;
   margin-bottom: 8px;

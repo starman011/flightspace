@@ -76,7 +76,7 @@
   border-radius: 5px; padding: 1px 7px; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
 }
 .queued {
-  color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.35);
+  color: var(--amber); border: 1px solid rgba(var(--amber-rgb), 0.35);
   border-radius: 5px; padding: 1px 7px; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
 }
 

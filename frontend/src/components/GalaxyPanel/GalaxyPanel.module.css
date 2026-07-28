@@ -54,9 +54,9 @@
 }
 .symbolQso {
   color: #fbd24a;
-  background: radial-gradient(120% 120% at 35% 25%, rgba(251, 191, 36, 0.22), rgba(251, 191, 36, 0.05));
-  border-color: rgba(251, 191, 36, 0.32);
-  box-shadow: 0 0 22px rgba(251, 191, 36, 0.16), inset 0 0 12px rgba(251, 191, 36, 0.10);
+  background: radial-gradient(120% 120% at 35% 25%, rgba(var(--amber-rgb), 0.22), rgba(var(--amber-rgb), 0.05));
+  border-color: rgba(var(--amber-rgb), 0.32);
+  box-shadow: 0 0 22px rgba(var(--amber-rgb), 0.16), inset 0 0 12px rgba(var(--amber-rgb), 0.10);
 }
 
 .titles {
@@ -98,8 +98,8 @@
 
 .qso {
   color: #fbd24a;
-  background: rgba(251, 191, 36, 0.10);
-  border: 1px solid rgba(251, 191, 36, 0.28);
+  background: rgba(var(--amber-rgb), 0.10);
+  border: 1px solid rgba(var(--amber-rgb), 0.28);
 }
 
 .close {

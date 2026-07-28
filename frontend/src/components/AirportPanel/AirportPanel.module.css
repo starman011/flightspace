@@ -217,7 +217,7 @@
 .fullBoardArrow { display: flex; color: rgba(var(--green-rgb), 0.9); flex: none; }
 
 .eta {
-  color: rgba(45, 212, 191, 0.8);
+  color: rgba(var(--teal-rgb), 0.8);
   font-weight: 500;
 }
 
