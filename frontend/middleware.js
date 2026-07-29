@@ -765,14 +765,14 @@ async function renderAsteroid(slug) {
     missKm       && `<tr><th>Miss Distance</th><td>${missKm} km <span style="opacity:.5">(${missLd} Lunar Distances)</span></td></tr>`,
     velKmh       && `<tr><th>Velocity</th><td>${velKmh} km/h <span style="opacity:.5">(${velKps} km/s)</span></td></tr>`,
     diamStr      && `<tr><th>Est. Diameter</th><td>${esc(diamStr)}</td></tr>`,
-    `<tr><th>Hazardous</th><td style="color:${isPHA ? '#ff6b6b' : '#b2ff1a'}">${isPHA ? '⚠ Potentially Hazardous' : '✓ Not Hazardous'}</td></tr>`,
+    `<tr><th>Hazardous</th><td style="color:${isPHA ? '#ff6b6b' : '#b2ff1a'}">${isPHA ? 'Potentially Hazardous' : 'Not Hazardous'}</td></tr>`,
     `<tr><th>NASA ID</th><td style="opacity:.5">${esc(asteroid.id)}</td></tr>`,
   ].filter(Boolean).join('\n')
 
   const body = `
     <h1>${esc(cleanName)}</h1>
     ${isPHA ? `<p style="color:#ff6b6b;font-family:var(--font-mono);font-size:.85rem;letter-spacing:.1em;margin:0 0 16px">
-      ⚠ POTENTIALLY HAZARDOUS ASTEROID
+      POTENTIALLY HAZARDOUS ASTEROID
     </p>` : ''}
     <p>${esc(desc.split('.')[0])}.</p>
     <a class="cta" href="${canonical}">Track on 3D Globe →</a>
@@ -1632,12 +1632,12 @@ async function renderISS() {
   }
 
   const crewRows = issCrew.map(p =>
-    `<tr><td>👨‍🚀 ${esc(p.name)}</td><td>ISS</td></tr>`
+    `<tr><td>${esc(p.name)}</td><td>ISS</td></tr>`
   ).join('\n')
 
   const otherCraft = [...new Set(allCrew.filter(p => p.craft !== 'ISS').map(p => p.craft))]
   const otherRows = allCrew.filter(p => p.craft !== 'ISS').map(p =>
-    `<tr><td>👨‍🚀 ${esc(p.name)}</td><td>${esc(p.craft)}</td></tr>`
+    `<tr><td>${esc(p.name)}</td><td>${esc(p.craft)}</td></tr>`
   ).join('\n')
 
   const streamUrl = stream?.embed_url
