@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 4px;
+  padding: 3px;
 
   background: var(--glass-fill);
   backdrop-filter: var(--glass-blur-lg);
@@ -57,8 +57,8 @@
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border: none;
   border-radius: var(--r-tight);
@@ -94,7 +94,7 @@
     align-items: stretch;
     gap: 2px;
     padding: 5px;
-    width: 74px;                                /* chip: hamburger + current icon */
+    width: 70px;                                /* chip: hamburger + current icon */
     border-radius: 20px;
     overflow: hidden;
     transition: width 0.36s cubic-bezier(0.32, 1.2, 0.42, 1), border-radius 0.3s ease;
@@ -106,8 +106,8 @@
     display: grid;
     place-items: center;
     flex: none;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: var(--r-tight);
     background: transparent;
@@ -119,8 +119,8 @@
     display: grid;
     place-items: center;
     flex: none;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     color: var(--green);
     transition: opacity 0.2s ease;
   }
