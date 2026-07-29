@@ -1421,6 +1421,8 @@ function renderHome() {
     ['/solar-system','Solar System',           'Real-time planet positions in an interactive 3D solar system'],
     ['/deep-space', 'Deep Space',              'Explore the DESI galaxy catalog and the cosmic web'],
     ['/moon',       'Moon Tracker',            'Lunar surface and orbital visualization'],
+    ['/engineering','Engineering Blog',        'How ObjectTracer is built — one hard problem a week, in depth'],
+    ['/blog',       'Space Journal',           'Daily cosmic imagery, powered by NASA APOD'],
     ['/about',      'About ObjectTracer',      'What ObjectTracer is and how it works'],
     ['/faq',        'FAQ',                     'Frequently asked questions about live tracking'],
     ['/contact',    'Contact',                 'Get in touch with the ObjectTracer team'],
@@ -1451,7 +1453,7 @@ function renderHome() {
         url: canonical,
         logo: `${SITE}/favicon.svg`,
         description: desc,
-        sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace'],
+        sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace', 'https://www.linkedin.com/in/mdsaqlainkhan'],
       },
       {
         '@type': 'WebSite',
@@ -1527,6 +1529,8 @@ function renderHome() {
   <meta property="og:title" content="${esc(title)}" />
   <meta property="og:description" content="${esc(desc)}" />
   <meta property="og:image" content="${ogImageUrl(title, desc, 'REAL-TIME 3D GLOBE')}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="ObjectTracer" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="${ogImageUrl(title, desc, 'REAL-TIME 3D GLOBE')}" />
@@ -1750,10 +1754,13 @@ async function renderBlogFeed() {
   const items = posts.map(p =>
     `<li><a href="${SITE}/blog/${esc(p.slug)}"><strong>${esc(p.title)}</strong><span>${esc(p.date)}</span></a></li>`
   ).join('\n')
-  const jsonLd = {
-    '@context': 'https://schema.org', '@type': 'Blog', name: 'ObjectTracer Space Journal',
-    url: canonical, description: desc,
-  }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Blog', '@id': `${canonical}#blog`, name: 'ObjectTracer Space Journal',
+      url: canonical, description: desc,
+      blogPost: posts.slice(0, 50).map(p => ({ '@type': 'BlogPosting', headline: p.title,
+        url: `${SITE}/blog/${p.slug}`, datePublished: p.date })) },
+    crumbLd([['Home', `${SITE}/`], ['Space Journal', canonical]]),
+  ] }
   const body = `
     <h1>Space Journal</h1>
     <p>Daily cosmic imagery powered by NASA's Astronomy Picture of the Day, with the science behind each image.</p>
@@ -1862,10 +1869,13 @@ async function renderEngineeringFeed() {
   const items = posts.map(p =>
     `<li><a href="${SITE}/blog/${esc(p.slug)}"><strong>${esc(p.title)}</strong><span>${esc(p.date)}</span></a></li>`
   ).join('\n')
-  const jsonLd = {
-    '@context': 'https://schema.org', '@type': 'Blog', name: 'ObjectTracer Engineering Blog',
-    url: canonical, description: desc,
-  }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Blog', '@id': `${canonical}#blog`, name: 'ObjectTracer Engineering Blog',
+      url: canonical, description: desc,
+      blogPost: posts.slice(0, 50).map(p => ({ '@type': 'BlogPosting', headline: p.title,
+        url: `${SITE}/blog/${p.slug}`, datePublished: p.date })) },
+    crumbLd([['Home', `${SITE}/`], ['Engineering', canonical]]),
+  ] }
   const body = `
     <h1>Engineering Blog</h1>
     <p>How ObjectTracer is built: one hard problem a week, in depth. Real code, real dead ends, real numbers.</p>
