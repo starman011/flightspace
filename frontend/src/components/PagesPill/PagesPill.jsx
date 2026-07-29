@@ -5,12 +5,12 @@ import { FilterIcon } from '../BottomBar/BottomBar'
 const PAGES = [
   { id: 'earth',     scale: 'earth',  label: 'Earth' },
   { id: 'moon',      scale: 'moon',   label: 'Moon' },
-  { id: 'solar',     scale: 'solar',  label: 'Solar System' },
+  { id: 'solar',     scale: 'solar',  label: 'Solar System', short: 'Solar' },
   { id: 'galaxy',    scale: 'galaxy', label: 'Deep Space' },
   { id: 'rockets',   filter: true,    label: 'Launches' },
   { id: 'asteroids', filter: true,    label: 'NEO' },
-  { id: 'flights',   page: 'flight',  label: 'Flights near you' },
-  { id: 'planes',    page: 'planes',  label: 'Live fleets' },
+  { id: 'flights',   page: 'flight',  label: 'Flights near you', short: 'Flights' },
+  { id: 'planes',    page: 'planes',  label: 'Live fleets', short: 'Fleets' },
   { id: 'journal',   page: 'blog',    label: 'Journal' },
 ]
 
@@ -134,7 +134,7 @@ export default function PagesPill({
                 aria-label={page.label}
               >
                 <PageIcon id={page.id} />
-                <span className={styles.label}>{page.label}</span>
+                <span className={styles.label}>{page.short || page.label}</span>
               </button>
             </Fragment>
           ))}
