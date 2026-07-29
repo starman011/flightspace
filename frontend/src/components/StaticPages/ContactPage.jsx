@@ -37,7 +37,7 @@ export default function ContactPage({ onClose }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
         <div className={styles.hero}>
-          <img className={styles.heroImg} src="/night-sky.jpg" alt="The Milky Way over a wildflower hillside" />
+          <img className={styles.heroImg} src="/night-sky.webp" width="1600" height="1066" fetchpriority="high" alt="The Milky Way over a wildflower hillside" />
           <div className={styles.heroOverlay} />
           <div className={styles.heroText}>
             <p className={styles.heroKicker}>ObjectTracer</p>

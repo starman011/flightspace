@@ -74,7 +74,7 @@ export default function FAQPage({ onClose }) {
         <button className={styles.heroClose} onClick={onClose} aria-label="Close"><CloseIcon /></button>
 
         <div className={styles.hero}>
-          <img className={styles.heroImg} src="/boy-sky.jpg" alt="A child pointing up at a plane crossing the sky" />
+          <img className={styles.heroImg} src="/boy-sky.webp" width="1600" height="916" fetchpriority="high" alt="A child pointing up at a plane crossing the sky" />
           <div className={styles.heroOverlay} />
           <div className={styles.heroText}>
             <p className={styles.heroKicker}>ObjectTracer</p>

@@ -8,7 +8,7 @@ export default function AboutPage({ onClose }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
         <div className={styles.hero}>
-          <img className={styles.heroImg} src="/flight-sky.jpg" alt="A plane crossing the sky, framed by spring flowers" />
+          <img className={styles.heroImg} src="/flight-sky.webp" width="1600" height="914" fetchpriority="high" alt="A plane crossing the sky, framed by spring flowers" />
           <div className={styles.heroOverlay} />
           <div className={styles.heroText}>
             <p className={styles.heroKicker}>ObjectTracer</p>

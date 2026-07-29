@@ -132,7 +132,7 @@ export default function WaitlistPopup() {
           ) : (
             <>
               <div className={styles.hero}>
-                <img className={styles.heroImg} src="/night-sky.jpg" alt="The Milky Way over a hillside" loading="lazy" />
+                <img className={styles.heroImg} src="/night-sky.webp" width="1600" height="1066" alt="The Milky Way over a hillside" loading="lazy" />
                 <div className={styles.heroVeil} />
                 <div className={styles.heroText}>
                   <p className={styles.eyebrow}>Our mission</p>
