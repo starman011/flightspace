@@ -1905,7 +1905,7 @@ async function renderBlogPost(slug) {
         author: isEng
           ? { '@type': 'Person', name: 'Md Saqlain Khan', jobTitle: 'Founder & CTO',
               worksFor: { '@type': 'Organization', name: 'ObjectTracer' }, url: `${SITE}/about`,
-              sameAs: ['https://github.com/starman011'] }
+              sameAs: ['https://github.com/starman011', 'https://www.linkedin.com/in/mdsaqlainkhan'] }
           : { '@type': 'Organization', name: 'NASA APOD' },
         publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
         mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
