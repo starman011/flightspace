@@ -72,10 +72,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  border: none;
+  border: 1px solid transparent;      /* reserved so .active never resizes the icon */
   border-radius: 10px;
   background: transparent;
   color: rgba(var(--ink-rgb), 0.5);   /* legible icon bar, not ghost-faint */
@@ -87,7 +87,7 @@
    as a deliberate two-section bar. */
 .groupDivider {
   width: 1px;
-  height: 18px;
+  height: 22px;
   margin: 0 4px;
   align-self: center;
   background: var(--glass-line);
@@ -168,7 +168,7 @@
     align-items: stretch;
     gap: 0;
     padding: 4px;
-    width: 86px;                     /* chip: bigger hamburger + current icon */
+    width: 72px;                     /* chip: hamburger + current icon, matched to right pill */
     border-radius: 18px;             /* fixed sane radius — no 9999px tween glitch */
     overflow: hidden;
     transition: width 0.38s cubic-bezier(0.32, 1.2, 0.42, 1),
@@ -183,13 +183,13 @@
   }
   .groupDivider { display: none; }   /* the vertical menu doesn't need the section rule */
   .btn svg { width: 20px; height: 20px; }
-  .toggle { display: flex; width: 36px; height: 36px; flex: none; }
+  .toggle { display: flex; width: 28px; height: 28px; flex: none; }
   .current {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     color: var(--green);
     opacity: 1;
     transition: opacity 0.2s ease;
@@ -249,6 +249,7 @@
 
   .label {
     display: inline;
+    opacity: 1;                 /* names always visible, active or not */
     color: inherit;
     font-size: 12px;
     letter-spacing: 0.02em;
@@ -256,7 +257,7 @@
   }
   .btn.active {
     background: rgba(var(--green-rgb), 0.1);
-    border: 1px solid rgba(var(--green-rgb), 0.35);
+    border-color: rgba(var(--green-rgb), 0.35);
     color: var(--green);
     width: 100%;
     padding: 10px 12px;
