@@ -168,6 +168,14 @@ export default function App() {
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
+  const [initialSearchQuery, setInitialSearchQuery] = useState('')
+  // Sitelinks searchbox: /?q=<term> opens the search palette pre-filled.
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get('q')
+      if (q) { setInitialSearchQuery(q.slice(0, 80)); setSearchOpen(true) }
+    } catch { /* ignore */ }
+  }, [])
   // Only auto-track regular aircraft from URL, not ISS (ISS tracked after live enables)
   const [trackingId, setTrackingId]         = useState(
     init.selectedIcao24 && init.selectedIcao24 !== 'ISS' ? init.selectedIcao24 : null
@@ -959,6 +967,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onClose={() => setSearchOpen(false)}
           onSelect={handleSearchSelect}
           activeScale={activeScale}
+          initialQuery={initialSearchQuery}
         />
       )}
 

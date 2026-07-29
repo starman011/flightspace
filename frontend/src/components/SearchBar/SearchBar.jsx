@@ -25,8 +25,8 @@ function matchAirports(q) {
   return hits.slice(0, 6).map(h => ({ ...h.a, _type: 'airport' }))
 }
 
-export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale }) {
-  const [query, setQuery] = useState('')
+export default function SearchBar({ open, onOpen, onClose, onSelect, activeScale, initialQuery }) {
+  const [query, setQuery] = useState(initialQuery || '')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
