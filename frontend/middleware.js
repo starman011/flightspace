@@ -1466,6 +1466,19 @@ function renderHome() {
        deep-space galaxies. Free, no signup, runs in your browser.</p>
     <a class="cta" href="${canonical}">Open the Live 3D Globe →</a>
 
+    <h2>What is ObjectTracer?</h2>
+    <p>ObjectTracer is a free, real-time 3D globe that tracks everything moving above you in
+       one place — no signup, running entirely in your browser. It plots live aircraft from
+       open ADS-B receivers worldwide, ships broadcasting over AIS, the International Space
+       Station with its live NASA video feed and current crew, satellites propagated from
+       published orbital elements, upcoming rocket launches with countdowns, near-Earth
+       asteroids from NASA data, and a catalog of hundreds of thousands of real galaxies.
+       Positions refresh every few seconds and the globe interpolates motion between updates,
+       so objects glide instead of jumping. The view scales continuously from street level out
+       through the Moon, the solar system, and deep space. It is genuine WebGL 3D geometry,
+       built with Three.js — not a flat map image — which is why it tilts, orbits, and zooms
+       without snapping between fixed levels.</p>
+
     <h2>Explore ObjectTracer</h2>
     <ul class="cards">
       ${sectionCards}
