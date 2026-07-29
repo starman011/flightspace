@@ -1397,7 +1397,7 @@ function renderPlanes() {
 
 function renderHome() {
   const canonical = `${SITE}/`
-  const title = 'ObjectTracer — Live Flight Tracker & Radar on a Real-Time 3D Globe'
+  const title = 'ObjectTracer — Live Flight & Space Tracker on a Real-Time 3D Globe'
   const desc  = 'Track live flights in real time on a free, interactive 3D globe — every aircraft\'s position, altitude, speed and route from open ADS-B data. Plus ships, the ISS, satellites and rocket launches.'
 
   // Primary sections — the sitelink candidates Google chooses from
@@ -1460,7 +1460,7 @@ function renderHome() {
   }
 
   const body = `
-    <h1>ObjectTracer — Live Flight Tracker &amp; Radar</h1>
+    <h1>ObjectTracer — Live Flight &amp; Space Tracker</h1>
     <p>Track live flights in real time on one free 3D globe: every aircraft's position,
        altitude, speed and route from open ADS-B data. ObjectTracer also plots ships (AIS),
        the ISS, satellites, rocket launches and near-Earth asteroids — the whole sky in one
