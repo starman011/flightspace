@@ -614,7 +614,7 @@ async function renderLaunch(slug) {
   }
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }],
+    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }, crumbLd([['Home', `${SITE}/`], ['Launches', `${SITE}/launches`], [mission, canonical]])],
   }
 
   // Countdown or elapsed
@@ -757,7 +757,7 @@ async function renderAsteroid(slug) {
   }
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }],
+    '@graph': [eventLd, { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }, crumbLd([['Home', `${SITE}/`], ['Asteroids', `${SITE}/asteroids`], [cleanName, canonical]])],
   }
 
   const rows = [
@@ -1081,13 +1081,10 @@ async function renderFlightsOver(slug) {
   const title = `Live Flights Over ${region.name} — Real-Time ADS-B Tracker | ObjectTracer`
   const desc  = `Track all live flights over ${region.name} in real-time on ObjectTracer's 3D globe. ${region.name} is ${region.desc}. Real-time ADS-B tracking with position, altitude, speed, and route.`
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: `Live Flights Over ${region.name}`,
-    url: canonical,
-    description: desc,
-  }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'WebPage', name: `Live Flights Over ${region.name}`, url: canonical, description: desc },
+    crumbLd([['Home', `${SITE}/`], ['Live Flights', `${SITE}/flight`], [`Flights over ${region.name}`, canonical]]),
+  ] }
 
   const airportLinks = region.airports.map(iata => {
     const info = AIRPORT_INFO[iata]
