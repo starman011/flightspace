@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -53,6 +53,9 @@ export default async function middleware(request) {
   }
   if (pathname === '/sitemap-blog.xml') {
     return renderBlogSitemap()
+  }
+  if (pathname === '/feed.xml' || pathname === '/rss.xml' || pathname === '/blog/rss.xml') {
+    return renderBlogRSS()
   }
 
   const ua = request.headers.get('user-agent') || ''
@@ -1925,6 +1928,11 @@ async function renderBlogPost(slug) {
       },
     ],
   }
+  // VideoObject for engineering posts that embed a video (video rich results)
+  if (isEng && p.video_url) {
+    const v = blogVideoLd(p)
+    if (v) jsonLd['@graph'].push(v)
+  }
   const imgTag = (isEng ? p.image_url : p.media_type === 'image')
     ? `<img src="${esc(img)}" alt="${esc(p.title)}" style="width:100%;border-radius:10px;margin:16px 0" />` : ''
 
@@ -1957,6 +1965,36 @@ async function renderBlogPost(slug) {
 }
 
 // YouTube/Vimeo link → responsive iframe embed (empty string when unknown host)
+// VideoObject schema for an engineering post's embedded video (YouTube/Vimeo).
+function blogVideoLd(post) {
+  try {
+    const u = new URL(post.video_url)
+    const host = u.hostname.replace(/^www\./, '')
+    let embedUrl = null
+    let thumb = post.image_url || `${SITE}/og-image.png`
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtu.be') {
+      const id = host === 'youtu.be'
+        ? u.pathname.slice(1).split('/')[0]
+        : (u.searchParams.get('v') || (u.pathname.match(/\/(shorts|embed)\/([\w-]{6,})/) || [])[2])
+      if (!id) return null
+      embedUrl = `https://www.youtube.com/embed/${id}`
+      thumb = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`
+    } else if (host === 'vimeo.com') {
+      const id = (u.pathname.match(/\/(\d+)/) || [])[1]
+      if (!id) return null
+      embedUrl = `https://player.vimeo.com/video/${id}`
+    } else return null
+    return {
+      '@type': 'VideoObject',
+      name: post.title,
+      description: (post.intro || post.explanation || '').slice(0, 200),
+      thumbnailUrl: thumb,
+      uploadDate: post.date,
+      embedUrl,
+    }
+  } catch (_) { return null }
+}
+
 function blogVideoEmbed(url) {
   try {
     const u = new URL(url)
@@ -1989,6 +2027,40 @@ async function renderBlogSitemap() {
   ).join('\n')
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/blog</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n${urls}\n</urlset>`
   return new Response(xml, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } })
+}
+
+async function renderBlogRSS() {
+  let posts = []
+  try {
+    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
+    if (res.ok) { const d = await res.json(); posts = d.posts || [] }
+  } catch (_) {}
+  const items = posts.map(p => {
+    const cat  = p.category === 'engineering' ? 'Engineering' : 'Space Journal'
+    const desc = (p.intro || p.explanation || '').slice(0, 300)
+    let pub = ''
+    try { pub = new Date(`${p.date}T00:00:00Z`).toUTCString() } catch (_) {}
+    return `  <item>
+    <title>${esc(p.title)}</title>
+    <link>${SITE}/blog/${p.slug}</link>
+    <guid isPermaLink="true">${SITE}/blog/${p.slug}</guid>
+    <category>${esc(cat)}</category>
+    ${pub ? `<pubDate>${pub}</pubDate>` : ''}
+    <description>${esc(desc)}</description>
+  </item>`
+  }).join('\n')
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>ObjectTracer Blog</title>
+  <link>${SITE}/blog</link>
+  <description>Space Journal (daily NASA APOD) and the Engineering Blog — how ObjectTracer tracks flights and the sky in real time.</description>
+  <language>en</language>
+  <atom:link href="${SITE}/feed.xml" rel="self" type="application/rss+xml"/>
+${items}
+</channel>
+</rss>`
+  return new Response(xml, { headers: { 'content-type': 'application/rss+xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } })
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
