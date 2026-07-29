@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
 }
 
 const BOT_RE =
@@ -108,6 +108,9 @@ export default async function middleware(request) {
   }
   if (pathname === '/faq') {
     return renderFaq()
+  }
+  if (pathname === '/about') {
+    return renderAbout()
   }
   if (pathname === '/blog') {
     return renderBlogFeed()
@@ -2177,6 +2180,49 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
       'x-robots-tag': 'index, follow',
     },
   })
+}
+
+// ── About renderer — E-E-A-T entity hub (Organization + founder Person) ─────
+async function renderAbout() {
+  const canonical = `${SITE}/about`
+  const title = 'About ObjectTracer — Live Flight & Space Tracker'
+  const desc  = 'ObjectTracer is a free, real-time 3D globe tracking live flights, ships, the ISS, satellites, rocket launches, asteroids and deep-space galaxies. Built in the open by Md Saqlain Khan.'
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Organization', '@id': `${SITE}/#org`, name: 'ObjectTracer', url: `${SITE}/`,
+      logo: `${SITE}/favicon-512.png`, description: desc,
+      founder: { '@id': `${canonical}#founder` }, foundingDate: '2026',
+      sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace'] },
+    { '@type': 'Person', '@id': `${canonical}#founder`, name: 'Md Saqlain Khan',
+      jobTitle: 'Founder & CTO', worksFor: { '@id': `${SITE}/#org` }, url: canonical,
+      sameAs: ['https://github.com/starman011', 'https://www.linkedin.com/in/mdsaqlainkhan'] },
+    { '@type': 'AboutPage', '@id': `${canonical}#page`, url: canonical, name: title,
+      mainEntity: { '@id': `${SITE}/#org` } },
+    crumbLd([['Home', `${SITE}/`], ['About', canonical]]),
+  ] }
+  const body = `
+    <h1>About ObjectTracer</h1>
+    <p>ObjectTracer is a free, real-time 3D globe that shows everything moving above you — live
+       flights, ships, the ISS, satellites, rocket launches, near-Earth asteroids, and deep-space
+       galaxies — in one place, with no signup and no ads.</p>
+    <h2>What you can track</h2>
+    <ul>
+      <li><strong>Flights.</strong> Live aircraft positions, routes, altitude and speed from open ADS-B receivers worldwide.</li>
+      <li><strong>The ISS and satellites.</strong> Live orbital positions, plus a 4K stream and crew manifest for the space station.</li>
+      <li><strong>Ships.</strong> Maritime vessels reporting over AIS, on the same globe as the planes above them.</li>
+      <li><strong>Rocket launches.</strong> Countdowns, pad locations and mission details, with a reminder before liftoff.</li>
+      <li><strong>Near-Earth asteroids.</strong> Close approaches from NASA data, to scale.</li>
+      <li><strong>Deep space.</strong> The Moon, the solar system, and hundreds of thousands of real galaxies.</li>
+    </ul>
+    <h2>How it works</h2>
+    <p>The server streams only the objects in your current view over one WebSocket connection, and
+       the globe draws thousands of them in a handful of GPU calls — genuine WebGL 3D geometry built
+       with Three.js, not a flat map image.</p>
+    <h2>Built in the open</h2>
+    <p>ObjectTracer is built by Md Saqlain Khan (Founder &amp; CTO). We write about the engineering
+       one hard problem at a time on the <a href="${SITE}/engineering">Engineering Blog</a> — from
+       rendering tens of thousands of aircraft at 60fps to serving the whole sky on a free backend.</p>
+    <p><a href="${SITE}/">Open the live 3D globe →</a> · <a href="${SITE}/faq">FAQ</a> · <a href="${SITE}/engineering">Engineering Blog</a></p>`
+  return html(canonical, title, desc, jsonLd, body, 'ABOUT')
 }
 
 // ── FAQ renderer — FAQPage schema + AI-citable answers ──────────────────────
