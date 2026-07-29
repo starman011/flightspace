@@ -1397,8 +1397,8 @@ function renderPlanes() {
 
 function renderHome() {
   const canonical = `${SITE}/`
-  const title = 'ObjectTracer — Live Flight Tracker, ISS, Satellites & Deep Space on a 3D Globe'
-  const desc  = 'Track live flights, ships, the ISS, satellites, rocket launches, asteroids, and deep-space galaxies on a real-time interactive 3D globe. Free, no signup.'
+  const title = 'ObjectTracer — Live Flight Tracker & Radar on a Real-Time 3D Globe'
+  const desc  = 'Track live flights in real time on a free, interactive 3D globe — every aircraft\'s position, altitude, speed and route from open ADS-B data. Plus ships, the ISS, satellites and rocket launches.'
 
   // Primary sections — the sitelink candidates Google chooses from
   const sections = [
@@ -1460,24 +1460,25 @@ function renderHome() {
   }
 
   const body = `
-    <h1>ObjectTracer — Live Flight &amp; Space Tracker</h1>
-    <p>Track everything moving above you on one real-time 3D globe: live flights (ADS-B),
-       ships (AIS), the ISS, satellites, rocket launches, near-Earth asteroids, and
-       deep-space galaxies. Free, no signup, runs in your browser.</p>
+    <h1>ObjectTracer — Live Flight Tracker &amp; Radar</h1>
+    <p>Track live flights in real time on one free 3D globe: every aircraft's position,
+       altitude, speed and route from open ADS-B data. ObjectTracer also plots ships (AIS),
+       the ISS, satellites, rocket launches and near-Earth asteroids — the whole sky in one
+       place. No signup, runs in your browser.</p>
     <a class="cta" href="${canonical}">Open the Live 3D Globe →</a>
 
     <h2>What is ObjectTracer?</h2>
-    <p>ObjectTracer is a free, real-time 3D globe that tracks everything moving above you in
-       one place — no signup, running entirely in your browser. It plots live aircraft from
-       open ADS-B receivers worldwide, ships broadcasting over AIS, the International Space
-       Station with its live NASA video feed and current crew, satellites propagated from
-       published orbital elements, upcoming rocket launches with countdowns, near-Earth
-       asteroids from NASA data, and a catalog of hundreds of thousands of real galaxies.
+    <p>ObjectTracer is a free, real-time flight tracker on an interactive 3D globe — no signup,
+       running entirely in your browser. It plots live aircraft from open ADS-B receivers
+       worldwide, showing each flight's position, altitude, speed and route, and you can search
+       by callsign, registration or ICAO24 hex and lock the camera onto one aircraft. The same
+       globe also tracks ships broadcasting over AIS, the International Space Station with its
+       live NASA feed and crew, satellites propagated from published orbital elements, upcoming
+       rocket launches, near-Earth asteroids, and hundreds of thousands of real galaxies.
        Positions refresh every few seconds and the globe interpolates motion between updates,
-       so objects glide instead of jumping. The view scales continuously from street level out
-       through the Moon, the solar system, and deep space. It is genuine WebGL 3D geometry,
-       built with Three.js — not a flat map image — which is why it tilts, orbits, and zooms
-       without snapping between fixed levels.</p>
+       so objects glide instead of jumping. It is genuine WebGL 3D geometry built with Three.js,
+       not a flat map image, so it tilts, orbits and zooms continuously from street level out to
+       deep space.</p>
 
     <h2>Explore ObjectTracer</h2>
     <ul class="cards">
