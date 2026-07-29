@@ -130,9 +130,9 @@ function ISSStream() {
                 <span className={styles.liveDot} /> ISS · LIVE
               </span>
               <span style={{ flex: 1 }} />
-              <button onClick={goFullscreen} title="Fullscreen">⛶</button>
-              <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube">↗</a>
-              <button onClick={() => setTheater(false)} title="Close">✕</button>
+              <button onClick={goFullscreen} title="Fullscreen" aria-label="Fullscreen">⛶</button>
+              <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
+              <button onClick={() => setTheater(false)} title="Close" aria-label="Close theater">✕</button>
             </div>
           </div>
         </div>
@@ -890,7 +890,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                           value={playback.index}
                           onChange={e => seekPlayback(parseInt(e.target.value))}
                         />
-                        <button className={styles.replayBtn} onClick={stopPlayback}>✕</button>
+                        <button className={styles.replayBtn} onClick={stopPlayback} aria-label="Stop playback" title="Stop playback">✕</button>
                       </div>
                     ) : null}
                   </div>

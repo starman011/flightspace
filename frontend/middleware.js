@@ -522,11 +522,11 @@ function renderPastLaunch(slug) {
   const name = slug.split('-').map(w => (/^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ')
   const canonical = `${SITE}/launch/${slug}`
   const title = `${name} Launch — Mission Archive | ObjectTracer`
-  const desc  = `${name}: past rocket launch tracked live on ObjectTracer. See upcoming launches with live countdowns, pad locations and mission details on the free 3D globe.`
-  const jsonLd = {
-    '@context': 'https://schema.org', '@type': 'WebPage',
-    name: `${name} Launch`, url: canonical, description: desc,
-  }
+  const desc  = `${name}: a completed rocket launch, tracked live on ObjectTracer as it happened — countdown, pad location and mission details. Track upcoming launches on the free 3D globe.`
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'WebPage', name: `${name} Launch`, url: canonical, description: desc },
+    crumbLd([['Home', `${SITE}/`], ['Launches', `${SITE}/launches`], [`${name} Launch`, canonical]]),
+  ] }
   const body = `
     <h1>${esc(name)}</h1>
     <p>This mission has launched. ObjectTracer tracked it live — countdown, launch pad location and mission details — as it happened.</p>
