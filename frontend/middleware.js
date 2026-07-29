@@ -246,8 +246,8 @@ async function renderAirport(iata) {
   const apLabel  = `${cityName} ${iata} Airport`
   const where    = country ? `${cityName}, ${country}` : cityName
   // Lead with the IATA phrase users actually type ("jfk arrivals", "jfk departures")
-  const title = `${iata} Arrivals & Departures — ${cityName} Airport Live Flight Status | ObjectTracer`
-  const desc  = `${iata} arrivals and departures live: real-time flight status at ${fullName}, ${cityName}, tracked from ADS-B on a free 3D map. Watch every inbound and outbound flight as it moves.`
+  const title = `${iata} Arrivals & Departures — ${cityName} | ObjectTracer`
+  const desc  = `${iata} arrivals & departures, live: real-time flight status at ${fullName}, ${cityName}, tracked from ADS-B on a free 3D map.`
 
   // Varied "about" opener (rotates by IATA hash) so 930 pages aren't identical
   let h = 0; for (let i = 0; i < iata.length; i++) h = (h * 31 + iata.charCodeAt(i)) >>> 0
@@ -426,7 +426,7 @@ async function renderAirline(slug) {
   const count = flights.length
   // "{airline} flight status" is the #1 query family for these pages — lead with it
   const title = `${airline.name} Flight Status & Live Tracker (${airline.iata}) | ObjectTracer`
-  const desc  = `${airline.name} flight status live: track every ${airline.name} (${airline.iata}/${airline.icao}) flight in real time — position, altitude, speed and route on a free live map, straight from ADS-B.`
+  const desc  = `${airline.name} flight status, live: track every ${airline.name} (${airline.iata}) flight in real time — position, altitude, speed and route on a free ADS-B map.`
 
   const faqs = [
     [`How can I track ${airline.name} flights live?`, `Open ObjectTracer's 3D globe — every ${airline.name} (${airline.iata}) aircraft currently broadcasting ADS-B is plotted in real time with its position, altitude, speed and route. Click any flight for full details.`],
@@ -884,7 +884,7 @@ async function renderCity(slug) {
     }
   } catch (_) {}
 
-  const title = `${city.name} Flights — All Airports, Live Arrivals & Departures | ObjectTracer`
+  const title = `${city.name} Flights — Live Airport Arrivals & Departures | ObjectTracer`
   const desc  = `Flights to and from ${city.name}, ${city.country}: live arrivals and departures across ${iataList.join(', ')}, tracked in real time on ObjectTracer's 3D globe.`
   const cityRegion = COUNTRY_TO_REGION[city.country]
   const cityRegionLink = cityRegion ? `Regional tracker: <a href="${SITE}/flights/${cityRegion}">Flights over ${esc(REGION_INFO[cityRegion].name)}</a>.` : ''
@@ -987,6 +987,7 @@ async function renderSatellite(slug) {
     '@graph': [
       { '@type': 'WebPage', name: `${sat.name} Live Tracker`, url: canonical, description: desc },
       { '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      crumbLd([['Home', `${SITE}/`], ['Satellites', `${SITE}/satellite`], [sat.name, canonical]]),
     ],
   }
 
@@ -1618,22 +1619,24 @@ async function renderISS() {
     ? `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`
     : null
 
-  const title = 'ISS Live Tracker — International Space Station Location, Crew & 4K Stream | ObjectTracer'
-  const desc  = `Track the International Space Station (ISS) live on ObjectTracer's real-time 3D globe. ${issCrew.length} crew members aboard. Currently at ~${ALT_KM} km altitude, traveling at ${SPEED_KMH.toLocaleString()} km/h.${posStr ? ` Now over ${posStr}.` : ''} Watch the 4K NASA live stream.`
+  const title = 'ISS Live Tracker — Location, Crew & 4K NASA Stream | ObjectTracer'
+  const desc  = `Track the International Space Station live on a real-time 3D globe — ${issCrew.length} crew aboard${posStr ? `, now over ${posStr}` : ''}. Watch the 4K NASA live stream, see the crew and its orbital path.`
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'ISS Live Tracker — International Space Station',
-    url: canonical,
-    description: desc,
-    about: {
-      '@type': 'Thing',
-      name: 'International Space Station',
-      description: `The ISS orbits Earth at ~${ALT_KM} km altitude every ${ORBITAL_PERIOD_MIN} minutes at ${SPEED_KMH.toLocaleString()} km/h with ${issCrew.length} crew members aboard.`,
-      sameAs: 'https://www.wikidata.org/wiki/Q159036',
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    {
+      '@type': 'WebPage',
+      name: 'ISS Live Tracker — International Space Station',
+      url: canonical,
+      description: desc,
+      about: {
+        '@type': 'Thing',
+        name: 'International Space Station',
+        description: `The ISS orbits Earth at ~${ALT_KM} km altitude every ${ORBITAL_PERIOD_MIN} minutes at ${SPEED_KMH.toLocaleString()} km/h with ${issCrew.length} crew members aboard.`,
+        sameAs: 'https://www.wikidata.org/wiki/Q159036',
+      },
     },
-  }
+    crumbLd([['Home', `${SITE}/`], ['ISS Live Tracker', canonical]]),
+  ] }
 
   const crewRows = issCrew.map(p =>
     `<tr><td>${esc(p.name)}</td><td>ISS</td></tr>`
