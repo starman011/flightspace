@@ -155,8 +155,8 @@ async function renderFlight(raw) {
   const routeStr   = originName && destName ? `${originName} → ${destName}` : originName || destName || ''
 
   const title = routeStr
-    ? `Track ${callsign} — ${routeStr} | ObjectTracer`
-    : `Track ${callsign} Live Flight | ObjectTracer`
+    ? `${callsign} Flight Live — ${routeStr} Status & Route | ObjectTracer`
+    : `${callsign} Flight — Live Status, Altitude & Route | ObjectTracer`
 
   const descParts = [`Track ${callsign} live on ObjectTracer's real-time 3D globe.`]
   if (operator)  descParts.push(`Operated by ${operator}.`)
@@ -169,7 +169,9 @@ async function renderFlight(raw) {
 
   const canonical = `${SITE}/flight/${icao24}`
 
-  const flightLd = { '@type': 'Flight', identifier: icao24, flightNumber: callsign, url: canonical }
+  const flightLd = { '@type': 'Flight', identifier: icao24, flightNumber: callsign,
+    name: routeStr ? `${callsign} — ${routeStr}` : `${callsign} flight`, url: canonical }
+  if (aircraft) flightLd.aircraft = aircraft
   if (operator)   flightLd.provider          = { '@type': 'Airline', name: operator }
   if (originName) flightLd.departureAirport  = { '@type': 'Airport', name: originName, ...(originIATA ? { iataCode: originIATA } : {}) }
   if (destName)   flightLd.arrivalAirport    = { '@type': 'Airport', name: destName,   ...(destIATA   ? { iataCode: destIATA   } : {}) }
@@ -192,10 +194,15 @@ async function renderFlight(raw) {
     : 'Live data unavailable — aircraft may be outside ADS-B coverage.'
 
   return html(canonical, title, desc, jsonLd, `
-    <h1>Track ${esc(callsign)} Live</h1>
+    <h1>${esc(callsign)} Flight — Live Tracking</h1>
     <p>${esc(status)}</p>
     ${rows ? `<table>${rows}</table>` : ''}
     <a class="cta" href="${canonical}">Open Live 3D Tracker →</a>
+    ${(originIATA || destIATA) ? `<p>Airports on this route: ${[
+      originIATA && `<a href="${SITE}/airport/${originIATA}">${esc(originName)} (${originIATA})</a>`,
+      destIATA && `<a href="${SITE}/airport/${destIATA}">${esc(destName)} (${destIATA})</a>`,
+    ].filter(Boolean).join(' · ')}</p>` : ''}
+    <p><a href="${SITE}/flight">Live flights near you</a> · <a href="${SITE}/">Live 3D globe</a></p>
     <p style="margin-top:32px">
       ObjectTracer provides real-time ADS-B flight tracking on an interactive 3D globe.
       Track any flight worldwide with live position, altitude, speed, and route history.
