@@ -197,3 +197,15 @@
 /* Fade tile images in on load — no pop when the APOD/eng image resolves */
 .tileImg { opacity: 0; transition: opacity 0.35s ease; }
 .imgLoaded { opacity: 1 !important; }
+
+/* Article hero image — reserve space (aspect-ratio) so the remote image can't
+   shift layout as it loads. .hero alone only carried bento-grid props. */
+.article .hero {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  object-fit: cover;
+  border-radius: 14px;
+  margin: 0 0 18px;
+}
