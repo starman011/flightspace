@@ -124,9 +124,6 @@
 .btn.active {
   color: var(--green);
   background: rgba(var(--green-rgb), 0.08);
-  width: auto;
-  padding: 0 10px;
-  gap: 5px;
 }
 
 .btn.active:hover {
@@ -148,13 +145,10 @@
   transition: grid-template-columns 0.28s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.2s ease, margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.btn.active .label {
-  grid-template-columns: 1fr;
-  opacity: 1;
-  margin-left: 5px;
-}
+/* desktop keeps the label collapsed so every button stays a uniform square;
+   mobile overrides .label to show names inline. */
 
-.btn svg { width: 20px; height: 20px; }   /* earth/moon/… glyphs — same size desktop + mobile */
+.btn svg { width: 24px; height: 24px; }   /* earth/moon/… glyphs — uniform, fills the button */
 .head, .menu, .menuInner { display: contents; }
 .current { display: none; }
 
