@@ -1445,6 +1445,7 @@ function renderHome() {
         url: canonical,
         logo: `${SITE}/favicon.svg`,
         description: desc,
+        sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace'],
       },
       {
         '@type': 'WebSite',
@@ -1903,7 +1904,8 @@ async function renderBlogPost(slug) {
         inLanguage: 'en',
         author: isEng
           ? { '@type': 'Person', name: 'Md Saqlain Khan', jobTitle: 'Founder & CTO',
-              worksFor: { '@type': 'Organization', name: 'ObjectTracer' }, url: `${SITE}/about` }
+              worksFor: { '@type': 'Organization', name: 'ObjectTracer' }, url: `${SITE}/about`,
+              sameAs: ['https://github.com/starman011'] }
           : { '@type': 'Organization', name: 'NASA APOD' },
         publisher: { '@type': 'Organization', name: 'ObjectTracer', logo: { '@type': 'ImageObject', url: `${SITE}/favicon.svg` } },
         mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
