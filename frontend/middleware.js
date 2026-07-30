@@ -1349,14 +1349,11 @@ function renderFlightNear() {
   const routeLinks   = routes.map(([s, n]) => `<li><a href="${SITE}/route/${s}">${esc(n)}</a></li>`).join('\n')
   const airlineLinks = airlines.map(([s, n]) => `<li><a href="${SITE}/airline/${s}">${esc(n)} flight tracker</a></li>`).join('\n')
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: title,
-    url: canonical,
-    description: desc,
-    isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` },
-  }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'WebPage', name: title, url: canonical, description: desc,
+      isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` } },
+    crumbLd([['Home', `${SITE}/`], ['Live Flights', canonical]]),
+  ] }
 
   const body = `
   <h1>Flights near you</h1>
@@ -1386,14 +1383,11 @@ function renderPlanes() {
   ]
   const airlineLinks = airlines.map(([s, n]) => `<li><a href="${SITE}/airline/${s}">${esc(n)} fleet — live flights</a></li>`).join('\n')
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: title,
-    url: canonical,
-    description: desc,
-    isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` },
-  }
+  const jsonLd = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'WebPage', name: title, url: canonical, description: desc,
+      isPartOf: { '@type': 'WebSite', name: 'ObjectTracer', url: `${SITE}/` } },
+    crumbLd([['Home', `${SITE}/`], ['Live Fleets', canonical]]),
+  ] }
 
   const body = `
   <h1>Live fleet tracker</h1>
