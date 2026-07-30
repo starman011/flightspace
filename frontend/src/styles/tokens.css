@@ -171,45 +171,44 @@
    ink, dark glass -> white glass, white gloss -> a faint dark hairline.
    Brand green deepens for contrast on white; blue is the vivid desertcart blue. */
 [data-theme='light'] {
-  /* Palette: BLUE + BLACK text + WHITE. Blue #0043f0 is the DOMINANT color —
-     the brand/active/primary role (what is green in dark) becomes blue here.
-     Text is near-black on the light-blue surfaces; white on solid-blue fills. */
-  --green:      #0043f0;              /* brand/active -> blue in the light theme */
-  --green-rgb:  0, 67, 240;
-  --blue:       #0043f0;              /* the desertcart blue — the spine */
-  --blue-rgb:   0, 67, 240;
-  --teal:       #0d6ea8;              /* deep blue-teal, readable on white */
-  --teal-rgb:   13, 110, 168;
-  --amber:      #b45309;              /* deep amber — readable on white */
-  --amber-rgb:  180, 83, 9;
-  --violet:     #3730c0;              /* deep blue-violet, readable on white */
-  --violet-rgb: 55, 48, 192;
+  /* BLUE theme: the desertcart blue #0043f0 IS the background. Text is white;
+     accents are lightened so they pop on the blue. (The 3D globe stays dark.) */
+  --green:      #bce419;              /* lime accent — active/highlights, pops on blue */
+  --green-rgb:  188, 228, 25;
+  --blue:       #dbe7ff;              /* links/secondary — light so they read on blue */
+  --blue-rgb:   219, 231, 255;
+  --teal:       #7fe0ff;              /* light cyan — reads on blue */
+  --teal-rgb:   127, 224, 255;
+  --amber:      #ffd24a;              /* light amber — reads on blue */
+  --amber-rgb:  255, 210, 74;
+  --violet:     #cbb8ff;              /* light violet — reads on blue */
+  --violet-rgb: 203, 184, 255;
 
-  --ink-rgb:            17, 22, 33;      /* near-black text */
-  --ink-muted-rgb:      84, 92, 110;     /* grey muted captions */
-  --ink-cool-rgb:       0, 67, 240;      /* cool text -> the blue */
-  --surface-rgb:        196, 214, 248;   /* clearly blue glass (not white) */
-  --surface-deep-rgb:   176, 199, 243;   /* deeper blue */
-  --surface-raised-rgb: 186, 206, 246;   /* raised chips, blue */
-  --line-rgb:           0, 67, 240;      /* blue hairlines / dividers */
-  --gloss-rgb:          0, 60, 210;      /* "gloss"/hairline -> blue line */
-  --text-strong:        #08101f;         /* near-black headings */
-  --page-bg:            #b4c9f0;         /* strong blue page wash */
+  --ink-rgb:            255, 255, 255;   /* white text on the blue */
+  --ink-muted-rgb:      205, 219, 255;   /* muted white-blue */
+  --ink-cool-rgb:       224, 236, 255;   /* cool light text */
+  --surface-rgb:        0, 67, 240;      /* THE blue — glass fills */
+  --surface-deep-rgb:   0, 52, 195;      /* deeper blue */
+  --surface-raised-rgb: 36, 100, 250;    /* raised blue chip */
+  --line-rgb:           255, 255, 255;   /* white hairlines / dividers */
+  --gloss-rgb:          255, 255, 255;   /* white gloss */
+  --text-strong:        #ffffff;         /* white headings */
+  --page-bg:            #0043f0;         /* THE blue — full-screen pages */
 
   /* Legacy semantic tokens some components still use directly */
-  --on-surface:         #11151f;        /* near-black */
-  --on-surface-variant: #44506e;
-  --surface:            #b4c9f0;
-  --surface-dim:        #bcd2fb;
-  --surface-container-low:     #d8e6ff;
-  --surface-container:         #cadcfc;
-  --surface-container-high:    #bcd2f8;
-  --primary-container:  #0043f0;        /* blue — active/primary states */
-  --glass-fill:   rgba(198, 216, 249, 0.92);
-  --glass-fill-2: rgba(184, 206, 246, 0.74);
-  --glass-line:   rgba(0, 67, 240, 0.28);
-  --glass-gloss:  rgba(255, 255, 255, 0.95);
-  --glass-shadow-nav:   0 6px 20px rgba(20, 40, 90, 0.10), 0 1px 3px rgba(20, 40, 90, 0.08);
-  --glass-shadow:       0 14px 44px rgba(20, 40, 90, 0.15), 0 2px 8px rgba(20, 40, 90, 0.10);
-  --glass-shadow-modal: 0 30px 80px rgba(20, 40, 90, 0.22), 0 6px 18px rgba(20, 40, 90, 0.12);
+  --on-surface:         #ffffff;
+  --on-surface-variant: #cddbff;
+  --surface:            #0043f0;
+  --surface-dim:        #0039d6;
+  --surface-container-low:     #1052f5;
+  --surface-container:         #0847e8;
+  --surface-container-high:    #1a5cff;
+  --primary-container:  #bce419;         /* lime — active/primary accents */
+  --glass-fill:   rgba(0, 67, 240, 0.9);
+  --glass-fill-2: rgba(0, 58, 212, 0.82);
+  --glass-line:   rgba(255, 255, 255, 0.22);
+  --glass-gloss:  rgba(255, 255, 255, 0.4);
+  --glass-shadow-nav:   0 6px 20px rgba(0, 22, 80, 0.28), 0 1px 3px rgba(0, 22, 80, 0.22);
+  --glass-shadow:       0 14px 44px rgba(0, 22, 80, 0.34), 0 2px 8px rgba(0, 22, 80, 0.24);
+  --glass-shadow-modal: 0 30px 80px rgba(0, 18, 70, 0.42), 0 6px 18px rgba(0, 18, 70, 0.28);
 }
