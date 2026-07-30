@@ -188,26 +188,26 @@
   --ink-rgb:            17, 22, 33;      /* near-black text */
   --ink-muted-rgb:      84, 92, 110;     /* grey muted captions */
   --ink-cool-rgb:       0, 67, 240;      /* cool text -> the blue */
-  --surface-rgb:        224, 235, 255;   /* light-blue glass (blue-dominant, not white) */
-  --surface-deep-rgb:   204, 222, 252;   /* deeper blue */
-  --surface-raised-rgb: 212, 227, 253;   /* raised chips, blue */
+  --surface-rgb:        196, 214, 248;   /* clearly blue glass (not white) */
+  --surface-deep-rgb:   176, 199, 243;   /* deeper blue */
+  --surface-raised-rgb: 186, 206, 246;   /* raised chips, blue */
   --line-rgb:           0, 67, 240;      /* blue hairlines / dividers */
   --gloss-rgb:          0, 60, 210;      /* "gloss"/hairline -> blue line */
   --text-strong:        #08101f;         /* near-black headings */
-  --page-bg:            #cbdcff;         /* dominant blue page wash */
+  --page-bg:            #b4c9f0;         /* strong blue page wash */
 
   /* Legacy semantic tokens some components still use directly */
   --on-surface:         #11151f;        /* near-black */
   --on-surface-variant: #44506e;
-  --surface:            #cbdcff;
+  --surface:            #b4c9f0;
   --surface-dim:        #bcd2fb;
   --surface-container-low:     #d8e6ff;
   --surface-container:         #cadcfc;
   --surface-container-high:    #bcd2f8;
   --primary-container:  #0043f0;        /* blue — active/primary states */
-  --glass-fill:   rgba(222, 235, 255, 0.88);
-  --glass-fill-2: rgba(210, 227, 255, 0.7);
-  --glass-line:   rgba(0, 67, 240, 0.22);
+  --glass-fill:   rgba(198, 216, 249, 0.92);
+  --glass-fill-2: rgba(184, 206, 246, 0.74);
+  --glass-line:   rgba(0, 67, 240, 0.28);
   --glass-gloss:  rgba(255, 255, 255, 0.95);
   --glass-shadow-nav:   0 6px 20px rgba(20, 40, 90, 0.10), 0 1px 3px rgba(20, 40, 90, 0.08);
   --glass-shadow:       0 14px 44px rgba(20, 40, 90, 0.15), 0 2px 8px rgba(20, 40, 90, 0.10);
