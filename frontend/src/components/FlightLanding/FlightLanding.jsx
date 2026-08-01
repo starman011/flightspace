@@ -125,7 +125,8 @@ export default function FlightLanding({ icao24, onEnable }) {
             e.currentTarget.style.transform = 'none'
           }}
         >
-          ▶ Enable Live Tracking
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 7, verticalAlign: '-1px' }}><path d="M8 5v14l11-7z" /></svg>
+          Enable Live Tracking
         </button>
 
         <p style={{

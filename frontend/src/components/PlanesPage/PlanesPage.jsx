@@ -207,7 +207,9 @@ export default function PlanesPage({ onClose, onFlightClick, initialAirline }) {
                   const alt = f.alt_ft ? `${(Math.round(f.alt_ft / 100) * 100).toLocaleString()} ft` : (f.on_ground ? 'on ground' : '—')
                   return (
                     <div key={f.icao24 || i} className={styles.row}
-                      onClick={() => f.icao24 && onFlightClick?.(f.icao24, f.lat != null ? { lat: f.lat, lon: f.lon } : null)}>
+                      role="button" tabIndex={f.icao24 ? 0 : -1}
+                      onClick={() => f.icao24 && onFlightClick?.(f.icao24, f.lat != null ? { lat: f.lat, lon: f.lon } : null)}
+                      onKeyDown={e => { if (f.icao24 && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onFlightClick?.(f.icao24, f.lat != null ? { lat: f.lat, lon: f.lon } : null) } }}>
                       <span className={styles.rcs}>{cs}</span>
                       <span className={styles.rcity}>{second}</span>
                       <span className={styles.rtime}>{f.country || '—'}</span>

@@ -252,7 +252,11 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport, init
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 placeholder="Search a city or airport…"
+                aria-label="Search a city or airport"
               />
+              <button type="submit" aria-label="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              </button>
             </form>
           </div>
           <div className={styles.locChips}>
@@ -312,7 +316,10 @@ export default function FlightPage({ onClose, onFlightClick, onOpenAirport, init
                   const { id, al } = flightName(f)
                   const status = isArr ? arrStatus(f) : { label: 'Departing', cls: styles.pillGo }
                   return (
-                    <div key={f.icao24 || i} className={styles.row} onClick={() => f.icao24 && onFlightClick?.(f.icao24, apt ? { lat: apt.lat, lon: apt.lon } : null)}>
+                    <div key={f.icao24 || i} className={styles.row}
+                      role="button" tabIndex={f.icao24 ? 0 : -1}
+                      onClick={() => f.icao24 && onFlightClick?.(f.icao24, apt ? { lat: apt.lat, lon: apt.lon } : null)}
+                      onKeyDown={e => { if (f.icao24 && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onFlightClick?.(f.icao24, apt ? { lat: apt.lat, lon: apt.lon } : null) } }}>
                       <span className={styles.rcs}>{id}{al && <small>{al}</small>}</span>
                       <span className={styles.rcity}>{peerLabel(f)}</span>
                       <span className={`${styles.pill} ${status.cls}`}>{status.label}</span>

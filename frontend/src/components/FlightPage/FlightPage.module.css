@@ -46,7 +46,7 @@
 .coverImg {
   position: absolute;
   inset: -5%;
-  background: url('/flight-sky.jpg') center/cover no-repeat;
+  background: url('/flight-sky.webp') center/cover no-repeat;
   animation: kenburns 32s ease-in-out infinite alternate;
   will-change: transform;
 }
