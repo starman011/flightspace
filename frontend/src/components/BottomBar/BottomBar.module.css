@@ -12,7 +12,7 @@
   display: flex;
   align-items: stretch;
   gap: 2px;
-  padding: 5px;
+  padding: 3px;                   /* highlight reaches the bar edge — no floating box */
   max-width: calc(100vw - 16px);
 
   background: var(--glass-fill);
@@ -33,10 +33,10 @@
   justify-content: center;
   gap: 3px;
   min-width: 52px;
-  min-height: 46px;
-  padding: 5px 8px;
+  min-height: 48px;
+  padding: 5px 10px;
   border: none;
-  border-radius: var(--r-tight);
+  border-radius: var(--r-pill);   /* lime fills the whole segment, matching the bar's curve */
   background: transparent;
   color: rgba(var(--ink-rgb), 0.6);
   cursor: pointer;
