@@ -78,17 +78,16 @@ export default function BottomBar({
     }, 250)
     return () => clearTimeout(t)
   }, [q, API_BASE])
-  // Idle chrome: dim the top area when the user works the globe; wake on touch.
+  // Chrome fade: dim the top area ONLY when the user actually works the globe
+  // (pointer-down outside both the top area and the bar). No idle timer —
+  // untouched chrome stays fully visible. Touching the top area wakes it.
   useEffect(() => {
-    let idle = setTimeout(() => setDim(true), 6000)
     const onDown = (e) => {
-      clearTimeout(idle)
       if (topRef.current?.contains(e.target)) setDim(false)
-      else { setDim(true); }
-      idle = setTimeout(() => setDim(true), 6000)
+      else if (!barRef.current?.contains(e.target)) setDim(true)
     }
     window.addEventListener('pointerdown', onDown)
-    return () => { clearTimeout(idle); window.removeEventListener('pointerdown', onDown) }
+    return () => window.removeEventListener('pointerdown', onDown)
   }, [])
   const [light, setLight] = useState(() => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light')
   const toggleTheme = () => {
