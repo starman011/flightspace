@@ -62,6 +62,7 @@ export default function BottomBar({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [hint, setHint] = useState('')
+  const [liveWave, setLiveWave] = useState(false)   // full-screen activation pulse
   const [light, setLight] = useState(() => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light')
   const toggleTheme = () => {
     const el = document.documentElement
@@ -197,6 +198,7 @@ export default function BottomBar({
 
   return (
     <>
+    {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
     <div className={styles.topArea}>
       <div className={styles.topRow}>
         <button className={styles.topSearch} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
@@ -301,7 +303,7 @@ export default function BottomBar({
 
       <button
         className={`${styles.live} ${liveEnabled ? styles.liveOn : ''}`}
-        onClick={() => onLiveToggle?.()}
+        onClick={() => { if (!liveEnabled) { setLiveWave(true); setTimeout(() => setLiveWave(false), 2100) } onLiveToggle?.() }}
         aria-label={liveEnabled ? 'Live stream on' : 'Live stream off'}
         aria-pressed={liveEnabled}
       >

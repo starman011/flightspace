@@ -219,7 +219,6 @@
   }
   .topSearch .hintText { overflow: hidden; white-space: nowrap; }
   .popMenu { right: 0; left: auto; transform: none; }
-  .popDown.popDown { left: auto; right: 0; transform: none; }
   .topChip {
     display: grid; place-items: center;
     width: 42px; min-height: 42px; flex: none;
@@ -258,4 +257,73 @@
 .popMenu { max-height: 62vh; overflow-y: auto; min-width: 175px; }
 .topChipWrap { position: relative; display: none; }
 @media (max-width: 640px) { .topChipWrap { display: flex; } }
-.popDown { bottom: auto; top: calc(100% + 8px); transform-origin: top center; }
+.popDown { bottom: auto; top: calc(100% + 10px); }
+/* Right-anchored, grows OUT of the funnel icon (its own keyframes — the base
+   popIn animates translateX(-50%) which made it flash centred then jump). */
+.popDown.popDown {
+  left: auto; right: 0; transform: none;
+  transform-origin: top right;
+  animation: popDownIn 0.24s var(--ease-spring-soft);
+}
+@keyframes popDownIn {
+  from { opacity: 0; transform: scale(0.88) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* connection notch pointing up at the funnel */
+.popDown.popDown::before {
+  content: '';
+  position: absolute; top: -5.5px; right: 15px;
+  width: 10px; height: 10px;
+  transform: rotate(45deg);
+  background: var(--glass-fill);
+  border-left: 1px solid var(--glass-line);
+  border-top: 1px solid var(--glass-gloss);
+}
+/* items cascade out of the icon — text 'pours' from the filter */
+.popDown.popDown .popItem {
+  opacity: 0;
+  animation: popItemIn 0.22s var(--ease-camera) forwards;
+}
+@keyframes popItemIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.popDown.popDown .popItem:nth-child(1) { animation-delay: 0.04s; }
+.popDown.popDown .popItem:nth-child(2) { animation-delay: 0.07s; }
+.popDown.popDown .popItem:nth-child(3) { animation-delay: 0.10s; }
+.popDown.popDown .popItem:nth-child(4) { animation-delay: 0.13s; }
+.popDown.popDown .popItem:nth-child(5) { animation-delay: 0.16s; }
+.popDown.popDown .popItem:nth-child(6) { animation-delay: 0.19s; }
+.popDown.popDown div .popItem { animation-delay: 0.08s; }   /* grouped rows */
+
+/* ── LIVE activation wave: a soft green pulse that rises from the bar, covers
+   the screen for ~2s and gracefully fades. Compositor-only (opacity). ──────── */
+.liveWave {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-banner);
+  pointer-events: none;
+  background:
+    radial-gradient(130% 110% at 50% 100%,
+      rgba(34, 239, 126, 0.20),
+      rgba(34, 239, 126, 0.06) 45%,
+      transparent 72%);
+  animation: liveWave 2s var(--ease-camera) forwards;
+}
+.liveWave::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 40px;
+  width: 60px; height: 60px;
+  margin-left: -30px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(34, 239, 126, 0.5);
+  animation: liveRing 1.6s var(--ease-camera) forwards;
+}
+@keyframes liveWave {
+  0%   { opacity: 0; }
+  16%  { opacity: 1; }
+  60%  { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+@keyframes liveRing {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to   { transform: scale(28);  opacity: 0; }
+}
