@@ -52,7 +52,7 @@ const TAB_FILTERS_IDS = ['flights', 'ships', 'satellites']
 export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
-  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount,
+  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount, onSearchSelect,
   isAuthenticated, user, onSignIn, onSignOut, onProfileOpen,
   liveEnabled, onLiveToggle,
   connectionStatus,
@@ -63,6 +63,33 @@ export default function BottomBar({
   const [collapsed, setCollapsed] = useState(false)
   const [hint, setHint] = useState('')
   const [liveWave, setLiveWave] = useState(false)   // full-screen activation pulse
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState([])
+  const [dim, setDim] = useState(false)
+  const topRef = useRef(null)
+  const API_BASE = import.meta.env.VITE_API_URL || ''
+  useEffect(() => {
+    if (q.trim().length < 2) { setResults([]); return }
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/aircraft/search?q=${encodeURIComponent(q.trim())}&limit=6`)
+        if (r.ok) { const d = await r.json(); setResults(Array.isArray(d) ? d : (d.results || d.aircraft || [])) }
+      } catch { /* offline */ }
+    }, 250)
+    return () => clearTimeout(t)
+  }, [q, API_BASE])
+  // Idle chrome: dim the top area when the user works the globe; wake on touch.
+  useEffect(() => {
+    let idle = setTimeout(() => setDim(true), 6000)
+    const onDown = (e) => {
+      clearTimeout(idle)
+      if (topRef.current?.contains(e.target)) setDim(false)
+      else { setDim(true); }
+      idle = setTimeout(() => setDim(true), 6000)
+    }
+    window.addEventListener('pointerdown', onDown)
+    return () => { clearTimeout(idle); window.removeEventListener('pointerdown', onDown) }
+  }, [])
   const [light, setLight] = useState(() => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light')
   const toggleTheme = () => {
     const el = document.documentElement
@@ -199,12 +226,30 @@ export default function BottomBar({
   return (
     <>
     {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
-    <div className={styles.topArea}>
+    <div className={`${styles.topArea} ${dim ? styles.dimmed : ''}`} ref={topRef}>
       <div className={styles.topRow}>
-        <button className={styles.topSearch} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
+        <div className={styles.topSearch}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <span className={styles.hintText}>{hint}<span className={styles.caret} /></span>
-        </button>
+          {q === '' && <span className={styles.hintText} aria-hidden="true">{hint}<span className={styles.caret} /></span>}
+          <input
+            className={styles.topInput}
+            value={q}
+            onChange={e => { setQ(e.target.value); setDim(false) }}
+            onFocus={() => setDim(false)}
+            aria-label="Search flights, airports, airlines"
+            enterKeyHint="search"
+          />
+          {results.length > 0 && (
+            <div className={styles.searchResults}>
+              {results.map((r, i) => (
+                <button key={r.icao24 || i} className={styles.popItem}
+                  onClick={() => { onSearchSelect?.(r); setQ(''); setResults([]) }}>
+                  {(r.callsign || r.icao24 || '').trim()}{r.type ? ` · ${r.type}` : ''}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className={styles.topChipWrap}>
           <button className={`${styles.topChip} ${activeFilter ? styles.topChipOn : ''}`} onClick={() => setOpenPopover(p => p === 'topfilters' ? null : 'topfilters')} aria-label="Filter options" aria-expanded={openPopover === 'topfilters'}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>

@@ -327,3 +327,22 @@
   from { transform: scale(0.4); opacity: 0.9; }
   to   { transform: scale(28);  opacity: 0; }
 }
+
+/* inline search input + results + idle fade */
+.topInput {
+  flex: 1; min-width: 0; border: none; background: transparent; outline: none;
+  font-family: var(--font-mono); font-size: 13px; color: var(--text-strong);
+  height: 100%;
+}
+.topSearch { position: relative; }
+.topSearch .hintText { position: absolute; left: 40px; pointer-events: none; }
+.searchResults {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg); -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: 1px solid var(--glass-line); border-top-color: var(--glass-gloss);
+  border-radius: var(--r-inset); box-shadow: var(--glass-shadow);
+}
+.topArea { transition: opacity 0.5s ease; }
+.dimmed { opacity: 0.25; }

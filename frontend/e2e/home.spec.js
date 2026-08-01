@@ -29,7 +29,7 @@ test.describe('Home /', () => {
     }
     // search: a labelled tab on desktop, a top glass field on mobile — one of
     // the two must be visible on every viewport
-    await expect(page.getByRole('button', { name: /Search flights, airports/ }).locator('visible=true').first()).toBeVisible()
+    await expect(page.getByLabel('Search flights, airports, airlines').locator('visible=true').first()).toBeVisible()
   })
 
 })

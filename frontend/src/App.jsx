@@ -873,6 +873,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onSearchOpen={() => setSearchOpen(true)}
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         onPageOpen={setActivePage}
+        onSearchSelect={handleSearchSelect}
         isAuthenticated={isAuthenticated}
         user={user}
         onSignIn={() => setAuthModalOpen(true)}
