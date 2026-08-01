@@ -266,6 +266,8 @@ function MobileFilterRow({ activeFilter, onFiltersChange, onCameraScale, onActiv
     if (cat.id === 'rockets') onLaunchPanelToggle?.()
   }
   const isConnecting = connectionStatus === 'connecting'
+  return null   // old mobile icon strip removed — filters live in the top-bar funnel
+  // eslint-disable-next-line no-unreachable
   return (
     <div className={styles.filterIconStrip}>
       {MOBILE_FILTERS.map(cat => (
@@ -1568,7 +1570,7 @@ export default function CommandCenterOverlay({
   const quote    = dailyQuote()
 
   // ── Mobile bottom sheet — 3-state: 'peek' | 'half' | 'full' ─────────────
-  const [sheetState, setSheetState] = useState('peek')
+  const [sheetState, setSheetState] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 768) ? 'full' : 'peek')
   const streamRef = useRef(null)
   const [desktopOpen, setDesktopOpen] = useState('open') // 'collapsed' | 'open' | 'wide'
   const userToggledFeedRef = useRef(false)

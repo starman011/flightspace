@@ -3203,33 +3203,19 @@
   border-bottom: 1px solid rgba(var(--ink-rgb), 0.05);
 }
 
-/* ── Mobile: the feed is a 75%-height sheet opened from the top-bar icon ──── */
-@media (max-width: 767px) {
-  .mobileFeed {
-    left: 0; top: auto; bottom: 0;
-    height: 75dvh;
-    z-index: var(--z-panel);
-    pointer-events: auto;
-    background: var(--glass-fill);
-    backdrop-filter: var(--glass-blur-lg);
-    -webkit-backdrop-filter: var(--glass-blur-lg);
-    border-top: 1px solid var(--glass-gloss);
-    border-radius: var(--r-card) var(--r-card) 0 0;
-    overflow-y: auto;
-    animation: feedUp 0.32s var(--ease-camera);
-  }
-  @keyframes feedUp { from { transform: translateY(12%); opacity: 0; } to { transform: none; opacity: 1; } }
-}
-.feedClose {
-  display: none;
-}
+/* ── Mobile feed: the internal 3-state sheet owns presentation; we only add
+   the close button (fixed, top-right, above the sheet content). ─────────── */
+.feedClose { display: none; }
 @media (max-width: 767px) {
   .feedClose {
     display: grid; place-items: center;
-    position: sticky; top: 10px; margin-left: auto; margin-right: 10px;
-    width: 34px; height: 34px; z-index: 5;
+    position: fixed; top: calc(env(safe-area-inset-top, 0px) + 66px); right: 14px;
+    width: 36px; height: 36px; z-index: 260;
     border: 1px solid var(--glass-line); border-radius: 50%;
-    background: rgba(var(--surface-rgb), 0.8);
-    color: rgba(var(--ink-rgb), 0.8); cursor: pointer;
+    background: rgba(var(--surface-rgb), 0.85);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    color: rgba(var(--ink-rgb), 0.85); cursor: pointer;
+    pointer-events: auto;
   }
 }
