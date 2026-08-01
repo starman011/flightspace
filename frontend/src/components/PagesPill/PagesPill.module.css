@@ -72,7 +72,7 @@
 
 .btn:hover  { color: rgba(var(--ink-rgb), 0.9); background: rgba(var(--gloss-rgb), 0.06); }
 .btn:active { transform: scale(0.95); transition-duration: 0.06s; }
-.btn.active { color: var(--green); background: rgba(var(--green-rgb), 0.12); }
+.btn.active { color: #0a0f14; background: var(--green); }
 
 /* Caption to the right of the icon — shown only for the ACTIVE page. */
 .label {
@@ -175,7 +175,7 @@
   }
   .btn svg { width: 20px; height: 20px; }
   .pill.expanded .btn { opacity: 1; transform: translateY(0); }
-  .btn.active { background: rgba(var(--green-rgb), 0.12); color: var(--green); }
+  .btn.active { background: var(--green); color: #0a0f14; }
 
   .label,
   .btn.active .label {      /* mobile menu shows every name inline, active included */

@@ -45,7 +45,8 @@
 .tab svg { display: block; }
 .tab:hover  { color: rgba(var(--ink-rgb), 0.95); background: rgba(var(--gloss-rgb), 0.06); }
 .tab:active { transform: scale(0.94); transition-duration: 0.06s; }
-.tabOn      { color: var(--green); background: rgba(var(--green-rgb), 0.12); }
+.tabOn      { color: #0a0f14; background: var(--green); }   /* solid lime pill, black glyph */
+.tabOn:hover { color: #0a0f14; background: var(--green); filter: brightness(1.06); }
 
 .tabLabel {
   font-family: var(--font-mono);
@@ -232,7 +233,7 @@
     cursor: pointer;
     transition: color 0.18s, background 0.18s;
   }
-  .topChipOn { color: var(--green); background: rgba(var(--green-rgb), 0.16); }
+  .topChipOn { color: #0a0f14; background: var(--green); border-color: var(--green); }
   .countStrip {
     display: inline-flex; align-items: center; gap: 6px;
     align-self: flex-start;
