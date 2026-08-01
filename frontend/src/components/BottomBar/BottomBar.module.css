@@ -185,3 +185,64 @@
     text-align: left;
   }
 }
+
+/* ── Mobile top area v2: search + layer-filter chips + tracked count ──────── */
+.topArea { display: none; }
+.hintText { display: inline-flex; align-items: baseline; min-height: 1em; }
+.caret {
+  display: inline-block; width: 1px; height: 12px; margin-left: 2px;
+  background: rgba(var(--ink-rgb), 0.6); align-self: center;
+  animation: caretBlink 1.1s step-end infinite;
+}
+@keyframes caretBlink { 0%, 55% { opacity: 1 } 56%, 100% { opacity: 0 } }
+
+@media (max-width: 640px) {
+  .topArea {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 12px;
+    right: 92px;                    /* profile pill corner stays free */
+    z-index: var(--z-nav);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;           /* children re-enable */
+  }
+  .topRow { display: flex; gap: 6px; pointer-events: auto; }
+  .topSearch {
+    position: static;               /* now laid out by .topRow */
+    flex: 1;
+    right: auto; left: auto; top: auto;
+  }
+  .topChip {
+    display: grid; place-items: center;
+    width: 42px; min-height: 42px; flex: none;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s;
+  }
+  .topChipOn { color: var(--green); background: rgba(var(--green-rgb), 0.16); }
+  .countStrip {
+    display: inline-flex; align-items: center; gap: 6px;
+    align-self: flex-start;
+    pointer-events: none;
+    padding: 4px 10px;
+    background: rgba(var(--surface-rgb), 0.55);
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+  .countDot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22ef7e; box-shadow: 0 0 6px rgba(34, 239, 126, 0.6);
+  }
+  /* layer filters live next to search now — drop them from the bar */
+  .layerTab { display: none; }
+}

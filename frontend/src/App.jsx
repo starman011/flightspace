@@ -873,6 +873,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onSearchOpen={() => setSearchOpen(true)}
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         onPageOpen={setActivePage}
+        objectCount={(filteredAircraft?.length ?? filteredAircraft?.size) || 0}
         liveEnabled={liveEnabled}
         onLiveToggle={() => setLiveEnabled(v => !v)}
         connectionStatus={connectionStatus}

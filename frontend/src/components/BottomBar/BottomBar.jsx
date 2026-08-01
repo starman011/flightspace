@@ -47,10 +47,12 @@ const SCALES = [
   { id: 'galaxy', label: 'Deep Space' },
 ]
 
+const TAB_FILTERS_IDS = ['flights', 'ships', 'satellites']
+
 export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
-  onSearchOpen, onLaunchPanelToggle, onPageOpen,
+  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount,
   liveEnabled, onLiveToggle,
   connectionStatus,
   audioMuted, onAudioToggle,
@@ -58,6 +60,22 @@ export default function BottomBar({
   hidden,
 }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [hint, setHint] = useState('')
+  useEffect(() => {
+    const WORDS = ['New York', 'ITY113', 'Emirates', 'JFK', 'BA275']
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setHint(WORDS[0]); return }
+    let hi = 0, ci = 0, dir = 1, t
+    const tick = () => {
+      const w = WORDS[hi]
+      ci += dir
+      if (ci > w.length + 9) { dir = -1; ci = w.length }          // hold, then delete
+      if (ci < 0) { dir = 1; ci = 0; hi = (hi + 1) % WORDS.length }
+      setHint(w.slice(0, Math.max(0, Math.min(ci, w.length))))
+      t = setTimeout(tick, dir === 1 ? (ci >= w.length ? 150 : 95) : 45)
+    }
+    t = setTimeout(tick, 900)
+    return () => clearTimeout(t)
+  }, [])
   const [openPopover, setOpenPopover] = useState(null)
   const [introMode, setIntroMode] = useState(true)
   const popoverTimeout = useRef(null)
@@ -151,7 +169,7 @@ export default function BottomBar({
   if (hidden) return null
 
   // ── Consolidated 5-tab bar: Search · Flights · Ships · Orbit · Space · More · LIVE
-  const TAB_FILTERS = ['flights', 'ships', 'satellites'].map(id => FILTERS.find(f => f.id === id))
+  const TAB_FILTERS = TAB_FILTERS_IDS.map(id => FILTERS.find(f => f.id === id))
   const SPACE_ITEMS = [
     ...SCALES.filter(sc => sc.id !== 'earth'),
     FILTERS.find(f => f.id === 'rockets'),
@@ -170,10 +188,31 @@ export default function BottomBar({
 
   return (
     <>
-    <button className={styles.topSearch} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Callsign, airport, airline…</span>
-    </button>
+    <div className={styles.topArea}>
+      <div className={styles.topRow}>
+        <button className={styles.topSearch} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span className={styles.hintText}>{hint}<span className={styles.caret} /></span>
+        </button>
+        {TAB_FILTERS_IDS.map(id => FILTERS.find(f => f.id === id)).map(f => (
+          <button
+            key={f.id}
+            className={`${styles.topChip} ${activeFilter === f.id ? styles.topChipOn : ''}`}
+            onClick={() => handleFilterClick(f)}
+            aria-label={f.label}
+            aria-pressed={activeFilter === f.id}
+          >
+            <FilterIcon id={f.id} size={18} />
+          </button>
+        ))}
+      </div>
+      {objectCount > 0 && (
+        <div className={styles.countStrip}>
+          <span className={styles.countDot} />
+          {objectCount.toLocaleString()} tracked now
+        </div>
+      )}
+    </div>
     <nav className={styles.bar} aria-label="Primary navigation" ref={barRef}>
       <button className={`${styles.tab} ${styles.searchTab}`} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -181,7 +220,7 @@ export default function BottomBar({
       </button>
 
       {TAB_FILTERS.map(f => (
-        <div key={f.id} className={styles.tabWrap}>
+        <div key={f.id} className={`${styles.tabWrap} ${styles.layerTab}`}>
           <button
             className={`${styles.tab} ${activeFilter === f.id ? styles.tabOn : ''}`}
             onClick={() => handleFilterClick(f)}

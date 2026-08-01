@@ -15,8 +15,13 @@ test.describe('Home /', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     const bar = page.getByRole('navigation', { name: 'Primary navigation' })
     await expect(bar).toBeVisible({ timeout: 20_000 })
-    for (const label of ['Flights', 'Ships', 'Orbit', 'Space', 'More']) {
+    // Space + More are in the bar on every viewport; Flights/Ships/Orbit are
+    // bar tabs on desktop and filter chips beside the search field on mobile.
+    for (const label of ['Space', 'More']) {
       await expect(bar.getByText(label, { exact: true })).toBeVisible()
+    }
+    for (const name of ['Flights', 'Ships', 'Satellites']) {
+      await expect(page.getByRole('button', { name, exact: true }).locator('visible=true').first()).toBeVisible()
     }
     // search: a labelled tab on desktop, a top glass field on mobile — one of
     // the two must be visible on every viewport
