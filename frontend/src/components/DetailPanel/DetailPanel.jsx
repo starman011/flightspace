@@ -748,12 +748,6 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                   <span className={styles.airportName}>{route.arrival_name || 'Arrival'}</span>
                 </div>
               </div>
-              {etaMin != null && (
-                <div className={styles.etaBadge}>
-                  <span className={styles.etaLabel}>ETA</span>
-                  <span className={styles.etaValue}>{fmtEta(etaMin)}</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -769,14 +763,16 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {cat !== 'satellite' && (
             <div className={styles.sheetActions}>
               <button className={styles.actFollow} onClick={() => onTrack?.()} aria-pressed={isTracking}>
-                {isTracking ? 'Following' : 'Follow camera'}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                <span>{isTracking ? 'Following' : 'Follow'}</span>
               </button>
               <button
                 className={`${styles.actAlert} ${alertWanted ? styles.actAlertOn : ''}`}
                 onClick={() => { if (!alertWanted) track('alert_on_landing'); setAlertWanted(v => !v) }}
                 aria-pressed={alertWanted}
               >
-                {alertWanted ? 'Alert saved' : 'Alert on landing'}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                <span>{alertWanted ? 'Alert saved' : 'Land alert'}</span>
               </button>
             </div>
           )}
@@ -807,7 +803,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {hasPosition && (
             <div className={styles.telemetry}>
               <div className={styles.telemStrip}>
-                {displayAlt != null && (
+                {displayAlt != null && cat === 'satellite' && (
                   <div className={styles.telemCell}>
                     <span className={styles.telemLabel}>ALT</span>
                     <span className={styles.telemVal}>{formatAltitude(displayAlt)}</span>
@@ -819,7 +815,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                     <span className={styles.telemVal}>{Math.round(altKm)} km</span>
                   </div>
                 )}
-                {displayVel != null && (
+                {displayVel != null && cat === 'satellite' && (
                   <div className={styles.telemCell}>
                     <span className={styles.telemLabel}>SPD</span>
                     <span className={styles.telemVal}>
@@ -827,7 +823,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                     </span>
                   </div>
                 )}
-                {displayHdg != null && (
+                {displayHdg != null && cat === 'satellite' && (
                   <div className={styles.telemCell}>
                     <span className={styles.telemLabel}>HDG</span>
                     <span className={styles.telemVal}>{formatHeading(displayHdg)}</span>
