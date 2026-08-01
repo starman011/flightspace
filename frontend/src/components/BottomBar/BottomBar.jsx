@@ -211,8 +211,7 @@ export default function BottomBar({
   const TAB_FILTERS = TAB_FILTERS_IDS.map(id => FILTERS.find(f => f.id === id))
   const SPACE_ITEMS = [
     ...SCALES.filter(sc => sc.id !== 'earth'),
-    FILTERS.find(f => f.id === 'rockets'),
-    FILTERS.find(f => f.id === 'asteroids'),
+    ...PILL_FILTERS,          // Launches + NEO (they live in PILL_FILTERS, not FILTERS)
   ]
   const PAGE_ITEMS = [['flight', 'Flights near you'], ['planes', 'Live fleets'], ['blog', 'Journal']]
   const spaceOn = ['moon', 'solar', 'galaxy'].includes(activeScale) || activeFilter === 'asteroids'
@@ -376,6 +375,8 @@ export default function BottomBar({
             {PAGE_ITEMS.map(([id, label]) => (
               <button key={id} className={styles.popItem} onClick={() => { setOpenPopover(null); onPageOpen?.(id) }}>{label}</button>
             ))}
+            <button className={styles.popItem} onClick={() => { setOpenPopover(null); onLaunchPanelToggle?.() }}>Launches</button>
+            <button className={styles.popItem} onClick={() => { setOpenPopover(null); handleFilterClick(PILL_FILTERS[1]) }}>Near-Earth Objects</button>
             <span className={styles.popRule} />
             <button className={styles.popItem} onClick={toggleTheme}>{light ? 'Dark mode' : 'Light mode'}</button>
             <button className={`${styles.popItem} ${showWeather ? styles.popOn : ''}`} onClick={() => onWeatherToggle?.()}>{showWeather ? 'Weather on' : 'Weather off'}</button>

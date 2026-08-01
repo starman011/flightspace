@@ -1560,7 +1560,6 @@ export default function CommandCenterOverlay({
   onSheetChange, mobileOpen, onClose,
 }) {
   const isMobileVp = typeof window !== 'undefined' && window.innerWidth < 768
-  if (isMobileVp && !mobileOpen) return null   // feed opens only via the top-bar icon on mobile
   const isLive  = connectionStatus === 'connected'
   const { news } = useSpaceNews()
   const solarKp  = useSolarKp()
@@ -1700,6 +1699,7 @@ export default function CommandCenterOverlay({
     // visibility (not display) — display:none→block restarts every CSS
     // animation inside, replaying feedSlideIn and flashing the collapsed
     // Space Feed open each time a panel (e.g. aircraft card) closes
+    isMobileVp && !mobileOpen ? null :
     <div className={`${styles.overlay} ${isMobileVp ? styles.mobileFeed : ''}`} style={hidden ? { visibility: 'hidden' } : undefined}>
       {isMobileVp && (
         <button className={styles.feedClose} onClick={() => onClose?.()} aria-label="Close space feed">

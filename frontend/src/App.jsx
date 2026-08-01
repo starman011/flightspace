@@ -940,7 +940,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         issData={aircraft.get('ISS') ?? null}
         pinnedLaunch={pinnedLaunch}
         onUnpinLaunch={() => pinnedLaunch && pins.unpinLaunch(pinnedLaunch.id)}
-        forceCollapsed={streamCollapsed || !!landing}
+        forceCollapsed={(streamCollapsed || !!landing) && !feedOpen}
         onSheetChange={setFeedSheet}
         onISSLink={{
           flyTo:     (lat, lon) => globeRef.current?.flyTo?.(lat, lon),
