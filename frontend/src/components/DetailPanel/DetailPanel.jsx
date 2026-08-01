@@ -237,6 +237,7 @@ const ISS_IMAGES = [
 ]
 
 export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject, onSheetChange }) {
+  const [alertWanted, setAlertWanted] = useState(false)   // Phase-6 stub: measured, not yet wired to push
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -753,6 +754,30 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                   <span className={styles.etaValue}>{fmtEta(etaMin)}</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── 4-up live metrics + actions (UX audit S-4/S-6) ── */}
+          {(displayAlt != null || displayVel != null) && (
+            <div className={styles.metric4}>
+              <div className={styles.m4cell}><span className={styles.m4label}>ALT</span><span className={styles.m4val}>{displayAlt != null ? formatAltitude(displayAlt) : '—'}</span></div>
+              <div className={styles.m4cell}><span className={styles.m4label}>SPEED</span><span className={styles.m4val}>{displayVel != null ? (cat === 'satellite' ? `${displayVel.toFixed(1)} km/s` : formatSpeed(displayVel)) : '—'}</span></div>
+              <div className={styles.m4cell}><span className={styles.m4label}>TRACK</span><span className={styles.m4val}>{displayHdg != null ? formatHeading(displayHdg) : '—'}</span></div>
+              <div className={`${styles.m4cell} ${styles.m4lands}`}><span className={styles.m4label}>LANDS</span><span className={styles.m4val}>{etaMin != null ? fmtEta(etaMin) : '—'}</span></div>
+            </div>
+          )}
+          {cat !== 'satellite' && (
+            <div className={styles.sheetActions}>
+              <button className={styles.actFollow} onClick={() => onTrack?.()} aria-pressed={isTracking}>
+                {isTracking ? 'Following' : 'Follow camera'}
+              </button>
+              <button
+                className={`${styles.actAlert} ${alertWanted ? styles.actAlertOn : ''}`}
+                onClick={() => { if (!alertWanted) track('alert_on_landing'); setAlertWanted(v => !v) }}
+                aria-pressed={alertWanted}
+              >
+                {alertWanted ? 'Alert saved' : 'Alert on landing'}
+              </button>
             </div>
           )}
 

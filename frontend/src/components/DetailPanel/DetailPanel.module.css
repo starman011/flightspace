@@ -1083,3 +1083,35 @@
   background: linear-gradient(90deg, rgba(var(--teal-rgb), 0.75), rgba(var(--teal-rgb), 0.45));
   height: 2px;
 }
+
+/* 4-up live metric grid + action row (mockup C) */
+.metric4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 20px 4px;
+  background: rgba(var(--surface-deep-rgb), 1);
+}
+.m4cell {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 9px 10px; border-radius: var(--r-tight);
+  background: rgba(var(--surface-raised-rgb), 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+}
+.m4label { font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em; color: rgba(var(--ink-muted-rgb), 0.8); }
+.m4val   { font-family: var(--font-mono); font-size: 13.5px; font-weight: 700; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.m4lands .m4val { color: var(--green); }
+
+.sheetActions {
+  display: flex; gap: 8px; padding: 10px 20px 14px;
+  background: rgba(var(--surface-deep-rgb), 1);
+}
+.actFollow, .actAlert {
+  flex: 1; min-height: 44px; border-radius: var(--r-pill);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
+  cursor: pointer; transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.actFollow { background: rgba(var(--ink-rgb), 0.08); border: 1px solid rgba(var(--ink-rgb), 0.14); color: rgba(var(--ink-rgb), 0.9); }
+.actFollow:hover { background: rgba(var(--ink-rgb), 0.14); }
+.actAlert  { background: rgba(var(--green-rgb), 0.12); border: 1px solid rgba(var(--green-rgb), 0.45); color: var(--green); }
+.actAlertOn { background: rgba(var(--green-rgb), 0.25); }
