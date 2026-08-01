@@ -179,8 +179,11 @@ export default function BottomBar({
   }, [onActiveFilterChange, onFiltersChange, onScaleChange])
 
   const handleScale = useCallback((s) => {
-    onActiveFilterChange?.(s.id === 'solar' ? 'asteroids' : null)
-    onFiltersChange?.(s.id === 'solar' ? { type: 'asteroids' } : {})
+    // Scales are pure scene changes now — NEO is its own Space-menu entry, so
+    // Solar no longer force-enables the asteroids filter (that showed the NEO
+    // view instead of the solar system).
+    onActiveFilterChange?.(null)
+    onFiltersChange?.({})
     onScaleChange?.(s.id)
     setOpenPopover(null)
   }, [onActiveFilterChange, onFiltersChange, onScaleChange])
