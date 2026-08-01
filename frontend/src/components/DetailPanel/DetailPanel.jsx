@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import styles from './DetailPanel.module.css'
+import { track } from '../../analytics.js'
 import { formatAltitude, formatSpeed, formatHeading, formatCallsign } from '../../utils/formatters'
 import { PLACES } from '../Globe/placeData'
 
@@ -919,11 +920,11 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                     className={styles.fitBtn}
                     data-haptic-heavy
                     title={isSaved ? 'Remove from saved flights' : 'Save flight to your account'}
-                    onClick={() => onToggleSave({
+                    onClick={() => { if (!isSaved) track('save_flight'); onToggleSave({
                       icao24,
                       callsign: liveData?.callsign || detail?.callsign || null,
                       label: liveData?.name || detail?.model || null,
-                    })}
+                    }) }}
                   >
                     {isSaved ? '★ Saved' : '☆ Save'}
                   </button>

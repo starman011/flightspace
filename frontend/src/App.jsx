@@ -15,6 +15,7 @@ class ErrorBoundary extends Component {
 import { Globe } from './components/Globe/Globe'
 import DetailPanel from './components/DetailPanel/DetailPanel'
 import SearchBar from './components/SearchBar/SearchBar'
+import { track } from './analytics.js'
 import LaunchPanel from './components/LaunchPanel/LaunchPanel'
 import ProfilePanel from './components/ProfilePanel/ProfilePanel'
 import BottomBar from './components/BottomBar/BottomBar'
@@ -392,6 +393,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   )
 
   const handleAircraftClick = useCallback((icao24) => {
+    track('select_flight', { method: 'globe' })
     setSelectedIcao24(icao24)
     setLiveEnabled(prev => {
       if (!prev) {
@@ -406,6 +408,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
   // From the /flight page: immediately go live, track, and fly to the picked
   // flight on the globe (don't leave the user on the static offline card).
   const handleTrackFromFlightPage = useCallback((icao24, hint) => {
+    track('select_flight', { method: 'board' })
     setActivePage(null)
     if (activeScale !== 'earth') { setActiveScale('earth'); globeRef.current?.setCameraScale?.('earth') }
     setLiveEnabled(true)
@@ -747,6 +750,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         <FlightLanding
           icao24={init.selectedIcao24}
           onEnable={() => {
+            track('enable_tracking')
             setShowFlightLanding(false)
             setLiveEnabled(true)
             setTrackingId(init.selectedIcao24)
@@ -826,7 +830,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {authModalOpen && (
         <AuthModal
           onClose={() => setAuthModalOpen(false)}
-          onLogin={login}
+          onLogin={(...a) => { track('login'); return login(...a) }}
           onRegister={register}
           onGoogleLogin={googleLogin}
         />

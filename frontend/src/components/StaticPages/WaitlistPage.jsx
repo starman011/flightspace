@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { track } from '../../analytics.js'
 import { gsap } from 'gsap'
 import styles from './WaitlistPage.module.css'
 
@@ -147,6 +148,7 @@ export default function WaitlistPage({ onClose }) {
       })
       if (!res.ok) throw new Error()
       setStatus('done')
+      track('join_waitlist', { source: 'waitlist_page' })
     } catch {
       setStatus('error')
     }

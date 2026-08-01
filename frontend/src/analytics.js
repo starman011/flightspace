@@ -18,3 +18,10 @@ export function initGA() {
   // beacons to google.com / google.<cc> domains (they tripped CSP and add noise).
   gtag('config', id, { allow_google_signals: false, allow_ad_personalization_signals: false })
 }
+
+// Fire a GA4 event for a conversion / funnel step. No-op if GA hasn't loaded.
+// Use for mid-funnel intent (select_flight, enable_tracking) and key events
+// (save_flight, sign_in, join_waitlist) so the funnel is actually measurable.
+export function track(event, params = {}) {
+  try { window.gtag?.('event', event, params) } catch { /* GA not ready */ }
+}
