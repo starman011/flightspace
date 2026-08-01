@@ -1116,3 +1116,16 @@
 .actFollow:hover { background: rgba(var(--ink-rgb), 0.14); }
 .actAlert  { background: rgba(var(--green-rgb), 0.12); border: 1px solid rgba(var(--green-rgb), 0.45); color: var(--green); }
 .actAlertOn { background: rgba(var(--green-rgb), 0.25); }
+
+/* ── Card overflow + one bottom action row (mobile redesign) ─────────────── */
+.scroller { overflow-x: hidden; }                 /* nothing scrolls sideways */
+.scroller > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.metric4 { box-sizing: border-box; }
+.m4cell { min-width: 0; overflow: hidden; }
+.m4val  { overflow: hidden; text-overflow: ellipsis; }
+.sheetActions { flex-wrap: nowrap; }
+.sheetActions button { min-width: 0; padding: 6px 4px; }
+.sheetActions button span { font-size: 10px; white-space: nowrap; }
+@media (max-width: 767px) {
+  .trackRow { display: none; }                    /* superseded by the tile row */
+}

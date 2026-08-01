@@ -762,7 +762,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           )}
           {cat !== 'satellite' && (
             <div className={styles.sheetActions}>
-              <button className={styles.actFollow} onClick={() => onTrack?.()} aria-pressed={isTracking}>
+              <button className={styles.actFollow} onClick={() => onTrack?.(isTracking ? null : icao24)} aria-pressed={isTracking}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
                 <span>{isTracking ? 'Following' : 'Follow'}</span>
               </button>
@@ -773,6 +773,21 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                 <span>{alertWanted ? 'Alert saved' : 'Land alert'}</span>
+              </button>
+              <button className={styles.actFollow} data-haptic-heavy
+                onClick={() => {
+                  if (!isAuthenticated) { onSignIn?.(); return }
+                  if (!isSaved) track('save_flight')
+                  onToggleSave?.({ icao24, callsign: liveData?.callsign || detail?.callsign || null, label: liveData?.name || detail?.model || null })
+                }}
+                aria-pressed={isSaved}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <span>{isSaved ? 'Saved' : 'Save'}</span>
+              </button>
+              <button className={styles.actFollow}
+                onClick={() => { try { navigator.clipboard?.writeText(`${window.location.origin}/flight/${icao24}`); track('share_flight') } catch { /* no clipboard */ } }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                <span>Share</span>
               </button>
             </div>
           )}
