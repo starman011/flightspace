@@ -169,8 +169,13 @@ export default function BottomBar({
   )
 
   return (
+    <>
+    <button className={styles.topSearch} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>Callsign, airport, airline…</span>
+    </button>
     <nav className={styles.bar} aria-label="Primary navigation" ref={barRef}>
-      <button className={styles.tab} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
+      <button className={`${styles.tab} ${styles.searchTab}`} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span className={styles.tabLabel}>Search</span>
       </button>
@@ -243,6 +248,7 @@ export default function BottomBar({
         <span className={styles.tabLabel}>{liveEnabled ? 'LIVE' : 'OFF'}</span>
       </button>
     </nav>
+    </>
   )
 }
 

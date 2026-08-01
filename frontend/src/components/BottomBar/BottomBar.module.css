@@ -153,3 +153,35 @@
   .tab, .live { min-width: 46px; padding: 5px 5px; }
   .tabLabel { font-size: 8.5px; }
 }
+
+/* ── Mobile: search becomes a top glass field (mockup B); the bar keeps
+   exactly 5 labelled tabs + LIVE so nothing is squeezed off narrow screens. */
+.topSearch { display: none; }
+@media (max-width: 640px) {
+  .searchTab { display: none; }
+  .topSearch {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 12px;
+    right: 92px;                    /* leaves the profile pill's corner free */
+    z-index: var(--z-nav);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 0 15px;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);
+    box-shadow: var(--glass-shadow-nav);
+    color: rgba(var(--ink-rgb), 0.55);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    text-align: left;
+  }
+}
