@@ -169,6 +169,7 @@ export default function App() {
 
   const [selectedIcao24, setSelectedIcao24] = useState(init.selectedIcao24)
   const [searchOpen, setSearchOpen]         = useState(false)
+  const [feedOpen, setFeedOpen]             = useState(false)   // mobile space feed via top-bar icon
   const [initialSearchQuery, setInitialSearchQuery] = useState('')
   // Sitelinks searchbox: /?q=<term> opens the search palette pre-filled.
   useEffect(() => {
@@ -874,6 +875,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         onPageOpen={setActivePage}
         onSearchSelect={handleSearchSelect}
+        onFeedToggle={() => setFeedOpen(v => !v)}
         isAuthenticated={isAuthenticated}
         user={user}
         onSignIn={() => setAuthModalOpen(true)}
@@ -931,6 +933,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       />
 
       <CommandCenterOverlay
+        mobileOpen={feedOpen}
+        onClose={() => setFeedOpen(false)}
         trackedCount={aircraftWithShips.size}
         connectionStatus={connectionStatus}
         issData={aircraft.get('ISS') ?? null}

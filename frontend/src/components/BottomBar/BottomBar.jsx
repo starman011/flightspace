@@ -52,7 +52,7 @@ const TAB_FILTERS_IDS = ['flights', 'ships', 'satellites']
 export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
-  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount, onSearchSelect,
+  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount, onSearchSelect, onFeedToggle,
   isAuthenticated, user, onSignIn, onSignOut, onProfileOpen,
   liveEnabled, onLiveToggle,
   connectionStatus,
@@ -274,6 +274,9 @@ export default function BottomBar({
             </div>
           )}
         </div>
+        <button className={styles.topChip} onClick={() => onFeedToggle?.()} aria-label="Open space feed">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
       </div>
       {objectCount > 0 && (
         <div className={styles.countStrip}>

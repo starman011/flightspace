@@ -1555,8 +1555,10 @@ export default function CommandCenterOverlay({
   activeFilter, onFiltersChange, onCameraScale, onActiveFilterChange, onLaunchPanelToggle, zoomedIn, hidden,
   activeScale, onDistanceChange,
   liveEnabled, onLiveToggle, onSearchOpen, audioMuted, onAudioToggle,
-  onSheetChange,
+  onSheetChange, mobileOpen, onClose,
 }) {
+  const isMobileVp = typeof window !== 'undefined' && window.innerWidth < 768
+  if (isMobileVp && !mobileOpen) return null   // feed opens only via the top-bar icon on mobile
   const isLive  = connectionStatus === 'connected'
   const { news } = useSpaceNews()
   const solarKp  = useSolarKp()
@@ -1696,7 +1698,12 @@ export default function CommandCenterOverlay({
     // visibility (not display) — display:none→block restarts every CSS
     // animation inside, replaying feedSlideIn and flashing the collapsed
     // Space Feed open each time a panel (e.g. aircraft card) closes
-    <div className={styles.overlay} style={hidden ? { visibility: 'hidden' } : undefined}>
+    <div className={`${styles.overlay} ${isMobileVp ? styles.mobileFeed : ''}`} style={hidden ? { visibility: 'hidden' } : undefined}>
+      {isMobileVp && (
+        <button className={styles.feedClose} onClick={() => onClose?.()} aria-label="Close space feed">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      )}
       {/* Background SVG grid — hidden when zoomed in */}
       <div className={`${styles.gridBg} ${zoomedIn ? styles.heroHidden : ''}`}>
         <svg className={styles.gridSvg}>
