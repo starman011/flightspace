@@ -123,7 +123,10 @@ export default function BottomBar({
     if (!openPopover) return
     const handleKey = (e) => { if (e.key === 'Escape') setOpenPopover(null) }
     const handleClick = (e) => {
-      if (barRef.current && !barRef.current.contains(e.target)) setOpenPopover(null)
+      // outside-click must ignore BOTH containers — the funnel lives in the
+      // top area, not the bar; without this its pointerdown closed the popover
+      // and the same click's toggle reopened it (so it never closed).
+      if (!barRef.current?.contains(e.target) && !topRef.current?.contains(e.target)) setOpenPopover(null)
     }
     document.addEventListener('keydown', handleKey)
     document.addEventListener('pointerdown', handleClick)

@@ -346,3 +346,25 @@
 }
 .topArea { transition: opacity 0.5s ease; }
 .dimmed { opacity: 0.25; }
+
+/* Hamburger menu: anchored to the bottom-right tab, grows UP out of it (its
+   own keyframes — the base popIn animates the centred translateX(-50%)). */
+.popMenu.popMenu {
+  left: auto; right: 0; transform: none;
+  transform-origin: bottom right;
+  animation: popMenuIn 0.24s var(--ease-spring-soft);
+}
+@keyframes popMenuIn {
+  from { opacity: 0; transform: scale(0.9) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* connection notch pointing down at the hamburger */
+.popMenu.popMenu::after {
+  content: '';
+  position: absolute; bottom: -5.5px; right: 18px;
+  width: 10px; height: 10px;
+  transform: rotate(45deg);
+  background: var(--glass-fill);
+  border-right: 1px solid var(--glass-line);
+  border-bottom: 1px solid var(--glass-line);
+}
