@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss'],
+  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss', '/planes'],
 }
 
 const BOT_RE =
@@ -597,18 +597,20 @@ async function renderLaunch(slug) {
     url: canonical,
     description: missionDesc || descParts,
     eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
     image: [PROVIDER_LOGOS[provider] || `${SITE}/og-image.png`],
     ...(net ? { startDate: net.toISOString() } : {}),
     ...(endISO ? { endDate: endISO } : {}),
-    location: {
-      '@type': 'Place',
-      name: pad || 'Launch Pad',
-      address: { '@type': 'PostalAddress', addressCountry: padCountry, name: pad || 'Launch Pad' },
-      ...(launch.pad_lat && launch.pad_lon ? {
-        geo: { '@type': 'GeoCoordinates', latitude: launch.pad_lat, longitude: launch.pad_lon }
-      } : {}),
-    },
+    location: [
+      { '@type': 'VirtualLocation', url: canonical },
+      { '@type': 'Place',
+        name: pad || 'Launch Pad',
+        address: { '@type': 'PostalAddress', addressCountry: padCountry, name: pad || 'Launch Pad' },
+        ...(launch.pad_lat && launch.pad_lon ? {
+          geo: { '@type': 'GeoCoordinates', latitude: launch.pad_lat, longitude: launch.pad_lon }
+        } : {}) },
+    ],
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: canonical },
     performer: { '@type': 'Organization', name: provider || rocket || 'Launch Provider' },
     organizer: { '@type': 'Organization', name: provider || 'Launch Provider', url: canonical },
   }
@@ -747,11 +749,7 @@ async function renderAsteroid(slug) {
     image: [`${SITE}/og-image.png`],
     ...(apIso ? { startDate: apIso.toISOString() } : {}),
     ...(apEnd ? { endDate: apEnd.toISOString() } : {}),
-    location: {
-      '@type': 'Place',
-      name: 'Near-Earth space',
-      address: { '@type': 'PostalAddress', addressCountry: 'Earth orbit', name: 'Near-Earth space' },
-    },
+    location: { '@type': 'VirtualLocation', url: canonical },
     performer: { '@type': 'Organization', name: 'NASA CNEOS' },
     organizer: { '@type': 'Organization', name: 'NASA Center for Near Earth Object Studies', url: 'https://cneos.jpl.nasa.gov/' },
   }
@@ -1407,6 +1405,8 @@ function renderHome() {
 
   // Primary sections — the sitelink candidates Google chooses from
   const sections = [
+    ['/flight',     'Flights Near You',        'Live arrivals and departures at your nearest airport'],
+    ['/planes',     'Live Fleet Tracker',      'See any airline or aircraft type airborne right now'],
     ['/iss',        'ISS Live Tracker',        'Track the International Space Station live with 4K NASA stream and crew'],
     ['/launches',   'Rocket Launch Tracker',   'Live countdowns and mission details for upcoming rocket launches'],
     ['/asteroids',  'Asteroid Tracker',        'Near-Earth asteroids and close approaches from NASA NeoWs data'],
@@ -1443,9 +1443,20 @@ function renderHome() {
         '@id': `${SITE}/#org`,
         name: 'ObjectTracer',
         url: canonical,
-        logo: `${SITE}/favicon.svg`,
+        logo: `${SITE}/favicon-512.png`,
         description: desc,
         sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace', 'https://www.linkedin.com/in/mdsaqlainkhan'],
+      },
+      {
+        '@type': 'WebApplication',
+        '@id': `${SITE}/#app`,
+        name: 'ObjectTracer',
+        url: canonical,
+        applicationCategory: 'UtilityApplication',
+        applicationSubCategory: 'Flight Tracker',
+        operatingSystem: 'All',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        publisher: { '@id': `${SITE}/#org` },
       },
       {
         '@type': 'WebSite',
@@ -1459,11 +1470,7 @@ function renderHome() {
           'query-input': 'required name=search_term_string',
         },
       },
-      {
-        '@type': 'SiteNavigationElement',
-        name: sections.map(s => s[1]),
-        url: sections.map(s => `${SITE}${s[0]}`),
-      },
+      ...sections.map(s => ({ '@type': 'SiteNavigationElement', name: s[1], url: `${SITE}${s[0]}` })),
     ],
   }
 
@@ -2195,7 +2202,7 @@ async function renderAbout() {
     { '@type': 'Organization', '@id': `${SITE}/#org`, name: 'ObjectTracer', url: `${SITE}/`,
       logo: `${SITE}/favicon-512.png`, description: desc,
       founder: { '@id': `${canonical}#founder` }, foundingDate: '2026',
-      sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace'] },
+      sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace', 'https://www.linkedin.com/in/mdsaqlainkhan'] },
     { '@type': 'Person', '@id': `${canonical}#founder`, name: 'Md Saqlain Khan',
       jobTitle: 'Founder & CTO', worksFor: { '@id': `${SITE}/#org` }, url: canonical,
       sameAs: ['https://github.com/starman011', 'https://www.linkedin.com/in/mdsaqlainkhan'] },
