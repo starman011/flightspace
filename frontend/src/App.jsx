@@ -867,12 +867,12 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       {/* ── Bottom navigation bar ── */}
       <BottomBar
         activeFilter={activeFilter}
-        onActiveFilterChange={setActiveFilter}
+        onActiveFilterChange={(f) => { setActivePage(null); setActiveFilter(f) }}
         onFiltersChange={setFilters}
         activeScale={activeScale}
-        onScaleChange={handleCameraScale}
+        onScaleChange={(sc) => { setActivePage(null); handleCameraScale(sc) }}
         onSearchOpen={() => setSearchOpen(true)}
-        onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        onLaunchPanelToggle={() => { setActivePage(null); setLaunchPanelOpen(o => !o) }}
         onPageOpen={setActivePage}
         onSearchSelect={handleSearchSelect}
         onFeedToggle={() => setFeedOpen(v => !v)}
@@ -894,18 +894,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       />
 
       {/* ── Top-left pages pill ── */}
-      <PagesPill
-        activeScale={activeScale}
-        activeFilter={activeFilter}
-        activePage={activePage}
-        onScaleChange={(s) => { setActivePage(null); handleCameraScale(s) }}
-        onActiveFilterChange={(f) => { setActivePage(null); setActiveFilter(f) }}
-        onFiltersChange={setFilters}
-        onLaunchPanelToggle={() => { setActivePage(null); setLaunchPanelOpen(o => !o) }}
-        onPageOpen={setActivePage}
-        overPage={!!activePage}
-        hidden={focusedPad || !activePage}
-      />
+      {/* PagesPill retired — the bottom bar is persistent across pages */}
 
       {/* ── Top-right profile + menu pill ── */}
       {/* TopRightPill absorbed into the bottom bar's Profile tab */}
