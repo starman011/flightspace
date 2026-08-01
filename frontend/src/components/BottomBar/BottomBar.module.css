@@ -215,10 +215,12 @@
     flex: 1;
     right: auto; left: auto; top: auto;
     height: 42px;                   /* fixed — only the TEXT animates, never the box */
-    overflow: hidden;
+    overflow: visible;              /* the results dropdown hangs BELOW the field —
+                                       overflow:hidden was clipping it to a glitchy sliver */
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
   }
-  .topSearch .hintText { overflow: hidden; white-space: nowrap; }
+  .topSearch .hintText { overflow: hidden; white-space: nowrap; max-width: calc(100% - 56px); }
   .popMenu { right: 0; left: auto; transform: none; }
   .topChip {
     display: grid; place-items: center;
