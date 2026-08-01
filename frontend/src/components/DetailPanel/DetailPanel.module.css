@@ -620,6 +620,7 @@
   .panel {
     top: auto;
     bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     left: 0;
     right: 0;
     width: 100%;

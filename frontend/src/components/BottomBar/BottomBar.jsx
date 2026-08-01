@@ -162,7 +162,7 @@ export default function BottomBar({
     >
       {/* ── Collapsed: compact preview pill ── */}
       {collapsed && (
-        <button className={styles.preview} onClick={expand}>
+        <button className={styles.preview} onClick={expand} aria-label="Expand controls">
           <span className={styles.previewIcons}>
             {activeFilterObj
               ? <><FilterIcon id={activeFilterObj.id} size={15} /><span className={styles.previewDot} /></>
