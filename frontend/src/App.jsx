@@ -872,6 +872,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onScaleChange={handleCameraScale}
         onSearchOpen={() => setSearchOpen(true)}
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
+        onPageOpen={setActivePage}
         liveEnabled={liveEnabled}
         onLiveToggle={() => setLiveEnabled(v => !v)}
         connectionStatus={connectionStatus}
@@ -894,7 +895,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onLaunchPanelToggle={() => { setActivePage(null); setLaunchPanelOpen(o => !o) }}
         onPageOpen={setActivePage}
         overPage={!!activePage}
-        hidden={focusedPad}
+        hidden={focusedPad || !activePage}
       />
 
       {/* ── Top-right profile + menu pill ── */}

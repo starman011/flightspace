@@ -50,7 +50,7 @@ const SCALES = [
 export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
-  onSearchOpen, onLaunchPanelToggle,
+  onSearchOpen, onLaunchPanelToggle, onPageOpen,
   liveEnabled, onLiveToggle,
   connectionStatus,
   audioMuted, onAudioToggle,
@@ -150,222 +150,98 @@ export default function BottomBar({
 
   if (hidden) return null
 
-  const activeFilterObj = FILTERS.find(f => f.id === activeFilter)
+  // ── Consolidated 5-tab bar: Search · Flights · Ships · Orbit · Space · More · LIVE
+  const TAB_FILTERS = ['flights', 'ships', 'satellites'].map(id => FILTERS.find(f => f.id === id))
+  const SPACE_ITEMS = [
+    ...SCALES.filter(sc => sc.id !== 'earth'),
+    FILTERS.find(f => f.id === 'rockets'),
+    FILTERS.find(f => f.id === 'asteroids'),
+  ]
+  const PAGE_ITEMS = [['flight', 'Flights near you'], ['planes', 'Live fleets'], ['blog', 'Journal']]
+  const spaceOn = ['moon', 'solar', 'galaxy'].includes(activeScale) || activeFilter === 'asteroids'
+
+  const sub = (f) => openPopover === f.id && f.subs?.length > 0 && (
+    <div className={styles.pop} onMouseEnter={handlePopoverEnter} onMouseLeave={handleFilterLeave}>
+      {f.subs.map(su => (
+        <button key={su.id} className={styles.popItem} onClick={() => handleSubClick(f, su)}>{su.label}</button>
+      ))}
+    </div>
+  )
 
   return (
-    <nav
-      className={`${styles.bar} ${collapsed ? styles.collapsed : ''}`}
-      aria-label="Navigation"
-      ref={barRef}
-      onMouseEnter={expand}
-      onMouseLeave={scheduleCollapse}
-    >
-      {/* ── Collapsed: compact preview pill ── */}
-      {collapsed && (
-        <button className={styles.preview} onClick={expand} aria-label="Expand controls">
-          <span className={styles.previewIcons}>
-            {activeFilterObj
-              ? <><FilterIcon id={activeFilterObj.id} size={15} /><span className={styles.previewDot} /></>
-              : <ScaleIcon id={activeScale} size={15} />
-            }
-          </span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M18 15l-6-6-6 6" />
-          </svg>
-        </button>
-      )}
+    <nav className={styles.bar} aria-label="Primary navigation" ref={barRef}>
+      <button className={styles.tab} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span className={styles.tabLabel}>Search</span>
+      </button>
 
-      {/* ── Expanded: full sectioned bar ── */}
-      {!collapsed && (
-        <div className={`${styles.content} ${introMode ? styles.introMode : ''}`}>
-          {/* TRACK section */}
-          <div className={styles.section}>
-            <span className={styles.sectionLabel}>Filters</span>
-            <div className={styles.sectionRow}>
-              {FILTERS.map(f => (
-                <div
-                  key={f.id}
-                  className={styles.btnWrap}
-                  onMouseEnter={() => handleFilterHover(f)}
-                  onMouseLeave={handleFilterLeave}
-                >
-                  <button
-                    className={`${styles.btn} ${styles.expandable} ${activeFilter === f.id ? styles.active : ''}`}
-                    onClick={() => handleFilterClick(f)}
-                    aria-label={f.label}
-                  >
-                    <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
-                    <span className={styles.label}>{f.label}</span>
-                    {activeFilter === f.id && <span className={styles.dot} />}
-                    <span className={styles.tooltip}>{f.label}</span>
-                  </button>
-
-                  {openPopover === f.id && f.subs?.length > 0 && (
-                    <div
-                      className={styles.popover}
-                      onMouseEnter={handlePopoverEnter}
-                      onMouseLeave={handleFilterLeave}
-                    >
-                      <div className={styles.popoverArrow} />
-                      <p className={styles.popoverTitle}>{f.label}</p>
-                      {f.subs.map(sub => (
-                        <button
-                          key={sub.id}
-                          className={`${styles.popoverItem} ${activeFilter === f.id ? styles.popoverItemActive : ''}`}
-                          onClick={() => handleSubClick(f, sub)}
-                        >
-                          <span className={styles.popoverDot} />
-                          {sub.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <span className={styles.sep} />
-
-          {/* EXPLORE section — scales + launches/NEO inside gradient pill */}
-          <div className={styles.section}>
-            <span className={styles.sectionLabel}>Pages</span>
-            <div className={`${styles.sectionRow} ${styles.scalePill}`}>
-              {SCALES.map(s => (
-                <button
-                  key={s.id}
-                  className={`${styles.btn} ${styles.expandable} ${activeScale === s.id ? styles.active : ''}`}
-                  onClick={() => handleScale(s)}
-                  aria-label={s.label}
-                >
-                  <span className={styles.iconWrap}><ScaleIcon id={s.id} /></span>
-                  <span className={styles.label}>{s.label}</span>
-                  {activeScale === s.id && <span className={styles.dot} />}
-                  <span className={styles.tooltip}>{s.label}</span>
-                </button>
-              ))}
-              {PILL_FILTERS.map(f => (
-                <div
-                  key={f.id}
-                  className={styles.btnWrap}
-                  onMouseEnter={() => handleFilterHover(f)}
-                  onMouseLeave={handleFilterLeave}
-                >
-                  <button
-                    className={`${styles.btn} ${styles.expandable} ${activeFilter === f.id ? styles.active : ''}`}
-                    onClick={() => handleFilterClick(f)}
-                    aria-label={f.label}
-                  >
-                    <span className={styles.iconWrap}><FilterIcon id={f.id} /></span>
-                    <span className={styles.label}>{f.label}</span>
-                    {activeFilter === f.id && <span className={styles.dot} />}
-                    <span className={styles.tooltip}>{f.label}</span>
-                  </button>
-
-                  {openPopover === f.id && f.subs?.length > 0 && (
-                    <div
-                      className={styles.popover}
-                      onMouseEnter={handlePopoverEnter}
-                      onMouseLeave={handleFilterLeave}
-                    >
-                      <div className={styles.popoverArrow} />
-                      <p className={styles.popoverTitle}>{f.label}</p>
-                      {f.subs.map(sub => (
-                        <button
-                          key={sub.id}
-                          className={`${styles.popoverItem} ${activeFilter === f.id ? styles.popoverItemActive : ''}`}
-                          onClick={() => handleSubClick(f, sub)}
-                        >
-                          <span className={styles.popoverDot} />
-                          {sub.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <span className={styles.sep} />
-
-          {/* ACTIONS section */}
-          <div className={styles.section}>
-            <span className={styles.sectionLabel}>Actions</span>
-            <div className={styles.sectionRow}>
-              <button className={`${styles.btn} ${styles.expandable}`} onClick={onSearchOpen} aria-label="Search">
-                <span className={styles.iconWrap}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                </span>
-                <span className={styles.label}>Search</span>
-                <span className={styles.tooltip}>Search</span>
-              </button>
-              <button
-                className={`${styles.btn} ${styles.expandable} ${!audioMuted ? styles.audioOn : ''}`}
-                onClick={onAudioToggle}
-                aria-label={audioMuted ? 'Unmute audio' : 'Mute audio'}
-              >
-                <span className={styles.iconWrap}>
-                  {audioMuted ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                      <line x1="23" y1="9" x2="17" y2="15" />
-                      <line x1="17" y1="9" x2="23" y2="15" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                    </svg>
-                  )}
-                </span>
-                <span className={styles.label}>{audioMuted ? 'Unmute' : 'Audio'}</span>
-                <span className={styles.tooltip}>{audioMuted ? 'Unmute Audio' : 'Mute Audio'}</span>
-              </button>
-              <button
-                className={`${styles.btn} ${styles.expandable} ${showWeather ? styles.active : ''}`}
-                onClick={onWeatherToggle}
-                aria-label="Toggle wind overlay"
-              >
-                <span className={styles.iconWrap}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
-                    <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
-                    <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
-                  </svg>
-                </span>
-                <span className={styles.label}>Wind</span>
-                <span className={styles.tooltip}>{showWeather ? 'Hide Wind Overlay' : 'Show Wind Overlay'}</span>
-              </button>
-              <button
-                className={`${styles.btn} ${styles.liveBtn} ${liveEnabled ? styles.active : styles.liveBtnOff}`}
-                onClick={onLiveToggle}
-                aria-label="Toggle live"
-              >
-                <span className={`${styles.liveDot} ${liveEnabled ? styles.liveDotOn : ''} ${connectionStatus === 'connecting' ? styles.liveDotConnecting : ''}`} />
-                <span className={`${styles.liveLabel} ${liveEnabled ? styles.liveLabelOn : styles.liveLabelOff}`}>
-                  {liveEnabled ? 'LIVE' : 'OFF'}
-                </span>
-                <span className={styles.tooltip}>{liveEnabled ? 'Disable Live Tracking' : 'Enable Live Tracking'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Collapse chevron */}
+      {TAB_FILTERS.map(f => (
+        <div key={f.id} className={styles.tabWrap}>
           <button
-            className={styles.collapseBtn}
-            onClick={() => { setCollapsed(true); clearTimeout(collapseTimeout.current) }}
-            aria-label="Collapse"
+            className={`${styles.tab} ${activeFilter === f.id ? styles.tabOn : ''}`}
+            onClick={() => handleFilterClick(f)}
+            aria-label={f.label}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <FilterIcon id={f.id} size={19} />
+            <span className={styles.tabLabel}>{f.id === 'satellites' ? 'Orbit' : f.label}</span>
           </button>
+          {sub(f)}
         </div>
-      )}
+      ))}
+
+      <div className={styles.tabWrap}>
+        <button
+          className={`${styles.tab} ${spaceOn ? styles.tabOn : ''}`}
+          onClick={() => setOpenPopover(p => p === 'space' ? null : 'space')}
+          aria-label="Space destinations"
+          aria-expanded={openPopover === 'space'}
+        >
+          <ScaleIcon id="galaxy" size={19} />
+          <span className={styles.tabLabel}>Space</span>
+        </button>
+        {openPopover === 'space' && (
+          <div className={styles.pop}>
+            <button className={`${styles.popItem} ${activeScale === 'earth' && !activeFilter ? styles.popOn : ''}`} onClick={() => handleScale(SCALES[0])}>Earth</button>
+            {SPACE_ITEMS.map(it => it.subs !== undefined || it.type ? (
+              <button key={it.id} className={`${styles.popItem} ${activeFilter === it.id ? styles.popOn : ''}`} onClick={() => handleFilterClick(it)}>{it.label}</button>
+            ) : (
+              <button key={it.id} className={`${styles.popItem} ${activeScale === it.id ? styles.popOn : ''}`} onClick={() => handleScale(it)}>{it.label}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className={styles.tabWrap}>
+        <button
+          className={styles.tab}
+          onClick={() => setOpenPopover(p => p === 'more' ? null : 'more')}
+          aria-label="More pages and settings"
+          aria-expanded={openPopover === 'more'}
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <span className={styles.tabLabel}>More</span>
+        </button>
+        {openPopover === 'more' && (
+          <div className={styles.pop}>
+            {PAGE_ITEMS.map(([id, label]) => (
+              <button key={id} className={styles.popItem} onClick={() => { setOpenPopover(null); onPageOpen?.(id) }}>{label}</button>
+            ))}
+            <span className={styles.popRule} />
+            <button className={`${styles.popItem} ${showWeather ? styles.popOn : ''}`} onClick={() => onWeatherToggle?.()}>{showWeather ? 'Weather on' : 'Weather off'}</button>
+            <button className={styles.popItem} onClick={() => onAudioToggle?.()}>{audioMuted ? 'Sound off' : 'Sound on'}</button>
+          </div>
+        )}
+      </div>
+
+      <button
+        className={`${styles.live} ${liveEnabled ? styles.liveOn : ''}`}
+        onClick={() => onLiveToggle?.()}
+        aria-label={liveEnabled ? 'Live stream on' : 'Live stream off'}
+        aria-pressed={liveEnabled}
+      >
+        <span className={`${styles.liveDot} ${liveEnabled ? (connectionStatus === 'connected' ? styles.liveDotOn : styles.liveDotConnecting) : ''}`} />
+        <span className={styles.tabLabel}>{liveEnabled ? 'LIVE' : 'OFF'}</span>
+      </button>
     </nav>
   )
 }

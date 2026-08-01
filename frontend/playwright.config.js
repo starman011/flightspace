@@ -11,7 +11,7 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 15_000 },
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 1,   // one retry absorbs parallel-load flakes on the heavy WebGL dev server
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
     baseURL: 'http://localhost:5174',

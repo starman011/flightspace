@@ -11,9 +11,13 @@ test.describe('Home /', () => {
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 20_000 })
   })
 
-  test('the left navigation pill is present', async ({ page }) => {
+  test('the primary bar shows labelled tabs', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
-    await expect(page.locator('nav[data-pagespill]')).toBeVisible({ timeout: 20_000 })
+    const bar = page.getByRole('navigation', { name: 'Primary navigation' })
+    await expect(bar).toBeVisible({ timeout: 20_000 })
+    for (const label of ['Search', 'Flights', 'Ships', 'Orbit', 'Space', 'More']) {
+      await expect(bar.getByText(label, { exact: true })).toBeVisible()
+    }
   })
 
 })

@@ -11,6 +11,6 @@ for (const route of GLOBE_ROUTES) {
   test(`${route} mounts the globe + nav`, async ({ page }) => {
     await page.goto(route, { waitUntil: 'domcontentloaded' })
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 25_000 })
-    await expect(page.locator('nav[data-pagespill]')).toBeVisible({ timeout: 25_000 })
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible({ timeout: 25_000 })
   })
 }
