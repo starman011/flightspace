@@ -201,7 +201,7 @@
     position: fixed;
     top: calc(12px + env(safe-area-inset-top, 0px));
     left: 12px;
-    right: 92px;                    /* profile pill corner stays free */
+    right: 12px;                    /* full width — the profile now lives in the bar */
     z-index: var(--z-nav);
     display: flex;
     flex-direction: column;
@@ -213,7 +213,13 @@
     position: static;               /* now laid out by .topRow */
     flex: 1;
     right: auto; left: auto; top: auto;
+    height: 42px;                   /* fixed — only the TEXT animates, never the box */
+    overflow: hidden;
+    white-space: nowrap;
   }
+  .topSearch .hintText { overflow: hidden; white-space: nowrap; }
+  .popMenu { right: 0; left: auto; transform: none; }
+  .popDown.popDown { left: auto; right: 0; transform: none; }
   .topChip {
     display: grid; place-items: center;
     width: 42px; min-height: 42px; flex: none;

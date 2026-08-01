@@ -11,7 +11,7 @@ test.describe('Home /', () => {
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 20_000 })
   })
 
-  test('the primary bar shows labelled tabs', async ({ page }) => {
+  test('the primary bar shows labelled tabs', async ({ page }, testInfo) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     const bar = page.getByRole('navigation', { name: 'Primary navigation' })
     await expect(bar).toBeVisible({ timeout: 20_000 })
@@ -20,8 +20,12 @@ test.describe('Home /', () => {
     for (const label of ['Home', 'Space', 'Journal']) {
       await expect(bar.getByText(label, { exact: true })).toBeVisible()
     }
-    for (const name of ['Flights', 'Ships', 'Satellites']) {
-      await expect(page.getByRole('button', { name, exact: true }).locator('visible=true').first()).toBeVisible()
+    if (testInfo.project.name === 'mobile') {
+      await expect(page.getByRole('button', { name: 'Filter options' })).toBeVisible()
+    } else {
+      for (const name of ['Flights', 'Ships', 'Satellites']) {
+        await expect(page.getByRole('button', { name, exact: true }).locator('visible=true').first()).toBeVisible()
+      }
     }
     // search: a labelled tab on desktop, a top glass field on mobile — one of
     // the two must be visible on every viewport

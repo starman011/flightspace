@@ -204,28 +204,26 @@ export default function BottomBar({
           <span className={styles.hintText}>{hint}<span className={styles.caret} /></span>
         </button>
         <div className={styles.topChipWrap}>
-          <button className={styles.topChip} onClick={() => setOpenPopover(p => p === 'topfilters' ? null : 'topfilters')} aria-label="Filter options" aria-expanded={openPopover === 'topfilters'}>
+          <button className={`${styles.topChip} ${activeFilter ? styles.topChipOn : ''}`} onClick={() => setOpenPopover(p => p === 'topfilters' ? null : 'topfilters')} aria-label="Filter options" aria-expanded={openPopover === 'topfilters'}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
           </button>
           {openPopover === 'topfilters' && (
             <div className={`${styles.pop} ${styles.popDown}`}>
-              {TAB_FILTERS.filter(f => f.subs?.length).map(f => f.subs.map(su => (
-                <button key={su.id} className={styles.popItem} onClick={() => { handleSubClick(f, su); setOpenPopover(null) }}>{su.label}</button>
-              )))}
+              {TAB_FILTERS.filter(f => f.subs?.length).map((f, i) => (
+                <div key={f.id}>
+                  {i > 0 && <span className={styles.popRule} />}
+                  {f.subs.map(su => (
+                    <button key={su.id} className={`${styles.popItem} ${activeFilter === f.id ? styles.popOn : ''}`} onClick={() => { handleSubClick(f, su); setOpenPopover(null) }}>
+                      <FilterIcon id={f.id} size={14} /> {su.label}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <span className={styles.popRule} />
+              <button className={styles.popItem} onClick={() => { onActiveFilterChange?.(null); onFiltersChange?.({}); setOpenPopover(null) }}>Clear filters</button>
             </div>
           )}
         </div>
-        {TAB_FILTERS_IDS.map(id => FILTERS.find(f => f.id === id)).map(f => (
-          <button
-            key={f.id}
-            className={`${styles.topChip} ${activeFilter === f.id ? styles.topChipOn : ''}`}
-            onClick={() => handleFilterClick(f)}
-            aria-label={f.label}
-            aria-pressed={activeFilter === f.id}
-          >
-            <FilterIcon id={f.id} size={18} />
-          </button>
-        ))}
       </div>
       {objectCount > 0 && (
         <div className={styles.countStrip}>
@@ -289,24 +287,40 @@ export default function BottomBar({
         <span className={styles.tabLabel}>Journal</span>
       </button>
 
-      <div className={styles.tabWrap}>
-        <button
-          className={styles.tab}
-          onClick={() => setOpenPopover(p => p === 'profile' ? null : 'profile')}
-          aria-label="Profile and menu"
-          aria-expanded={openPopover === 'profile'}
-        >
+      <button
+        className={styles.tab}
+        onClick={() => (isAuthenticated ? onProfileOpen?.() : onSignIn?.())}
+        aria-label={isAuthenticated ? 'Your profile' : 'Sign in'}
+      >
           {isAuthenticated && user?.picture
             ? <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
             : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-          <span className={styles.tabLabel}>{isAuthenticated ? (user?.display_name?.split(' ')[0] || 'You') : 'Profile'}</span>
+        <span className={styles.tabLabel}>{isAuthenticated ? (user?.display_name?.split(' ')[0] || 'You') : 'Profile'}</span>
+      </button>
+
+
+      <button
+        className={`${styles.live} ${liveEnabled ? styles.liveOn : ''}`}
+        onClick={() => onLiveToggle?.()}
+        aria-label={liveEnabled ? 'Live stream on' : 'Live stream off'}
+        aria-pressed={liveEnabled}
+      >
+        <span className={`${styles.liveDot} ${liveEnabled ? (connectionStatus === 'connected' ? styles.liveDotOn : styles.liveDotConnecting) : ''}`} />
+        <span className={styles.tabLabel}>{liveEnabled ? 'LIVE' : 'OFF'}</span>
+      </button>
+
+      <div className={styles.tabWrap}>
+        <button
+          className={styles.tab}
+          onClick={() => setOpenPopover(p => p === 'menu' ? null : 'menu')}
+          aria-label="Menu"
+          aria-expanded={openPopover === 'menu'}
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <span className={styles.tabLabel}>Menu</span>
         </button>
-        {openPopover === 'profile' && (
+        {openPopover === 'menu' && (
           <div className={`${styles.pop} ${styles.popMenu}`}>
-            <button className={styles.popItem} onClick={() => { setOpenPopover(null); isAuthenticated ? onProfileOpen?.() : onSignIn?.() }}>
-              {isAuthenticated ? 'Your profile' : 'Sign in'}
-            </button>
-            <span className={styles.popRule} />
             {PAGE_ITEMS.map(([id, label]) => (
               <button key={id} className={styles.popItem} onClick={() => { setOpenPopover(null); onPageOpen?.(id) }}>{label}</button>
             ))}
@@ -321,16 +335,6 @@ export default function BottomBar({
           </div>
         )}
       </div>
-
-      <button
-        className={`${styles.live} ${liveEnabled ? styles.liveOn : ''}`}
-        onClick={() => onLiveToggle?.()}
-        aria-label={liveEnabled ? 'Live stream on' : 'Live stream off'}
-        aria-pressed={liveEnabled}
-      >
-        <span className={`${styles.liveDot} ${liveEnabled ? (connectionStatus === 'connected' ? styles.liveDotOn : styles.liveDotConnecting) : ''}`} />
-        <span className={styles.tabLabel}>{liveEnabled ? 'LIVE' : 'OFF'}</span>
-      </button>
     </nav>
     </>
   )
