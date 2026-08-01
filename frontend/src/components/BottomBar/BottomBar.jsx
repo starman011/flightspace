@@ -82,12 +82,17 @@ export default function BottomBar({
   // (pointer-down outside both the top area and the bar). No idle timer —
   // untouched chrome stays fully visible. Touching the top area wakes it.
   useEffect(() => {
+    let wake
     const onDown = (e) => {
-      if (topRef.current?.contains(e.target)) setDim(false)
-      else if (!barRef.current?.contains(e.target)) setDim(true)
+      if (topRef.current?.contains(e.target)) { clearTimeout(wake); setDim(false) }
+      else if (!barRef.current?.contains(e.target)) {
+        setDim(true)                                        // working the globe
+        clearTimeout(wake)
+        wake = setTimeout(() => setDim(false), 4500)        // quiet again -> chrome returns
+      }
     }
     window.addEventListener('pointerdown', onDown)
-    return () => window.removeEventListener('pointerdown', onDown)
+    return () => { clearTimeout(wake); window.removeEventListener('pointerdown', onDown) }
   }, [])
   const [light, setLight] = useState(() => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light')
   const toggleTheme = () => {
