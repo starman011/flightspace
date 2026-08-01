@@ -1070,3 +1070,16 @@
   }
   .panelFull .scroller { height: var(--full-h, calc(88dvh - 30px)); }
 }
+
+/* ── Data-first sheet (UX audit Phase 2) ─────────────────────────────────────
+   The scroller becomes a flex column so the hero PHOTO can be demoted below
+   the live data (identity, route, telemetry). The photo is the reward for
+   scrolling, not the headline. Travelled route segment reads solid teal. */
+.scroller { display: flex; flex-direction: column; }
+.scroller > * { flex-shrink: 0; }
+.hero { order: 9; }
+.routeDash { flex-grow: 1; }
+.routeDashDone {
+  background: linear-gradient(90deg, rgba(var(--teal-rgb), 0.75), rgba(var(--teal-rgb), 0.45));
+  height: 2px;
+}

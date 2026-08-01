@@ -52,6 +52,14 @@ function fmtDist(km) {
   return `${Math.round(km)} km`
 }
 
+// % of the route already flown — total great-circle vs distance remaining.
+function pctFlown(route, remainingKm) {
+  if (remainingKm == null || route?.dep_lat == null || route?.arr_lat == null) return null
+  const total = haversineKm(route.dep_lat, route.dep_lon, route.arr_lat, route.arr_lon)
+  if (!total || total < 1) return null
+  return Math.max(0, Math.min(100, Math.round((1 - remainingKm / total) * 100)))
+}
+
 function fmtEta(minutes) {
   if (minutes == null) return null
   if (minutes < 1) return '< 1 min'
@@ -721,14 +729,18 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 <div className={styles.routeMiddle}>
                   <div className={styles.routeLine}>
                     <span className={styles.routeDotLeft} />
-                    <span className={styles.routeDash} />
+                    <span className={`${styles.routeDash} ${styles.routeDashDone}`} style={{ flexGrow: (pctFlown(route, distKm) ?? 50) }} />
                     <svg className={styles.routePlane} viewBox="0 0 24 24" width="16" height="16">
                       <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="currentColor" />
                     </svg>
-                    <span className={styles.routeDash} />
+                    <span className={styles.routeDash} style={{ flexGrow: 100 - (pctFlown(route, distKm) ?? 50) }} />
                     <span className={styles.routeDotRight} />
                   </div>
-                  {distKm != null && <span className={styles.routeDist}>{fmtDist(distKm)}</span>}
+                  {distKm != null && (
+                    <span className={styles.routeDist}>
+                      {pctFlown(route, distKm) != null ? `${pctFlown(route, distKm)}% · ` : ''}{fmtDist(distKm)} to go
+                    </span>
+                  )}
                 </div>
                 <div className={styles.routeAirport}>
                   <span className={styles.iata}>{arrIata}</span>
