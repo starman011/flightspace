@@ -246,3 +246,10 @@
   /* layer filters live next to search now — drop them from the bar */
   .layerTab { display: none; }
 }
+
+/* profile avatar in the tab + absorbed menu + top filter popover */
+.avatarImg { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.popMenu { max-height: 62vh; overflow-y: auto; min-width: 175px; }
+.topChipWrap { position: relative; display: none; }
+@media (max-width: 640px) { .topChipWrap { display: flex; } }
+.popDown { bottom: auto; top: calc(100% + 8px); transform-origin: top center; }

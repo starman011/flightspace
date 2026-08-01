@@ -17,7 +17,7 @@ test.describe('Home /', () => {
     await expect(bar).toBeVisible({ timeout: 20_000 })
     // Space + More are in the bar on every viewport; Flights/Ships/Orbit are
     // bar tabs on desktop and filter chips beside the search field on mobile.
-    for (const label of ['Space', 'More']) {
+    for (const label of ['Home', 'Space', 'Journal']) {
       await expect(bar.getByText(label, { exact: true })).toBeVisible()
     }
     for (const name of ['Flights', 'Ships', 'Satellites']) {

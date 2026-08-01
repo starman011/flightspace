@@ -873,6 +873,11 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onSearchOpen={() => setSearchOpen(true)}
         onLaunchPanelToggle={() => setLaunchPanelOpen(o => !o)}
         onPageOpen={setActivePage}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        onSignIn={() => setAuthModalOpen(true)}
+        onSignOut={logout}
+        onProfileOpen={() => setProfilePanelOpen(true)}
         objectCount={(filteredAircraft?.length ?? filteredAircraft?.size) || 0}
         liveEnabled={liveEnabled}
         onLiveToggle={() => setLiveEnabled(v => !v)}
@@ -900,15 +905,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
       />
 
       {/* ── Top-right profile + menu pill ── */}
-      <TopRightPill
-        isAuthenticated={isAuthenticated}
-        user={user}
-        onSignIn={() => setAuthModalOpen(true)}
-        onSignOut={logout}
-        onProfileOpen={() => setProfilePanelOpen(true)}
-        onPageOpen={setActivePage}
-        hidden={focusedPad}
-      />
+      {/* TopRightPill absorbed into the bottom bar's Profile tab */}
 
       <Globe
         ref={globeRef}

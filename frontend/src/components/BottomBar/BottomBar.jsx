@@ -53,6 +53,7 @@ export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
   onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount,
+  isAuthenticated, user, onSignIn, onSignOut, onProfileOpen,
   liveEnabled, onLiveToggle,
   connectionStatus,
   audioMuted, onAudioToggle,
@@ -61,6 +62,14 @@ export default function BottomBar({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [hint, setHint] = useState('')
+  const [light, setLight] = useState(() => typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light')
+  const toggleTheme = () => {
+    const el = document.documentElement
+    const next = el.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+    if (next === 'light') el.setAttribute('data-theme', 'light'); else el.removeAttribute('data-theme')
+    try { localStorage.setItem('ot-theme', next) } catch { /* private mode */ }
+    setLight(next === 'light')
+  }
   useEffect(() => {
     const WORDS = ['New York', 'ITY113', 'Emirates', 'JFK', 'BA275']
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setHint(WORDS[0]); return }
@@ -194,6 +203,18 @@ export default function BottomBar({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <span className={styles.hintText}>{hint}<span className={styles.caret} /></span>
         </button>
+        <div className={styles.topChipWrap}>
+          <button className={styles.topChip} onClick={() => setOpenPopover(p => p === 'topfilters' ? null : 'topfilters')} aria-label="Filter options" aria-expanded={openPopover === 'topfilters'}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+          </button>
+          {openPopover === 'topfilters' && (
+            <div className={`${styles.pop} ${styles.popDown}`}>
+              {TAB_FILTERS.filter(f => f.subs?.length).map(f => f.subs.map(su => (
+                <button key={su.id} className={styles.popItem} onClick={() => { handleSubClick(f, su); setOpenPopover(null) }}>{su.label}</button>
+              )))}
+            </div>
+          )}
+        </div>
         {TAB_FILTERS_IDS.map(id => FILTERS.find(f => f.id === id)).map(f => (
           <button
             key={f.id}
@@ -217,6 +238,15 @@ export default function BottomBar({
       <button className={`${styles.tab} ${styles.searchTab}`} onClick={() => onSearchOpen?.()} aria-label="Search flights, airports, airlines">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span className={styles.tabLabel}>Search</span>
+      </button>
+
+      <button
+        className={`${styles.tab} ${activeScale === 'earth' && !activeFilter ? styles.tabOn : ''}`}
+        onClick={() => handleScale(SCALES[0])}
+        aria-label="Home — Earth globe"
+      >
+        <ScaleIcon id="earth" size={19} />
+        <span className={styles.tabLabel}>Home</span>
       </button>
 
       {TAB_FILTERS.map(f => (
@@ -245,7 +275,6 @@ export default function BottomBar({
         </button>
         {openPopover === 'space' && (
           <div className={styles.pop}>
-            <button className={`${styles.popItem} ${activeScale === 'earth' && !activeFilter ? styles.popOn : ''}`} onClick={() => handleScale(SCALES[0])}>Earth</button>
             {SPACE_ITEMS.map(it => it.subs !== undefined || it.type ? (
               <button key={it.id} className={`${styles.popItem} ${activeFilter === it.id ? styles.popOn : ''}`} onClick={() => handleFilterClick(it)}>{it.label}</button>
             ) : (
@@ -255,24 +284,40 @@ export default function BottomBar({
         )}
       </div>
 
+      <button className={styles.tab} onClick={() => onPageOpen?.('blog')} aria-label="Journal">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span className={styles.tabLabel}>Journal</span>
+      </button>
+
       <div className={styles.tabWrap}>
         <button
           className={styles.tab}
-          onClick={() => setOpenPopover(p => p === 'more' ? null : 'more')}
-          aria-label="More pages and settings"
-          aria-expanded={openPopover === 'more'}
+          onClick={() => setOpenPopover(p => p === 'profile' ? null : 'profile')}
+          aria-label="Profile and menu"
+          aria-expanded={openPopover === 'profile'}
         >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-          <span className={styles.tabLabel}>More</span>
+          {isAuthenticated && user?.picture
+            ? <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
+            : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+          <span className={styles.tabLabel}>{isAuthenticated ? (user?.display_name?.split(' ')[0] || 'You') : 'Profile'}</span>
         </button>
-        {openPopover === 'more' && (
-          <div className={styles.pop}>
+        {openPopover === 'profile' && (
+          <div className={`${styles.pop} ${styles.popMenu}`}>
+            <button className={styles.popItem} onClick={() => { setOpenPopover(null); isAuthenticated ? onProfileOpen?.() : onSignIn?.() }}>
+              {isAuthenticated ? 'Your profile' : 'Sign in'}
+            </button>
+            <span className={styles.popRule} />
             {PAGE_ITEMS.map(([id, label]) => (
               <button key={id} className={styles.popItem} onClick={() => { setOpenPopover(null); onPageOpen?.(id) }}>{label}</button>
             ))}
             <span className={styles.popRule} />
+            <button className={styles.popItem} onClick={toggleTheme}>{light ? 'Dark mode' : 'Light mode'}</button>
             <button className={`${styles.popItem} ${showWeather ? styles.popOn : ''}`} onClick={() => onWeatherToggle?.()}>{showWeather ? 'Weather on' : 'Weather off'}</button>
             <button className={styles.popItem} onClick={() => onAudioToggle?.()}>{audioMuted ? 'Sound off' : 'Sound on'}</button>
+            {[['about','About'],['faq','FAQ'],['contact','Contact'],['donate','Donate'],['waitlist','Waitlist']].map(([id,label]) => (
+              <button key={id} className={styles.popItem} onClick={() => { setOpenPopover(null); onPageOpen?.(id) }}>{label}</button>
+            ))}
+            {isAuthenticated && (<><span className={styles.popRule} /><button className={styles.popItem} onClick={() => { setOpenPopover(null); onSignOut?.() }}>Sign out</button></>)}
           </div>
         )}
       </div>
