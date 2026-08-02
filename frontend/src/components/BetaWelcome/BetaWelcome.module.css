@@ -113,3 +113,27 @@
   .grid, .cells { gap: 6px; }
   .cellImg { height: 52px; }
 }
+
+/* ── One-screen intro ────────────────────────────────────────────────────────
+   The CTA must never require scrolling. The modal is a flex column: only the
+   bento grid scrolls, while the button is pinned to the bottom of the card. */
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;                 /* the grid owns scrolling, not the card */
+}
+.bento {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  grid-auto-rows: minmax(64px, auto);
+}
+.enterBtn {
+  flex: 0 0 auto;                   /* always visible, never scrolls away */
+  margin-top: 2px;
+}
+/* Short phones: shrink the decorative grid first, never the CTA. */
+@media (max-height: 760px) {
+  .bento { grid-auto-rows: minmax(52px, auto); gap: 7px; }
+}
