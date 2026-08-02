@@ -1672,6 +1672,12 @@
 }
 
 @media (max-width: 767px) {
+  /* The overlay is offset by --sidebar-w (a desktop-era 256px token that
+     nothing ever resets). On a phone that squeezed the whole feed into a
+     ~130px strip off the right edge — the sheet looked gone while the fixed
+     close button stayed. Full width on mobile. */
+  .overlay { left: 0; right: 0; width: 100%; }
+
   .overlay {
     left: 0;
     top: 0;
