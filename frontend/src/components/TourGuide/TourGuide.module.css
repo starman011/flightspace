@@ -203,3 +203,8 @@
   from { opacity: 0; transform: translateY(100%); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Keep the tour card clear of the persistent bottom pill. */
+@media (max-width: 767px) {
+  .card, .tip, .panel { margin-bottom: 86px; }
+}

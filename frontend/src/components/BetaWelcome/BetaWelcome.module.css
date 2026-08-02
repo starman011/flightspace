@@ -16,9 +16,9 @@
 .modal {
   position: relative;
   width: min(720px, 100%);
-  max-height: 90dvh;
+  max-height: calc(100dvh - 150px);   /* clears the bottom pill */
   overflow-y: auto;
-  padding: 26px;
+  padding: 22px;
   border-radius: 22px;
   border: 1px solid rgba(var(--ink-rgb), 0.14);
   background: linear-gradient(180deg, rgba(20, 26, 34, 0.96), rgba(var(--surface-rgb), 0.98));
@@ -102,4 +102,14 @@
   .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 96px; gap: 8px }
   .wide { grid-column: span 2 }
   .wideTall { grid-column: span 2; grid-row: span 1 }
+}
+
+/* One-screen intro: the CTA must be visible without scrolling, and nothing may
+   sit under the persistent bottom pill. */
+@media (max-height: 780px) {
+  .modal { padding: 16px 18px; max-height: calc(100dvh - 130px); }
+  .modal h1, .modal h2 { font-size: 19px; margin-bottom: 6px; }
+  .modal p { font-size: 12.5px; line-height: 1.45; }
+  .grid, .cells { gap: 6px; }
+  .cellImg { height: 52px; }
 }
