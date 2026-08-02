@@ -406,3 +406,18 @@
   line-height: 1;
   letter-spacing: normal;
 }
+
+/* ── Search field geometry (authoritative — earlier rules were overridden) ──
+   Measured: the container had padding-left 0 and gap 0, so the icon sat flush
+   at the edge and the text ran straight into it. Explicit values here, with the
+   hint offset = padding(14) + icon(15) + gap(10) so the animated placeholder
+   starts exactly where typed text does. */
+.topSearch {
+  padding-left: 14px;
+  padding-right: 14px;
+  gap: 10px;
+}
+.topSearch .hintText { left: 39px; }
+/* `gap` was not taking effect on this container, so space the icon explicitly:
+   input text then starts at 14(pad) + 15(icon) + 10 = 39px, matching .hintText. */
+.topSearch > svg { margin-right: 10px; flex: none; }
