@@ -251,6 +251,9 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   // Land alert: ask once, remember the choice, then fire a notification the
   // moment this aircraft transitions airborne -> on ground.
   const toggleLandAlert = useCallback(async () => {
+    // Push alerts are gated behind sign-in: an anonymous endpoint would let
+    // anyone arm unlimited subscriptions against our VAPID sender.
+    if (!isAuthenticated) { onSignIn?.(); track('land_alert_signin_prompt'); return }
     const next = !alertWanted
     if (next && typeof Notification !== 'undefined' && Notification.permission === 'default') {
       try { await Notification.requestPermission() } catch { /* denied */ }
@@ -290,7 +293,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       if (next) all[icao24] = true; else delete all[icao24]
       localStorage.setItem('ot-land-alerts', JSON.stringify(all))
     } catch { /* private mode */ }
-  }, [alertWanted, icao24])
+  }, [alertWanted, icao24, isAuthenticated, onSignIn])
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -855,10 +858,11 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               <button
                 className={`${styles.actAlert} ${alertWanted ? styles.actAlertOn : ''}`}
                 onClick={toggleLandAlert}
+                title={isAuthenticated ? 'Notify me when this flight lands' : 'Sign in to get a landing alert'}
                 aria-pressed={alertWanted}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                <span>{alertWanted ? 'Alert on' : 'Land alert'}</span>
+                <span>{alertWanted ? 'Alert on' : isAuthenticated ? 'Land alert' : 'Sign in'}</span>
               </button>
               {hasRoute && (
                 <button className={styles.actFollow} onClick={() => onFitRoute?.(route)}>
