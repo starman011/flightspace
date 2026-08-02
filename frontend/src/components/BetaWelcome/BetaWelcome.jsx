@@ -36,9 +36,10 @@ export default function BetaWelcome() {
   }, [])
 
   useEffect(() => {
-    document.body.setAttribute('data-modal-open', 'welcome')
-    return () => document.body.removeAttribute('data-modal-open')
-  }, [])
+    if (!visible) return          // only while the card is actually on screen —
+    document.body.setAttribute('data-modal-open', 'welcome')   // otherwise the
+    return () => document.body.removeAttribute('data-modal-open') // flag stuck
+  }, [visible])
 
   if (!visible) return null
 

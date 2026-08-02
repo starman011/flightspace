@@ -213,7 +213,6 @@
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
   }
-  .topSearch .hintText { overflow: hidden; white-space: nowrap; max-width: calc(100% - 56px); }
   .popMenu { right: 0; left: auto; transform: none; }
   .topChip {
     display: grid; place-items: center;
@@ -329,7 +328,6 @@
   line-height: 1; height: 100%; padding: 0;
 }
 .topSearch { position: relative; }
-.topSearch .hintText { position: absolute; left: 40px; pointer-events: none; }
 .searchResults {
   position: absolute; top: calc(100% + 8px); left: 0; right: 0;
   display: flex; flex-direction: column; gap: 2px; padding: 6px;
@@ -390,3 +388,21 @@
   transform: translateY(20px);
 }
 :global(body[data-modal-open]) .bar { transform: translateX(-50%) translateY(150%); }
+
+/* Placeholder hint must share the input's exact box + metrics, or the animated
+   text sits off from what you type. Offset = padding(15) + icon(15) + gap(9). */
+.topSearch .hintText {
+  position: absolute;
+  left: 15px;   /* measured: the input's text box starts at the container padding */
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: calc(100% - 54px);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1;
+  letter-spacing: normal;
+}

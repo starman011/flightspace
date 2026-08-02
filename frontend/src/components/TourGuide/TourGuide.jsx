@@ -86,6 +86,13 @@ export default function TourGuide() {
     return () => window.removeEventListener('keydown', onKey)
   }, [active, finish, next, back])
 
+  // Hide persistent chrome while the tour owns the screen.
+  useEffect(() => {
+    if (!active) return
+    document.body.setAttribute('data-modal-open', 'tour')
+    return () => document.body.removeAttribute('data-modal-open')
+  }, [active])
+
   if (!active) return null
 
   const s      = STEPS[step]
