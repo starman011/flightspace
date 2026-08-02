@@ -446,3 +446,63 @@
   .topChip   { width: 42px; height: 42px; }
   .countStrip { align-self: flex-start; }
 }
+
+/* ══ Desktop top row — full styling (these classes previously existed ONLY in
+   the mobile query, so on desktop they rendered as unstyled square buttons
+   with the browser's default focus border). Larger than mobile. ═══════════ */
+@media (min-width: 641px) {
+  .topArea { width: min(520px, 44vw); }
+
+  .topSearch {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 50px;
+    padding: 0 18px;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);
+    box-shadow: var(--glass-shadow-nav);
+    color: rgba(var(--ink-rgb), 0.55);
+    cursor: text;
+    overflow: visible;
+  }
+  .topSearch > svg { width: 17px; height: 17px; margin-right: 12px; flex: none; }
+  .topInput {
+    flex: 1; min-width: 0; height: 100%; padding: 0;
+    border: none; background: transparent; outline: none;
+    font-family: var(--font-mono); font-size: 14px; line-height: 1;
+    color: var(--text-strong);
+  }
+  .topSearch .hintText {
+    left: 47px;                     /* 18 padding + 17 icon + 12 margin */
+    font-size: 14px;
+  }
+
+  .topChip {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    flex: none;
+    padding: 0;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);     /* round, matching the design language */
+    box-shadow: var(--glass-shadow-nav);
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    outline: none;
+    transition: color 0.18s, background 0.18s;
+  }
+  .topChip:hover { color: rgba(var(--ink-rgb), 0.95); }
+  .topChip svg { width: 19px; height: 19px; }
+  .topChipOn { color: #0a0f14; background: var(--green); border-color: var(--green); }
+}
