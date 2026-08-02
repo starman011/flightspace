@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +40,7 @@ func (ps *PushScheduler) Run(ctx context.Context) {
 			return
 		case <-ticker.C:
 			ps.checkAndNotify(ctx)
+			ps.checkFlightLandings(ctx)
 		case <-cleanupTicker.C:
 			if err := ps.push.CleanupExpired(ctx); err != nil {
 				log.Printf(`{"level":"error","service":"push-scheduler","msg":"cleanup failed","error":%q}`, err)
@@ -132,4 +134,79 @@ func (ps *PushScheduler) sendForWindow(ctx context.Context, l schedulerLaunch, w
 		}
 	}
 	log.Printf(`{"level":"info","service":"push-scheduler","msg":"notifications sent","launch":%q,"window":%q,"sent":%d,"failed":%d}`, l.ID, window, sent, failed)
+}
+
+// ── Flight landing alerts ───────────────────────────────────────────────────
+// Subscriptions for a flight reuse the launch_id column with a "flight:<icao24>"
+// target, so no schema change is needed. Every tick we look at the armed
+// targets, read the aircraft's live state, and when one that we have seen
+// airborne reports on-ground we push once and drop the subscriptions.
+func (ps *PushScheduler) checkFlightLandings(ctx context.Context) {
+	rows, err := ps.push.pool.Query(ctx,
+		`SELECT DISTINCT launch_id FROM push_subscriptions WHERE launch_id LIKE 'flight:%'`)
+	if err != nil {
+		return
+	}
+	targets := []string{}
+	for rows.Next() {
+		var t string
+		if err := rows.Scan(&t); err == nil {
+			targets = append(targets, t)
+		}
+	}
+	rows.Close()
+	if len(targets) == 0 {
+		return
+	}
+
+	for _, target := range targets {
+		icao24 := strings.TrimPrefix(target, "flight:")
+		raw, err := ps.rdb.HGet(ctx, aircraftLiveKey, icao24).Result()
+		if err != nil || raw == "" {
+			continue // out of coverage this tick — keep the alert armed
+		}
+		var live models.LiveAircraft
+		if err := json.Unmarshal([]byte(raw), &live); err != nil {
+			continue
+		}
+
+		airborneKey := target + ":airborne"
+		if !live.Grnd {
+			ps.sent.Store(airborneKey, true) // remember we saw it flying
+			continue
+		}
+		if _, seenAirborne := ps.sent.Load(airborneKey); !seenAirborne {
+			continue // already on the ground when armed — not a landing
+		}
+		ps.sent.Delete(airborneKey)
+
+		subs, err := ps.push.GetSubscriptionsForLaunch(ctx, target)
+		if err != nil || len(subs) == 0 {
+			continue
+		}
+		callsign := strings.ToUpper(icao24)
+		if live.Callsign != nil && strings.TrimSpace(*live.Callsign) != "" {
+			callsign = strings.TrimSpace(*live.Callsign)
+		}
+		payload := models.PushPayload{
+			Title: callsign + " has landed",
+			Body:  "The flight you were tracking is on the ground.",
+			Tag:   "landing-" + icao24,
+			URL:   "/flight/" + icao24,
+		}
+		sent, failed := 0, 0
+		for _, sub := range subs {
+			if err := ps.push.SendNotification(sub, payload); err != nil {
+				failed++
+			} else {
+				sent++
+			}
+		}
+		// One-shot alert: clear the subscriptions once delivered.
+		if _, err := ps.push.pool.Exec(ctx,
+			`DELETE FROM push_subscriptions WHERE launch_id = $1`, target); err != nil {
+			log.Printf(`{"level":"warn","service":"push-scheduler","msg":"landing cleanup failed","target":%q}`, target)
+		}
+		log.Printf(`{"level":"info","service":"push-scheduler","msg":"landing notified","flight":%q,"sent":%d,"failed":%d}`, icao24, sent, failed)
+	}
 }

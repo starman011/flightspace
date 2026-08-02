@@ -60,6 +60,12 @@ function pctFlown(route, remainingKm) {
   return Math.max(0, Math.min(100, Math.round((1 - remainingKm / total) * 100)))
 }
 
+function urlB64ToUint8(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4)
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'))
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
+}
+
 function fmtEta(minutes) {
   if (minutes == null) return null
   if (minutes < 1) return '< 1 min'
@@ -251,6 +257,34 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     }
     setAlertWanted(next)
     if (next) track('alert_on_landing')
+
+    // Register a real Web Push subscription so the alert survives this tab
+    // closing — the Go scheduler watches "flight:<icao24>" and pushes on
+    // touchdown. Reuses the existing launch-push endpoints (same target column).
+    try {
+      const reg = await navigator.serviceWorker?.ready
+      if (reg) {
+        const target = `flight:${icao24}`
+        if (next) {
+          const kr = await fetch(`${API}/api/v1/push/vapid-key`)
+          const { publicKey } = await kr.json()
+          const sub = await reg.pushManager.getSubscription()
+            || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(publicKey) })
+          await fetch(`${API}/api/v1/push/subscribe`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub, launch_id: target }),
+          })
+        } else {
+          const sub = await reg.pushManager.getSubscription()
+          if (sub) {
+            await fetch(`${API}/api/v1/push/unsubscribe`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: sub.endpoint, launch_id: target }),
+            })
+          }
+        }
+      }
+    } catch { /* push unavailable — the in-tab watcher below still fires */ }
     try {
       const all = JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')
       if (next) all[icao24] = true; else delete all[icao24]
