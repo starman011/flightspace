@@ -429,8 +429,8 @@
     position: fixed;                /* was computing to static on desktop, so
                                        right/top anchoring did nothing */
     top: 16px;
-    left: auto;
-    right: 16px;
+    left: 16px;      /* top-LEFT, matching mobile */
+    right: auto;
     bottom: auto;
     transform: none;
     width: min(400px, 38vw);
@@ -442,5 +442,5 @@
   }
   .topSearch { height: 42px; font-size: 12.5px; }
   .topChip   { width: 42px; height: 42px; }
-  .countStrip { align-self: flex-end; }   /* tucks under the field, right-aligned */
+  .countStrip { align-self: flex-start; }
 }

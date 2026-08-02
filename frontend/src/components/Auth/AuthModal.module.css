@@ -273,3 +273,45 @@
   color: rgba(var(--green-rgb), 0.5);
   top: 2px;
 }
+
+/* ── Photo hero: aviation imagery on the top half, headline over it ───────── */
+.hero {
+  position: relative;
+  height: 168px;
+  margin: -1px -1px 0;          /* bleed to the card's rounded edge */
+  overflow: hidden;
+  flex: none;
+}
+.heroImg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.04);
+  animation: heroDrift 18s ease-in-out infinite alternate;
+}
+@keyframes heroDrift { from { transform: scale(1.04) translateY(0); } to { transform: scale(1.1) translateY(-6px); } }
+.heroVeil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(4, 8, 16, 0.15) 0%,
+    rgba(4, 8, 16, 0.55) 55%,
+    rgba(6, 10, 18, 0.99) 100%);
+}
+.heroText { position: absolute; left: 22px; right: 22px; bottom: 14px; }
+.heroKicker {
+  margin: 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green);
+}
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 700;
+  letter-spacing: -0.6px; line-height: 1;
+  color: #fff;
+}
+.header { padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .heroImg { animation: none; } }
+@media (max-height: 720px) { .hero { height: 128px; } .heroTitle { font-size: 25px; } }

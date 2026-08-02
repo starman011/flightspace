@@ -101,14 +101,21 @@ export default function AuthModal({ onClose, onLogin, onRegister, onGoogleLogin 
       <div className={styles.modal}>
         <button className={styles.close} onClick={onClose} aria-label="Close">&#x2715;</button>
 
+        <div className={styles.hero}>
+          <img className={styles.heroImg} src="/flight-sky.webp" alt="" width="1600" height="914" />
+          <div className={styles.heroVeil} />
+          <div className={styles.heroText}>
+            <p className={styles.heroKicker}>ObjectTracer</p>
+            <h2 className={styles.heroTitle}>
+              {mode === 'login' ? 'Sign in' : 'Create account'}
+            </h2>
+          </div>
+        </div>
+
         <div className={styles.header}>
-          <div className={styles.logo}>&#x2726;</div>
-          <h2 className={styles.title}>
-            {mode === 'login' ? 'Welcome back' : 'Join ObjectTracer'}
-          </h2>
           <p className={styles.subtitle}>
             {mode === 'login'
-              ? 'Sign in to track flights & save your watchlist'
+              ? 'Track flights, save a watchlist and get landing alerts.'
               : 'Create an account to unlock personalized tracking'}
           </p>
         </div>
