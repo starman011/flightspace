@@ -187,7 +187,6 @@
 
 /* ── Mobile: search becomes a top glass field (mockup B); the bar keeps
    exactly 5 labelled tabs + LIVE so nothing is squeezed off narrow screens. */
-.topSearch { display: none; }
 @keyframes caretBlink { 0%, 55% { opacity: 1 } 56%, 100% { opacity: 0 } }
 
 @media (max-width: 640px) {

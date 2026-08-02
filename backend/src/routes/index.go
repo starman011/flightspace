@@ -139,7 +139,7 @@ func Setup(
 		w.Write([]byte(`{"enabled":false}`))
 	})))
 	if pushCtrl != nil {
-		mux.Handle("POST /api/v1/push/subscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleSubscribe)))
+		mux.Handle("POST /api/v1/push/subscribe", rateLimit(authOpt(http.HandlerFunc(pushCtrl.HandleSubscribe))))
 		mux.Handle("POST /api/v1/push/unsubscribe", rateLimit(http.HandlerFunc(pushCtrl.HandleUnsubscribe)))
 		mux.Handle("GET /api/v1/push/check", rateLimit(http.HandlerFunc(pushCtrl.HandleCheckSubscription)))
 	}

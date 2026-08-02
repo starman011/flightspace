@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strings"
+
 	"bytes"
 	"context"
 	"crypto/aes"
@@ -14,6 +16,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/skydot/backend/src/middlewares"
 	"io"
 	"log"
 	"math/big"
@@ -52,12 +55,17 @@ func NewPushController(pool *pgxpool.Pool, pubKey, privKey, email string) (*Push
 	}
 	priv := &ecdsa.PrivateKey{
 		PublicKey: ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y},
-		D:        new(big.Int).SetBytes(privBytes),
+		D:         new(big.Int).SetBytes(privBytes),
 	}
 	return &PushController{pool: pool, vapidPub: pubKey, vapidPriv: priv, vapidEmail: email}, nil
 }
 
-// HandleSubscribe stores a push subscription for a launch.
+// HandleSubscribe stores a push subscription for a launch or a flight.
+//
+// SECURITY: flight targets ("flight:<icao24>") require an authenticated
+// session. This is enforced HERE, on the server — the UI gate is a courtesy,
+// not a control. An open subscribe endpoint lets anyone register unlimited
+// subscriptions against our VAPID sender and get it throttled or blocked.
 func (pc *PushController) HandleSubscribe(w http.ResponseWriter, r *http.Request) {
 	var req models.PushSubscribeRequest
 	if err := json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&req); err != nil {
@@ -67,6 +75,13 @@ func (pc *PushController) HandleSubscribe(w http.ResponseWriter, r *http.Request
 	if req.Endpoint == "" || req.KeyP256dh == "" || req.KeyAuth == "" || req.LaunchID == "" {
 		utils.Error(w, http.StatusBadRequest, "missing required fields")
 		return
+	}
+
+	if strings.HasPrefix(req.LaunchID, "flight:") {
+		if sess := middlewares.GetSession(r); sess == nil || sess.UserID == nil || *sess.UserID == "" {
+			utils.Error(w, http.StatusUnauthorized, "sign in to set a flight alert")
+			return
+		}
 	}
 
 	_, err := pc.pool.Exec(r.Context(),

@@ -525,3 +525,29 @@ No specification, plan, or task SHALL proceed without passing all applicable
 constitutional gates.
 
 **Version**: 1.5.0 | **Ratified**: 2026-03-12 | **Last Amended**: 2026-07-27
+
+
+## Article XV — Server-Side Authorization (NON-NEGOTIABLE)
+
+**Every authorization and validation rule MUST be enforced on the server.** UI
+gating is a courtesy to the user, never a security control: hidden buttons,
+disabled inputs, and client-side `isAuthenticated` checks are trivially
+bypassed with curl or devtools.
+
+Rules:
+1. Any endpoint that creates, mutates, or consumes a shared/limited resource
+   (push subscriptions, alerts, uploads, admin actions, credits, email sends)
+   MUST verify the session server-side before acting, and return 401/403 when
+   absent — regardless of what the UI does.
+2. Never introduce a client-only gate as the sole protection. If the UI hides
+   a feature for security reasons, an equivalent server check MUST land in the
+   same change.
+3. Rate-limit and quota anything that fans out to a third-party sender
+   (Web Push/VAPID, email) per authenticated user, so one actor cannot get the
+   shared sender throttled or blocked for everyone.
+4. Trust no client-supplied identity, ownership claim, or target id. Derive the
+   acting user from the verified session, never from the request body.
+
+Precedent: the land-alert push endpoint shipped with a UI-only sign-in gate;
+the server accepted anonymous subscriptions against our VAPID sender. Fixed by
+enforcing the session in `HandleSubscribe` for `flight:*` targets.
