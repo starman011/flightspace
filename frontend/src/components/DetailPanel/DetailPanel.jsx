@@ -858,11 +858,11 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               <button
                 className={`${styles.actAlert} ${alertWanted ? styles.actAlertOn : ''}`}
                 onClick={toggleLandAlert}
-                title={isAuthenticated ? 'Notify me when this flight lands' : 'Sign in to get a landing alert'}
+                title={isAuthenticated ? 'Notify me when this flight lands' : 'Sign in to be notified when this flight lands'}
                 aria-pressed={alertWanted}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                <span>{alertWanted ? 'Alert on' : isAuthenticated ? 'Land alert' : 'Sign in'}</span>
+                <span>{alertWanted ? 'Notifying' : 'Notify me'}</span>
               </button>
               {hasRoute && (
                 <button className={styles.actFollow} onClick={() => onFitRoute?.(route)}>
