@@ -1594,11 +1594,15 @@ export default function CommandCenterOverlay({
   // Globe interaction / landing pages → dock the feed out of the way
   // (mobile: sheet to peek; desktop: collapse to the pull-tab)
   useEffect(() => {
+    // A feed opened deliberately from the top-bar icon must stay open — these
+    // auto-dock triggers were collapsing it to peek on their own.
+    if (isMobileVp && mobileOpen) return
     if (forceCollapsed) { setSheetState('peek'); setDesktopOpen('collapsed') }
-  }, [forceCollapsed])
+  }, [forceCollapsed, isMobileVp, mobileOpen])
 
   // Auto-dock stream + collapse hero when zoomed in close to Earth
   useEffect(() => {
+    if (isMobileVp && mobileOpen) return
     if (zoomedIn) {
       setDesktopOpen('collapsed')
       setSheetState('peek')
@@ -1607,7 +1611,7 @@ export default function CommandCenterOverlay({
       setDesktopOpen('open')
       if (!heroSeenRef.current) setHeroCollapsed(false)
     }
-  }, [zoomedIn])
+  }, [zoomedIn, isMobileVp, mobileOpen])
   const grabRef       = useRef(null)
   const sheetStateRef = useRef(sheetState)
   useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])

@@ -52,7 +52,7 @@ const TAB_FILTERS_IDS = ['flights', 'ships', 'satellites']
 export default function BottomBar({
   activeFilter, onActiveFilterChange, onFiltersChange,
   activeScale, onScaleChange,
-  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount, onSearchSelect, onFeedToggle,
+  onSearchOpen, onLaunchPanelToggle, onPageOpen, objectCount, onSearchSelect, onFeedToggle, topHidden,
   isAuthenticated, user, onSignIn, onSignOut, onProfileOpen,
   liveEnabled, onLiveToggle,
   connectionStatus,
@@ -235,7 +235,7 @@ export default function BottomBar({
   return (
     <>
     {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
-    <div className={`${styles.topArea} ${dim ? styles.dimmed : ''}`} ref={topRef}>
+    <div className={`${styles.topArea} ${dim ? styles.dimmed : ''} ${topHidden ? styles.topGone : ''}`} ref={topRef}>
       <div className={styles.topRow}>
         <div className={styles.topSearch}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>

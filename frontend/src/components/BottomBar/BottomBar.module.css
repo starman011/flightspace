@@ -401,3 +401,12 @@
   border-right: 1px solid var(--glass-line);
   border-bottom: 1px solid var(--glass-line);
 }
+
+/* Smart notch: slide the top row away when a card/panel takes the screen. */
+.topGone {
+  opacity: 0;
+  transform: translateY(-120%);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.28s var(--ease-camera);
+}
+.topArea { transition: opacity 0.5s ease, transform 0.28s var(--ease-camera); }

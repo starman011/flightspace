@@ -876,6 +876,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
         onPageOpen={setActivePage}
         onSearchSelect={handleSearchSelect}
         onFeedToggle={() => setFeedOpen(v => !v)}
+        topHidden={!!selectedIcao24 || !!selectedAirport || launchPanelOpen || profilePanelOpen || !!activePage}
         isAuthenticated={isAuthenticated}
         user={user}
         onSignIn={() => setAuthModalOpen(true)}
