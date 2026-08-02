@@ -716,7 +716,20 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             )}
           </div>
 
-          {loading && <p className={styles.state}>loading…</p>}
+          {loading && (
+            <div className={styles.skel} aria-hidden="true">
+              <div className={styles.skelRoute}>
+                <span className={`${styles.skelBar} ${styles.skelIata}`} />
+                <span className={`${styles.skelBar} ${styles.skelLine}`} />
+                <span className={`${styles.skelBar} ${styles.skelIata}`} />
+              </div>
+              <div className={styles.skelGrid}>
+                <span className={styles.skelBar} /><span className={styles.skelBar} />
+                <span className={styles.skelBar} /><span className={styles.skelBar} />
+              </div>
+            </div>
+          )}
+          <span className={styles.srOnly} role="status">{loading ? 'Loading flight details' : ''}</span>
           {error && isFlight && <p className={styles.state}>error {error}</p>}
 
           {/* ── Route: departure → arrival ── */}

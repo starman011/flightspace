@@ -1142,3 +1142,39 @@
   overflow-wrap: anywhere;
   text-overflow: clip;
 }
+
+/* ── Skeleton while flight data resolves: the card keeps its shape and the
+   blocks shimmer, so waiting feels like loading, not emptiness. ─────────── */
+.skel { padding: 14px 20px 4px; display: flex; flex-direction: column; gap: 12px; }
+.skelRoute { display: flex; align-items: center; gap: 10px; }
+.skelGrid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.skelBar {
+  display: block; height: 34px; border-radius: var(--r-tight);
+  background: linear-gradient(100deg,
+    rgba(var(--ink-rgb), 0.06) 30%,
+    rgba(var(--ink-rgb), 0.14) 50%,
+    rgba(var(--ink-rgb), 0.06) 70%);
+  background-size: 220% 100%;
+  animation: skelShimmer 1.25s ease-in-out infinite;
+}
+.skelIata { width: 62px; height: 26px; }
+.skelLine { flex: 1; height: 10px; }
+@keyframes skelShimmer {
+  from { background-position: 130% 0; }
+  to   { background-position: -30% 0; }
+}
+/* entrance: bands fade+rise as their data arrives */
+.routeCard, .metric4, .sheetActions {
+  animation: cardBandIn 0.34s var(--ease-camera) both;
+}
+@keyframes cardBandIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.metric4     { animation-delay: 0.05s; }
+.sheetActions{ animation-delay: 0.1s; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .skelBar { animation: none; }
+  .routeCard, .metric4, .sheetActions { animation: none; }
+}
