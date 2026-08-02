@@ -410,3 +410,12 @@
   transition: opacity 0.22s ease, transform 0.28s var(--ease-camera);
 }
 .topArea { transition: opacity 0.5s ease, transform 0.28s var(--ease-camera); }
+
+/* Smart bar: slide it off-screen when a card/panel/page owns the view, so it
+   never sits on top of the flight card's action tiles. */
+.bar { transition: transform 0.3s var(--ease-camera), opacity 0.22s ease; }
+.barGone {
+  opacity: 0;
+  transform: translateX(-50%) translateY(150%);
+  pointer-events: none;
+}
