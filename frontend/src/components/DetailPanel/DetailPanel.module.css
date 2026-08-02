@@ -1186,3 +1186,31 @@
 /* Action tiles always sit at the BOTTOM of the card — the telemetry/position
    block renders after them in source order, which pushed V/S below the buttons. */
 .sheetActions { order: 90; margin-top: auto; }
+
+/* ── Card bands: sit on the panel's own surface instead of painting solid
+   blocks of --surface-deep (which in the light theme is saturated blue and
+   read as a glitch against the rest of the card). ────────────────────────── */
+.metric4, .sheetActions { background: transparent; }
+.m4cell {
+  background: rgba(var(--gloss-rgb), 0.07);
+  border-color: rgba(var(--gloss-rgb), 0.14);
+}
+
+/* Actions: one tidy row of five, anchored to the content — not shoved to the
+   panel's bottom edge where they float disconnected on tall desktop panels. */
+.sheetActions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+  padding: 10px 14px 16px;
+}
+.sheetActions button { flex: none; min-width: 0; padding: 8px 2px; min-height: 58px; }
+.sheetActions button span { font-size: 9.5px; }
+
+@media (min-width: 768px) {
+  /* Desktop panel is full height: let the data column breathe and keep the
+     action row directly beneath it rather than pinned to the viewport floor. */
+  .scroller { justify-content: flex-start; }
+  .sheetActions { order: 90; margin-top: 6px; }
+}
