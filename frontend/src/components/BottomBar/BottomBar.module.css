@@ -188,43 +188,6 @@
 /* ── Mobile: search becomes a top glass field (mockup B); the bar keeps
    exactly 5 labelled tabs + LIVE so nothing is squeezed off narrow screens. */
 .topSearch { display: none; }
-@media (max-width: 640px) {
-  .searchTab { display: none; }
-  .topSearch {
-    position: fixed;
-    top: calc(12px + env(safe-area-inset-top, 0px));
-    left: 12px;
-    right: 92px;                    /* leaves the profile pill's corner free */
-    z-index: var(--z-nav);
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-height: 42px;
-    padding: 0 15px;
-    background: var(--glass-fill);
-    backdrop-filter: var(--glass-blur-lg);
-    -webkit-backdrop-filter: var(--glass-blur-lg);
-    border: 1px solid var(--glass-line);
-    border-top-color: var(--glass-gloss);
-    border-radius: var(--r-pill);
-    box-shadow: var(--glass-shadow-nav);
-    color: rgba(var(--ink-rgb), 0.55);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    text-align: left;
-  }
-}
-
-/* ── Mobile top area v2: search + layer-filter chips + tracked count ──────── */
-.topArea { display: none; }
-.hintText { display: inline-flex; align-items: baseline; min-height: 1em; }
-.caret {
-  display: inline-block; width: 1px; height: 12px; margin-left: 2px;
-  background: rgba(var(--ink-rgb), 0.6); align-self: center;
-  animation: caretBlink 1.1s step-end infinite;
-}
 @keyframes caretBlink { 0%, 55% { opacity: 1 } 56%, 100% { opacity: 0 } }
 
 @media (max-width: 640px) {
@@ -289,8 +252,6 @@
 /* profile avatar in the tab + absorbed menu + top filter popover */
 .avatarImg { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 .popMenu { max-height: 62vh; overflow-y: auto; min-width: 175px; }
-.topChipWrap { position: relative; display: none; }
-@media (max-width: 640px) { .topChipWrap { display: flex; } }
 .popDown { bottom: auto; top: calc(100% + 10px); }
 /* Right-anchored, grows OUT of the funnel icon (its own keyframes — the base
    popIn animates translateX(-50%) which made it flash centred then jump). */

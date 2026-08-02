@@ -787,6 +787,12 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                 <span>{alertWanted ? 'Alert saved' : 'Land alert'}</span>
               </button>
+              {hasRoute && (
+                <button className={styles.actFollow} onClick={() => onFitRoute?.(route)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 3h6M3 3v6M21 21h-6M21 21v-6M21 3h-6M21 3v6M3 21h6M3 21v-6"/></svg>
+                  <span>Fit route</span>
+                </button>
+              )}
               <button className={styles.actFollow} data-haptic-heavy
                 onClick={() => {
                   if (!isAuthenticated) { onSignIn?.(); return }
@@ -961,7 +967,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
             </div>
           )}
 
-          {isFlight && (detail || liveData) && (
+          {false && isFlight && (detail || liveData) && (
             <div className={styles.trackRow}>
               <button
                 className={`${styles.trackBtn} ${isTracking ? styles.trackBtnActive : ''}`}

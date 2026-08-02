@@ -20,13 +20,8 @@ test.describe('Home /', () => {
     for (const label of ['Home', 'Space', 'Journal']) {
       await expect(bar.getByText(label, { exact: true })).toBeVisible()
     }
-    if (testInfo.project.name === 'mobile') {
-      await expect(page.getByRole('button', { name: 'Filter options' })).toBeVisible()
-    } else {
-      for (const name of ['Flights', 'Ships', 'Satellites']) {
-        await expect(page.getByRole('button', { name, exact: true }).locator('visible=true').first()).toBeVisible()
-      }
-    }
+    // search + filter live in the shared top row on BOTH viewports now
+    await expect(page.getByRole('button', { name: 'Filter options' })).toBeVisible()
     // search: a labelled tab on desktop, a top glass field on mobile — one of
     // the two must be visible on every viewport
     await expect(page.getByLabel('Search flights, airports, airlines').locator('visible=true').first()).toBeVisible()

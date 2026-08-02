@@ -1178,3 +1178,7 @@
   .skelBar { animation: none; }
   .routeCard, .metric4, .sheetActions { animation: none; }
 }
+
+/* One consolidated action group — wraps to a second line rather than clipping. */
+.sheetActions { flex-wrap: wrap; }
+.sheetActions button { flex: 1 1 22%; min-width: 68px; }
