@@ -421,3 +421,26 @@
 /* `gap` was not taking effect on this container, so space the icon explicitly:
    input text then starts at 14(pad) + 15(icon) + 10 = 39px, matching .hintText. */
 .topSearch > svg { margin-right: 10px; flex: none; }
+
+/* ── Desktop: search + filter sit top-right (the corner freed by folding the
+   old profile pill into the bar), narrower than the mobile full-bleed row. ── */
+@media (min-width: 641px) {
+  .topArea {
+    position: fixed;                /* was computing to static on desktop, so
+                                       right/top anchoring did nothing */
+    top: 16px;
+    left: auto;
+    right: 16px;
+    bottom: auto;
+    transform: none;
+    width: min(400px, 38vw);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .topSearch { height: 42px; font-size: 12.5px; }
+  .topChip   { width: 42px; height: 42px; }
+  .countStrip { align-self: flex-end; }   /* tucks under the field, right-aligned */
+}
