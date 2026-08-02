@@ -1214,3 +1214,37 @@
   .scroller { justify-content: flex-start; }
   .sheetActions { order: 90; margin-top: 6px; }
 }
+
+/* ── The flight card is a fixed DARK reading surface (its .panel background is
+   deliberately near-black in both themes). Its bands must therefore be jet
+   black too — using themed surface tokens made them render blue in light
+   mode against the dark panel. ────────────────────────────────────────────── */
+.identity, .routeCard, .posCard, .metric4, .sheetActions, .hero {
+  background: #05070c;
+}
+.routeCard { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.identity  { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.m4cell {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.m4label { color: rgba(255, 255, 255, 0.5); }
+.m4val   { color: #f2f5f8; }
+.posCard, .posLabel { color: rgba(255, 255, 255, 0.55); }
+.posValue, .telemVal { color: #f2f5f8; }
+
+/* ── Action tiles: accent fill with a black glyph (matches the nav's active
+   pill language), so the row reads as a set of real buttons. ─────────────── */
+.actFollow, .actAlert {
+  background: var(--green);
+  border: none;
+  color: #05070c;
+}
+.actFollow:hover, .actAlert:hover { filter: brightness(1.08); }
+.actFollow svg, .actAlert svg { stroke: #05070c; }
+.actAlertOn {
+  background: #05070c;
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+.actAlertOn svg { stroke: var(--green); }
