@@ -233,7 +233,8 @@
     top: calc(12px + env(safe-area-inset-top, 0px));
     left: 12px;
     right: 12px;                    /* full width — the profile now lives in the bar */
-    z-index: var(--z-nav);
+    z-index: 10000;                 /* above the session-error banner (z 9999),
+                                       which otherwise swallowed every tap here */
     display: flex;
     flex-direction: column;
     gap: 6px;
