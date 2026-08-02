@@ -1182,3 +1182,7 @@
 /* One consolidated action group — wraps to a second line rather than clipping. */
 .sheetActions { flex-wrap: wrap; }
 .sheetActions button { flex: 1 1 22%; min-width: 68px; }
+
+/* Action tiles always sit at the BOTTOM of the card — the telemetry/position
+   block renders after them in source order, which pushed V/S below the buttons. */
+.sheetActions { order: 90; margin-top: auto; }
