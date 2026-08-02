@@ -380,3 +380,13 @@
   transform: translateX(-50%) translateY(150%);
   pointer-events: none;
 }
+
+/* Any full-screen engagement modal (waitlist, welcome) flags the body; the
+   persistent nav steps aside so it never sits on top of the card's CTA. */
+:global(body[data-modal-open]) .bar,
+:global(body[data-modal-open]) .topArea {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+:global(body[data-modal-open]) .bar { transform: translateX(-50%) translateY(150%); }

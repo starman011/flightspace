@@ -35,6 +35,11 @@ export default function BetaWelcome() {
     if (n <= 2) setVisible(true)   // sessions 1 & 2 only
   }, [])
 
+  useEffect(() => {
+    document.body.setAttribute('data-modal-open', 'welcome')
+    return () => document.body.removeAttribute('data-modal-open')
+  }, [])
+
   if (!visible) return null
 
   return (

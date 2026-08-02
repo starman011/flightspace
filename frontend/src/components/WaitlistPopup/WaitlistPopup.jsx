@@ -104,6 +104,13 @@ export default function WaitlistPopup() {
     }
   }
 
+  // Flag the document so persistent chrome (the bottom nav) can step aside.
+  useEffect(() => {
+    if (!visible) return
+    document.body.setAttribute('data-modal-open', 'waitlist')
+    return () => document.body.removeAttribute('data-modal-open')
+  }, [visible])
+
   if (!visible) return null
 
   return (
