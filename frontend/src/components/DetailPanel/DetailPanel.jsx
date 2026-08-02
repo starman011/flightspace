@@ -237,7 +237,26 @@ const ISS_IMAGES = [
 ]
 
 export default function DetailPanel({ icao24, liveData, onClose, onTrailData, isAuthenticated, isTracking, onTrack, onFitRoute, isSaved, onToggleSave, onSignIn, viewerCount = 0, watchObject, onSheetChange }) {
-  const [alertWanted, setAlertWanted] = useState(false)   // Phase-6 stub: measured, not yet wired to push
+  const [alertWanted, setAlertWanted] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')[icao24] === true } catch { return false }
+  })
+  const wasAirborneRef = useRef(false)
+
+  // Land alert: ask once, remember the choice, then fire a notification the
+  // moment this aircraft transitions airborne -> on ground.
+  const toggleLandAlert = useCallback(async () => {
+    const next = !alertWanted
+    if (next && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      try { await Notification.requestPermission() } catch { /* denied */ }
+    }
+    setAlertWanted(next)
+    if (next) track('alert_on_landing')
+    try {
+      const all = JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')
+      if (next) all[icao24] = true; else delete all[icao24]
+      localStorage.setItem('ot-land-alerts', JSON.stringify(all))
+    } catch { /* private mode */ }
+  }, [alertWanted, icao24])
   const [detail, setDetail]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -583,6 +602,26 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const displayAlt = cur?.altitude ?? liveData?.alt
   const displayVel = cur?.velocity ?? liveData?.vel
   const displayHdg = cur?.heading ?? liveData?.hdg
+
+  // Watch for touchdown while an alert is armed.
+  useEffect(() => {
+    const onGround = (cur?.on_ground ?? liveData?.grnd) === true
+    if (!onGround) { if (displayAlt > 0) wasAirborneRef.current = true; return }
+    if (!alertWanted || !wasAirborneRef.current) return
+    wasAirborneRef.current = false
+    const cs = liveData?.callsign || detail?.callsign || icao24
+    try {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(`${cs} has landed`, { body: 'Tracked on ObjectTracer', icon: '/favicon-192.png' })
+      }
+    } catch { /* notifications unavailable */ }
+    track('land_alert_fired')
+    setAlertWanted(false)
+    try {
+      const all = JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')
+      delete all[icao24]; localStorage.setItem('ot-land-alerts', JSON.stringify(all))
+    } catch { /* private mode */ }
+  }, [cur?.on_ground, liveData?.grnd, displayAlt, alertWanted, icao24, liveData?.callsign, detail?.callsign])
   const displayVR  = cur?.vertical_rate ?? liveData?.vr
   const displayGrnd = cur?.on_ground ?? liveData?.grnd ?? false
   const displayTs  = cur?.timestamp ?? (liveData?.ts ? new Date(liveData.ts * 1000).toISOString() : null)
@@ -781,11 +820,11 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
               </button>
               <button
                 className={`${styles.actAlert} ${alertWanted ? styles.actAlertOn : ''}`}
-                onClick={() => { if (!alertWanted) track('alert_on_landing'); setAlertWanted(v => !v) }}
+                onClick={toggleLandAlert}
                 aria-pressed={alertWanted}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                <span>{alertWanted ? 'Alert saved' : 'Land alert'}</span>
+                <span>{alertWanted ? 'Alert on' : 'Land alert'}</span>
               </button>
               {hasRoute && (
                 <button className={styles.actFollow} onClick={() => onFitRoute?.(route)}>
