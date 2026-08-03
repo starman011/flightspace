@@ -115,57 +115,25 @@ textarea:focus-visible {
 button:active:not(:disabled) { transform: scale(0.97); }
 button { transition: transform 0.13s var(--ease-camera); }
 
-/* ══ Cockpit shell ═══════════════════════════════════════════════════════════
-   ONE seamless frame: a single element whose thick borders form the header,
-   footer and side bezels, so all four corners join continuously. border-radius
-   rounds the outer edge and CSS rounds the inner cut-out to match — no seams
-   between bands. Presentational only (pointer-events: none). */
-:root {
-  --shell-header: 56px;
-  --shell-footer: 64px;
-  --shell-bezel: 12px;
-  --shell-radius: 26px;
-  --shell-color: #0043f0;   /* frame surface — the brand blue */
-}
-.ot-shell {
-  position: fixed;
-  inset: 0;
-  z-index: 9500;
-  pointer-events: none;
-}
-/* Cutout technique: an element sized to the STAGE, with a huge solid spread
-   shadow painting everything outside it. That fills header, footer and bezels
-   as one seamless surface AND leaves a genuinely rounded rectangular hole —
-   thick borders can't do this (inner radius = outer - border, i.e. 0 here). */
-.ot-shell-inner {
-  position: absolute;
-  top: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
-  bottom: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
-  left: var(--shell-bezel);
-  right: var(--shell-bezel);
-  border-radius: var(--shell-radius);
-  box-shadow:
-    0 0 0 9999px var(--shell-color),
-    inset 0 0 0 1px rgba(var(--gloss-rgb), 0.14),
-    inset 0 14px 32px -20px rgba(0, 0, 0, 0.9),
-    inset 0 -14px 32px -20px rgba(0, 0, 0, 0.9);
-}
-.ot-shell-header,
-.ot-shell-footer { display: none; }   /* the cutout element draws the whole frame */
-
-/* The two persistent bars live INSIDE their bands. */
-[class*="topArea"]  { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
-nav[aria-label="Primary navigation"] {
-  bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-  z-index: 9600 !important;   /* above the shell frame (9500) */
-}
-
-@media (max-width: 640px) {
-  :root { --shell-header: 54px; --shell-footer: 62px; --shell-bezel: 7px; --shell-radius: 20px; }
-  [class*="topArea"] { top: calc(7px + env(safe-area-inset-top, 0px)) !important; }
-}
-
 /* Header chrome is persistent: never fades while the globe is being worked.
    Only a full-screen modal may hide it. */
 [class*="topArea"] { opacity: 1 !important; }
 body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
+
+/* ── Rounded screen corners ──────────────────────────────────────────────────
+   Four pitch-black corner wedges: each is a radial gradient centred on the
+   inner corner — transparent inside the radius, solid black outside — so the
+   viewport reads as a rounded screen. Purely presentational. */
+.ot-corners {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  --corner: 22px;
+  background:
+    radial-gradient(circle at 100% 100%, transparent var(--corner), #000 calc(var(--corner) + 0.5px)) top left    / var(--corner) var(--corner) no-repeat,
+    radial-gradient(circle at 0    100%, transparent var(--corner), #000 calc(var(--corner) + 0.5px)) top right   / var(--corner) var(--corner) no-repeat,
+    radial-gradient(circle at 100% 0,    transparent var(--corner), #000 calc(var(--corner) + 0.5px)) bottom left / var(--corner) var(--corner) no-repeat,
+    radial-gradient(circle at 0    0,    transparent var(--corner), #000 calc(var(--corner) + 0.5px)) bottom right/ var(--corner) var(--corner) no-repeat;
+}
+@media (max-width: 640px) { .ot-corners { --corner: 18px; } }
