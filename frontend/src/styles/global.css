@@ -125,7 +125,7 @@ button { transition: transform 0.13s var(--ease-camera); }
   --shell-footer: 64px;
   --shell-bezel: 12px;
   --shell-radius: 26px;
-  --shell-color: #16344d;   /* frame surface — deep slate blue */
+  --shell-color: #0043f0;   /* frame surface — the brand blue */
 }
 .ot-shell {
   position: fixed;
@@ -150,9 +150,8 @@ button { transition: transform 0.13s var(--ease-camera); }
     inset 0 14px 32px -20px rgba(0, 0, 0, 0.9),
     inset 0 -14px 32px -20px rgba(0, 0, 0, 0.9);
 }
-/* Film grain on the FRAME only. Painted as four tiled bands (top, bottom, and
-   the two bezels) rather than one full-bleed layer, so the stage — and the
-   globe inside it — stays perfectly clean. */
+/* Film grain on the HEADER and FOOTER bands only — not the bezels, not the
+   stage. Two tiled layers pinned to the top and bottom edges. */
 .ot-shell::after {
   content: '';
   position: absolute;
@@ -160,14 +159,12 @@ button { transition: transform 0.13s var(--ease-camera); }
   pointer-events: none;
   opacity: 0.55;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-  background-position: left top, left bottom, left top, right top;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-position: left top, left bottom;
   background-size:
     100% calc(var(--shell-header) + env(safe-area-inset-top, 0px)),
-    100% calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px)),
-    var(--shell-bezel) 100%,
-    var(--shell-bezel) 100%;
-  background-repeat: repeat, repeat, repeat, repeat;
+    100% calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
+  background-repeat: repeat, repeat;
 }
 
 .ot-shell-header,
