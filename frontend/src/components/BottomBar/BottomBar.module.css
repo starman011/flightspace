@@ -506,3 +506,14 @@
   .topChip svg { width: 19px; height: 19px; }
   .topChipOn { color: #0a0f14; background: var(--green); border-color: var(--green); }
 }
+
+/* Controls sized to fit the slimmer shell bands. */
+@media (min-width: 641px) {
+  .topSearch { height: 44px; }
+  .topChip   { width: 44px; height: 44px; }
+  .tab, .live { min-height: 44px; }
+}
+@media (max-width: 640px) {
+  .topSearch, .topChip { height: 40px; }
+  .topChip { width: 40px; }
+}

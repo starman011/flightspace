@@ -235,7 +235,7 @@ export default function BottomBar({
   return (
     <>
     {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
-    <div className={`${styles.topArea} ${dim ? styles.dimmed : ''} ${topHidden ? styles.topGone : ''}`} ref={topRef}>
+    <div className={`${styles.topArea}  ${topHidden ? styles.topGone : ''}`} ref={topRef}>
       <div className={styles.topRow}>
         <div className={styles.topSearch}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -291,7 +291,7 @@ export default function BottomBar({
         </div>
       )}
     </div>
-    <nav className={`${styles.bar} ${topHidden ? styles.barGone : ''}`} aria-label="Primary navigation" ref={barRef}>
+    <nav className={styles.bar} aria-label="Primary navigation" ref={barRef}>
 
       <button
         className={`${styles.tab} ${activeScale === 'earth' && !activeFilter ? styles.tabOn : ''}`}

@@ -120,8 +120,8 @@ button { transition: transform 0.13s var(--ease-camera); }
    rounded inner corners. Presentational only — it never eats pointer events,
    so the globe and every overlay keep working while they migrate onto it. */
 :root {
-  --shell-header: 100px;
-  --shell-footer: 84px;
+  --shell-header: 56px;
+  --shell-footer: 64px;
   --shell-bezel: 12px;
   --shell-radius: 22px;
 }
@@ -167,12 +167,12 @@ button { transition: transform 0.13s var(--ease-camera); }
 }
 
 /* The two persistent bars live INSIDE their bands. */
-[class*="topArea"]  { top: calc(26px + env(safe-area-inset-top, 0px)) !important; }
+[class*="topArea"]  { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
 nav[aria-label="Primary navigation"] {
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 @media (max-width: 640px) {
-  :root { --shell-header: 88px; --shell-footer: 78px; --shell-bezel: 6px; --shell-radius: 16px; }
-  [class*="topArea"] { top: calc(16px + env(safe-area-inset-top, 0px)) !important; }
+  :root { --shell-header: 54px; --shell-footer: 62px; --shell-bezel: 6px; --shell-radius: 16px; }
+  [class*="topArea"] { top: calc(7px + env(safe-area-inset-top, 0px)) !important; }
 }
