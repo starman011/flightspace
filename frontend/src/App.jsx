@@ -795,6 +795,15 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onOpenFleet={() => { setPlanesFleet(landing.prefix); setActivePage('planes') }}
         />
       )}
+      {/* Cockpit shell: header band + side bezels + footer band, drawn over the
+          stage with rounded inner corners. Purely presentational (pointer-events
+          none) — overlays migrate onto it in later steps. */}
+      <div className="ot-shell" aria-hidden="true">
+        <div className="ot-shell-header" />
+        <div className="ot-shell-footer" />
+        <div className="ot-shell-inner" />
+      </div>
+
       <BetaWelcome />
 
       {/* Nudge first-time visitors to turn Live on so the Earth view fills with data */}

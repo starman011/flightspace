@@ -114,3 +114,65 @@ textarea:focus-visible {
    mobile where there is no hover. Gentle scale, module :active rules override. */
 button:active:not(:disabled) { transform: scale(0.97); }
 button { transition: transform 0.13s var(--ease-camera); }
+
+/* ══ Cockpit shell ═══════════════════════════════════════════════════════════
+   A header band, footer band and thin side bezels framing the stage, with
+   rounded inner corners. Presentational only — it never eats pointer events,
+   so the globe and every overlay keep working while they migrate onto it. */
+:root {
+  --shell-header: 100px;
+  --shell-footer: 84px;
+  --shell-bezel: 12px;
+  --shell-radius: 22px;
+}
+.ot-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;              /* above the globe + panels, below toasts/modals */
+  pointer-events: none;
+}
+.ot-shell-header,
+.ot-shell-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(var(--surface-deep-rgb), 0.92);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+}
+.ot-shell-header {
+  top: 0;
+  height: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--glass-line);
+}
+.ot-shell-footer {
+  bottom: 0;
+  height: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--glass-line);
+}
+/* Side bezels + rounded inner corners, drawn as one ring around the stage. */
+.ot-shell-inner {
+  position: absolute;
+  top: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
+  bottom: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  border-left: var(--shell-bezel) solid rgba(var(--surface-deep-rgb), 0.92);
+  border-right: var(--shell-bezel) solid rgba(var(--surface-deep-rgb), 0.92);
+  border-radius: var(--shell-radius);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 18px 40px -22px rgba(0, 0, 0, 0.9),
+    inset 0 -18px 40px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* The two persistent bars live INSIDE their bands. */
+[class*="topArea"]  { top: calc(26px + env(safe-area-inset-top, 0px)) !important; }
+nav[aria-label="Primary navigation"] {
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (max-width: 640px) {
+  :root { --shell-header: 88px; --shell-footer: 78px; --shell-bezel: 6px; --shell-radius: 16px; }
+  [class*="topArea"] { top: calc(16px + env(safe-area-inset-top, 0px)) !important; }
+}
