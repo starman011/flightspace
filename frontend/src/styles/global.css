@@ -116,67 +116,47 @@ button:active:not(:disabled) { transform: scale(0.97); }
 button { transition: transform 0.13s var(--ease-camera); }
 
 /* ══ Cockpit shell ═══════════════════════════════════════════════════════════
-   A header band, footer band and thin side bezels framing the stage, with
-   rounded inner corners. Presentational only — it never eats pointer events,
-   so the globe and every overlay keep working while they migrate onto it. */
+   ONE seamless frame: a single element whose thick borders form the header,
+   footer and side bezels, so all four corners join continuously. border-radius
+   rounds the outer edge and CSS rounds the inner cut-out to match — no seams
+   between bands. Presentational only (pointer-events: none). */
 :root {
   --shell-header: 56px;
   --shell-footer: 64px;
   --shell-bezel: 12px;
-  --shell-radius: 22px;
+  --shell-radius: 26px;
 }
 .ot-shell {
   position: fixed;
   inset: 0;
-  z-index: 9500;              /* above the globe + panels, below toasts/modals */
+  z-index: 9500;
   pointer-events: none;
-}
-.ot-shell-header,
-.ot-shell-footer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  background: rgb(var(--surface-deep-rgb));
-  backdrop-filter: var(--glass-blur-lg);
-  -webkit-backdrop-filter: var(--glass-blur-lg);
-}
-.ot-shell-header {
-  top: 0;
-  height: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
-  border-bottom: 1px solid var(--glass-line);
-}
-.ot-shell-footer {
-  bottom: 0;
-  height: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--glass-line);
-}
-/* Side bezels + rounded inner corners, drawn as one ring around the stage. */
-.ot-shell-inner {
-  position: absolute;
-  top: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
-  bottom: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
-  left: 0;
-  right: 0;
-  /* Solid, not 0.92 — the bezels have no backdrop blur, so a translucent
-     border let the globe's tan landmass bleed through as a brown tint. */
-  border-left: var(--shell-bezel) solid rgb(var(--surface-deep-rgb));
-  border-right: var(--shell-bezel) solid rgb(var(--surface-deep-rgb));
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: rgb(var(--surface-deep-rgb));
+  border-top-width: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
+  border-bottom-width: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
+  border-left-width: var(--shell-bezel);
+  border-right-width: var(--shell-bezel);
   border-radius: var(--shell-radius);
+  /* hairline + vignette on the inner stage edge */
   box-shadow:
     inset 0 0 0 1px var(--glass-line),
-    inset 0 18px 40px -22px rgba(0, 0, 0, 0.9),
-    inset 0 -18px 40px -22px rgba(0, 0, 0, 0.9);
+    inset 0 16px 36px -22px rgba(0, 0, 0, 0.95),
+    inset 0 -16px 36px -22px rgba(0, 0, 0, 0.95);
 }
+.ot-shell-header,
+.ot-shell-footer,
+.ot-shell-inner { display: none; }   /* the frame is now one element */
 
 /* The two persistent bars live INSIDE their bands. */
 [class*="topArea"]  { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
 nav[aria-label="Primary navigation"] {
   bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-  z-index: 9600 !important;   /* above the shell bands (9500), which are opaque
-                                 and were painting straight over the pill */
+  z-index: 9600 !important;   /* above the shell frame (9500) */
 }
 
 @media (max-width: 640px) {
-  :root { --shell-header: 54px; --shell-footer: 62px; --shell-bezel: 6px; --shell-radius: 16px; }
+  :root { --shell-header: 54px; --shell-footer: 62px; --shell-bezel: 7px; --shell-radius: 20px; }
   [class*="topArea"] { top: calc(7px + env(safe-area-inset-top, 0px)) !important; }
 }
