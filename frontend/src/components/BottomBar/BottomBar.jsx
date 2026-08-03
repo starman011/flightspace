@@ -280,9 +280,17 @@ export default function BottomBar({
       </div>
       {objectCount > 0 && (
         <div className={styles.countStrip} role="status" aria-live="polite">
-          <span className={styles.countRadar} aria-hidden="true" />
-          <span key={objectCount} className={styles.countNum}>{objectCount.toLocaleString()}</span>
-          <span className={styles.countWord}>tracked now</span>
+          <span className={styles.radar} aria-hidden="true">
+            <span className={styles.radarSweep} />
+            <i className={styles.blip} style={{ left: '28%', top: '34%' }} />
+            <i className={styles.blip} style={{ left: '62%', top: '58%', animationDelay: '.9s' }} />
+            <i className={styles.blip} style={{ left: '44%', top: '72%', animationDelay: '1.8s' }} />
+            <i className={styles.blip} style={{ left: '72%', top: '26%', animationDelay: '2.6s' }} />
+          </span>
+          <span className={styles.countCol}>
+            <span key={objectCount} className={styles.countNum}>{objectCount.toLocaleString()}</span>
+            <span className={styles.countWord}>tracked now</span>
+          </span>
         </div>
       )}
     </div>
