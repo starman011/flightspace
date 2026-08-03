@@ -170,6 +170,8 @@ button { transition: transform 0.13s var(--ease-camera); }
 [class*="topArea"]  { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
 nav[aria-label="Primary navigation"] {
   bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 9600 !important;   /* above the shell bands (9500), which are opaque
+                                 and were painting straight over the pill */
 }
 
 @media (max-width: 640px) {
