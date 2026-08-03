@@ -125,29 +125,33 @@ button { transition: transform 0.13s var(--ease-camera); }
   --shell-footer: 64px;
   --shell-bezel: 12px;
   --shell-radius: 26px;
+  --shell-color: #7fb9dd;   /* frame surface — sky blue */
 }
 .ot-shell {
   position: fixed;
   inset: 0;
   z-index: 9500;
   pointer-events: none;
-  box-sizing: border-box;
-  border-style: solid;
-  border-color: rgb(var(--surface-deep-rgb));
-  border-top-width: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
-  border-bottom-width: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
-  border-left-width: var(--shell-bezel);
-  border-right-width: var(--shell-bezel);
+}
+/* Cutout technique: an element sized to the STAGE, with a huge solid spread
+   shadow painting everything outside it. That fills header, footer and bezels
+   as one seamless surface AND leaves a genuinely rounded rectangular hole —
+   thick borders can't do this (inner radius = outer - border, i.e. 0 here). */
+.ot-shell-inner {
+  position: absolute;
+  top: calc(var(--shell-header) + env(safe-area-inset-top, 0px));
+  bottom: calc(var(--shell-footer) + env(safe-area-inset-bottom, 0px));
+  left: var(--shell-bezel);
+  right: var(--shell-bezel);
   border-radius: var(--shell-radius);
-  /* hairline + vignette on the inner stage edge */
   box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 16px 36px -22px rgba(0, 0, 0, 0.95),
-    inset 0 -16px 36px -22px rgba(0, 0, 0, 0.95);
+    0 0 0 9999px var(--shell-color),
+    inset 0 0 0 1px rgba(var(--gloss-rgb), 0.14),
+    inset 0 14px 32px -20px rgba(0, 0, 0, 0.9),
+    inset 0 -14px 32px -20px rgba(0, 0, 0, 0.9);
 }
 .ot-shell-header,
-.ot-shell-footer,
-.ot-shell-inner { display: none; }   /* the frame is now one element */
+.ot-shell-footer { display: none; }   /* the cutout element draws the whole frame */
 
 /* The two persistent bars live INSIDE their bands. */
 [class*="topArea"]  { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
@@ -160,3 +164,8 @@ nav[aria-label="Primary navigation"] {
   :root { --shell-header: 54px; --shell-footer: 62px; --shell-bezel: 7px; --shell-radius: 20px; }
   [class*="topArea"] { top: calc(7px + env(safe-area-inset-top, 0px)) !important; }
 }
+
+/* Header chrome is persistent: never fades while the globe is being worked.
+   Only a full-screen modal may hide it. */
+[class*="topArea"] { opacity: 1 !important; }
+body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
