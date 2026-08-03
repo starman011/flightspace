@@ -744,7 +744,9 @@
 
   /* ── Close button repositioned ── */
   .closeBtn {
-    top: 62px;            /* clears the fixed top-right profile button */
+    /* Mobile: back at the card's top-right — the profile button is part of the
+       top chrome, which hides whenever this card is open, so nothing collides. */
+    top: 10px;
     right: 10px;
     width: 26px;
     height: 26px;
