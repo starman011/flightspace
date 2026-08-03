@@ -801,7 +801,7 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
 
       {/* Nudge first-time visitors to turn Live on so the Earth view fills with data */}
       <LiveNudge
-        visible={activeScale === 'earth' && !liveEnabled && !showLoading && !showFlightLanding && !selectedIcao24 && !focusedPad && !landing}
+        visible={false && activeScale === 'earth' && !liveEnabled && !showLoading && !showFlightLanding && !selectedIcao24 && !focusedPad && !landing}
         onGoLive={() => setLiveEnabled(true)}
       />
 

@@ -99,6 +99,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 6px var(--green);
   animation: fleetPulse 2s infinite;
 }

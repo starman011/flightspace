@@ -45,8 +45,10 @@
 .tab svg { display: block; }
 .tab:hover  { color: rgba(var(--ink-rgb), 0.95); background: rgba(var(--gloss-rgb), 0.06); }
 .tab:active { transform: scale(0.94); transition-duration: 0.06s; }
-.tabOn      { color: #0a0f14; background: var(--green); }   /* solid lime pill, black glyph */
-.tabOn:hover { color: #0a0f14; background: var(--green); filter: brightness(1.06); }
+.tabOn      { color: #0a0f14; background: var(--green);
+  color: #05070c; }   /* solid lime pill, black glyph */
+.tabOn:hover { color: #0a0f14; background: var(--green);
+  color: #05070c; filter: brightness(1.06); }
 
 .tabLabel {
   font-family: var(--font-mono);
@@ -227,7 +229,8 @@
     cursor: pointer;
     transition: color 0.18s, background 0.18s;
   }
-  .topChipOn { color: #0a0f14; background: var(--green); border-color: var(--green); }
+  .topChipOn { color: #0a0f14; background: var(--green);
+  color: #05070c; border-color: var(--green); }
   .countStrip {
     display: inline-flex; align-items: center; gap: 6px;
     align-self: flex-start;
@@ -504,7 +507,8 @@
   }
   .topChip:hover { color: rgba(var(--ink-rgb), 0.95); }
   .topChip svg { width: 19px; height: 19px; }
-  .topChipOn { color: #0a0f14; background: var(--green); border-color: var(--green); }
+  .topChipOn { color: #0a0f14; background: var(--green);
+  color: #05070c; border-color: var(--green); }
 }
 
 /* Controls sized to fit the slimmer shell bands. */
@@ -571,6 +575,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 7px rgba(var(--green-rgb), 0.7);
   flex: none;
 }
@@ -648,6 +653,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   width: 3px; height: 3px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 5px rgba(var(--green-rgb), 0.9);
   opacity: 0;
   animation: blipFlash 2.6s linear infinite;
@@ -837,3 +843,19 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 
 /* The radar hides with the rest of the top chrome when a card/panel opens. */
 .topGone .countStrip { opacity: 0; pointer-events: none; }
+
+/* Radar as the live entry point: invites a scan, then reports acquisition. */
+.countStrip { border: none; cursor: default; }
+.scanIdle {
+  cursor: pointer;
+  animation: scanInvite 2.4s ease-in-out infinite;
+}
+.scanIdle:hover { filter: brightness(1.07); }
+@keyframes scanInvite {
+  0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.35), 0 0 0 0 rgba(var(--green-rgb), 0.5); }
+  55%      { box-shadow: 0 4px 16px rgba(0,0,0,0.35), 0 0 0 7px rgba(var(--green-rgb), 0); }
+}
+.scanIdle .countNum { font-size: 12px; letter-spacing: 0.1em; }
+.scanBusy .countNum { letter-spacing: 0.18em; animation: scanDots 1.1s steps(4) infinite; }
+@keyframes scanDots { 0% { opacity: 0.45 } 50% { opacity: 1 } 100% { opacity: 0.45 } }
+@media (prefers-reduced-motion: reduce) { .scanIdle, .scanBusy .countNum { animation: none; } }

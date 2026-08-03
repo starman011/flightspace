@@ -188,6 +188,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 6px rgba(var(--green-rgb), 0.5);
   animation: viewerPulse 2s ease-in-out infinite;
 }
@@ -413,6 +414,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 8px rgba(var(--green-rgb), 0.4);
   animation: pulse 2s ease-in-out infinite;
   flex-shrink: 0;
@@ -860,6 +862,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   animation: livePulse 1.5s ease-in-out infinite;
 }
 
@@ -1239,6 +1242,7 @@
    pill language), so the row reads as a set of real buttons. ─────────────── */
 .actFollow, .actAlert {
   background: var(--green);
+  color: #05070c;
   border: none;
   color: #05070c;
 }

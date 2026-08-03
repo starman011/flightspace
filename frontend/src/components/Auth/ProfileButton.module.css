@@ -65,6 +65,7 @@
   height: 14px;
   border-radius: 7px;
   background: var(--green);
+  color: #05070c;
   color: rgb(var(--surface-deep-rgb));
   font-size: 9px;
   font-weight: 700;

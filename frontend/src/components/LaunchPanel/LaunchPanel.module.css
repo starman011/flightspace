@@ -431,6 +431,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 6px rgba(var(--green-rgb), 0.5);
   animation: viewerPulse 2s ease-in-out infinite;
 }

@@ -121,6 +121,7 @@
   width: 20px;
   border-radius: 3px;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 10px rgba(var(--green-rgb), 0.45);
 }
 
@@ -162,6 +163,7 @@
   align-items: center;
   gap: 6px;
   background: var(--green);
+  color: #05070c;
   border: 1px solid var(--green);
   border-radius: 10px;
   padding: 10px 18px;

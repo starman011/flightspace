@@ -43,6 +43,7 @@
   width: 6px;
   height: 6px;
   background: var(--green);
+  color: #05070c;
   border-radius: 50%;
   display: inline-block;
   box-shadow: 0 0 6px rgba(var(--green-rgb), 0.6);

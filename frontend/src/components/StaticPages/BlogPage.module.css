@@ -63,7 +63,8 @@
   position: absolute; top: 12px; left: 12px; z-index: 2;
   font-family: var(--font-mono, monospace); font-size: 0.62rem; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--surface-deep-rgb));
-  background: var(--green); padding: 4px 10px; border-radius: 100px;
+  background: var(--green);
+  color: #05070c; padding: 4px 10px; border-radius: 100px;
   box-shadow: 0 0 16px rgba(var(--green-rgb), 0.4);
 }
 .tileBody {

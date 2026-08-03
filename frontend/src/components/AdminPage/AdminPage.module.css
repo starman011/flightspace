@@ -26,7 +26,8 @@
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 26px }
 .kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--green); margin-bottom: 10px }
 .title { font-family: var(--font-display); font-size: clamp(26px, 5vw, 40px); font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px }
-.badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: rgb(var(--surface-deep-rgb)); background: var(--green); padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em }
+.badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: rgb(var(--surface-deep-rgb)); background: var(--green);
+  color: #05070c; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em }
 
 .info { font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.5); padding: 20px 0 }
 
@@ -34,7 +35,8 @@
 .tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: rgba(var(--ink-rgb), 0.6);
   padding: 9px 15px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer }
 .tab:hover { color: var(--text-strong) }
-.tabOn { color: rgb(var(--surface-deep-rgb)); background: var(--green); border-color: var(--green); font-weight: 700 }
+.tabOn { color: rgb(var(--surface-deep-rgb)); background: var(--green);
+  color: #05070c; border-color: var(--green); font-weight: 700 }
 
 .syncRow { display: flex; gap: 8px; margin-bottom: 16px }
 .syncInput { flex: 1; min-width: 0; box-sizing: border-box; padding: 10px 14px; border-radius: 10px;
@@ -58,7 +60,8 @@
 .time { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.4) }
 .pill { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px }
 .pillNew { color: rgb(var(--surface-deep-rgb)); background: var(--green) }
-.pillReplied { color: #5fd38a; border: 1px solid rgba(95,211,138,0.4) }
+.pillReplied { color: #5fd38a;
+  color: #05070c; border: 1px solid rgba(95,211,138,0.4) }
 
 .body { padding: 4px 18px 18px; border-top: 1px solid rgba(var(--ink-rgb), 0.08) }
 .message { font-family: var(--font-body); font-size: 15px; line-height: 1.7; color: rgba(220,230,244,0.9); white-space: pre-wrap; margin: 16px 0 }
@@ -72,7 +75,8 @@
 .textarea:focus { border-color: rgba(var(--green-rgb), 0.45) }
 
 .actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px }
-.primary { font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; color: rgb(var(--surface-deep-rgb)); background: var(--green); border: none; padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: 0.18s }
+.primary { font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; color: rgb(var(--surface-deep-rgb)); background: var(--green);
+  color: #05070c; border: none; padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: 0.18s }
 .primary:hover { filter: brightness(1.08) }
 .primary:disabled { opacity: 0.45; cursor: not-allowed }
 .ghost { font-family: var(--font-mono); font-size: 12px; color: rgba(var(--ink-rgb), 0.6); text-decoration: none; padding: 10px 14px; border: 1px solid rgba(var(--ink-rgb), 0.16); border-radius: 12px; background: none; cursor: pointer }

@@ -508,6 +508,7 @@
   width: 20px;
   border-radius: 3px;
   background: var(--green);
+  color: #05070c;
   box-shadow: 0 0 10px rgba(var(--green-rgb), 0.55), 0 0 24px rgba(var(--green-rgb), 0.15);
 }
 

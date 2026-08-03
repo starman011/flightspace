@@ -137,3 +137,15 @@ body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
     radial-gradient(circle at 0    0,    transparent var(--corner), #000 calc(var(--corner) + 0.5px)) bottom right/ var(--corner) var(--corner) no-repeat;
 }
 @media (max-width: 640px) { .ot-corners { --corner: 18px; } }
+
+/* Anything painted with the lime accent carries black ink and black icons —
+   white on lime fails contrast and looks washed out. */
+[class*="tabOn"], [class*="topChipOn"], [class*="countStrip"],
+[class*="enterBtn"], [class*="chip"][class*="live"], [class*="ctaLive"] {
+  color: #05070c;
+}
+[class*="tabOn"] svg, [class*="topChipOn"] svg, [class*="countStrip"] svg,
+[class*="enterBtn"] svg {
+  stroke: #05070c;
+  color: #05070c;
+}
