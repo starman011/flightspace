@@ -731,3 +731,36 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   animation: countFlip 0.42s var(--ease-spring-soft);
 }
 .countWord { font-size: 8px; letter-spacing: 0.14em; opacity: 0.7; }
+
+/* ── Inverted scope: solid lime panel, everything on it in black ─────────── */
+.countStrip {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
+    var(--green) !important;
+  border-color: rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  color: #05070c !important;
+}
+.radar {
+  background:
+    repeating-linear-gradient(0deg,  rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 4px),
+    radial-gradient(circle, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.22) 70%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+.radar::after { border-color: rgba(0, 0, 0, 0.32); }
+.radarSweep {
+  background: conic-gradient(from 0deg,
+    rgba(0, 0, 0, 0.55) 0deg,
+    rgba(0, 0, 0, 0.16) 30deg,
+    transparent 70deg 360deg);
+}
+.blip {
+  background: #05070c;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.55);
+}
+.countNum  { color: #05070c; text-shadow: none; }
+.countWord { color: #05070c; opacity: 0.65; }
+/* Proportions: shorter and a little taller. */
+.countStrip { width: 38% !important; min-width: 158px !important; height: 54px !important; }
+.radar { width: 38px !important; height: 38px !important; }
