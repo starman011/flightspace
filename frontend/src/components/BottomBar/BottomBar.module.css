@@ -877,3 +877,16 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   .bar { transition: opacity 0.2s ease !important; }
   .barGone { transform: translateX(-50%) !important; }
 }
+
+/* Mobile: profile joins filter + feed on the right of the row, so the search
+   field gives up width to make room for three chips. */
+@media (max-width: 640px) {
+  .topSearch { flex: 1 1 auto; min-width: 0; }
+  .topRow { gap: 5px; }
+  .topChip { width: 38px !important; height: 38px !important; }
+  .topSearch { height: 38px !important; padding: 0 10px !important; }
+  .topSearch > svg { width: 14px; height: 14px; margin-right: 7px; }
+  .topSearch .hintText { left: 31px; font-size: 11.5px; }
+  .topInput { font-size: 11.5px; }
+  .profileChip .avatarImg { width: 24px; height: 24px; border-radius: 50%; }
+}
