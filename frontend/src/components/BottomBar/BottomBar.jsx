@@ -307,7 +307,7 @@ export default function BottomBar({
         )
       })()}
     </div>
-    <nav className={styles.bar} aria-label="Primary navigation" ref={barRef}>
+    <nav className={`${styles.bar} ${topHidden ? styles.barGone : ''}`} aria-label="Primary navigation" ref={barRef}>
 
       <button
         className={`${styles.tab} ${activeScale === 'earth' && !activeFilter ? styles.tabOn : ''}`}
@@ -367,7 +367,7 @@ export default function BottomBar({
         aria-pressed={liveEnabled}
       >
         <span className={`${styles.liveDot} ${liveEnabled ? (connectionStatus === 'connected' ? styles.liveDotOn : styles.liveDotConnecting) : ''}`} />
-        <span className={styles.tabLabel}>{liveEnabled ? 'LIVE' : 'OFF'}</span>
+        <span className={styles.tabLabel}>Live traffic</span>
       </button>
 
       <div className={styles.tabWrap}>
