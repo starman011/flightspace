@@ -276,3 +276,47 @@ Sequenced by impact. Shipped items reflect current production.
 - [ ] P1 Organization sameAs (socials) + VideoObject on engineering posts with embeds
 - [ ] P1 CWV field-data + Coverage monitoring after each deploy
 - [ ] P2 RSS feed + blog pagination crawl signals
+
+## COCKPIT FRAME LAYOUT — proposed 2026-08-03 (NOT started)
+
+Goal: one consistent shell across every page — a header bar, a footer bar, thin
+side bezels, and rounded corners on all four edges, with all content living
+inside the frame.
+
+Target structure:
+```
+┌──────────────────────────────────────────┐  ← rounded outer shell
+│  HEADER 100px — search + filter + feed   │
+├──────────────────────────────────────────┤
+│ ▏                                      ▕ │  ← ~12px side bezels
+│ ▏   STAGE: globe / page / panels        ▕ │
+│ ▏                                      ▕ │
+├──────────────────────────────────────────┤
+│  FOOTER — the persistent pill            │
+└──────────────────────────────────────────┘
+```
+
+Why this is not a CSS-only change (the risk):
+- The Globe canvas sizes to the viewport; it must size to the STAGE instead,
+  and its resize observer + camera aspect must follow the stage box.
+- Every overlay is `position: fixed` against the viewport: DetailPanel,
+  CommandCenterOverlay, LaunchPanel, AirportPanel, ContextBanner, modals,
+  toasts. Inside a frame they must anchor to the stage, or they will overlap
+  the header/footer.
+- Picking maths (screenPick / gpuPick) uses `getBoundingClientRect()` on the
+  canvas — verify offsets still resolve once the canvas is inset.
+- Safe-area insets currently applied to the bar move to the shell.
+
+Suggested execution order (each step shippable):
+1. Add the shell: a fixed rounded container with header/stage/footer grid rows;
+   render the app inside it. Keep everything else viewport-fixed for now.
+2. Move the existing top row into the header; move the bar into the footer.
+   Delete their `position: fixed` and the safe-area handling they own today.
+3. Give the stage `position: relative` + `overflow: hidden`, then migrate the
+   overlays one at a time (DetailPanel first, feed last), verifying each.
+4. Re-point the Globe's sizing/resize to the stage element; re-verify picking
+   with the pickOcclusion tests and a manual click at several zooms.
+5. Responsive: collapse bezels to 0 and header to ~72px under 640px.
+
+Done when: no component uses `position: fixed` against the viewport except the
+shell itself, and the e2e suite passes on desktop + mobile.
