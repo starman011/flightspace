@@ -764,3 +764,59 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 /* Proportions: shorter and a little taller. */
 .countStrip { width: 38% !important; min-width: 158px !important; height: 54px !important; }
 .radar { width: 38px !important; height: 38px !important; }
+
+/* ══ LIVE toggle — clean modern switch (replaces the fussy 90s slider) ══════
+   A pill track with a soft knob that glides across; the whole control tints
+   green when live. Reads instantly at a glance, no fake plastic texture. */
+.live {
+  flex-direction: row !important;
+  gap: 8px !important;
+  min-width: auto !important;
+  padding: 0 12px 0 10px !important;
+  border-radius: var(--r-pill) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.16) !important;
+  background: rgba(var(--ink-rgb), 0.05) !important;
+  transition: background 0.2s, border-color 0.2s, color 0.2s !important;
+}
+.liveOn {
+  background: rgba(34, 239, 126, 0.14) !important;
+  border-color: rgba(34, 239, 126, 0.5) !important;
+  color: #22ef7e !important;
+}
+
+.liveDot {
+  position: relative;
+  width: 34px !important;
+  height: 18px !important;
+  border-radius: 9px !important;
+  border: none !important;
+  background: rgba(var(--ink-rgb), 0.22) !important;
+  box-shadow: none !important;
+  transition: background 0.22s ease !important;
+  flex: none;
+}
+.liveDot::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: rgba(var(--gloss-rgb), 0.92);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  transition: transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.liveDotOn {
+  background: #22ef7e !important;
+  box-shadow: 0 0 12px rgba(34, 239, 126, 0.45) !important;
+}
+.liveDotOn::after { transform: translateX(16px); background: #05070c; }
+.liveDotConnecting {
+  background: #ffd700 !important;
+  animation: livePulse 0.7s ease-in-out infinite !important;
+}
+.liveDotConnecting::after { transform: translateX(8px); }
+.live .tabLabel { font-size: 9.5px; letter-spacing: 0.1em; }
+/* Tighter panel; all readout text solid black on the lime. */
+.countStrip { width: auto !important; min-width: 0 !important; padding: 0 14px 0 8px !important; }
+.countStrip, .countStrip * { color: #05070c !important; }
+.countWord { opacity: 0.72 !important; }

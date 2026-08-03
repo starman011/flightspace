@@ -39,18 +39,22 @@ export default function LiveNudge({ visible, onGoLive }) {
     return () => timersRef.current.forEach(clearTimeout)
   }, [visible, dismissed])
 
-  // Anchor below the pages pill, aligned to its left edge.
+  // Anchor below the top-left chrome (search row + radar). The old pages pill
+  // it used to hang off has been retired, so it fell back to a fixed 70px —
+  // right on top of the radar panel.
   useEffect(() => {
     if (!visible || dismissed) return
-    const pill = document.querySelector('[data-pagespill]')
-    if (!pill) { setAnchor({ top: 70, left: 16 }); return }
+    const anchorEl = document.querySelector('[class*="countStrip"]')
+      || document.querySelector('[class*="topArea"]')
+      || document.querySelector('[data-pagespill]')
+    if (!anchorEl) { setAnchor({ top: 152, left: 16 }); return }
     const place = () => {
-      const r = pill.getBoundingClientRect()
-      setAnchor({ top: r.bottom + 10, left: r.left })
+      const r = anchorEl.getBoundingClientRect()
+      setAnchor({ top: r.bottom + 12, left: r.left })
     }
     place()
     const ro = new ResizeObserver(place)
-    ro.observe(pill)
+    ro.observe(anchorEl)
     window.addEventListener('resize', place)
     return () => { ro.disconnect(); window.removeEventListener('resize', place) }
   }, [visible, dismissed])
