@@ -278,7 +278,7 @@ export default function BottomBar({
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
         </button>
       </div>
-      {objectCount > 0 && (
+      {(
         <div className={styles.countStrip} role="status" aria-live="polite">
           <span className={styles.radar} aria-hidden="true">
             <span className={styles.radarSweep} />
@@ -288,8 +288,8 @@ export default function BottomBar({
             <i className={styles.blip} style={{ left: '72%', top: '26%', animationDelay: '2.6s' }} />
           </span>
           <span className={styles.countCol}>
-            <span key={objectCount} className={styles.countNum}>{objectCount.toLocaleString()}</span>
-            <span className={styles.countWord}>tracked now</span>
+            <span key={objectCount} className={styles.countNum}>{objectCount > 0 ? objectCount.toLocaleString() : '—'}</span>
+            <span className={styles.countWord}>{objectCount > 0 ? 'tracked now' : 'standby'}</span>
           </span>
         </div>
       )}
