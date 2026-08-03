@@ -517,3 +517,89 @@
   .topSearch, .topChip { height: 40px; }
   .topChip { width: 40px; }
 }
+
+/* Profile lives in the top-right corner, mirroring the search row on the left. */
+.profileTop {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border: 1px solid var(--glass-line);
+  border-top-color: var(--glass-gloss);
+  border-radius: var(--r-pill);
+  box-shadow: var(--glass-shadow-nav);
+  color: rgba(var(--ink-rgb), 0.7);
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+}
+.profileTop:hover { color: rgba(var(--ink-rgb), 1); }
+.profileTop .avatarImg { width: 26px; height: 26px; }
+@media (max-width: 640px) { .profileTop { width: 40px; height: 40px; top: calc(12px + env(safe-area-inset-top, 0px)); } }
+body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
+
+/* ── Live tracked-count readout ──────────────────────────────────────────────
+   A pulsing radar dot, tabular numerals that flip when the value changes, and
+   a subtle sheen so it reads as a live instrument rather than static text. */
+.countStrip {
+  position: relative;
+  overflow: hidden;
+  gap: 7px !important;
+  padding: 5px 12px 5px 10px !important;
+  border: 1px solid rgba(var(--green-rgb), 0.28);
+}
+.countStrip::after {                    /* slow sheen sweep */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(var(--gloss-rgb), 0.16) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: countSheen 4.5s ease-in-out infinite;
+}
+@keyframes countSheen { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+
+/* radar dot: solid core + expanding ping ring */
+.countRadar {
+  position: relative;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 7px rgba(var(--green-rgb), 0.7);
+  flex: none;
+}
+.countRadar::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--green-rgb), 0.55);
+  animation: countPing 1.8s cubic-bezier(0.2, 0.7, 0.4, 1) infinite;
+}
+@keyframes countPing {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* the number flips up whenever the count changes (key change remounts it) */
+.countNum {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--green);
+  animation: countFlip 0.42s var(--ease-spring-soft);
+}
+@keyframes countFlip {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+.countWord { opacity: 0.75; }
+
+@media (prefers-reduced-motion: reduce) {
+  .countStrip::after, .countRadar::before, .countNum { animation: none; }
+}

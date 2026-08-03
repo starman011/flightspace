@@ -218,6 +218,17 @@ export default function BottomBar({
   return (
     <>
     {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
+    <button
+      className={styles.profileTop}
+      onClick={() => (isAuthenticated ? onProfileOpen?.() : onSignIn?.())}
+      aria-label={isAuthenticated ? 'Your profile' : 'Sign in'}
+      title={isAuthenticated ? 'Your profile' : 'Sign in'}
+    >
+      {isAuthenticated && user?.picture
+        ? <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
+        : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+    </button>
+
     <div className={`${styles.topArea}  ${topHidden ? styles.topGone : ''}`} ref={topRef}>
       <div className={styles.topRow}>
         <div className={styles.topSearch}>
@@ -268,9 +279,10 @@ export default function BottomBar({
         </button>
       </div>
       {objectCount > 0 && (
-        <div className={styles.countStrip}>
-          <span className={styles.countDot} />
-          {objectCount.toLocaleString()} tracked now
+        <div className={styles.countStrip} role="status" aria-live="polite">
+          <span className={styles.countRadar} aria-hidden="true" />
+          <span key={objectCount} className={styles.countNum}>{objectCount.toLocaleString()}</span>
+          <span className={styles.countWord}>tracked now</span>
         </div>
       )}
     </div>
@@ -325,16 +337,6 @@ export default function BottomBar({
         <span className={styles.tabLabel}>Journal</span>
       </button>
 
-      <button
-        className={styles.tab}
-        onClick={() => (isAuthenticated ? onProfileOpen?.() : onSignIn?.())}
-        aria-label={isAuthenticated ? 'Your profile' : 'Sign in'}
-      >
-          {isAuthenticated && user?.picture
-            ? <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
-            : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-        <span className={styles.tabLabel}>{isAuthenticated ? (user?.display_name?.split(' ')[0] || 'You') : 'Profile'}</span>
-      </button>
 
 
       <button
