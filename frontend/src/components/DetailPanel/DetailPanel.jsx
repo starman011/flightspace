@@ -773,12 +773,19 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           <div className={styles.identity}>
             <div className={styles.identityRow}>
               {route?.airline_iata && (
-                <img
-                  className={styles.airlineLogo}
-                  src={`https://pics.avs.io/36/36/${route.airline_iata}@2x.png`}
-                  alt=""
-                  onError={e => { e.target.style.display = 'none' }}
-                />
+                // Typographic IATA badge with the logo layered over it: if the
+                // remote mark fails or renders as mush at this size, the code
+                // underneath still identifies the carrier (audit S-2).
+                <span className={styles.airlineBadge} aria-label={route.airline_iata}>
+                  <span className={styles.airlineCode}>{route.airline_iata}</span>
+                  <img
+                    className={styles.airlineLogo}
+                    src={`https://pics.avs.io/72/72/${route.airline_iata}@2x.png`}
+                    alt=""
+                    loading="lazy"
+                    onError={e => { e.target.style.display = 'none' }}
+                  />
+                </span>
               )}
               <span className={styles.callsign}>{displayName}</span>
               {typeCode && <span className={styles.typeCode}>{typeCode}</span>}
