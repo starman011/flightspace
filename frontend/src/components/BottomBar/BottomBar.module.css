@@ -820,3 +820,20 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 .countStrip { width: auto !important; min-width: 0 !important; padding: 0 14px 0 8px !important; }
 .countStrip, .countStrip * { color: #05070c !important; }
 .countWord { opacity: 0.72 !important; }
+
+/* Mobile: scale the radar down ~50% so it doesn't dominate the top row. */
+@media (max-width: 640px) {
+  .countStrip {
+    height: 34px !important;
+    padding: 0 9px 0 5px !important;
+    gap: 6px !important;
+    border-radius: 8px !important;
+  }
+  .radar { width: 24px !important; height: 24px !important; }
+  .radar::after { inset: 4px; }
+  .countNum  { font-size: 11px; }
+  .countWord { font-size: 6.5px; letter-spacing: 0.1em; }
+}
+
+/* The radar hides with the rest of the top chrome when a card/panel opens. */
+.topGone .countStrip { opacity: 0; pointer-events: none; }
