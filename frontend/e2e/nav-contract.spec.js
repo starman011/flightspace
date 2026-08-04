@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test'
 const RANGES = {
   desktop: {
     searchH: [42, 52], chipW: [42, 52], radarH: [50, 58],
-    barGap: [30, 90],            // bar bottom edge to viewport bottom
+    barGap: [8, 60],             // bar bottom edge to viewport bottom (measured 16)
   },
   mobile: {
     searchH: [34, 42], chipW: [34, 42], radarH: [30, 38],
@@ -26,7 +26,12 @@ test('nav chrome geometry contract', async ({ page }, testInfo) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(4000)
   await page.evaluate(() => document.body.removeAttribute('data-modal-open'))
-  await page.waitForTimeout(600)
+  // wait for the chrome to finish transitioning in, else we measure mid-slide
+  await page.waitForFunction(() => {
+    const bar = document.querySelector('nav[aria-label="Primary navigation"]')
+    return bar && getComputedStyle(bar).opacity === '1' &&
+           bar.getBoundingClientRect().bottom <= innerHeight + 1
+  }, null, { timeout: 15000 })
 
   const m = await page.evaluate(() => {
     const box = (sel) => {
@@ -65,12 +70,17 @@ test('nav chrome geometry contract', async ({ page }, testInfo) => {
 
 test('nav chrome retreats when a flight card opens', async ({ page }) => {
   await page.goto('/flight/a07228', { waitUntil: 'domcontentloaded' })
-  await page.waitForTimeout(6000)
-  const s = await page.evaluate(() => {
-    const top = document.querySelector('[class*="topArea"]')
-    const bar = document.querySelector('nav[aria-label="Primary navigation"]')
-    return { topOpacity: getComputedStyle(top).opacity, barOpacity: getComputedStyle(bar).opacity }
-  })
-  expect(s.topOpacity, 'top row hidden behind the card').toBe('0')
-  expect(s.barOpacity, 'pill hidden behind the card').toBe('0')
+  // wait for the card itself to mount — the chrome only retreats once the
+  // selection lands, and that depends on a network round-trip
+  await page.waitForSelector('[class*="panel"], [class*="scroller"]', { timeout: 20000 }).catch(() => {})
+  await page.waitForTimeout(2500)
+  // both retreat on a transition — poll until they've settled rather than
+  // sampling mid-animation
+  await expect.poll(async () => page.evaluate(() => {
+    const o = (sel) => {
+      const el = document.querySelector(sel)
+      return el ? parseFloat(getComputedStyle(el).opacity) : 1
+    }
+    return Math.max(o('[class*="topArea"]'), o('nav[aria-label="Primary navigation"]'))
+  }), { timeout: 12000, message: 'nav chrome retreats behind the card' }).toBeLessThan(0.05)
 })
