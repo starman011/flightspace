@@ -172,3 +172,16 @@ body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
 }
 .ot-skip:focus { transform: translateY(0); outline: 2px solid #05070c; outline-offset: 2px; }
 #ot-main:focus { outline: none; }
+
+/* Interactive affordance: every button/link gives feedback on hover, and the
+   cursor always signals interactivity. Scoped to devices that actually hover,
+   so touch users never get a stuck hover state (audit task 8). */
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  a[href]:hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    filter: brightness(1.12);
+  }
+}
+button:not(:disabled), a[href], [role="button"] { cursor: pointer; }
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
