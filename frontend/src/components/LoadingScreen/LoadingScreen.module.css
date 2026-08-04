@@ -109,3 +109,33 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Progress affordance: a real percentage and a named stage, so the wait reads
+   as work happening rather than a dark screen (audit task 1). */
+.progressTrack {
+  width: min(230px, 62vw);
+  height: 3px;
+  margin: 20px 0 9px;
+  border-radius: 2px;
+  background: rgba(var(--ink-rgb), 0.14);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(var(--green-rgb), 0.7), var(--green));
+  box-shadow: 0 0 10px rgba(var(--green-rgb), 0.5);
+  transition: width 0.15s linear;
+}
+.stage {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-rgb), 0.6);
+}
+.pct { color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }

@@ -99,16 +99,39 @@ function pickFact() {
   return FACTS[i];
 }
 
+// Named stages so the wait reads as progress rather than a blank screen.
+const STAGES = [
+  'Initialising renderer',
+  'Loading Earth textures',
+  'Connecting to live feeds',
+  'Plotting objects',
+];
+
 const LoadingScreen = ({ duration = 2500, onDone }) => {
   const [fading, setFading] = useState(false);
+  const [pct, setPct] = useState(0);
 
   const fact = useMemo(() => pickFact(), []);
 
   useEffect(() => {
     const fadeTimer = setTimeout(() => setFading(true), duration - 800);
     const doneTimer = setTimeout(() => onDone?.(), duration);
-    return () => { clearTimeout(fadeTimer); clearTimeout(doneTimer); };
+    // Advance a real percentage across the known duration so the user always
+    // sees forward motion and can judge how long is left.
+    const start = performance.now();
+    let raf;
+    const tick = () => {
+      const p = Math.min(100, ((performance.now() - start) / duration) * 100);
+      setPct(p);
+      if (p < 100) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      clearTimeout(fadeTimer); clearTimeout(doneTimer); cancelAnimationFrame(raf);
+    };
   }, [duration, onDone]);
+
+  const stage = STAGES[Math.min(STAGES.length - 1, Math.floor((pct / 100) * STAGES.length))];
 
   return (
     <div className={`${styles.overlay}${fading ? ` ${styles.fading}` : ''}`}>
@@ -118,6 +141,10 @@ const LoadingScreen = ({ duration = 2500, onDone }) => {
           <div className={styles.dot} />
         </div>
         <p className={styles.appName}>Object Tracer</p>
+        <div className={styles.progressTrack} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Loading ObjectTracer">
+          <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+        </div>
+        <p className={styles.stage}>{stage}<span className={styles.pct}>{Math.round(pct)}%</span></p>
         <p className={styles.fact}>{fact}</p>
       </div>
     </div>
