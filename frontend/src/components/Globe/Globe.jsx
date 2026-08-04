@@ -1455,8 +1455,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     })))
 
     // ── Lights ───────────────────────────────────────────────────────
-    scene.add(new AmbientLight(0xffffff, 0.12))
-    const sun = new DirectionalLight(0xffffff, 1.6)
+    // The globe is a tracking surface, not a day/night simulation: with ambient
+    // at 0.12 the night hemisphere fell to near-black, which read as a dark
+    // blotch across one side and a hard terminator seam. Light it almost
+    // uniformly and keep only a gentle sun for spherical shading.
+    scene.add(new AmbientLight(0xffffff, 1.05))
+    const sun = new DirectionalLight(0xffffff, 0.35)
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
@@ -1488,10 +1492,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     )
 
     // ── Clouds ───────────────────────────────────────────────────────
-    const cloudMat = new MeshPhongMaterial({ transparent: true, opacity: 0.18, depthWrite: false })
+    // UNLIT on purpose. As a MeshPhongMaterial this shell was lit like the
+    // Earth, so on the night side a 0.18-opacity sphere sitting 0.006 above the
+    // surface rendered as a dark grey husk — the dark band wrapping the limb and
+    // the arc that appeared to overlap the globe. MeshBasic keeps the clouds
+    // white everywhere, and the texture drives alpha only.
+    const cloudMat = new MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.16, depthWrite: false,
+    })
     loader.load(
       '/earth-clouds.jpg',
-      tex => { cloudMat.alphaMap = tex; cloudMat.map = tex; cloudMat.needsUpdate = true },
+      tex => { cloudMat.alphaMap = tex; cloudMat.needsUpdate = true },
     )
     const clouds = new Mesh(new SphereGeometry(CLOUD_R, 64, 64), cloudMat)
     scene.add(clouds)
@@ -2842,6 +2853,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // converge to desktop speed at orbit so zoomed-out feel stays fast.
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
         const touchDamp = isTouch ? MathUtils.clamp(1 - (1 - t) * 0.6, 0.4, 1) : 1
+        // Touch gets extra glide: a finger drag should carry the globe a little
+        // after release (map-style momentum) rather than stopping dead.
         // Feel tuning. dampingFactor in OrbitControls is response strength:
         // ~0.9 applies almost the whole delta each frame, so motion snaps with
         // no inertia and any dropped frame reads as a stutter. Lower values
@@ -2849,7 +2862,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // The old rotate floor (0.008) also made a zoomed-out drag barely move.
         controls.rotateSpeed   = (0.06 + Math.pow(t, 1.5) * 0.32) * touchDamp
         controls.zoomSpeed     = (0.10 + t * 0.62) * touchDamp
-        controls.dampingFactor = 0.16 + t * 0.10
+        controls.dampingFactor = (0.16 + t * 0.10) * (isTouch ? 0.62 : 1)
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
