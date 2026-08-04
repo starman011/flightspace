@@ -139,3 +139,53 @@
   color: rgba(var(--ink-rgb), 0.6);
 }
 .pct { color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── Orbit gauge: the loading readout is a sweeping ring with the percentage
+   at its centre, matching the product's instrument language. ─────────────── */
+.gauge {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin: 22px 0 14px;
+  display: grid;
+  place-items: center;
+}
+.gaugeSvg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.gaugeTrack {
+  fill: none;
+  stroke: rgba(var(--ink-rgb), 0.12);
+  stroke-width: 2;
+}
+.gaugeFill {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(var(--green-rgb), 0.55));
+  transition: stroke-dashoffset 0.15s linear;
+}
+.gaugeInner { display: flex; align-items: baseline; gap: 2px; }
+.gaugeNum {
+  font-family: var(--font-mono);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+.gaugeUnit {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green);
+}
+.stage {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-rgb), 0.62);
+}
+@media (prefers-reduced-motion: reduce) { .gaugeFill { transition: none; } }

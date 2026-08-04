@@ -141,10 +141,33 @@ const LoadingScreen = ({ duration = 2500, onDone }) => {
           <div className={styles.dot} />
         </div>
         <p className={styles.appName}>Object Tracer</p>
-        <div className={styles.progressTrack} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Loading ObjectTracer">
-          <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+
+        {/* Orbit-style progress: the ring sweeps as the app loads, with the
+            percentage read out at its centre like an instrument. */}
+        <div
+          className={styles.gauge}
+          role="progressbar"
+          aria-valuenow={Math.round(pct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Loading ObjectTracer"
+        >
+          <svg className={styles.gaugeSvg} viewBox="0 0 120 120">
+            <circle className={styles.gaugeTrack} cx="60" cy="60" r="52" />
+            <circle
+              className={styles.gaugeFill}
+              cx="60" cy="60" r="52"
+              strokeDasharray={2 * Math.PI * 52}
+              strokeDashoffset={2 * Math.PI * 52 * (1 - pct / 100)}
+            />
+          </svg>
+          <div className={styles.gaugeInner}>
+            <span className={styles.gaugeNum}>{Math.round(pct)}</span>
+            <span className={styles.gaugeUnit}>%</span>
+          </div>
         </div>
-        <p className={styles.stage}>{stage}<span className={styles.pct}>{Math.round(pct)}%</span></p>
+
+        <p className={styles.stage}>{stage}</p>
         <p className={styles.fact}>{fact}</p>
       </div>
     </div>

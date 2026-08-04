@@ -1459,11 +1459,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // at 0.12 the night hemisphere fell to near-black, which read as a dark
     // blotch across one side and a hard terminator seam. Light it almost
     // uniformly and keep only a gentle sun for spherical shading.
-    // Day/night is a wanted feature — but as a SOFT gradient, not a black
-    // hemisphere. Ambient keeps the night side readable; the sun supplies the
-    // terminator and spherical shading on top of it.
-    scene.add(new AmbientLight(0xffffff, 0.62))
-    const sun = new DirectionalLight(0xffffff, 0.95)
+    // Day/night shading is a deliberate feature — the original strong terminator
+    // reads best. Ambient is lifted only slightly above the old 0.12 so the
+    // night side keeps some detail instead of going pure black; the sun still
+    // carries the contrast.
+    scene.add(new AmbientLight(0xffffff, 0.22))
+    const sun = new DirectionalLight(0xffffff, 1.55)
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
