@@ -2906,8 +2906,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           // shade = 1 only near max altitude, 0 for the entire working range.
           const k = MathUtils.clamp((t - 0.80) / 0.16, 0, 1)
           const shade = k * k * (3 - 2 * k)
-          int.current.ambientLight.intensity = 1.55 - shade * 1.50
-          if (int.current.sunLight) int.current.sunLight.intensity = 0.85 + shade * 1.05
+          // At low altitude the sun is switched OFF, not just dimmed. Leaving it
+          // at 0.85 meant the day side got ambient + sun while the night side
+          // got ambient alone, so zooming into darkness still looked murky
+          // compared with the lit hemisphere. With the directional term gone,
+          // lighting is pure uniform ambient: every point on the globe renders
+          // identically, which is what visibility at working altitude needs.
+          int.current.ambientLight.intensity = 1.90 - shade * 1.85
+          if (int.current.sunLight) int.current.sunLight.intensity = 0.02 + shade * 1.88
           int.current.terminatorShade = shade
           // Splay the scatter lights ±38° around the sun so the twilight band
           // straddles the terminator; widest from orbit, damped up close where
