@@ -1467,6 +1467,17 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     const sun = new DirectionalLight(0xffffff, 1.9)
     int.current.ambientLight = ambient
     int.current.sunLight = sun
+
+    // Soft terminator. A single directional light gives a hard N·L edge, which
+    // reads as a cut across the globe. Real twilight is wide because the
+    // atmosphere scatters sunlight past the geometric boundary, so model that:
+    // two dim lights splayed either side of the sun extend the falloff into a
+    // gradient, warm-tinted like real scattered light at grazing angles.
+    const scatterA = new DirectionalLight(0xffd9a8, 0.34)
+    const scatterB = new DirectionalLight(0xbcd4ff, 0.20)
+    scene.add(scatterA)
+    scene.add(scatterB)
+    int.current.scatterLights = [scatterA, scatterB]
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
@@ -2890,6 +2901,20 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         if (int.current.ambientLight) {
           int.current.ambientLight.intensity = 0.05 + Math.pow(1 - t, 1.6) * 0.85
           if (int.current.sunLight) int.current.sunLight.intensity = 1.9 - Math.pow(1 - t, 1.6) * 0.95
+          // Splay the scatter lights ±38° around the sun so the twilight band
+          // straddles the terminator; widest from orbit, damped up close where
+          // the ambient lift already carries visibility.
+          const sl = int.current.scatterLights
+          if (sl && int.current.sunLight) {
+            const sd = int.current.sunLight.position
+            const up = _north.set(0, 1, 0)
+            const axis = _right.copy(sd).cross(up).normalize()
+            const spread = 0.66 * t + 0.18
+            sl[0].position.copy(sd).applyAxisAngle(axis,  spread)
+            sl[1].position.copy(sd).applyAxisAngle(axis, -spread)
+            sl[0].intensity = 0.34 * t
+            sl[1].intensity = 0.20 * t
+          }
         }
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
