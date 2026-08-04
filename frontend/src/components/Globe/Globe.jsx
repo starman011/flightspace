@@ -1473,7 +1473,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     scene.add(earth)
 
     loader.load(
-      'https://cdn.jsdelivr.net/npm/three-globe@2.31.3/example/img/earth-blue-marble.jpg',
+      '/earth-blue-marble.webp',   // self-hosted: was a 1.39MB third-party CDN fetch on the boot path
       tex => {
         tex.anisotropy      = renderer.capabilities.getMaxAnisotropy()
         tex.minFilter       = LinearMipmapLinearFilter
@@ -1485,7 +1485,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       },
     )
     loader.load(
-      'https://cdn.jsdelivr.net/npm/three-globe@2.31.3/example/img/earth-topology.png',
+      '/earth-topology.webp',   // self-hosted (was a second CDN fetch on boot)
       tex => { earthMat.bumpMap = tex; earthMat.bumpScale = 0.004; earthMat.needsUpdate = true },
     )
 

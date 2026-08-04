@@ -118,6 +118,9 @@
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" />
 
     <!-- Kick off world-atlas fetch early so it's ready when Globe initialises -->
+    <!-- Earth texture is needed for the very first globe frame: start it with
+         the document, not after the JS bundle parses. -->
+    <link rel="preload" as="image" href="/earth-blue-marble.webp" type="image/webp" />
     <link rel="prefetch" as="fetch" crossorigin
           href="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json" />
   </head>
