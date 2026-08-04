@@ -1500,8 +1500,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // surface rendered as a dark grey husk — the dark band wrapping the limb and
     // the arc that appeared to overlap the globe. MeshBasic keeps the clouds
     // white everywhere, and the texture drives alpha only.
-    const cloudMat = new MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.16, depthWrite: false,
+    // LIT, like the tiles. As MeshBasic these clouds glowed uniformly white,
+    // adding brightness across the night hemisphere and washing the terminator
+    // out — worst at max altitude where the whole sphere (and so the whole
+    // cloud shell) is in view. Lambert makes them darken with the surface, so
+    // night-side cloud goes dark instead of lifting it.
+    const cloudMat = new MeshLambertMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false,
     })
     loader.load(
       '/earth-clouds.jpg',
