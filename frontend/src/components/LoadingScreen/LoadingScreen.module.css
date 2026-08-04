@@ -189,3 +189,27 @@
   color: rgba(var(--ink-rgb), 0.62);
 }
 @media (prefers-reduced-motion: reduce) { .gaugeFill { transition: none; } }
+
+/* One ring only: the gauge. The old .logoWrap orbital ring sat concentric with
+   it, which read as a doubled circle. The orbiting dot now rides the gauge. */
+.orbitDot {
+  position: absolute;
+  inset: 0;
+  animation: orbitSpin 2.4s linear infinite;
+  pointer-events: none;
+}
+.orbitDot::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(var(--green-rgb), 0.9);
+}
+@keyframes orbitSpin { to { transform: rotate(360deg); } }
+.gauge { margin-top: 26px; }
+@media (prefers-reduced-motion: reduce) { .orbitDot { animation: none; } }

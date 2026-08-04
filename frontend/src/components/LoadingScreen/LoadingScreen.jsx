@@ -136,10 +136,6 @@ const LoadingScreen = ({ duration = 2500, onDone }) => {
   return (
     <div className={`${styles.overlay}${fading ? ` ${styles.fading}` : ''}`}>
       <div className={styles.center}>
-        <div className={styles.logoWrap}>
-          <div className={styles.ring} />
-          <div className={styles.dot} />
-        </div>
         <p className={styles.appName}>Object Tracer</p>
 
         {/* Orbit-style progress: the ring sweeps as the app loads, with the
@@ -161,6 +157,7 @@ const LoadingScreen = ({ duration = 2500, onDone }) => {
               strokeDashoffset={2 * Math.PI * 52 * (1 - pct / 100)}
             />
           </svg>
+          <span className={styles.orbitDot} aria-hidden="true" />
           <div className={styles.gaugeInner}>
             <span className={styles.gaugeNum}>{Math.round(pct)}</span>
             <span className={styles.gaugeUnit}>%</span>
