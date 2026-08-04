@@ -942,3 +942,25 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   .topChip svg { width: 15px; height: 15px; }
   .profileChip .avatarImg { width: 22px; height: 22px; }
 }
+
+/* Mobile chips must be perfect circles. They were rendering 34x42 because the
+   flex row stretched them to the search field's height — width came from my
+   rule, height came from the stretch. Pin both and stop the stretch. */
+@media (max-width: 640px) {
+  .topRow { align-items: center; }
+  .topChip,
+  .topChipWrap > .topChip,
+  .profileChip {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    flex: 0 0 36px !important;
+    align-self: center !important;
+    aspect-ratio: 1 / 1;
+    border-radius: 50% !important;
+    padding: 0 !important;
+  }
+  .topChipWrap { align-self: center; }
+}
