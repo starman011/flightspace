@@ -264,7 +264,10 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     // closing — the Go scheduler watches "flight:<icao24>" and pushes on
     // touchdown. Reuses the existing launch-push endpoints (same target column).
     try {
-      const reg = await navigator.serviceWorker?.ready
+      const reg = await Promise.race([
+          navigator.serviceWorker?.ready,
+          new Promise((_, rej) => setTimeout(() => rej(new Error('service worker not ready')), 4000)),
+        ])
       if (reg) {
         const target = `flight:${icao24}`
         if (next) {

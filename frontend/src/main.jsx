@@ -9,6 +9,19 @@ import './styles/tokens.css'
 inject()
 initGA()
 
+// Register the service worker once at startup. It used to be registered only
+// inside usePushNotifications (mounted with the launch panel), so if a user
+// never opened that panel no worker existed — and anything awaiting
+// navigator.serviceWorker.ready (e.g. arming a landing alert) hung forever
+// instead of failing, so push subscriptions were never created.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('[sw] registration failed; push notifications unavailable:', err?.message || err)
+    })
+  })
+}
+
 // After a redeploy, a tab still holding the previous index.html requests a lazy
 // chunk whose content-hash no longer exists on the server (404) → "Failed to
 // fetch dynamically imported module". Recover by reloading once to pull the
