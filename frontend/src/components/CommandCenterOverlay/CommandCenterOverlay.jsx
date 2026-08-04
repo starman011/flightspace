@@ -1704,7 +1704,13 @@ export default function CommandCenterOverlay({
     // animation inside, replaying feedSlideIn and flashing the collapsed
     // Space Feed open each time a panel (e.g. aircraft card) closes
     isMobileVp && !mobileOpen ? null :
-    <div className={`${styles.overlay} ${isMobileVp ? styles.mobileFeed : ''}`} style={hidden ? { visibility: 'hidden' } : undefined}>
+    <div
+      className={`${styles.overlay} ${isMobileVp ? styles.mobileFeed : ''}`}
+      /* An explicit open from the top-bar icon outranks the ambient `hidden`
+         flag (!showCommandCenter), which flips for unrelated states and was
+         making the feed vanish the moment it was tapped on mobile. */
+      style={(hidden && !(isMobileVp && mobileOpen)) ? { visibility: 'hidden' } : undefined}
+    >
       {isMobileVp && (
         <button className={styles.feedClose} onClick={() => onClose?.()} aria-label="Close space feed">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
