@@ -2899,8 +2899,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // as the user descends (t→0) lift ambient so the ground stays readable
         // on the night side — visibility beats drama once you are down close.
         if (int.current.ambientLight) {
-          int.current.ambientLight.intensity = 0.05 + Math.pow(1 - t, 1.6) * 0.85
-          if (int.current.sunLight) int.current.sunLight.intensity = 1.9 - Math.pow(1 - t, 1.6) * 0.95
+          // Brighten EARLY as the user descends: a ^1.6 curve kept mid-zoom
+          // dim, so aircraft over the night side were unreadable. ^0.65 lifts
+          // most of the way within the first part of the descent, reaching full
+          // daylight at ground where visibility is the only thing that matters.
+          const near = Math.pow(1 - t, 0.65)
+          int.current.ambientLight.intensity = 0.05 + near * 1.25
+          if (int.current.sunLight) int.current.sunLight.intensity = 1.9 - near * 0.55
           // Splay the scatter lights ±38° around the sun so the twilight band
           // straddles the terminator; widest from orbit, damped up close where
           // the ambient lift already carries visibility.
