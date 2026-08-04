@@ -2916,13 +2916,18 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           if (sl && int.current.sunLight) {
             const sd = int.current.sunLight.position
             const up = _north.set(0, 1, 0)
-            const axis = _right.copy(sd).cross(up).normalize()
+            // Rotate about world-up so the pair straddles the terminator
+            // east/west. The old axis (sun × up) tilted them north/south, which
+            // is what made the southern half read darker than the rest.
+            const axis = _north.set(0, 1, 0)
             const spread = 0.66 * t + 0.18
             int.current.scatterSpread = spread
             sl[0].position.copy(sd).applyAxisAngle(axis,  spread)
             sl[1].position.copy(sd).applyAxisAngle(axis, -spread)
-            sl[0].intensity = 0.34 * shade
-            sl[1].intensity = 0.20 * shade
+            // EQUAL intensities: unequal values (0.34 / 0.20) skewed the sum
+            // toward one side, so the terminator lit unevenly north-to-south.
+            sl[0].intensity = 0.26 * shade
+            sl[1].intensity = 0.26 * shade
           }
         }
       } else if (targetScale === 'solar') {
@@ -3084,7 +3089,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // terminator moves — they drift apart over a session.
         const sl = int.current.scatterLights
         if (sl) {
-          const axis = _right.copy(sun.position).cross(_north.set(0, 1, 0)).normalize()
+          const axis = _north.set(0, 1, 0)
           const spread = int.current.scatterSpread ?? 0.6
           sl[0].position.copy(sun.position).applyAxisAngle(axis,  spread)
           sl[1].position.copy(sun.position).applyAxisAngle(axis, -spread)
