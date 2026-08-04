@@ -207,8 +207,6 @@ function greatCirclePoints(pts, r = EARTH_R + 0.035, steps = 40) {
 
 // ── Vector-map helpers ────────────────────────────────────────────────────
 
-// Fetch world-atlas TopoJSON and decode to [[lon,lat],…] polylines (country borders).
-
 // ── Place label sprite ────────────────────────────────────────────────────────
 // Module-level scratch for world→screen projection (avoids per-frame allocation)
 
