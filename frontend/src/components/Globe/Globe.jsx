@@ -1462,8 +1462,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // Day/night shading is a deliberate feature and should read strongly: a
     // near-zero ambient lets the night hemisphere fall genuinely dark, with a
     // bright sun carrying the lit side and a crisp terminator between them.
-    scene.add(new AmbientLight(0xffffff, 0.05))
+    const ambient = new AmbientLight(0xffffff, 0.05)
+    scene.add(ambient)
     const sun = new DirectionalLight(0xffffff, 1.9)
+    int.current.ambientLight = ambient
+    int.current.sunLight = sun
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
@@ -2880,6 +2883,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         controls.rotateSpeed   = (0.06 + Math.pow(t, 1.5) * 0.32) * touchDamp
         controls.zoomSpeed     = (0.10 + t * 0.62) * touchDamp
         controls.dampingFactor = (0.16 + t * 0.10) * (isTouch ? 0.62 : 1)
+
+        // Exposure by altitude. At orbit (t→1) keep the dramatic terminator;
+        // as the user descends (t→0) lift ambient so the ground stays readable
+        // on the night side — visibility beats drama once you are down close.
+        if (int.current.ambientLight) {
+          int.current.ambientLight.intensity = 0.05 + Math.pow(1 - t, 1.6) * 0.85
+          if (int.current.sunLight) int.current.sunLight.intensity = 1.9 - Math.pow(1 - t, 1.6) * 0.95
+        }
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
