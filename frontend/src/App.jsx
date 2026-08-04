@@ -795,6 +795,8 @@ const aircraftWithShips = useMemo(() => new Map(filteredAircraft), [filteredAirc
           onOpenFleet={() => { setPlanesFleet(landing.prefix); setActivePage('planes') }}
         />
       )}
+      <a className="ot-skip" href="#ot-main">Skip to main content</a>
+      <div id="ot-main" role="main" tabIndex={-1} aria-label="Live 3D globe" />
       <div className="ot-corners" aria-hidden="true" />
 
       <BetaWelcome />

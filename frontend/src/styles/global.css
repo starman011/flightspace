@@ -149,3 +149,26 @@ body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
   stroke: #05070c;
   color: #05070c;
 }
+
+/* Skip link: hidden until focused, then the first thing a keyboard user lands
+   on. Pairs with the #ot-main landmark (audit task 9). */
+.ot-skip {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10001;
+  transform: translateY(-160%);
+  padding: 10px 16px;
+  background: var(--green);
+  color: #05070c;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  transition: transform 0.18s var(--ease-camera);
+}
+.ot-skip:focus { transform: translateY(0); outline: 2px solid #05070c; outline-offset: 2px; }
+#ot-main:focus { outline: none; }
