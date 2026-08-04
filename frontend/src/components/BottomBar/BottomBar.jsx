@@ -218,6 +218,16 @@ export default function BottomBar({
   return (
     <>
     {liveWave && <div className={styles.liveWave} aria-hidden="true" />}
+    <button
+      className={styles.profileTop}
+      onClick={() => (isAuthenticated ? onProfileOpen?.() : onSignIn?.())}
+      aria-label={isAuthenticated ? 'Your profile' : 'Sign in'}
+    >
+      {isAuthenticated && user?.picture
+        ? <img src={user.picture} alt="" className={styles.avatarImg} referrerPolicy="no-referrer" />
+        : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+    </button>
+
     <div className={`${styles.topArea}  ${topHidden ? styles.topGone : ''}`} ref={topRef}>
       <div className={styles.topRow}>
         <div className={styles.topSearch}>
