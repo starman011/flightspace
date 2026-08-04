@@ -2918,6 +2918,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             const up = _north.set(0, 1, 0)
             const axis = _right.copy(sd).cross(up).normalize()
             const spread = 0.66 * t + 0.18
+            int.current.scatterSpread = spread
             sl[0].position.copy(sd).applyAxisAngle(axis,  spread)
             sl[1].position.copy(sd).applyAxisAngle(axis, -spread)
             sl[0].intensity = 0.34 * shade
@@ -3078,6 +3079,16 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       if (now - lastSunUpdate > 60000) {
         sun.position.copy(solarDirection()).multiplyScalar(10)
+        // Keep the twilight lights straddling the NEW sun direction, otherwise
+        // the soft edge stays where the sun was at page load while the hard
+        // terminator moves — they drift apart over a session.
+        const sl = int.current.scatterLights
+        if (sl) {
+          const axis = _right.copy(sun.position).cross(_north.set(0, 1, 0)).normalize()
+          const spread = int.current.scatterSpread ?? 0.6
+          sl[0].position.copy(sun.position).applyAxisAngle(axis,  spread)
+          sl[1].position.copy(sun.position).applyAxisAngle(axis, -spread)
+        }
         lastSunUpdate = now
       }
 
