@@ -936,3 +936,9 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   .profileChip { display: none !important; }   /* inline one is mobile-only */
 }
 body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
+/* Mobile: keep the top chips square — they were stretching to an ellipse. */
+@media (max-width: 640px) {
+  .topChip { width: 34px !important; height: 34px !important; flex: 0 0 34px !important; aspect-ratio: 1 / 1; padding: 0 !important; }
+  .topChip svg { width: 15px; height: 15px; }
+  .profileChip .avatarImg { width: 22px; height: 22px; }
+}

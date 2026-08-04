@@ -1459,8 +1459,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // at 0.12 the night hemisphere fell to near-black, which read as a dark
     // blotch across one side and a hard terminator seam. Light it almost
     // uniformly and keep only a gentle sun for spherical shading.
-    scene.add(new AmbientLight(0xffffff, 1.05))
-    const sun = new DirectionalLight(0xffffff, 0.35)
+    // Day/night is a wanted feature — but as a SOFT gradient, not a black
+    // hemisphere. Ambient keeps the night side readable; the sun supplies the
+    // terminator and spherical shading on top of it.
+    scene.add(new AmbientLight(0xffffff, 0.62))
+    const sun = new DirectionalLight(0xffffff, 0.95)
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
@@ -1899,7 +1902,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           // Parent (low-zoom) tiles fill the disc when viewed from distance —
           // keep them near full-bright so they don't read as a grey haze.
           // Detail (street) tiles stay slightly toned (easy on the eyes up close).
-          color: item.isParent ? new Color(0.92, 0.92, 0.94) : new Color(0.62, 0.62, 0.66),
+          // Detail tiles were tinted 0.62 — a 38% darkening. Because tiles load
+          // as a patchwork, every loaded quad read as a hard-edged dark panel
+          // against its neighbours. Keep both levels near full-bright so there
+          // is no tonal step between tiled and untiled ground.
+          color: item.isParent ? new Color(0.95, 0.95, 0.96) : new Color(0.93, 0.93, 0.95),
         })
         // Boost saturation for richer street-view colors
         mat.onBeforeCompile = shader => {
