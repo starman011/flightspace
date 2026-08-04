@@ -165,7 +165,7 @@
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
 }
 
 .legendDot {
@@ -207,7 +207,7 @@
 .infoBody {
   font-size: 11px;
   line-height: 1.6;
-  color: rgba(var(--ink-rgb), 0.5);
+  color: rgba(var(--ink-rgb), 0.62);
   margin: 0;
 }
 
@@ -224,7 +224,7 @@
   align-items: flex-start;
   gap: 8px;
   font-size: 11px;
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   line-height: 1.5;
 }
 .tip strong { color: rgba(195, 220, 255, 0.85); }

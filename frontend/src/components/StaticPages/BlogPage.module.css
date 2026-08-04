@@ -13,7 +13,7 @@
 .feedHeader { margin-bottom: 28px; }
 .feedTitle { font-family: var(--font-display, sans-serif); font-size: 2rem; margin: 0; color: var(--text-strong); }
 .feedSub { color: rgba(var(--green-rgb), 0.75); font-family: var(--font-mono, monospace); font-size: 0.85rem; margin-top: 6px; }
-.loading { color: rgba(var(--ink-rgb), 0.5); font-family: var(--font-mono, monospace); }
+.loading { color: rgba(var(--ink-rgb), 0.62); font-family: var(--font-mono, monospace); }
 /* ── Bento grid ─────────────────────────────────────────────────────────── */
 .bento {
   display: grid;
@@ -100,7 +100,7 @@
 .title { font-family: var(--font-display, sans-serif); font-size: 1.7rem; color: var(--text-strong); margin: 0 0 14px; }
 .intro { font-size: 1.05rem; color: rgba(var(--ink-rgb), 0.9); font-style: italic; margin: 0 0 18px; }
 .body { font-size: 1rem; line-height: 1.7; color: rgba(var(--ink-rgb), 0.78); white-space: pre-wrap; }
-.credit { margin-top: 20px; font-size: 0.8rem; color: rgba(var(--ink-rgb), 0.5); }
+.credit { margin-top: 20px; font-size: 0.8rem; color: rgba(var(--ink-rgb), 0.62); }
 .source { margin-top: 6px; font-size: 0.8rem; }
 .source a, .credit a { color: var(--blue); }
 .sectionH { font-family: var(--font-display, sans-serif); font-weight: 600; font-size: 1.05rem; color: var(--text-strong); margin: 26px 0 10px; }

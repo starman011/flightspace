@@ -47,7 +47,7 @@
 
 .group {
   margin: 10px 0 6px; font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--ink-rgb), 0.45);
+  letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--ink-rgb), 0.62);
 }
 .metrics { display: flex; flex-wrap: wrap; gap: 8px; }
 .metric {
@@ -55,7 +55,7 @@
   padding: 8px 10px; border-radius: var(--r-tight);
   border: 1px solid rgba(var(--ink-rgb), 0.1);
 }
-.mLabel { font-family: var(--font-mono); font-size: 10px; color: rgba(var(--ink-rgb), 0.55); }
+.mLabel { font-family: var(--font-mono); font-size: 10px; color: rgba(var(--ink-rgb), 0.62); }
 .mValue { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--text-strong); }
 
 /* CWV bands */

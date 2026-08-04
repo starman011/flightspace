@@ -194,7 +194,7 @@
 .file {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-rgb), 0.5);
+  color: rgba(var(--ink-rgb), 0.62);
   overflow-wrap: anywhere;
 }
 

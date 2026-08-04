@@ -46,7 +46,7 @@
 .closeBtn {
   background: none;
   border: none;
-  color: rgba(var(--ink-muted-rgb), 0.5);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   cursor: pointer;
   font-size: 14px;
   padding: 4px 8px;
@@ -237,7 +237,7 @@
 .missionSub {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -279,7 +279,7 @@
 
 .statusTbd {
   background: rgba(var(--ink-rgb), 0.06);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   border: 1px solid rgba(var(--ink-rgb), 0.1);
 }
 
@@ -321,7 +321,7 @@
 .peopleLabel {
   font-family: var(--font-body);
   font-size: var(--text-body-md);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
 }
 
 .peopleChevron {
@@ -353,7 +353,7 @@
 .personCraft {
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
 }
 
 /* locate button */
@@ -377,7 +377,7 @@
 .pinBtn {
   background: none;
   border: none;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   cursor: pointer;
   padding: 2px;
   opacity: 0.4;
@@ -457,7 +457,7 @@
   gap: var(--space-2);
   background: none;
   border: none;
-  color: rgba(var(--ink-muted-rgb), 0.5);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   font-family: var(--font-mono);
   font-size: var(--text-label-md);
   cursor: pointer;
@@ -567,7 +567,7 @@
 .detailDescText {
   font-family: var(--font-body);
   font-size: var(--text-body-sm);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   line-height: 1.6;
 }
 
@@ -619,7 +619,7 @@
   background: rgba(var(--surface-raised-rgb), 0.4);
   border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: var(--radius-md);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
   text-decoration: none;

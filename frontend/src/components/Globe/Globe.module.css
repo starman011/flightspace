@@ -27,7 +27,7 @@
 .mapToggle button {
   background: transparent;
   border: none;
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   font-size: 11px;
   letter-spacing: 0.04em;
   padding: 4px 11px;

@@ -71,7 +71,7 @@
   font-family: var(--font-mono, monospace); font-size: 0.72rem; color: rgba(var(--ink-rgb), 0.4);
 }
 .bottomLinks { display: flex; gap: 16px; }
-.bottomLinks a { color: rgba(var(--ink-rgb), 0.55); text-decoration: none; }
+.bottomLinks a { color: rgba(var(--ink-rgb), 0.62); text-decoration: none; }
 .bottomLinks a:hover { color: var(--green); }
 
 @media (max-width: 720px) {

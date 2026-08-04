@@ -64,7 +64,7 @@
   border: none;
   border-radius: var(--r-tight);
   background: transparent;
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   cursor: pointer;
   transition: color 0.18s, background 0.18s, transform 0.1s;
 }

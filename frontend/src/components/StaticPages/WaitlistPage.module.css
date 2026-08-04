@@ -55,7 +55,7 @@
   border-radius: 50%;
   border: 1px solid rgba(var(--ink-rgb), 0.12);
   background: rgba(var(--ink-rgb), 0.04);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -314,7 +314,7 @@
 .formSub {
   font-size: 12px;
   line-height: 1.65;
-  color: rgba(var(--ink-rgb), 0.5);
+  color: rgba(var(--ink-rgb), 0.62);
   margin: 0;
 }
 
@@ -475,7 +475,7 @@
 .roadmapDesc {
   font-size: 11px;
   line-height: 1.5;
-  color: rgba(var(--ink-rgb), 0.45);
+  color: rgba(var(--ink-rgb), 0.62);
   margin: 0;
 }
 

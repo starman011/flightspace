@@ -64,7 +64,7 @@
 
 .subtitle {
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -83,7 +83,7 @@
 .close {
   background: none;
   border: none;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   font-size: 22px;
   cursor: pointer;
   padding: 4px 8px;
@@ -154,7 +154,7 @@
   gap: 4px;
   padding: 10px 20px 6px;
   font-size: 9px;
-  color: rgba(var(--ink-muted-rgb), 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);

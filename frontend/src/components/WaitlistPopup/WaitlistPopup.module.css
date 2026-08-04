@@ -72,7 +72,7 @@
 .spinner { width: 14px; height: 14px; border: 2px solid rgba(var(--surface-deep-rgb), 0.3); border-top-color: rgb(var(--surface-deep-rgb)); border-radius: 50%; animation: spin 0.7s linear infinite }
 @keyframes spin { to { transform: rotate(360deg) } }
 .errorMsg { color: #ff8a8a; font-family: var(--font-mono); font-size: 11px; margin-top: 8px }
-.skipBtn { display: block; margin: 12px auto 0; background: none; border: none; color: rgba(var(--ink-rgb), 0.5); font-family: var(--font-mono); font-size: 12px; cursor: pointer }
+.skipBtn { display: block; margin: 12px auto 0; background: none; border: none; color: rgba(var(--ink-rgb), 0.62); font-family: var(--font-mono); font-size: 12px; cursor: pointer }
 .skipBtn:hover { color: rgba(var(--ink-rgb), 0.8) }
 
 .success { padding: 36px 24px; text-align: center }

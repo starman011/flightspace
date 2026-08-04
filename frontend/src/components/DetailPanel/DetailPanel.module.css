@@ -158,7 +158,7 @@
 .typeCode {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   letter-spacing: 0.06em;
 }
 
@@ -604,7 +604,7 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  color: rgba(var(--ink-rgb), 0.5);
+  color: rgba(var(--ink-rgb), 0.62);
   padding: 11px 18px;
   border-radius: 10px;
   transition: all 0.15s;
@@ -735,7 +735,7 @@
   .miniEta {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(var(--ink-rgb), 0.5);
+    color: rgba(var(--ink-rgb), 0.62);
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
     padding-left: 6px;
@@ -1012,7 +1012,7 @@
 .specLabel {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(var(--ink-muted-rgb), 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   letter-spacing: 0.05em;
 }
 
@@ -1049,7 +1049,7 @@
 .missionDate {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.5);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   white-space: nowrap;
 }
 

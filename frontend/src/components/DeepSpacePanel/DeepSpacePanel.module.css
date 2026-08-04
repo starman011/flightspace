@@ -71,7 +71,7 @@
 .pageDesc {
   font-family: var(--font-body);
   font-size: var(--text-body-lg);
-  color: rgba(var(--ink-rgb), 0.55);
+  color: rgba(var(--ink-rgb), 0.62);
   max-width: 560px;
   line-height: 1.6;
   margin-bottom: var(--space-8);
@@ -157,7 +157,7 @@
 .sectionMeta {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -191,7 +191,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(var(--ink-muted-rgb), 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   margin-bottom: 4px;
 }
 
@@ -261,7 +261,7 @@
 .avatarLabel {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   margin-left: var(--space-3);
 }
 
@@ -358,7 +358,7 @@
 .entityCoord {
   font-family: var(--font-mono);
   font-size: var(--text-label-sm);
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
 }
 
 .entityStat {
@@ -368,7 +368,7 @@
 .entityStatLabel {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.42);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   text-transform: uppercase;
   margin-bottom: 2px;
 }
@@ -390,7 +390,7 @@
 .riskUnit {
   font-size: 0.5em;
   font-weight: 400;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
 }
 
 /* ── Empty / loading state ───────────────────────────────────────────────── */
@@ -430,7 +430,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
 }
 
 .neoRow {
@@ -482,7 +482,7 @@
 .neoMeta {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
 }
 
 /* Risk badge */
@@ -618,7 +618,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(var(--ink-muted-rgb), 0.45);
+  color: rgba(var(--ink-muted-rgb), 0.62);
   margin-bottom: 4px;
 }
 

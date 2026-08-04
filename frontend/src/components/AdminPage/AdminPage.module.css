@@ -29,7 +29,7 @@
 .badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: rgb(var(--surface-deep-rgb)); background: var(--green);
   color: #05070c; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em }
 
-.info { font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.5); padding: 20px 0 }
+.info { font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.62); padding: 20px 0 }
 
 .tabs { display: flex; gap: 8px; margin-bottom: 18px }
 .tab { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: rgba(var(--ink-rgb), 0.6);
@@ -55,7 +55,7 @@
 .cardHead:hover { background: rgba(var(--ink-rgb), 0.05) }
 .who { display: flex; flex-direction: column; gap: 3px; min-width: 0 }
 .name { font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.email { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.45) }
+.email { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.62) }
 .meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0 }
 .time { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.4) }
 .pill { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px }

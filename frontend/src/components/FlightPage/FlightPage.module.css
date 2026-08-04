@@ -209,7 +209,7 @@
 .pillGo { color: #4dd0e1 } .pillOk { color: #5fd38a } .pillWarn { color: #ffc24d }
 .foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 26px; border-top: 1px solid rgba(var(--ink-rgb), 0.16); flex-wrap: wrap }
 .foot > span { font-family: var(--font-mono); font-size: 11px; color: rgba(var(--ink-rgb), 0.4) }
-.empty, .loading { padding: 40px 26px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.5) }
+.empty, .loading { padding: 40px 26px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: rgba(var(--ink-rgb), 0.62) }
 
 /* ── footer (internal links + sitemap) ───────────────────────────────────── */
 .footer {
@@ -224,7 +224,7 @@
 .footerCol { display: flex; flex-direction: column; gap: 11px }
 .footerColTitle {
   font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(var(--ink-rgb), 0.5); margin-bottom: 4px;
+  text-transform: uppercase; color: rgba(var(--ink-rgb), 0.62); margin-bottom: 4px;
 }
 .footerLink {
   font-family: var(--font-body); font-size: 13.5px;
