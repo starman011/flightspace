@@ -6,7 +6,7 @@ import {
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
   PlaneGeometry, SphereGeometry, TubeGeometry, CatmullRomCurve3,
   Mesh, InstancedMesh, LineSegments, Points,
-  MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
+  MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial, MeshLambertMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
   TextureLoader, CanvasTexture, VideoTexture, SRGBColorSpace,
@@ -1894,7 +1894,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // when zooming below those altitudes.
         const r    = item.isParent ? EARTH_R * 1.0002 : EARTH_R * 1.0004
         const geo  = buildTileGeo(item.tx, item.ty, item.z, r)
-        const mat  = new MeshBasicMaterial({
+        // LIT, not basic. As MeshBasicMaterial these tiles ignored the sun, so
+        // wherever they loaded they painted over the day/night terminator at
+        // full brightness — the Earth appeared to lose its shading entirely.
+        // Lambert is cheap and takes the same lighting as the globe surface, so
+        // tiles now darken across the night side exactly like the base texture.
+        const mat  = new MeshLambertMaterial({
           transparent: true, opacity: 0, side: FrontSide,
           depthWrite: false,
           polygonOffset: true,
