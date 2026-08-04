@@ -1344,7 +1344,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const controls           = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping   = true
-    controls.dampingFactor   = 0.30   // higher = stops faster = rigid feel
+    controls.dampingFactor   = 0.18   // lower = carries velocity = glides
     controls.enablePan       = false
     controls.minDistance     = 1.00002   // ~127 m altitude → zoom 18 tiles (~0.6 m/px)
     controls.maxDistance     = 8
@@ -2844,9 +2844,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // converge to desktop speed at orbit so zoomed-out feel stays fast.
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
         const touchDamp = isTouch ? MathUtils.clamp(1 - (1 - t) * 0.6, 0.4, 1) : 1
-        controls.rotateSpeed   = (0.008 + Math.pow(t, 1.5) * 0.35) * touchDamp
-        controls.zoomSpeed     = (0.02  + t * 0.68) * touchDamp
-        controls.dampingFactor = 0.88 - t * 0.48
+        // Feel tuning. dampingFactor in OrbitControls is response strength:
+        // ~0.9 applies almost the whole delta each frame, so motion snaps with
+        // no inertia and any dropped frame reads as a stutter. Lower values
+        // carry velocity across frames, which glides and hides jitter.
+        // The old rotate floor (0.008) also made a zoomed-out drag barely move.
+        controls.rotateSpeed   = (0.06 + Math.pow(t, 1.5) * 0.32) * touchDamp
+        controls.zoomSpeed     = (0.10 + t * 0.62) * touchDamp
+        controls.dampingFactor = 0.16 + t * 0.10
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
