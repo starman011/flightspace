@@ -55,6 +55,21 @@ func (ps *PushScheduler) checkAndNotify(ctx context.Context) {
 		return
 	}
 
+	// Evict sent-keys for launches that have dropped out of the upcoming feed,
+	// otherwise the map grows for the lifetime of the process.
+	live := make(map[string]bool, len(launches))
+	for _, l := range launches {
+		live[l.ID] = true
+	}
+	ps.sent.Range(func(k, _ any) bool {
+		if s, ok := k.(string); ok {
+			if i := strings.LastIndex(s, ":"); i > 0 && !strings.HasPrefix(s, "flight:") && !live[s[:i]] {
+				ps.sent.Delete(k)
+			}
+		}
+		return true
+	})
+
 	for _, l := range launches {
 		if l.NET.IsZero() {
 			continue
@@ -114,6 +129,7 @@ func (ps *PushScheduler) sendForWindow(ctx context.Context, l schedulerLaunch, w
 
 	subs, err := ps.push.GetSubscriptionsForLaunch(ctx, l.ID)
 	if err != nil || len(subs) == 0 {
+		ps.sent.Delete(key) // nothing to send: don't pin this key in memory
 		return
 	}
 

@@ -245,6 +245,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     try { return JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')[icao24] === true } catch { return false }
   })
   const wasAirborneRef = useRef(false)
+  const [alertLocalOnly, setAlertLocalOnly] = useState(false)
 
   // Land alert: ask once, remember the choice, then fire a notification the
   // moment this aircraft transitions airborne -> on ground.
@@ -285,7 +286,13 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           }
         }
       }
-    } catch { /* push unavailable — the in-tab watcher below still fires */ }
+    } catch (e) {
+      // Push unavailable (most often: VAPID keys unset on the server, so the
+      // subscribe endpoint isn't registered). The in-tab watcher below still
+      // fires while this tab is open — say so rather than failing silently.
+      console.warn('[land alert] push subscription failed; in-tab only:', e?.message || e)
+      setAlertLocalOnly(true)
+    }
     try {
       const all = JSON.parse(localStorage.getItem('ot-land-alerts') || '{}')
       if (next) all[icao24] = true; else delete all[icao24]
@@ -873,7 +880,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                 aria-pressed={alertWanted}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                <span>{alertWanted ? 'Notifying' : 'Notify me'}</span>
+                <span>{alertWanted ? (alertLocalOnly ? 'This tab' : 'Notifying') : 'Notify me'}</span>
               </button>
               {hasRoute && (
                 <button className={styles.actFollow} onClick={() => onFitRoute?.(route)}>

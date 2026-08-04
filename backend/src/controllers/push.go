@@ -331,8 +331,12 @@ func buildPushBody(encrypted, localPub, salt []byte) []byte {
 
 // CleanupExpired removes subscriptions for launches that have already happened.
 func (pc *PushController) CleanupExpired(ctx context.Context) error {
-	// Remove subs older than 48h — launch has passed
+	// Remove launch subs older than 48h (the launch has passed). Flight alerts
+	// are excluded: a long-haul armed >48h before landing would be silently
+	// dropped and never fire. They self-delete once the landing push is sent.
 	_, err := pc.pool.Exec(ctx,
-		`DELETE FROM push_subscriptions WHERE created_at < NOW() - INTERVAL '48 hours'`)
+		`DELETE FROM push_subscriptions
+		 WHERE created_at < NOW() - INTERVAL '48 hours'
+		   AND launch_id NOT LIKE 'flight:%'`)
 	return err
 }
