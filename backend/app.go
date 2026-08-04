@@ -229,19 +229,13 @@ func startCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
 	}
 }
 
-func runCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
-	result, err := pool.Exec(ctx,
-		`DELETE FROM aircraft_positions WHERE received_at < NOW() - make_interval(hours => $1)`,
-		retentionHours,
-	)
-	if err != nil {
-		log.Printf(`{"level":"error","service":"cleanup","msg":"positions cleanup failed","error":%q}`, err)
-		return
-	}
-	log.Printf(`{"level":"info","service":"cleanup","msg":"positions purged","rows":%d}`, result.RowsAffected())
-
-	// Clean up expired anonymous sessions
-	result, err = pool.Exec(ctx, `DELETE FROM anonymous_sessions WHERE expires_at < NOW()`)
+func runCleanup(ctx context.Context, pool *pgxpool.Pool, _ int) {
+	// NOTE: the aircraft_positions purge that used to run here was removed.
+	// Migration 000010 dropped that table (trail history lives in Redis as a
+	// bounded per-aircraft list), so the DELETE errored every hour AND its
+	// early return meant the session cleanup below never ran at all —
+	// expired anonymous sessions accumulated indefinitely.
+	result, err := pool.Exec(ctx, `DELETE FROM anonymous_sessions WHERE expires_at < NOW()`)
 	if err != nil {
 		log.Printf(`{"level":"error","service":"cleanup","msg":"sessions cleanup failed","error":%q}`, err)
 		return
