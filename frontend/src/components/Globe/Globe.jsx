@@ -6,7 +6,7 @@ import {
   BufferGeometry, BufferAttribute, DynamicDrawUsage,
   PlaneGeometry, SphereGeometry, TubeGeometry, CatmullRomCurve3,
   Mesh, InstancedMesh, LineSegments, Points,
-  MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial, MeshLambertMaterial,
+  MeshBasicMaterial, MeshStandardMaterial, MeshPhongMaterial,
   LineBasicMaterial, PointsMaterial, ShaderMaterial,
   AmbientLight, DirectionalLight,
   TextureLoader, CanvasTexture, VideoTexture, SRGBColorSpace,
@@ -1455,29 +1455,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     })))
 
     // ── Lights ───────────────────────────────────────────────────────
-    // The globe is a tracking surface, not a day/night simulation: with ambient
-    // at 0.12 the night hemisphere fell to near-black, which read as a dark
-    // blotch across one side and a hard terminator seam. Light it almost
-    // uniformly and keep only a gentle sun for spherical shading.
-    // Day/night shading is a deliberate feature and should read strongly: a
-    // near-zero ambient lets the night hemisphere fall genuinely dark, with a
-    // bright sun carrying the lit side and a crisp terminator between them.
-    const ambient = new AmbientLight(0xffffff, 0.05)
-    scene.add(ambient)
-    const sun = new DirectionalLight(0xffffff, 1.9)
-    int.current.ambientLight = ambient
-    int.current.sunLight = sun
-
-    // Soft terminator. A single directional light gives a hard N·L edge, which
-    // reads as a cut across the globe. Real twilight is wide because the
-    // atmosphere scatters sunlight past the geometric boundary, so model that:
-    // two dim lights splayed either side of the sun extend the falloff into a
-    // gradient, warm-tinted like real scattered light at grazing angles.
-    const scatterA = new DirectionalLight(0xffd9a8, 0.34)
-    const scatterB = new DirectionalLight(0xbcd4ff, 0.20)
-    scene.add(scatterA)
-    scene.add(scatterB)
-    int.current.scatterLights = [scatterA, scatterB]
+    scene.add(new AmbientLight(0xffffff, 0.12))
+    const sun = new DirectionalLight(0xffffff, 1.6)
     sun.position.copy(solarDirection()).multiplyScalar(10)
     scene.add(sun)
 
@@ -1509,22 +1488,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     )
 
     // ── Clouds ───────────────────────────────────────────────────────
-    // UNLIT on purpose. As a MeshPhongMaterial this shell was lit like the
-    // Earth, so on the night side a 0.18-opacity sphere sitting 0.006 above the
-    // surface rendered as a dark grey husk — the dark band wrapping the limb and
-    // the arc that appeared to overlap the globe. MeshBasic keeps the clouds
-    // white everywhere, and the texture drives alpha only.
-    // LIT, like the tiles. As MeshBasic these clouds glowed uniformly white,
-    // adding brightness across the night hemisphere and washing the terminator
-    // out — worst at max altitude where the whole sphere (and so the whole
-    // cloud shell) is in view. Lambert makes them darken with the surface, so
-    // night-side cloud goes dark instead of lifting it.
-    const cloudMat = new MeshLambertMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false,
-    })
+    const cloudMat = new MeshPhongMaterial({ transparent: true, opacity: 0.18, depthWrite: false })
     loader.load(
       '/earth-clouds.jpg',
-      tex => { cloudMat.alphaMap = tex; cloudMat.needsUpdate = true },
+      tex => { cloudMat.alphaMap = tex; cloudMat.map = tex; cloudMat.needsUpdate = true },
     )
     const clouds = new Mesh(new SphereGeometry(CLOUD_R, 64, 64), cloudMat)
     scene.add(clouds)
@@ -1912,12 +1879,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // when zooming below those altitudes.
         const r    = item.isParent ? EARTH_R * 1.0002 : EARTH_R * 1.0004
         const geo  = buildTileGeo(item.tx, item.ty, item.z, r)
-        // LIT, not basic. As MeshBasicMaterial these tiles ignored the sun, so
-        // wherever they loaded they painted over the day/night terminator at
-        // full brightness — the Earth appeared to lose its shading entirely.
-        // Lambert is cheap and takes the same lighting as the globe surface, so
-        // tiles now darken across the night side exactly like the base texture.
-        const mat  = new MeshLambertMaterial({
+        const mat  = new MeshBasicMaterial({
           transparent: true, opacity: 0, side: FrontSide,
           depthWrite: false,
           polygonOffset: true,
@@ -1926,11 +1888,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
           // Parent (low-zoom) tiles fill the disc when viewed from distance —
           // keep them near full-bright so they don't read as a grey haze.
           // Detail (street) tiles stay slightly toned (easy on the eyes up close).
-          // Detail tiles were tinted 0.62 — a 38% darkening. Because tiles load
-          // as a patchwork, every loaded quad read as a hard-edged dark panel
-          // against its neighbours. Keep both levels near full-bright so there
-          // is no tonal step between tiled and untiled ground.
-          color: item.isParent ? new Color(0.95, 0.95, 0.96) : new Color(0.93, 0.93, 0.95),
+          color: item.isParent ? new Color(0.92, 0.92, 0.94) : new Color(0.62, 0.62, 0.66),
         })
         // Boost saturation for richer street-view colors
         mat.onBeforeCompile = shader => {
@@ -2884,8 +2842,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // converge to desktop speed at orbit so zoomed-out feel stays fast.
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
         const touchDamp = isTouch ? MathUtils.clamp(1 - (1 - t) * 0.6, 0.4, 1) : 1
-        // Touch gets extra glide: a finger drag should carry the globe a little
-        // after release (map-style momentum) rather than stopping dead.
         // Feel tuning. dampingFactor in OrbitControls is response strength:
         // ~0.9 applies almost the whole delta each frame, so motion snaps with
         // no inertia and any dropped frame reads as a stutter. Lower values
@@ -2893,49 +2849,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // The old rotate floor (0.008) also made a zoomed-out drag barely move.
         controls.rotateSpeed   = (0.06 + Math.pow(t, 1.5) * 0.32) * touchDamp
         controls.zoomSpeed     = (0.10 + t * 0.62) * touchDamp
-        controls.dampingFactor = (0.16 + t * 0.10) * (isTouch ? 0.62 : 1)
-
-        // Exposure by altitude. At orbit (t→1) keep the dramatic terminator;
-        // as the user descends (t→0) lift ambient so the ground stays readable
-        // on the night side — visibility beats drama once you are down close.
-        if (int.current.ambientLight) {
-          // Day/night is scenery for the ORBIT view only. The moment the user
-          // starts descending it hands over to flat, map-like daylight so
-          // nothing is hidden in shade. smoothstep(0.80 → 0.96) makes that a
-          // quick handover rather than a gradient across the whole descent:
-          // shade = 1 only near max altitude, 0 for the entire working range.
-          const k = MathUtils.clamp((t - 0.80) / 0.16, 0, 1)
-          const shade = k * k * (3 - 2 * k)
-          // At low altitude the sun is switched OFF, not just dimmed. Leaving it
-          // at 0.85 meant the day side got ambient + sun while the night side
-          // got ambient alone, so zooming into darkness still looked murky
-          // compared with the lit hemisphere. With the directional term gone,
-          // lighting is pure uniform ambient: every point on the globe renders
-          // identically, which is what visibility at working altitude needs.
-          int.current.ambientLight.intensity = 1.90 - shade * 1.85
-          if (int.current.sunLight) int.current.sunLight.intensity = 0.02 + shade * 1.88
-          int.current.terminatorShade = shade
-          // Splay the scatter lights ±38° around the sun so the twilight band
-          // straddles the terminator; widest from orbit, damped up close where
-          // the ambient lift already carries visibility.
-          const sl = int.current.scatterLights
-          if (sl && int.current.sunLight) {
-            const sd = int.current.sunLight.position
-            const up = _north.set(0, 1, 0)
-            // Rotate about world-up so the pair straddles the terminator
-            // east/west. The old axis (sun × up) tilted them north/south, which
-            // is what made the southern half read darker than the rest.
-            const axis = _north.set(0, 1, 0)
-            const spread = 0.66 * t + 0.18
-            int.current.scatterSpread = spread
-            sl[0].position.copy(sd).applyAxisAngle(axis,  spread)
-            sl[1].position.copy(sd).applyAxisAngle(axis, -spread)
-            // EQUAL intensities: unequal values (0.34 / 0.20) skewed the sum
-            // toward one side, so the terminator lit unevenly north-to-south.
-            sl[0].intensity = 0.26 * shade
-            sl[1].intensity = 0.26 * shade
-          }
-        }
+        controls.dampingFactor = 0.16 + t * 0.10
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -3090,16 +3004,6 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       if (now - lastSunUpdate > 60000) {
         sun.position.copy(solarDirection()).multiplyScalar(10)
-        // Keep the twilight lights straddling the NEW sun direction, otherwise
-        // the soft edge stays where the sun was at page load while the hard
-        // terminator moves — they drift apart over a session.
-        const sl = int.current.scatterLights
-        if (sl) {
-          const axis = _north.set(0, 1, 0)
-          const spread = int.current.scatterSpread ?? 0.6
-          sl[0].position.copy(sun.position).applyAxisAngle(axis,  spread)
-          sl[1].position.copy(sun.position).applyAxisAngle(axis, -spread)
-        }
         lastSunUpdate = now
       }
 
