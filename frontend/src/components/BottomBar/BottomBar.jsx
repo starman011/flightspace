@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import styles from './BottomBar.module.css'
+import { matchAirports } from '../SearchBar/SearchBar'
 
 const FILTERS = [
   {
@@ -69,11 +70,20 @@ export default function BottomBar({
   const API_BASE = import.meta.env.VITE_API_URL || ''
   useEffect(() => {
     if (q.trim().length < 2) { setResults([]); return }
+    // Airports/cities match locally and instantly; aircraft need the API. The
+    // inline field previously only did the latter, so 'New York' or 'JFK' —
+    // the very examples the placeholder cycles — returned nothing.
+    const local = matchAirports(q).map(a => ({ ...a, _type: 'airport' }))
+    setResults(local)
     const t = setTimeout(async () => {
       try {
         const r = await fetch(`${API_BASE}/api/v1/aircraft/search?q=${encodeURIComponent(q.trim())}&limit=6`)
-        if (r.ok) { const d = await r.json(); setResults(Array.isArray(d) ? d : (d.results || d.aircraft || [])) }
-      } catch { /* offline */ }
+        if (r.ok) {
+          const d = await r.json()
+          const air = (Array.isArray(d) ? d : (d.results || d.aircraft || [])).map(x => ({ ...x, _type: 'aircraft' }))
+          setResults([...local, ...air].slice(0, 8))
+        }
+      } catch { /* offline — local airport hits still stand */ }
     }, 250)
     return () => clearTimeout(t)
   }, [q, API_BASE])
@@ -246,7 +256,9 @@ export default function BottomBar({
               {results.map((r, i) => (
                 <button key={r.icao24 || i} className={styles.popItem}
                   onClick={() => { onSearchSelect?.(r); setQ(''); setResults([]) }}>
-                  {(r.callsign || r.icao24 || '').trim()}{r.type ? ` · ${r.type}` : ''}
+                  {r._type === 'airport'
+                    ? `${r.iata || ''} · ${r.city || r.name || ''}`
+                    : `${(r.callsign || r.icao24 || '').trim()}${r.type ? ` · ${r.type}` : ''}`}
                 </button>
               ))}
             </div>

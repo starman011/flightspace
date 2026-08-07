@@ -5,7 +5,7 @@ import { AIRPORTS } from '../Globe/airportData.js'
 const API = import.meta.env.VITE_API_URL || ''
 
 // Local airport/city match — instant, no API. Matches IATA code, city, or name.
-function matchAirports(q) {
+export function matchAirports(q) {
   const u = q.trim().toUpperCase()
   if (u.length < 2) return []
   const hits = []
