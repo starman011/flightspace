@@ -60,7 +60,8 @@ test('nav chrome geometry contract', async ({ page }, testInfo) => {
   expect(m.radar.h, 'radar height').toBeLessThanOrEqual(R.radarH[1])
 
   // Layout relationships that kept breaking during the redesign
-  expect(m.chip.y, 'chip shares the search row').toBe(m.search.y)
+  // within a couple of px — the row centres items of slightly different heights
+  expect(Math.abs(m.chip.y - m.search.y), 'chip shares the search row').toBeLessThanOrEqual(3)
   expect(m.chip.x, 'chip sits right of the search field').toBeGreaterThan(m.search.x + m.search.w - 2)
   expect(m.radar.y, 'radar sits below the search row').toBeGreaterThan(m.search.y + m.search.h - 2)
   expect(m.topX, 'top row is left-anchored').toBeLessThan(40)

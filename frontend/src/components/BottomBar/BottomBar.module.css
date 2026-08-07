@@ -191,64 +191,7 @@
    exactly 5 labelled tabs + LIVE so nothing is squeezed off narrow screens. */
 @keyframes caretBlink { 0%, 55% { opacity: 1 } 56%, 100% { opacity: 0 } }
 
-@media (max-width: 640px) {
-  .topArea {
-    position: fixed;
-    top: calc(12px + env(safe-area-inset-top, 0px));
-    left: 12px;
-    right: 12px;                    /* full width — the profile now lives in the bar */
-    z-index: 10000;                 /* above the session-error banner (z 9999),
-                                       which otherwise swallowed every tap here */
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: none;           /* children re-enable */
-  }
-  .topRow { display: flex; gap: 6px; pointer-events: auto; }
-  .topSearch {
-    position: static;               /* now laid out by .topRow */
-    flex: 1;
-    right: auto; left: auto; top: auto;
-    height: 42px;                   /* fixed — only the TEXT animates, never the box */
-    overflow: visible;              /* the results dropdown hangs BELOW the field —
-                                       overflow:hidden was clipping it to a glitchy sliver */
-    white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .popMenu { right: 0; left: auto; transform: none; }
-  .topChip {
-    display: grid; place-items: center;
-    width: 42px; min-height: 42px; flex: none;
-    background: var(--glass-fill);
-    backdrop-filter: var(--glass-blur-lg);
-    -webkit-backdrop-filter: var(--glass-blur-lg);
-    border: 1px solid var(--glass-line);
-    border-top-color: var(--glass-gloss);
-    border-radius: var(--r-pill);
-    color: rgba(var(--ink-rgb), 0.6);
-    cursor: pointer;
-    transition: color 0.18s, background 0.18s;
-  }
-  .topChipOn { color: #0a0f14; background: var(--green);
-  color: #05070c; border-color: var(--green); }
-  .countStrip {
-    display: inline-flex; align-items: center; gap: 6px;
-    align-self: flex-start;
-    pointer-events: none;
-    padding: 4px 10px;
-    background: rgba(var(--surface-rgb), 0.55);
-    border-radius: var(--r-pill);
-    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    color: rgba(var(--ink-rgb), 0.75);
-  }
-  .countDot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #22ef7e; box-shadow: 0 0 6px rgba(34, 239, 126, 0.6);
-  }
-  /* layer filters live next to search now — drop them from the bar */
-  .layerTab { display: none; }
-}
+
 
 /* profile avatar in the tab + absorbed menu + top filter popover */
 .avatarImg { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
@@ -427,100 +370,16 @@
 
 /* ── Desktop: search + filter sit top-right (the corner freed by folding the
    old profile pill into the bar), narrower than the mobile full-bleed row. ── */
-@media (min-width: 641px) {
-  .topArea {
-    position: fixed;                /* was computing to static on desktop, so
-                                       right/top anchoring did nothing */
-    top: 16px;
-    left: 16px;      /* top-LEFT, matching mobile */
-    right: auto;
-    bottom: auto;
-    transform: none;
-    width: min(400px, 38vw);
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: none;
-  }
-  /* the row itself must flex, or the icons stack under the search field */
-  .topRow { display: flex; flex-direction: row; align-items: center; gap: 6px; pointer-events: auto; }
-  .topSearch { height: 42px; font-size: 12.5px; }
-  .topChip   { width: 42px; height: 42px; }
-  .countStrip { align-self: flex-start; }
-}
+
 
 /* ══ Desktop top row — full styling (these classes previously existed ONLY in
    the mobile query, so on desktop they rendered as unstyled square buttons
    with the browser's default focus border). Larger than mobile. ═══════════ */
-@media (min-width: 641px) {
-  .topArea { width: min(520px, 44vw); }
 
-  .topSearch {
-    position: relative;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    height: 50px;
-    padding: 0 18px;
-    background: var(--glass-fill);
-    backdrop-filter: var(--glass-blur-lg);
-    -webkit-backdrop-filter: var(--glass-blur-lg);
-    border: 1px solid var(--glass-line);
-    border-top-color: var(--glass-gloss);
-    border-radius: var(--r-pill);
-    box-shadow: var(--glass-shadow-nav);
-    color: rgba(var(--ink-rgb), 0.62);
-    cursor: text;
-    overflow: visible;
-  }
-  .topSearch > svg { width: 17px; height: 17px; margin-right: 12px; flex: none; }
-  .topInput {
-    flex: 1; min-width: 0; height: 100%; padding: 0;
-    border: none; background: transparent; outline: none;
-    font-family: var(--font-mono); font-size: 14px; line-height: 1;
-    color: var(--text-strong);
-  }
-  .topSearch .hintText {
-    left: 47px;                     /* 18 padding + 17 icon + 12 margin */
-    font-size: 14px;
-  }
-
-  .topChip {
-    display: grid;
-    place-items: center;
-    width: 50px;
-    height: 50px;
-    flex: none;
-    padding: 0;
-    background: var(--glass-fill);
-    backdrop-filter: var(--glass-blur-lg);
-    -webkit-backdrop-filter: var(--glass-blur-lg);
-    border: 1px solid var(--glass-line);
-    border-top-color: var(--glass-gloss);
-    border-radius: var(--r-pill);     /* round, matching the design language */
-    box-shadow: var(--glass-shadow-nav);
-    color: rgba(var(--ink-rgb), 0.6);
-    cursor: pointer;
-    outline: none;
-    transition: color 0.18s, background 0.18s;
-  }
-  .topChip:hover { color: rgba(var(--ink-rgb), 0.95); }
-  .topChip svg { width: 19px; height: 19px; }
-  .topChipOn { color: #0a0f14; background: var(--green);
-  color: #05070c; border-color: var(--green); }
-}
 
 /* Controls sized to fit the slimmer shell bands. */
-@media (min-width: 641px) {
-  .topSearch { height: 44px; }
-  .topChip   { width: 44px; height: 44px; }
-  .tab, .live { min-height: 44px; }
-}
-@media (max-width: 640px) {
-  .topSearch, .topChip { height: 40px; }
-  .topChip { width: 40px; }
-}
+
+
 
 /* Profile lives in the top-right corner, mirroring the search row on the left. */
 .profileTop {
@@ -546,7 +405,7 @@
 }
 .profileTop:hover { color: rgba(var(--ink-rgb), 1); }
 .profileTop .avatarImg { width: 26px; height: 26px; }
-@media (max-width: 640px) { .profileTop { width: 40px; height: 40px; top: calc(12px + env(safe-area-inset-top, 0px)); } }
+
 body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 
 /* ── Live tracked-count readout ──────────────────────────────────────────────
@@ -605,9 +464,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 }
 .countWord { opacity: 0.75; }
 
-@media (prefers-reduced-motion: reduce) {
-  .countStrip::after, .countRadar::before, .countNum { animation: none; }
-}
+
 
 /* ── Mini radar screen: a scope sweeping the surface, blips lighting up as the
    beam passes. Pixel-grid backdrop for the CRT feel. Pure CSS. ───────────── */
@@ -664,10 +521,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   70%, 100% { opacity: 0; transform: scale(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .radarSweep { animation: none; opacity: 0.4; }
-  .blip { animation: none; opacity: 0.8; }
-}
+
 
 /* ══ Retro radar panel (authoritative — the base .countStrip lived only in the
    mobile query, so on desktop it rendered unstyled and invisible). ═════════ */
@@ -828,18 +682,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 .countWord { opacity: 0.72 !important; }
 
 /* Mobile: scale the radar down ~50% so it doesn't dominate the top row. */
-@media (max-width: 640px) {
-  .countStrip {
-    height: 34px !important;
-    padding: 0 9px 0 5px !important;
-    gap: 6px !important;
-    border-radius: 8px !important;
-  }
-  .radar { width: 24px !important; height: 24px !important; }
-  .radar::after { inset: 4px; }
-  .countNum  { font-size: 11px; }
-  .countWord { font-size: 6.5px; letter-spacing: 0.1em; }
-}
+
 
 /* The radar hides with the rest of the top chrome when a card/panel opens. */
 .topGone .countStrip { opacity: 0; pointer-events: none; }
@@ -858,7 +701,7 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 .scanIdle .countNum { font-size: 12px; letter-spacing: 0.1em; }
 .scanBusy .countNum { letter-spacing: 0.18em; animation: scanDots 1.1s steps(4) infinite; }
 @keyframes scanDots { 0% { opacity: 0.45 } 50% { opacity: 1 } 100% { opacity: 0.45 } }
-@media (prefers-reduced-motion: reduce) { .scanIdle, .scanBusy .countNum { animation: none; } }
+
 
 /* Apple-style dismissal: the bar eases down and settles out of view, rather
    than snapping. Slight scale keeps it feeling physical. */
@@ -874,26 +717,105 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
+  .countStrip::after, .countRadar::before, .countNum { animation: none; }
+  .radarSweep { animation: none; opacity: 0.4; }
+  .blip { animation: none; opacity: 0.8; }
+ .scanIdle, .scanBusy .countNum { animation: none; } 
   .bar { transition: opacity 0.2s ease !important; }
   .barGone { transform: translateX(-50%) !important; }
 }
 
 /* Mobile: profile joins filter + feed on the right of the row, so the search
    field gives up width to make room for three chips. */
-@media (max-width: 640px) {
-  .topSearch { flex: 1 1 auto; min-width: 0; }
-  .topRow { gap: 5px; }
-  .topChip { width: 38px !important; height: 38px !important; }
-  .topSearch { height: 38px !important; padding: 0 10px !important; }
-  .topSearch > svg { width: 14px; height: 14px; margin-right: 7px; }
-  .topSearch .hintText { left: 31px; font-size: 11.5px; }
-  .topInput { font-size: 11.5px; }
-  .profileChip .avatarImg { width: 24px; height: 24px; border-radius: 50%; }
-}
+
 
 /* Desktop: profile detaches from the left row and anchors top-right, mirroring
    the search row. On mobile it stays inline with the filter + feed chips. */
+
+
+/* Profile: a fixed top-right button on desktop (rendered OUTSIDE .topArea,
+   whose transform would otherwise become its containing block), and the inline
+   chip on mobile. Exactly one is visible per breakpoint. */
+.profileTop { display: none; }
 @media (min-width: 641px) {
+  .topArea {
+    position: fixed;                /* was computing to static on desktop, so
+                                       right/top anchoring did nothing */
+    top: 16px;
+    left: 16px;      /* top-LEFT, matching mobile */
+    right: auto;
+    bottom: auto;
+    transform: none;
+    width: min(400px, 38vw);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+  }
+  /* the row itself must flex, or the icons stack under the search field */
+  .topRow { display: flex; flex-direction: row; align-items: center; gap: 6px; pointer-events: auto; }
+  .topSearch { height: 42px; font-size: 12.5px; }
+  .topChip   { width: 42px; height: 42px; }
+  .countStrip { align-self: flex-start; }
+  .topArea { width: min(520px, 44vw); }
+
+  .topSearch {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 50px;
+    padding: 0 18px;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);
+    box-shadow: var(--glass-shadow-nav);
+    color: rgba(var(--ink-rgb), 0.62);
+    cursor: text;
+    overflow: visible;
+  }
+  .topSearch > svg { width: 17px; height: 17px; margin-right: 12px; flex: none; }
+  .topInput {
+    flex: 1; min-width: 0; height: 100%; padding: 0;
+    border: none; background: transparent; outline: none;
+    font-family: var(--font-mono); font-size: 14px; line-height: 1;
+    color: var(--text-strong);
+  }
+  .topSearch .hintText {
+    left: 47px;                     /* 18 padding + 17 icon + 12 margin */
+    font-size: 14px;
+  }
+
+  .topChip {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    flex: none;
+    padding: 0;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);     /* round, matching the design language */
+    box-shadow: var(--glass-shadow-nav);
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    outline: none;
+    transition: color 0.18s, background 0.18s;
+  }
+  .topChip:hover { color: rgba(var(--ink-rgb), 0.95); }
+  .topChip svg { width: 19px; height: 19px; }
+  .topChipOn { color: #0a0f14; background: var(--green);
+  color: #05070c; border-color: var(--green); }
+  .topSearch { height: 44px; }
+  .topChip   { width: 44px; height: 44px; }
+  .tab, .live { min-height: 44px; }
   .profileChip {
     position: fixed !important;   /* .topChip sizing rules were winning */
     top: 16px !important;
@@ -904,13 +826,6 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
     height: 50px !important;
   }
   .profileChip .avatarImg { width: 28px; height: 28px; border-radius: 50%; }
-}
-
-/* Profile: a fixed top-right button on desktop (rendered OUTSIDE .topArea,
-   whose transform would otherwise become its containing block), and the inline
-   chip on mobile. Exactly one is visible per breakpoint. */
-.profileTop { display: none; }
-@media (min-width: 641px) {
   .profileTop {
     display: grid;
     place-items: center;
@@ -937,16 +852,92 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 }
 body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
 /* Mobile: keep the top chips square — they were stretching to an ellipse. */
-@media (max-width: 640px) {
-  .topChip { width: 34px !important; height: 34px !important; flex: 0 0 34px !important; aspect-ratio: 1 / 1; padding: 0 !important; }
-  .topChip svg { width: 15px; height: 15px; }
-  .profileChip .avatarImg { width: 22px; height: 22px; }
-}
+
 
 /* Mobile chips must be perfect circles. They were rendering 34x42 because the
    flex row stretched them to the search field's height — width came from my
    rule, height came from the stretch. Pin both and stop the stretch. */
 @media (max-width: 640px) {
+  .topArea {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 12px;
+    right: 12px;                    /* full width — the profile now lives in the bar */
+    z-index: 10000;                 /* above the session-error banner (z 9999),
+                                       which otherwise swallowed every tap here */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;           /* children re-enable */
+  }
+  .topRow { display: flex; gap: 6px; pointer-events: auto; }
+  .topSearch {
+    /* position stays relative — .hintText is absolutely positioned inside it */
+    flex: 1;
+    right: auto; left: auto; top: auto;
+    height: 42px;                   /* fixed — only the TEXT animates, never the box */
+    overflow: visible;              /* the results dropdown hangs BELOW the field —
+                                       overflow:hidden was clipping it to a glitchy sliver */
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .popMenu { right: 0; left: auto; transform: none; }
+  .topChip {
+    display: grid; place-items: center;
+    width: 42px; min-height: 42px; flex: none;
+    background: var(--glass-fill);
+    backdrop-filter: var(--glass-blur-lg);
+    -webkit-backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-line);
+    border-top-color: var(--glass-gloss);
+    border-radius: var(--r-pill);
+    color: rgba(var(--ink-rgb), 0.6);
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s;
+  }
+  .topChipOn { color: #0a0f14; background: var(--green);
+  color: #05070c; border-color: var(--green); }
+  .countStrip {
+    display: inline-flex; align-items: center; gap: 6px;
+    align-self: flex-start;
+    pointer-events: none;
+    padding: 4px 10px;
+    background: rgba(var(--surface-rgb), 0.55);
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(var(--ink-rgb), 0.75);
+  }
+  .countDot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22ef7e; box-shadow: 0 0 6px rgba(34, 239, 126, 0.6);
+  }
+  /* layer filters live next to search now — drop them from the bar */
+  .layerTab { display: none; }
+  .topSearch, .topChip { height: 40px; }
+  .topChip { width: 40px; }
+ .profileTop { width: 40px; height: 40px; top: calc(12px + env(safe-area-inset-top, 0px)); } 
+  .countStrip {
+    height: 34px !important;
+    padding: 0 9px 0 5px !important;
+    gap: 6px !important;
+    border-radius: 8px !important;
+  }
+  .radar { width: 24px !important; height: 24px !important; }
+  .radar::after { inset: 4px; }
+  .countNum  { font-size: 11px; }
+  .countWord { font-size: 6.5px; letter-spacing: 0.1em; }
+  .topSearch { flex: 1 1 auto; min-width: 0; }
+  .topRow { gap: 5px; }
+  .topChip { width: 38px !important; height: 38px !important; }
+  .topSearch { height: 38px !important; padding: 0 10px !important; }
+  .topSearch > svg { width: 14px; height: 14px; margin-right: 7px; }
+  .topSearch .hintText { left: 31px; font-size: 11.5px; }
+  .topInput { font-size: 11.5px; }
+  .profileChip .avatarImg { width: 24px; height: 24px; border-radius: 50%; }
+  .topChip { width: 34px !important; height: 34px !important; flex: 0 0 34px !important; aspect-ratio: 1 / 1; padding: 0 !important; }
+  .topChip svg { width: 15px; height: 15px; }
+  .profileChip .avatarImg { width: 22px; height: 22px; }
   .topRow { align-items: center; }
   .topChip,
   .topChipWrap > .topChip,
