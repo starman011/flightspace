@@ -955,3 +955,10 @@ body[data-modal-open] .profileTop { opacity: 0; pointer-events: none; }
   }
   .topChipWrap { align-self: center; }
 }
+
+/* The scan panel is a BUTTON — it must receive taps. .topArea is
+   pointer-events:none so the globe stays draggable through the gaps, and each
+   interactive child re-enables itself; the radar/scan panel was missing that,
+   so tapping it did nothing. */
+.countStrip { pointer-events: auto !important; }
+.topGone .countStrip { pointer-events: none !important; }
