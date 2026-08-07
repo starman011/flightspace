@@ -275,15 +275,27 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           const { publicKey } = await kr.json()
           const sub = await reg.pushManager.getSubscription()
             || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(publicKey) })
+          // Flat fields — the API expects endpoint/key_p256dh/key_auth, NOT a
+          // nested `subscription` object. Sending the nested shape returned
+          // 400 "missing required fields", which the catch below swallowed, so
+          // alerts silently degraded to tab-only. Matches usePushNotifications.
+          const k = sub.toJSON().keys
           await fetch(`${API}/api/v1/push/subscribe`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscription: sub, launch_id: target }),
+            credentials: 'include',
+            body: JSON.stringify({
+              endpoint: sub.endpoint,
+              key_p256dh: k.p256dh,
+              key_auth: k.auth,
+              launch_id: target,
+            }),
           })
         } else {
           const sub = await reg.pushManager.getSubscription()
           if (sub) {
             await fetch(`${API}/api/v1/push/unsubscribe`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({ endpoint: sub.endpoint, launch_id: target }),
             })
           }
