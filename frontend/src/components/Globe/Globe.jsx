@@ -32,6 +32,7 @@ import { createMoonScene } from './MoonScene.js'
 import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { segmentOccludedBySphere } from './pickOcclusion.js'
+import { DETENTS_KM, distForKm, kmForDist, nearestDetent, rotateSpeedForAltitude } from './zoomDetents.js'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
 import { SKY_OBJECTS } from './skyObjects.js'
@@ -913,6 +914,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   const [mapStyle, setMapStyle] = useState('satellite')
   const mapStyleRef = useRef('satellite')
   const [cameraInfo, setCameraInfo] = useState({ altM: null, scaleLabel: '', scaleBarPx: 80 })
+  // Bumped each time the camera lands on a zoom detent. `n` is what replays the
+  // flash — it keys the readout, so React remounts it and the CSS animation
+  // restarts even when you land on the same rung twice.
+  const [detent, setDetent] = useState(null)  // { km, n }
   const [cameraScale, setCameraScale] = useState('earth')   // 'earth' | 'solar'
   const [moonTransit, setMoonTransit] = useState(false)  // warp overlay during Moon flight
   const [hoverTooltip, setHoverTooltip] = useState(null)  // { x, y, data }
@@ -2450,8 +2455,25 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     // ── Render loop ──────────────────────────────────────────────────
     let raf
     let lastSunUpdate = 0
+    // ── Zoom detents ──────────────────────────────────────────────────────
+    // Free zoom gave no sense of scale: you slid from orbit to rooftop with
+    // nothing marking the transitions, so altitude never registered. Snap to
+    // an altitude ladder instead, so each stop reads as a place you arrived
+    // at rather than a number sliding past.
+    let _zoomIdleAt  = 0    // wheel/pinch quiet deadline
+    let _snapFrom    = 0
+    let _snapTo      = 0
+    let _snapStart   = 0    // 0 = no tween running
+    let _dwellUntil  = 0    // hold at the stop so it's felt, not just passed
+    let _lastDetent  = -1
+    let _prevZoomDist = camera.position.length()
+
     const tick = () => {
       raf = requestAnimationFrame(tick)
+
+      // Drag response has to shrink with altitude or a normal drag near the
+      // ground whips across whole countries. See zoomDetents.js for why.
+      controls.rotateSpeed = rotateSpeedForAltitude(camera.position.length() - 1)
       // ── Satellite pulsing glow ──────────────────────────────────────
       // Satellites sit very high up and read as tiny dots; pulse their
       // opacity so users can spot where they are (esp. the Starlink filter).
@@ -2864,6 +2886,53 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // Skip orbit controls when AR mode is driving the camera
+      // ── Zoom detent snap ──────────────────────────────────────────────
+      // Skipped while a flyTo tween, plane tracking or AR owns the camera —
+      // those set position themselves and a detent would fight them.
+      if (!int.current.flyToTarget && !int.current.trackingId && !arController.isActive()) {
+        const _now  = Date.now()
+        const _dCur = camera.position.length()
+
+        if (_snapStart) {
+          const _t = Math.min((_now - _snapStart) / 420, 1)
+          const _e = 1 - Math.pow(1 - _t, 3)          // ease-out, arrives calm
+          camera.position.normalize().multiplyScalar(_snapFrom + (_snapTo - _snapFrom) * _e)
+          if (_t >= 1) {
+            _snapStart  = 0
+            _dwellUntil = _now + 200
+          }
+        } else if (_now < _dwellUntil) {
+          // Held at the stop. Zoom stays disabled through the dwell so input
+          // is swallowed rather than banked up and released as a jump.
+          camera.position.normalize().multiplyScalar(_snapTo)
+        } else {
+          if (!controls.enableZoom) controls.enableZoom = true
+
+          if (Math.abs(_dCur - _prevZoomDist) > 2e-6) {
+            _zoomIdleAt = _now + 170                  // still zooming (or gliding)
+          } else if (_zoomIdleAt && _now >= _zoomIdleAt) {
+            _zoomIdleAt = 0
+            // Nearest rung in LOG space: altitude spans five decades, so a
+            // linear nearest would collapse everything under 500 km onto one
+            // rung and make the low ladder unreachable.
+            const _best   = nearestDetent(kmForDist(_dCur))
+            const _target = distForKm(DETENTS_KM[_best])
+            if (Math.abs(_target - _dCur) > 1e-5) {
+              _snapFrom = _dCur
+              _snapTo   = _target
+              _snapStart = _now
+              controls.enableZoom = false
+            }
+            if (_best !== _lastDetent) {
+              _lastDetent = _best
+              navigator.vibrate?.(8)
+              int.current.onDetent?.(DETENTS_KM[_best])
+            }
+          }
+        }
+        _prevZoomDist = camera.position.length()
+      }
+
       if (!arController.isActive()) controls.update()
       clouds.rotation.y += 0.000022
 
@@ -3329,6 +3398,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
   }, [onInteract])
 
   useEffect(() => {
+    if (int.current) int.current.onDetent = (km) => setDetent(d => ({ km, n: (d?.n || 0) + 1 }))
+  }, [])
+
+  useEffect(() => {
     if (!int.current) return
     const wasTracking = int.current.trackingId != null
     int.current.trackingId = trackingId ?? null
@@ -3538,7 +3611,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         <div className={styles.cameraHud}>
           <div className={styles.hudAlt}>
             <span className={styles.hudLabel}>ALT</span>
-            <span className={styles.hudValue}>{cameraInfo.altLabel}</span>
+            <span
+              key={detent?.n || 0}
+              className={`${styles.hudValue} ${detent ? styles.hudValueDetent : ''}`}
+            >
+              {cameraInfo.altLabel}
+            </span>
           </div>
           <div className={styles.hudScaleWrap}>
             <div className={styles.hudScaleBar} style={{ transform: `scaleX(${(cameraInfo.scaleBarPx / 80).toFixed(3)})` }} />
