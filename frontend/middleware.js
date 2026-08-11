@@ -15,18 +15,49 @@ import { airlineFromCs, aircraftName } from './src/data/flightLabels.js'
 const API  = 'https://api.objecttracer.com'
 const SITE = 'https://www.objecttracer.com'
 
+// ── Upstream deadline ────────────────────────────────────────────────────────
+// The Edge runtime gives fetch NO default timeout. An upstream that accepts the
+// connection and then stalls will hang the whole invocation until Vercel kills
+// it with MIDDLEWARE_INVOCATION_TIMEOUT — which the visitor sees as a 504, even
+// though every other call on the page succeeded in under 300ms.
+//
+// A deadline is strictly better than a 504 here: every renderer already treats
+// missing upstream data as "render the page without that section", so a slow
+// API costs one section, not the page.
+const UPSTREAM_MS = 3000
+const BOT_HDR     = { 'x-render': 'bot' }
+
+function apiFetch(url, headers = BOT_HDR, ms = UPSTREAM_MS) {
+  return fetch(url, { headers, signal: AbortSignal.timeout(ms) })
+}
+
 // Full 930-airport lookup (name, city, lat/lon, tier) for content on every page
 const AIRPORT_FULL = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 // Deterministic per-page sibling selection: each page links a DIFFERENT slice
 // of the catalog (seeded by its own slug), so the internal link graph reaches
 // all 930 airports / 44 airlines instead of the same 10 hubs from every page.
 function seedHash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h }
-function rotatePick(arr, seed, n) {
-  if (!arr.length) return []
-  const start = seed % arr.length, step = (seed % 37) + 7
+function gcd(a, b) { while (b) { const t = a % b; a = b; b = t } return a }
+export function rotatePick(arr, seed, n) {
+  const len = arr.length
+  if (!len) return []
+  const start = seed % len
+  // The walk (start + i*step) % len reaches only len / gcd(step, len) distinct
+  // indices. The old loop spun until it had min(n, len) of them, so whenever
+  // that was more than the walk could reach it never terminated — a pure
+  // synchronous infinite loop, no upstream involved. /airport/AUH hit exactly
+  // this (pool of 8, n=6, step=22 → gcd 2 → only 4 reachable) and every
+  // request to it burned the invocation until Vercel returned
+  // MIDDLEWARE_INVOCATION_TIMEOUT. Forcing step coprime with len turns the
+  // walk into a full permutation, so all len indices are reachable.
+  let step = (seed % 37) + 7
+  while (gcd(step, len) !== 1) step++
+  const want = Math.min(n, len)
   const out = [], used = new Set()
-  for (let i = 0; out.length < Math.min(n, arr.length); i++) {
-    const idx = (start + i * step) % arr.length
+  // i < len is a second, independent guarantee of termination: even if the
+  // coprime step above were ever wrong, this cannot spin.
+  for (let i = 0; i < len && out.length < want; i++) {
+    const idx = (start + i * step) % len
     if (!used.has(idx)) { used.add(idx); out.push(arr[idx]) }
   }
   return out
@@ -133,8 +164,8 @@ async function renderFlight(raw) {
   if (!icao24) return
 
   const [detailRes, routeRes] = await Promise.allSettled([
-    fetch(`${API}/api/v1/aircraft/${icao24}`, { headers: { 'x-render': 'bot' } }),
-    fetch(`${API}/api/v1/aircraft/${icao24}/route`, { headers: { 'x-render': 'bot' } }),
+    apiFetch(`${API}/api/v1/aircraft/${icao24}`),
+    apiFetch(`${API}/api/v1/aircraft/${icao24}/route`),
   ])
 
   let detail = null
@@ -222,8 +253,8 @@ async function renderAirport(iata) {
   if (!iata || iata.length < 3 || iata.length > 4) return
 
   const [arrRes, depRes] = await Promise.allSettled([
-    fetch(`${API}/api/v1/airports/${iata}/arrivals`,   { headers: { 'x-render': 'bot' } }),
-    fetch(`${API}/api/v1/airports/${iata}/departures`, { headers: { 'x-render': 'bot' } }),
+    apiFetch(`${API}/api/v1/airports/${iata}/arrivals`),
+    apiFetch(`${API}/api/v1/airports/${iata}/departures`),
   ])
 
   let arrivals   = []
@@ -414,9 +445,7 @@ async function renderAirline(slug) {
   // Search for all currently tracked flights for this airline by ICAO prefix
   let flights = []
   try {
-    const res = await fetch(`${API}/api/v1/aircraft/search?q=${airline.icao}&limit=50`, {
-      headers: { 'x-render': 'bot' },
-    })
+    const res = await apiFetch(`${API}/api/v1/aircraft/search?q=${airline.icao}&limit=50`)
     if (res.ok) {
       const data = await res.json()
       flights = Array.isArray(data) ? data : (data.results || data.aircraft || [])
@@ -540,7 +569,7 @@ function renderPastLaunch(slug) {
 async function renderLaunch(slug) {
   let launches = []
   try {
-    const res = await fetch(`${API}/api/v1/launches`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/launches`)
     if (res.ok) {
       const data = await res.json()
       launches = [...(data.upcoming || []), ...(data.recent || [])]
@@ -689,7 +718,7 @@ function asteroidSlug(name) {
 async function renderAsteroid(slug) {
   let asteroids = []
   try {
-    const res = await fetch(`${API}/api/v1/asteroids`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/asteroids`)
     if (res.ok) {
       const data = await res.json()
       asteroids = Array.isArray(data) ? data : (data.asteroids || data.data || [])
@@ -875,7 +904,7 @@ async function renderCity(slug) {
   // Fetch arrivals for the first airport to show live flights
   let flights = []
   try {
-    const res = await fetch(`${API}/api/v1/airports/${iataList[0]}/arrivals`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/airports/${iataList[0]}/arrivals`)
     if (res.ok) {
       const d = await res.json()
       flights = Array.isArray(d) ? d : (d.arrivals || [])
@@ -1605,9 +1634,9 @@ async function renderISS() {
 
   // Fetch position, crew, and stream in parallel
   const [posRes, crewRes, streamRes] = await Promise.allSettled([
-    fetch(`${API}/api/v1/aircraft/ISS`, { headers: { 'x-render': 'bot' } }),
-    fetch(`${API}/api/v1/iss/crew`,     { headers: { 'x-render': 'bot' } }),
-    fetch(`${API}/api/v1/iss/stream`,   { headers: { 'x-render': 'bot' } }),
+    apiFetch(`${API}/api/v1/aircraft/ISS`),
+    apiFetch(`${API}/api/v1/iss/crew`),
+    apiFetch(`${API}/api/v1/iss/stream`),
   ])
 
   let pos = null, crewData = null, stream = null
@@ -1731,7 +1760,7 @@ async function renderISS() {
 async function renderLaunchSitemap() {
   let launches = []
   try {
-    const res = await fetch(`${API}/api/v1/launches`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/launches`)
     if (res.ok) {
       const data = await res.json()
       launches = [...(data.upcoming || []), ...(data.recent || [])]
@@ -1767,7 +1796,7 @@ async function renderBlogFeed() {
   try {
     // limit=50 matches the sitemap (backend caps at 50) — the old 30 left the
     // 20 oldest sitemap posts unreachable from any HTML page
-    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/blog?limit=50`)
     if (res.ok) { const d = await res.json(); posts = d.posts || [] }
   } catch (_) {}
 
@@ -1882,7 +1911,7 @@ function relatedBlogHtml(p, all) {
 async function renderEngineeringFeed() {
   let posts = []
   try {
-    const res = await fetch(`${API}/api/v1/blog?limit=50&category=engineering`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/blog?limit=50&category=engineering`)
     if (res.ok) { const d = await res.json(); posts = d.posts || [] }
   } catch (_) {}
 
@@ -1912,8 +1941,8 @@ async function renderBlogPost(slug) {
   let p = null, allPosts = []
   try {
     const [pr, lr] = await Promise.all([
-      fetch(`${API}/api/v1/blog/${encodeURIComponent(slug)}`, { headers: { 'x-render': 'bot' } }),
-      fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } }),
+      apiFetch(`${API}/api/v1/blog/${encodeURIComponent(slug)}`),
+      apiFetch(`${API}/api/v1/blog?limit=50`),
     ])
     if (pr.ok) p = await pr.json()
     if (lr.ok) { const d = await lr.json(); allPosts = d.posts || [] }
@@ -2061,7 +2090,7 @@ function blogVideoEmbed(url) {
 async function renderBlogSitemap() {
   let posts = []
   try {
-    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/blog?limit=50`)
     if (res.ok) { const d = await res.json(); posts = d.posts || [] }
   } catch (_) {}
   const urls = posts.map(p =>
@@ -2074,7 +2103,7 @@ async function renderBlogSitemap() {
 async function renderBlogRSS() {
   let posts = []
   try {
-    const res = await fetch(`${API}/api/v1/blog?limit=50`, { headers: { 'x-render': 'bot' } })
+    const res = await apiFetch(`${API}/api/v1/blog?limit=50`)
     if (res.ok) { const d = await res.json(); posts = d.posts || [] }
   } catch (_) {}
   const items = posts.map(p => {
@@ -2119,21 +2148,54 @@ function ogImageUrl(title, subtitle, badge) {
 // ── SPA asset tags — fetched from the deployed shell, cached per edge isolate ──
 // Vite hashes bundle names each deploy; reading them from the live /index.html
 // keeps SSR pages pointing at the current bundles without a build-time coupling.
-let _spaAssets = { tags: '', at: 0 }
+// This is a SELF-request: middleware running on www.objecttracer.com fetching
+// www.objecttracer.com. It leaves the isolate, crosses the edge network and
+// comes back, so it is the slowest thing on the page and the one most likely
+// to stall under crawler load — and because it is same-host it does NOT show
+// up in Vercel's "External APIs" panel, which is why /airport/AUH could 504
+// while its only two logged calls both finished in under 300ms.
+//
+// Three guards, in order of importance:
+//   1. A deadline, so a stall can never consume the whole invocation.
+//   2. Stale-while-revalidate — once we have tags, we never block on this
+//      again; the refresh lands for a later request.
+//   3. In-flight dedupe, so a burst on one isolate fires one request, not one
+//      per visitor.
+// Net effect: at most the FIRST request per isolate can wait on this, and
+// that one is bounded.
+const SHELL_MS = 1500
+let _spaAssets  = { tags: '', at: 0 }
+let _spaInflight = null
+
+async function refreshSpaAssets() {
+  try {
+    const res = await fetch(`${SITE}/index.html`, {
+      headers: { 'x-mw-internal': '1' },
+      signal: AbortSignal.timeout(SHELL_MS),
+    })
+    if (res.ok) {
+      const shell = await res.text()
+      const tags = [
+        ...(shell.match(/<link rel="stylesheet"[^>]*>/g) || []),
+        ...(shell.match(/<link rel="modulepreload"[^>]*>/g) || []),
+        ...(shell.match(/<script type="module"[^>]*><\/script>/g) || []),
+      ].join('\n  ')
+      if (tags) _spaAssets = { tags, at: Date.now() }
+    }
+  } catch (_) { /* SSR page still works as a plain document */ }
+  _spaInflight = null
+  return _spaAssets.tags
+}
+
+// Stays async so it ALWAYS returns a promise — one caller uses .then() rather
+// than await, and returning a bare string there would throw. The cached paths
+// resolve on the next microtask, with no network involved.
 async function spaAssets() {
   if (_spaAssets.tags && Date.now() - _spaAssets.at < 300_000) return _spaAssets.tags
-  try {
-    const res = await fetch(`${SITE}/index.html`, { headers: { 'x-mw-internal': '1' } })
-    if (!res.ok) return _spaAssets.tags
-    const shell = await res.text()
-    const tags = [
-      ...(shell.match(/<link rel="stylesheet"[^>]*>/g) || []),
-      ...(shell.match(/<link rel="modulepreload"[^>]*>/g) || []),
-      ...(shell.match(/<script type="module"[^>]*><\/script>/g) || []),
-    ].join('\n  ')
-    if (tags) _spaAssets = { tags, at: Date.now() }
-  } catch (_) { /* SSR page still works as a plain document */ }
-  return _spaAssets.tags
+  if (!_spaInflight) _spaInflight = refreshSpaAssets()
+  // Stale tags in hand → serve them now, let the refresh land for next time.
+  // Only a cold isolate with nothing cached actually awaits the network.
+  return _spaAssets.tags || _spaInflight
 }
 
 async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverride) {
