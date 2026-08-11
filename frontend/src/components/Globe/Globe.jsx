@@ -33,6 +33,7 @@ import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { segmentOccludedBySphere } from './pickOcclusion.js'
 import { DETENTS_KM, distForKm, kmForDist, nearestDetent, rotateSpeedForAltitude } from './zoomDetents.js'
+import { tapHaptic } from '../../utils/haptics.js'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
 import { SKY_OBJECTS } from './skyObjects.js'
@@ -1351,7 +1352,29 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     controls.enablePan       = false
     controls.minDistance     = 1.00002   // ~127 m altitude → zoom 18 tiles (~0.6 m/px)
     controls.maxDistance     = 8
-    controls.zoomSpeed       = 0.7       // applies to both mouse wheel and trackpad pinch
+    // ── Altitude-multiplicative zoom ───────────────────────────────────────
+    // OrbitControls dollies by scaling distance from the Earth's CENTRE. Near
+    // the surface that quantity is ~1.0 regardless of altitude, so a notch
+    // meant wildly different things at different heights: at 127 m (d=1.00002)
+    // one notch in multiplied d by ~0.95, landing inside the planet — clamped,
+    // so zoom-in simply stalled — while one notch out took you from 127 m to
+    // 336 km. Scale ALTITUDE instead, so a notch is the same proportional step
+    // everywhere. Detents then land on the ladder from any starting height.
+    controls.enableZoom = false
+    const H_MIN = controls.minDistance - 1
+    const H_MAX = controls.maxDistance - 1
+    let _zoomLocked = false   // held true through a detent snap + dwell
+
+    // Unset until a scale is first chosen, so it has to default to earth or
+    // zoom would be dead on the initial view.
+    const isEarthScale = () => (int.current.targetCameraScale || 'earth') === 'earth'
+
+    const zoomByFactor = (f) => {
+      if (_zoomLocked || int.current.flyToTarget) return
+      const h    = Math.max(camera.position.length() - 1, H_MIN)
+      const next = Math.min(H_MAX, Math.max(H_MIN, h * f))
+      camera.position.normalize().multiplyScalar(1 + next)
+    }
     controls.autoRotate      = true
     controls.autoRotateSpeed = 0.18
     renderer.domElement.addEventListener('pointerdown', () => {
@@ -1361,12 +1384,39 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // doesn't fight the gesture; it eases back onto the plane afterward.
       if (int.current.trackingId) int.current.trackPausedUntil = Date.now() + 2500
     })
-    renderer.domElement.addEventListener('wheel', () => {
+    renderer.domElement.addEventListener('wheel', (e) => {
       int.current.onInteract?.()
       // Pause tracking while zooming (extended on each wheel tick) → smooth zoom,
       // then ease back. This is what removes the zoom lag while following a plane.
       if (int.current.trackingId) int.current.trackPausedUntil = Date.now() + 1500
+      if (!isEarthScale()) return
+      e.preventDefault()
+      // Exponential in deltaY so trackpad (many small deltas) and mouse wheel
+      // (few large ones) accumulate to the same total zoom.
+      zoomByFactor(Math.exp(e.deltaY * 0.0016))
+    }, { passive: false })
+
+    // Two-finger pinch. OrbitControls' own pinch handling went out with
+    // enableZoom, but its two-finger ROTATE still works, so this only has to
+    // supply the dolly component — in altitude, same as the wheel.
+    let _pinchPrev = 0
+    const touchSpan = (t) => Math.hypot(
+      t[0].clientX - t[1].clientX,
+      t[0].clientY - t[1].clientY,
+    )
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) _pinchPrev = touchSpan(e.touches)
     }, { passive: true })
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 2 || !isEarthScale()) return
+      const span = touchSpan(e.touches)
+      // Fingers spreading → span grows → factor < 1 → altitude drops → zoom in.
+      if (_pinchPrev > 0 && span > 0) zoomByFactor(_pinchPrev / span)
+      _pinchPrev = span
+    }, { passive: true })
+    const endPinch = () => { _pinchPrev = 0 }
+    renderer.domElement.addEventListener('touchend', endPinch, { passive: true })
+    renderer.domElement.addEventListener('touchcancel', endPinch, { passive: true })
 
     // Galaxy FOV zoom — scroll/pinch changes field of view for sky zoom
     const galaxyWheel = (e) => {
@@ -1986,8 +2036,10 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // Fade out tiles smoothly when zoomed out past threshold
         for (const [key, t] of tileCache) {
           if (!t) { tileCache.delete(key); continue }
+          // No needsUpdate: opacity is a live uniform on an already-transparent
+          // material. Setting it bumps material.version and forces the renderer
+          // to re-derive the shader program for this tile every frame.
           t.mat.opacity = Math.max(0, t.mat.opacity - 0.03)
-          t.mat.needsUpdate = true
           // Dispose fully-transparent tiles
           if (t.mat.opacity <= 0) {
             scene.remove(t.mesh); t.geo.dispose(); t.mat.dispose(); tileCache.delete(key)
@@ -1998,12 +2050,13 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       inTileMode = true
 
       // ── Per-frame opacity ramp: fade newly-loaded tiles in smoothly ─────
-      // Runs every call (not throttled) so fade feels continuous.
+      // Runs every call (not throttled) so fade feels continuous. This is the
+      // only fade-in loop; the tick loop used to run a second, identical pass
+      // over the same cache every frame.
       for (const [, t] of tileCache) {
-        if (!t || t.targetOpacity == null) continue
+        if (!t || t.targetOpacity == null || !t.mat.map) continue
         if (t.mat.opacity < t.targetOpacity) {
           t.mat.opacity = Math.min(t.targetOpacity, t.mat.opacity + 0.08)
-          t.mat.needsUpdate = true
         }
       }
 
@@ -2473,7 +2526,12 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       // Drag response has to shrink with altitude or a normal drag near the
       // ground whips across whole countries. See zoomDetents.js for why.
-      controls.rotateSpeed = rotateSpeedForAltitude(camera.position.length() - 1)
+      // Earth only — the other scales set their own fixed rate further down.
+      // Same `|| 'earth'` default as targetScale below: it is unset until a
+      // scale is first chosen, so a strict === would skip the initial view.
+      if ((int.current.targetCameraScale || 'earth') === 'earth') {
+        controls.rotateSpeed = rotateSpeedForAltitude(camera.position.length() - 1)
+      }
       // ── Satellite pulsing glow ──────────────────────────────────────
       // Satellites sit very high up and read as tiny dots; pulse their
       // opacity so users can spot where they are (esp. the Starlink filter).
@@ -2851,27 +2909,28 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         skyDetail.clear()
       }
 
-      // ── Dynamic rotate + zoom speed — logarithmic scale with altitude ────────
-      // At low altitude (street/airport zoom), the globe must feel stiff and
-      // precise — a tiny drag should move slowly, not fling across continents.
+      // ── Damping feel ────────────────────────────────────────────────────
+      // rotateSpeed for earth is set once at the top of the tick from
+      // rotateSpeedForAltitude(). It used to be recomputed here too, from a
+      // separate hand-tuned curve, and because this block runs later it won
+      // — so the altitude scaling above had no effect at all. One source of
+      // truth now; only damping is tuned per-altitude here.
       if (targetScale === 'earth') {
         const dist = camera.position.length()
         const MIN_D = 1.00002, MAX_D = 8.0
         const t = Math.max(0, Math.min(1,
           Math.log(dist / MIN_D) / Math.log(MAX_D / MIN_D)
         ))
-        // Rotate/zoom — touch devices are slower only at low altitude (t<0.3),
-        // converge to desktop speed at orbit so zoomed-out feel stays fast.
-        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-        const touchDamp = isTouch ? MathUtils.clamp(1 - (1 - t) * 0.6, 0.4, 1) : 1
-        // Feel tuning. dampingFactor in OrbitControls is response strength:
-        // ~0.9 applies almost the whole delta each frame, so motion snaps with
-        // no inertia and any dropped frame reads as a stutter. Lower values
-        // carry velocity across frames, which glides and hides jitter.
-        // The old rotate floor (0.008) also made a zoomed-out drag barely move.
-        controls.rotateSpeed   = (0.06 + Math.pow(t, 1.5) * 0.32) * touchDamp
-        controls.zoomSpeed     = (0.10 + t * 0.62) * touchDamp
+        // dampingFactor in OrbitControls is response strength: ~0.9 applies
+        // almost the whole delta each frame, so motion snaps with no inertia
+        // and any dropped frame reads as a stutter. Lower values carry
+        // velocity across frames, which glides and hides jitter.
         controls.dampingFactor = 0.16 + t * 0.10
+        // Re-assert every frame: the solar and default branches below turn
+        // OrbitControls' own dolly back on, so without this, visiting another
+        // scale and returning to Earth would restore the centre-distance zoom
+        // that this replaced.
+        controls.enableZoom = false
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55
@@ -2902,11 +2961,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
             _dwellUntil = _now + 200
           }
         } else if (_now < _dwellUntil) {
-          // Held at the stop. Zoom stays disabled through the dwell so input
-          // is swallowed rather than banked up and released as a jump.
+          // Held at the stop. Zoom stays locked through the dwell so input is
+          // swallowed rather than banked up and released as a jump.
           camera.position.normalize().multiplyScalar(_snapTo)
         } else {
-          if (!controls.enableZoom) controls.enableZoom = true
+          _zoomLocked = false
 
           if (Math.abs(_dCur - _prevZoomDist) > 2e-6) {
             _zoomIdleAt = _now + 170                  // still zooming (or gliding)
@@ -2921,11 +2980,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
               _snapFrom = _dCur
               _snapTo   = _target
               _snapStart = _now
-              controls.enableZoom = false
+              _zoomLocked = true
             }
             if (_best !== _lastDetent) {
               _lastDetent = _best
-              navigator.vibrate?.(8)
+              tapHaptic()
               int.current.onDetent?.(DETENTS_KM[_best])
             }
           }
@@ -2973,18 +3032,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       // Skip tile loading in non-Earth views
       if (targetScale === 'earth') updateTiles()
 
-      // ── Smooth tile fade-in: ramp loaded tiles from 0 → target over ~200ms ──
-      // Only fade in when in tile mode (not when tiles are fading out).
-      if (inTileMode) {
-        for (const [, t] of tileCache) {
-          if (!t || !t.mat.map) continue
-          const target = t.isParent ? 0.88 : 1.0
-          if (t.mat.opacity < target) {
-            t.mat.opacity = Math.min(target, t.mat.opacity + 0.08)
-            t.mat.needsUpdate = true
-          }
-        }
-      }
+      // Tile fade-in is handled inside updateTiles() above — a second pass over
+      // the same cache here was doing the identical ramp twice per frame.
 
       // ── Place markers + airport/port labels ────────────────────────────
       // City dots: faint markers visible from regional zoom (tiles handle city names)

@@ -48,13 +48,28 @@ export function nearestDetent(altKm, ladder = DETENTS_KM) {
  * altitude — so near the surface a normal drag whipped across whole countries.
  * Screen-space travel is proportional to altitude, hence the scaling.
  *
- * The 0.8 exponent softens a strict 1:1 mapping. Pure proportionality is
- * physically "correct" but makes low-altitude travel feel stuck, since you'd
- * need dozens of drags to cross a city. At the top of the range (h = 7, the
- * maxDistance of 8) this returns 1.0, preserving the high-altitude feel that
- * users already reported as good.
+ * The exponent is exactly 1. Anything less makes the drag progressively too
+ * fast as you descend, which is the bug this is fixing: at 0.8, a drag at
+ * 100 km covered 4.2x more screen than the same drag from orbit. Strict
+ * proportionality is what makes response *uniform* at every altitude, which is
+ * the entire goal. At h = 7 (maxDistance 8) this returns 1.0, so the
+ * high-altitude feel that already worked is preserved exactly.
+ *
+ * `topSpeed` is the rate at the top of the range (h = ref), and 0.38 is not
+ * arbitrary: it is what the previous hand-tuned curve
+ * `0.06 + t^1.5 * 0.32` produced at full altitude, which is the feel users
+ * reported as good. Everything below scales down linearly from it.
+ *
+ * That old curve is what this replaces. Its floor term of 0.06 meant the
+ * *slowest* it ever got was 0.06 — at 127 m altitude the correct rate is
+ * ~1.1e-6, so it was roughly 55,000x too fast at the bottom of the range,
+ * which is why drag near the ground flung across continents.
+ *
+ * The floor here exists only to keep the value positive. It must stay below
+ * the speed at minimum altitude or it silently pins low-altitude drag to a
+ * fixed rate, reintroducing the same class of bug.
  */
-export function rotateSpeedForAltitude(h, { ref = 7, exponent = 0.8, min = 3e-5, max = 1 } = {}) {
-  const safe = Math.max(h, 1e-7)
-  return Math.min(max, Math.max(min, Math.pow(safe / ref, exponent)))
+export function rotateSpeedForAltitude(h, { ref = 7, topSpeed = 0.38, exponent = 1, min = 1e-9 } = {}) {
+  const safe = Math.max(h, 0)
+  return Math.max(min, Math.min(topSpeed, topSpeed * Math.pow(safe / ref, exponent)))
 }

@@ -67,9 +67,10 @@ describe('distForKm / kmForDist', () => {
 
 describe('rotateSpeedForAltitude', () => {
   it('preserves the high-altitude feel that already worked', () => {
-    // h = 7 is maxDistance 8 minus the Earth radius. This was the implicit
-    // constant 1.0 before, and users reported it as good.
-    expect(rotateSpeedForAltitude(7)).toBeCloseTo(1, 6)
+    // h = 7 is maxDistance 8 minus the Earth radius. The previous hand-tuned
+    // curve (0.06 + t^1.5 * 0.32) produced 0.38 there, and that is the feel
+    // users reported as good — so the top of the range must still be 0.38.
+    expect(rotateSpeedForAltitude(7)).toBeCloseTo(0.38, 9)
   })
 
   it('is dramatically slower near the ground — the actual bug', () => {
@@ -91,17 +92,29 @@ describe('rotateSpeedForAltitude', () => {
     for (const h of [-1, 0, 1e-9, 7, 50, 1e6]) {
       const s = rotateSpeedForAltitude(h)
       expect(s).toBeGreaterThan(0)
-      expect(s).toBeLessThanOrEqual(1)
+      expect(s).toBeLessThanOrEqual(0.38)
       expect(Number.isFinite(s)).toBe(true)
     }
   })
 
-  it('still allows useful travel at low altitude (softer than strict 1:1)', () => {
-    // A strict screen-space mapping is h * tan(fov/2) / PI, fov = 40deg.
-    const h = 0.0157 // ~100 km
-    const strict = (h * Math.tan((40 * Math.PI / 180) / 2)) / Math.PI
-    const actual = rotateSpeedForAltitude(h)
-    expect(actual).toBeGreaterThan(strict)   // not stuck
-    expect(actual).toBeLessThan(strict * 10) // but not a whip either
+  it('gives UNIFORM screen response at every altitude', () => {
+    // This is the whole point. Screen-space travel per drag is
+    // speed / altitude (up to constants), so that ratio must not drift —
+    // if it grows as you descend, low altitude feels too fast, which was
+    // the bug. An exponent below 1 fails this test.
+    const ratio = (h) => rotateSpeedForAltitude(h) / h
+    const atOrbit = ratio(7)
+    for (const h of [2e-5, 1e-4, 1e-3, 0.0157, 0.1, 1, 7]) {
+      expect(ratio(h)).toBeCloseTo(atOrbit, 9)
+    }
+  })
+
+  it('floor never overrides the scaling at reachable altitudes', () => {
+    // A floor above the speed at minimum altitude silently pins low-altitude
+    // drag to a fixed rate. The old curve's 0.06 floor did exactly that —
+    // ~55,000x too fast at 127 m, which is the bug this replaced.
+    const hMin = 1.00002 - 1
+    expect(rotateSpeedForAltitude(hMin)).toBeCloseTo(0.38 * hMin / 7, 12)
+    expect(rotateSpeedForAltitude(hMin)).toBeLessThan(0.06 / 1000)
   })
 })
