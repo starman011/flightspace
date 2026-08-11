@@ -32,7 +32,7 @@ import { createMoonScene } from './MoonScene.js'
 import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { segmentOccludedBySphere } from './pickOcclusion.js'
-import { DETENTS_KM, distForKm, kmForDist, nearestDetent, rotateSpeedForAltitude } from './zoomDetents.js'
+import { DETENTS_KM, altitudeAfterZoom, distForKm, kmForDist, nearestDetent, rotateSpeedForAltitude } from './zoomDetents.js'
 import { tapHaptic } from '../../utils/haptics.js'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
@@ -1371,8 +1371,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
     const zoomByFactor = (f) => {
       if (_zoomLocked || int.current.flyToTarget) return
-      const h    = Math.max(camera.position.length() - 1, H_MIN)
-      const next = Math.min(H_MAX, Math.max(H_MIN, h * f))
+      const next = altitudeAfterZoom(camera.position.length() - 1, f, H_MIN, H_MAX)
       camera.position.normalize().multiplyScalar(1 + next)
     }
     controls.autoRotate      = true

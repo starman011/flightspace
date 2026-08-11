@@ -18,6 +18,21 @@ export const distForKm = (km) => 1 + km / EARTH_R_KM
 export const kmForDist = (d) => (d - 1) * EARTH_R_KM
 
 /**
+ * Altitude after one zoom step, clamped to the reachable range.
+ *
+ * The step multiplies ALTITUDE, not distance-from-centre. OrbitControls does
+ * the latter, and near the surface distance-from-centre is ~1.0 whatever your
+ * altitude, so one notch meant wildly different things at different heights:
+ * at 127 m a notch in scaled 1.00002 to ~0.95 — inside the planet, so it
+ * clamped and zoom-in simply stalled — while a notch out jumped straight from
+ * 127 m to 336 km. Scaling altitude makes a notch the same proportional step
+ * everywhere, which is what "zoom feels consistent" actually means.
+ */
+export function altitudeAfterZoom(h, factor, hMin, hMax) {
+  return Math.min(hMax, Math.max(hMin, Math.max(h, hMin) * factor))
+}
+
+/**
  * Index of the rung closest to `altKm`, compared in LOG space.
  *
  * Linear distance would be wrong here: the ladder spans five decades, so
