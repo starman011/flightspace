@@ -32,7 +32,8 @@ import { createMoonScene } from './MoonScene.js'
 import { createWindLayer } from './WindLayer.js'
 import KDBush from 'kdbush'
 import { segmentOccludedBySphere } from './pickOcclusion.js'
-import { DETENTS_KM, altitudeAfterZoom, distForKm, kmForDist, nearestDetent, rotateSpeedForAltitude } from './zoomDetents.js'
+import { DETENTS_KM, altitudeAfterZoom, distForKm, kmForDist, nearestDetent } from './zoomDetents.js'
+import { raySphereOrLimb, anchorQuaternion, quatAngle } from './dragAnchor.js'
 import { tapHaptic } from '../../utils/haptics.js'
 import { PLACES } from './placeData.js'
 import { AIRPORTS } from './airportData.js'
@@ -1417,6 +1418,72 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     renderer.domElement.addEventListener('touchend', endPinch, { passive: true })
     renderer.domElement.addEventListener('touchcancel', endPinch, { passive: true })
 
+    // ── Ground-anchored drag (versor dragging) ─────────────────────────────
+    // OrbitControls rotates by a fixed ANGLE per pixel. An angle is a property
+    // of the globe, but what a user judges is how far the ground moved under
+    // their finger — which also depends on how much ground is on screen. No
+    // single angular rate satisfies both ends, which is why every attempt to
+    // scale rotateSpeed by altitude fixed one altitude and broke another.
+    //
+    // Anchoring asks the other question: what rotation puts the point I
+    // grabbed back under the cursor? That has one answer at every altitude and
+    // needs no tuning constant, so there is nothing left to miscalibrate.
+    // Technique is Jason Davies / Mike Bostock's versor dragging; see
+    // dragAnchor.js, and dragAnchor.test.js for the measured accuracy.
+    controls.enableRotate = false
+
+    const _ndc = new Vector2()
+    const _rc  = new Raycaster()
+    let _grabbed  = null   // world point picked at pointerdown
+    let _dragId   = null   // pointerId currently driving the drag
+    let _spinAxis = null   // release momentum
+    let _spinRate = 0
+
+    const surfaceAt = (clientX, clientY) => {
+      const r = renderer.domElement.getBoundingClientRect()
+      _ndc.set(
+        ((clientX - r.left) / r.width) * 2 - 1,
+        -((clientY - r.top) / r.height) * 2 + 1,
+      )
+      _rc.setFromCamera(_ndc, camera)
+      return raySphereOrLimb(_rc.ray.origin, _rc.ray.direction, EARTH_R)
+    }
+
+    const dragBusy = () => _zoomLocked || int.current.flyToTarget || arController.isActive()
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (!isEarthScale() || !e.isPrimary || dragBusy()) return
+      _dragId   = e.pointerId
+      _grabbed  = surfaceAt(e.clientX, e.clientY)
+      _spinRate = 0                       // a new grab kills leftover momentum
+      renderer.domElement.setPointerCapture?.(e.pointerId)
+    })
+
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== _dragId || !_grabbed || _pinchPrev > 0 || dragBusy()) return
+      const under = surfaceAt(e.clientX, e.clientY)
+      if (!under) return
+      const q = anchorQuaternion(under, _grabbed)
+      camera.position.applyQuaternion(q)
+      camera.lookAt(0, 0, 0)
+      // Seed momentum from the most recent step so release keeps the glide the
+      // damped OrbitControls rotation used to provide.
+      const ang = quatAngle(q)
+      if (ang > 1e-9) {
+        _spinAxis = new Vector3(q.x, q.y, q.z).normalize()
+        _spinRate = Math.min(ang, 0.05)   // cap so a flick cannot launch it
+      }
+    })
+
+    const endDrag = (e) => {
+      if (e.pointerId !== _dragId) return
+      renderer.domElement.releasePointerCapture?.(e.pointerId)
+      _dragId = null
+      _grabbed = null
+    }
+    renderer.domElement.addEventListener('pointerup', endDrag)
+    renderer.domElement.addEventListener('pointercancel', endDrag)
+
     // Galaxy FOV zoom — scroll/pinch changes field of view for sky zoom
     const galaxyWheel = (e) => {
       if (int.current.targetCameraScale !== 'galaxy') return
@@ -2525,11 +2592,14 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
 
       // Drag response has to shrink with altitude or a normal drag near the
       // ground whips across whole countries. See zoomDetents.js for why.
-      // Earth only — the other scales set their own fixed rate further down.
-      // Same `|| 'earth'` default as targetScale below: it is unset until a
-      // scale is first chosen, so a strict === would skip the initial view.
-      if ((int.current.targetCameraScale || 'earth') === 'earth') {
-        controls.rotateSpeed = rotateSpeedForAltitude(camera.position.length() - 1)
+      // Earth rotation is driven by ground-anchored drag, not by an angular
+      // rate, so there is no rotateSpeed to set here any more — the constant
+      // that kept needing recalibration simply no longer exists.
+      // Release momentum from the last drag step, decaying to a stop.
+      if (_spinRate > 1e-6 && _spinAxis && _dragId === null && (int.current.targetCameraScale || 'earth') === 'earth') {
+        camera.position.applyQuaternion(new Quaternion().setFromAxisAngle(_spinAxis, _spinRate))
+        camera.lookAt(0, 0, 0)
+        _spinRate *= 0.94
       }
       // ── Satellite pulsing glow ──────────────────────────────────────
       // Satellites sit very high up and read as tiny dots; pulse their
@@ -2909,11 +2979,8 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
       }
 
       // ── Damping feel ────────────────────────────────────────────────────
-      // rotateSpeed for earth is set once at the top of the tick from
-      // rotateSpeedForAltitude(). It used to be recomputed here too, from a
-      // separate hand-tuned curve, and because this block runs later it won
-      // — so the altitude scaling above had no effect at all. One source of
-      // truth now; only damping is tuned per-altitude here.
+      // Earth no longer has a rotation rate to tune — see the anchored-drag
+      // block above. Only damping is set per-altitude here.
       if (targetScale === 'earth') {
         const dist = camera.position.length()
         const MIN_D = 1.00002, MAX_D = 8.0
@@ -2928,8 +2995,11 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
         // Re-assert every frame: the solar and default branches below turn
         // OrbitControls' own dolly back on, so without this, visiting another
         // scale and returning to Earth would restore the centre-distance zoom
-        // that this replaced.
+        // that this replaced. Same for rotation — the flyTo/tracking code
+        // re-enables it, and OrbitControls rotating on top of the anchored
+        // drag would double every gesture.
         controls.enableZoom = false
+        controls.enableRotate = false
       } else if (targetScale === 'solar') {
         controls.rotateSpeed = 0.45
         controls.zoomSpeed   = 0.55

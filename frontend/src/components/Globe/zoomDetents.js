@@ -5,11 +5,22 @@ const EARTH_R_KM = 6371
 
 /**
  * Altitude rungs the camera settles onto, in km above the surface.
- * The low end is deliberately tight (5 / 10 / 20) because that is where the
- * sense of "how high am I" actually matters — above ~500 km everything reads
- * as "space" and the rungs only need to be order-of-magnitude apart.
+ *
+ * Spacing is roughly geometric (~2x, widening to ~3.7x in deep space) rather
+ * than a few round numbers. The original ladder jumped straight from 5 km to
+ * 0.13 km — a 38x drop — so zooming in below 5 km teleported you to the
+ * ground, which read as "zoom gets really fast under 20 km". Every rung is
+ * now within ~3.7x of its neighbour, so a step down is always a step rather
+ * than a fall.
+ *
+ * 5 / 10 / 20 / 100 are kept as named rungs; the additions sit between them.
  */
-export const DETENTS_KM = [0.13, 5, 10, 20, 100, 500, 2000, 10000, 44597]
+export const DETENTS_KM = [
+  0.13, 0.3, 0.6, 1.2, 2.5,      // ground work: runway to circuit height
+  5, 10, 20, 50, 100,            // approach and low cruise
+  250, 600, 1500, 4000,          // high cruise to near space
+  12000, 44597,                  // orbital and full-globe
+]
 
 /** Camera distance in world units for an altitude in km (Earth radius = 1). */
 export const distForKm = (km) => 1 + km / EARTH_R_KM
@@ -52,39 +63,4 @@ export function nearestDetent(altKm, ladder = DETENTS_KM) {
     }
   }
   return best
-}
-
-/**
- * Rotate speed for a camera at height `h` above the surface (world units,
- * Earth radius = 1).
- *
- * OrbitControls rotates by a fixed ANGLE per pixel dragged. Ground travel for
- * a given angle is constant, but the ground *visible on screen* shrinks with
- * altitude — so near the surface a normal drag whipped across whole countries.
- * Screen-space travel is proportional to altitude, hence the scaling.
- *
- * The exponent is exactly 1. Anything less makes the drag progressively too
- * fast as you descend, which is the bug this is fixing: at 0.8, a drag at
- * 100 km covered 4.2x more screen than the same drag from orbit. Strict
- * proportionality is what makes response *uniform* at every altitude, which is
- * the entire goal. At h = 7 (maxDistance 8) this returns 1.0, so the
- * high-altitude feel that already worked is preserved exactly.
- *
- * `topSpeed` is the rate at the top of the range (h = ref), and 0.38 is not
- * arbitrary: it is what the previous hand-tuned curve
- * `0.06 + t^1.5 * 0.32` produced at full altitude, which is the feel users
- * reported as good. Everything below scales down linearly from it.
- *
- * That old curve is what this replaces. Its floor term of 0.06 meant the
- * *slowest* it ever got was 0.06 — at 127 m altitude the correct rate is
- * ~1.1e-6, so it was roughly 55,000x too fast at the bottom of the range,
- * which is why drag near the ground flung across continents.
- *
- * The floor here exists only to keep the value positive. It must stay below
- * the speed at minimum altitude or it silently pins low-altitude drag to a
- * fixed rate, reintroducing the same class of bug.
- */
-export function rotateSpeedForAltitude(h, { ref = 7, topSpeed = 0.38, exponent = 1, min = 1e-9 } = {}) {
-  const safe = Math.max(h, 0)
-  return Math.max(min, Math.min(topSpeed, topSpeed * Math.pow(safe / ref, exponent)))
 }
