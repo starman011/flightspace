@@ -551,3 +551,61 @@ Rules:
 Precedent: the land-alert push endpoint shipped with a UI-only sign-in gate;
 the server accepted anonymous subscriptions against our VAPID sender. Fixed by
 enforcing the session in `HandleSubscribe` for `flight:*` targets.
+
+## Article XVI — Working Method (NON-NEGOTIABLE)
+
+Four principles govern **every** change, regardless of size. They are ordered:
+an earlier one wins when two conflict.
+
+### 1. Think Before Coding
+*Guards against: wrong assumptions, hidden confusion, missing tradeoffs.*
+
+State the actual cause before writing the fix. If the cause is a guess, say so
+and go verify it. Read the code that already exists before adding more. When a
+change involves a tradeoff, name it and pick a side out loud — silently
+choosing one is how the wrong one ships.
+
+Precedent: `/airport/AUH` returned 504 and the obvious reading was slow API
+calls. The APIs were fine — `rotatePick` was an infinite loop. Every minute
+spent on the assumed cause would have been wasted, and parallelising the
+already-parallel fetches would have "fixed" nothing.
+
+### 2. Simplicity First
+*Guards against: overcomplication, bloated abstractions.*
+
+The smallest thing that fully solves the problem wins. No abstraction earns its
+place until there are at least two real callers. Prefer deleting code to adding
+it — Article II and Article VII already say this about the product; this says it
+about the process.
+
+### 3. Surgical Changes
+*Guards against: orthogonal edits, touching code you shouldn't.*
+
+Change what the task requires and nothing else. Unrelated improvements spotted
+along the way get reported, not committed. A diff a reviewer can't explain
+line-by-line in terms of the stated goal is too big.
+
+Corollary — **one source of truth per behaviour.** Before claiming something is
+fixed, grep for every writer of what changed and confirm which one wins.
+
+Precedent: `controls.rotateSpeed` was set correctly at the top of the Globe tick
+loop while a second, older curve later in the same tick overwrote it every
+frame. The fix was reported as done twice before the second writer was found.
+
+### 4. Goal-Driven Execution
+*Guards against: unverifiable work, "should be fine".*
+
+Every change states its success criterion before it starts, and that criterion
+is something that can be run. Prefer a failing test that reproduces the problem
+first — for a bug, the test IS the diagnosis. "It builds" is not a success
+criterion. Neither is "I changed the right line".
+
+Precedent: the `rotatePick` fix is guarded by a test that would hang rather than
+fail if it regressed — the same symptom production had — plus one asserting
+seeded variation survives, because a fix returning the first `n` items would
+pass every termination test while silently collapsing the internal link graph.
+
+**Enforcement.** These are review criteria, not aspirations. A change that
+cannot be described in terms of all four does not merit a commit.
+
+**Version**: 1.7.0 | **Last Amended**: 2026-08-11
