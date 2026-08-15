@@ -3,6 +3,38 @@ Allow: /
 Disallow: /profile
 Disallow: /admin
 
+# ── Crawl pacing for SEO-audit and link-graph bots ───────────────────────────
+# Every /airport/*, /route/* and /flight/* URL is server-rendered on demand in
+# edge middleware — there is no CDN cache in front of it, because middleware
+# runs before the cache on every request. Cost is therefore linear in request
+# count, and these crawlers enumerate the ENTIRE sitemap (930 airports, tens of
+# thousands of routes) rather than the few hundred pages real users visit.
+#
+# AhrefsSiteAudit, MJ12bot and SemrushBot all honour Crawl-delay. Googlebot and
+# Bingbot deliberately are NOT listed: Google ignores Crawl-delay outright, and
+# throttling Bing would cost real search visibility. Indexability is unchanged
+# for every bot below — they may still fetch every URL, just not all at once.
+User-agent: AhrefsSiteAudit
+Crawl-delay: 10
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Crawl-delay: 10
+
+User-agent: DotBot
+Crawl-delay: 10
+
+User-agent: Amazonbot
+Crawl-delay: 5
+
+User-agent: Bytespider
+Crawl-delay: 10
+
 # Sitemap locations
 Sitemap: https://www.objecttracer.com/sitemap.xml
 Sitemap: https://www.objecttracer.com/sitemap-launches.xml
