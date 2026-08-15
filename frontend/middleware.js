@@ -6,8 +6,17 @@ export const config = {
   matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss', '/planes'],
 }
 
+// Only /planes and /flight branch on this: every other route is true SSR and
+// serves the same HTML to everyone. So widening it costs two routes' worth of
+// render and buys correct content for the crawlers that were getting an empty
+// SPA shell.
+//
+// `ahrefs` rather than `ahrefsbot`, because AhrefsSiteAudit -- the single
+// largest source in the second incident -- does not contain "ahrefsbot" and so
+// never matched. The AI assistants below never matched either, which meant
+// PerplexityBot was indexing a blank page.
 const BOT_RE =
-  /googlebot|google-inspectiontool|googleother|applebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefsbot|mj12bot|dotbot/i
+  /googlebot|google-inspectiontool|googleother|applebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefs|mj12bot|dotbot|amazonbot|bytespider|petalbot|seznambot|perplexitybot|gptbot|oai-searchbot|chatgpt-user|claudebot|anthropic-ai|ccbot|google-extended/i
 
 import { AIRPORTS } from './src/components/Globe/airportData.js'
 import { airlineFromCs, aircraftName } from './src/data/flightLabels.js'
@@ -73,7 +82,92 @@ function airlineLinksHtml(seedStr, excludeSlug, n = 4) {
     .map(([s, a]) => `<a href="${SITE}/airline/${s}">${esc(a.name)}</a>`).join(' · ')
 }
 
+// ── Spike resilience ─────────────────────────────────────────────────────────
+// Middleware runs BEFORE Vercel's CDN cache and its responses are never stored
+// there, so `s-maxage` on a rendered page buys nothing: cost is linear in
+// request count and nothing amortises. Crawlers walk the whole sitemap (930
+// airports, ~14k routes) instead of the few hundred URLs humans visit, which is
+// how a routine audit crawl reads as a 15-20x spike.
+//
+// robots.txt deliberately carries no Crawl-delay — discovery speed is the
+// priority — so the spike has to be absorbed here instead. Two mechanisms:
+//
+//   1. Micro-cache. A rendered page is reused for CACHE_TTL_MS. Live flight
+//      rows are already a ~60s snapshot, so this costs no freshness. It is the
+//      per-isolate stand-in for the CDN cache we cannot reach.
+//   2. In-flight coalescing. Concurrent requests for the same URL await ONE
+//      render instead of each firing their own upstream pair. This is what
+//      turns a thundering herd on a popular page into a single unit of work.
+//
+// Both are per-isolate and bounded in size, so neither can leak across a spike.
+const CACHE_TTL_MS = 60_000
+const CACHE_MAX    = 512
+const RENDER_MS    = 8000
+
+const _page     = new Map()   // key -> { body, headers, at }
+const _rendering = new Map()  // key -> Promise
+
+function cacheGet(key) {
+  const hit = _page.get(key)
+  if (!hit) return null
+  if (Date.now() - hit.at > CACHE_TTL_MS) { _page.delete(key); return null }
+  // Re-insert so Map iteration order stays least-recently-used first.
+  _page.delete(key); _page.set(key, hit)
+  return hit
+}
+
+function cacheSet(key, entry) {
+  // Map preserves insertion order, so the first key is the coldest.
+  if (_page.size >= CACHE_MAX) _page.delete(_page.keys().next().value)
+  _page.set(key, { ...entry, at: Date.now() })
+}
+
+function replay(hit, state) {
+  const headers = new Headers(hit.headers)
+  headers.set('x-mw-cache', state)
+  return new Response(hit.body, { status: hit.status, headers })
+}
+
 export default async function middleware(request) {
+  // Only GETs are cacheable, and only they can be coalesced.
+  if (request.method !== 'GET') return route(request)
+
+  const { pathname } = new URL(request.url)
+  const isBot = BOT_RE.test(request.headers.get('user-agent') || '')
+  // isBot is part of the key because /planes and /flight branch on it.
+  const key = `${isBot ? 'b' : 'h'}:${pathname}`
+
+  const hit = cacheGet(key)
+  if (hit) return replay(hit, 'hit')
+
+  let pending = _rendering.get(key)
+  if (!pending) {
+    pending = (async () => {
+      // A deadline only helps against an upstream that stalls; a synchronous
+      // hang blocks the isolate so this timer would never fire. Termination of
+      // the render itself is guaranteed by construction instead — see the hard
+      // `i < len` bound in rotatePick.
+      const res = await Promise.race([
+        route(request),
+        new Promise(r => setTimeout(() => r('deadline'), RENDER_MS)),
+      ])
+      // 'deadline' or undefined → fall through to the SPA. A thin but instant
+      // 200 beats a 504: Googlebot executes the app's JS, whereas a gateway
+      // timeout is a hard error that can cost the URL its place in the index.
+      if (!res || res === 'deadline' || typeof res.text !== 'function') return null
+      const entry = { body: await res.text(), headers: [...res.headers], status: res.status }
+      cacheSet(key, entry)
+      return entry
+    })().finally(() => _rendering.delete(key))
+    _rendering.set(key, pending)
+  }
+
+  const out = await pending
+  if (!out) return
+  return replay(out, 'miss')
+}
+
+async function route(request) {
   const { pathname } = new URL(request.url)
   const parts = pathname.split('/').filter(Boolean)
 
