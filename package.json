@@ -1,0 +1,13 @@
+{
+  "name": "objecttracer-workspace",
+  "private": true,
+  "type": "module",
+  "description": "Repo root — exists so the Playwright VS Code extension can resolve the root config and list frontend/e2e tests.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

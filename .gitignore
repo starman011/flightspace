@@ -26,9 +26,13 @@ backend/*.exe
 backend/tmp/
 
 # ── Node / frontend ──────────────────────────────────────────────────────────
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+# Unanchored, so these match at the repo root too. The root package.json exists
+# only so the Playwright VS Code extension can resolve the config, but npm still
+# installs a full node_modules beside it — ~186 untracked files that were
+# drowning real changes in git status.
+node_modules/
+dist/
+.vite/
 
 # ── OS & editor ──────────────────────────────────────────────────────────────
 .DS_Store
@@ -43,9 +47,18 @@ Thumbs.db
 *\ 2/
 
 # ── Test artifacts ────────────────────────────────────────────────────────────
-frontend/test-results/
-frontend/playwright-report/
-frontend/coverage/
+# Unanchored: the root Playwright config writes its reports beside itself.
+test-results/
+playwright-report/
+coverage/
+
+# ── Local backups ─────────────────────────────────────────────────────────────
+*.bak
+
+# ── Installed skill packages ─────────────────────────────────────────────────
+# skills-lock.json is the tracked source of truth; the unpacked skills are
+# reinstallable artifacts, same relationship as package-lock.json to node_modules.
+.claude/skills/
 
 # ── Docker volumes ────────────────────────────────────────────────────────────
 infra/postgres_data/
