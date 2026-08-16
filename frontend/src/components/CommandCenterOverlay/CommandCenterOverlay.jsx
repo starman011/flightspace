@@ -1612,6 +1612,17 @@ export default function CommandCenterOverlay({
       if (!heroSeenRef.current) setHeroCollapsed(false)
     }
   }, [zoomedIn, isMobileVp, mobileOpen])
+  // An explicit open from the top-bar icon must actually present the feed.
+  // Both auto-dock effects above are guarded by `mobileOpen`, but that guard
+  // only holds while the feed is OPEN — with it closed they still run, so any
+  // globe interaction sets streamCollapsed, forceCollapsed follows, and
+  // sheetState is parked at 'peek' behind a sheet nobody can see. Tapping the
+  // icon then mounted it already docked: 80px of sheet and the close button,
+  // which read as the feed opening and immediately collapsing.
+  useEffect(() => {
+    if (isMobileVp && mobileOpen) setSheetState('full')
+  }, [isMobileVp, mobileOpen])
+
   const grabRef       = useRef(null)
   const sheetStateRef = useRef(sheetState)
   useEffect(() => { sheetStateRef.current = sheetState }, [sheetState])
