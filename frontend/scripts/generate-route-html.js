@@ -110,7 +110,7 @@ function generateRouteHtml(template, route, meta) {
   const noscriptText = NOSCRIPT_CONTENT[route] || NOSCRIPT_CONTENT['/']
   html = html.replace(
     '<div id="root"></div>',
-    `<div id="root"></div>\n    <noscript><div style="padding:40px;max-width:720px;margin:auto;font-family:sans-serif;color:#ccc;background:#0a0e14"><h1>${escapedTitle}</h1><p>${escapeHtml(noscriptText)}</p><p>JavaScript is required to use ObjectTracer. Please enable JavaScript in your browser.</p><nav><a href="/" style="color:#b2ff1a">Home</a> · <a href="/launches" style="color:#b2ff1a">Launches</a> · <a href="/solar-system" style="color:#b2ff1a">Solar System</a> · <a href="/deep-space" style="color:#b2ff1a">Deep Space</a> · <a href="/moon" style="color:#b2ff1a">Moon</a> · <a href="/asteroids" style="color:#b2ff1a">Asteroids</a></nav></div></noscript>`
+    `<div id="root"></div>\n    <noscript><div style="padding:40px;max-width:720px;margin:auto;font-family:sans-serif;color:#ccc;background:#0a0e14"><h1>${escapedTitle}</h1><p>${escapeHtml(noscriptText)}</p><p>JavaScript is required to use ObjectTracer. Please enable JavaScript in your browser.</p><nav><a href="/" style="color:#bce419">Home</a> · <a href="/launches" style="color:#bce419">Launches</a> · <a href="/solar-system" style="color:#bce419">Solar System</a> · <a href="/deep-space" style="color:#bce419">Deep Space</a> · <a href="/moon" style="color:#bce419">Moon</a> · <a href="/asteroids" style="color:#bce419">Asteroids</a></nav></div></noscript>`
   )
 
   return html

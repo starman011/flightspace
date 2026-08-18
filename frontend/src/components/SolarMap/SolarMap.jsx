@@ -213,7 +213,7 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
       // Name label — always shown for selected, hover for others
       if (isSelected) {
         const label = ast.name.replace(/^\(?\d+\)?\s*/, '') || ast.id
-        ctx.font = 'bold 12px "IBM Plex Mono", monospace'
+        ctx.font = 'bold 12px "Lexend Deca", system-ui, sans-serif'
         ctx.textAlign = 'left'
         // Background pill
         const tw = ctx.measureText(label).width
@@ -225,7 +225,7 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
         ctx.fillText(label, px + 15, py - 3)
       } else if (isHovered) {
         const label = ast.name.replace(/^\(?\d+\)?\s*/, '') || ast.id
-        ctx.font = '11px "IBM Plex Mono", monospace'
+        ctx.font = '11px "Lexend Deca", system-ui, sans-serif'
         ctx.textAlign = 'left'
         ctx.fillStyle = '#7adeff'
         ctx.fillText(label, px + 8, py - 4)
@@ -242,14 +242,14 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
     for (const pl of PLANETS) {
       const px = cx + pl.au * SCALE, py = cy  // at 3-o'clock position
       glowCircle(ctx, px, py, pl.r, pl.color, pl.color + '40', pl.r * 3)
-      ctx.font = '10px "IBM Plex Mono", monospace'
+      ctx.font = '10px "Lexend Deca", system-ui, sans-serif'
       ctx.fillStyle = 'rgba(195,245,255,0.5)'
       ctx.textAlign = 'left'
       ctx.fillText(pl.name, px + pl.r + 4, py + 3)
     }
 
     // Compass / AU legend
-    ctx.font = '10px "IBM Plex Mono", monospace'
+    ctx.font = '10px "Lexend Deca", system-ui, sans-serif'
     ctx.fillStyle = 'rgba(195,245,255,0.25)'
     ctx.textAlign = 'left'
     ctx.fillText(`1 AU = ${SCALE.toFixed(0)}px  ·  Zoom ${zoom.toFixed(1)}×`, 16, H - 16)
@@ -271,6 +271,16 @@ export default function SolarMap({ asteroids, onSelect, selectedId }) {
 
   // Redraw on data/state change
   useEffect(() => { draw() }, [draw])
+
+  // Labels are drawn straight to the canvas, so a first paint that lands before
+  // Lexend Deca has loaded gets baked in system-ui until the next interaction.
+  // Redraw once the real face is available.
+  useEffect(() => {
+    if (!document.fonts) return
+    let live = true
+    document.fonts.load('bold 12px "Lexend Deca"').then(() => { if (live) draw() }).catch(() => {})
+    return () => { live = false }
+  }, [draw])
 
   // Auto-focus: when selectedId changes, zoom + pan to center on that asteroid
   useEffect(() => {

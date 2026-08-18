@@ -25,7 +25,7 @@ export default function handler(request) {
     justifyContent: 'space-between',
     background: '#050a0f',
     backgroundImage:
-      'radial-gradient(circle at 78% 28%, rgba(178,255,26,0.16) 0%, transparent 42%), radial-gradient(circle at 20% 80%, rgba(0,229,255,0.10) 0%, transparent 45%)',
+      'radial-gradient(circle at 78% 28%, rgba(188,228,25,0.16) 0%, transparent 42%), radial-gradient(circle at 20% 80%, rgba(0,229,255,0.10) 0%, transparent 45%)',
     padding: '64px 72px',
     fontFamily: 'sans-serif',
   }, [
@@ -34,14 +34,14 @@ export default function handler(request) {
       h('div', { display: 'flex', alignItems: 'center' }, [
         h('div', {
           width: '40px', height: '40px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #b2ff1a 0%, #00e5ff 100%)',
+          background: 'linear-gradient(135deg, #bce419 0%, #00e5ff 100%)',
           marginRight: '18px', display: 'flex',
         }, ''),
         h('div', { color: '#ffffff', fontSize: '30px', fontWeight: 700, letterSpacing: '-0.5px' }, 'ObjectTracer'),
       ]),
       h('div', {
-        display: 'flex', color: '#b2ff1a', fontSize: '18px', fontWeight: 700,
-        letterSpacing: '3px', border: '1px solid rgba(178,255,26,0.4)',
+        display: 'flex', color: '#bce419', fontSize: '18px', fontWeight: 700,
+        letterSpacing: '3px', border: '1px solid rgba(188,228,25,0.4)',
         borderRadius: '100px', padding: '8px 20px',
       }, badge),
     ]),
@@ -62,9 +62,9 @@ export default function handler(request) {
       h('div', { display: 'flex', alignItems: 'center' }, [
         h('div', {
           width: '14px', height: '14px', borderRadius: '50%',
-          background: '#b2ff1a', marginRight: '12px', display: 'flex',
+          background: '#bce419', marginRight: '12px', display: 'flex',
         }, ''),
-        h('div', { display: 'flex', color: '#b2ff1a', fontSize: '22px', fontWeight: 700, letterSpacing: '2px' }, 'LIVE'),
+        h('div', { display: 'flex', color: '#bce419', fontSize: '22px', fontWeight: 700, letterSpacing: '2px' }, 'LIVE'),
       ]),
     ]),
   ])

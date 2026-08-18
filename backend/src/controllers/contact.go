@@ -83,8 +83,8 @@ func sendContactEmail(name, from, message string) {
 <body style="margin:0;padding:0;background:#04080f;font-family:Arial,sans-serif;">
 <table width="100%%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:32px auto;">
   <tr><td style="padding:32px;background:#07101a;border:1px solid #1a2e10;border-radius:16px;">
-    <p style="margin:0 0 4px;font-size:10px;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#b2ff1a;">&#9711; OBJECTTRACER</p>
-    <p style="margin:0 0 20px;font-size:9px;font-family:'Courier New',monospace;letter-spacing:.16em;text-transform:uppercase;color:rgba(178,255,26,0.4);">New contact message</p>
+    <p style="margin:0 0 4px;font-size:10px;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#bce419;">&#9711; OBJECTTRACER</p>
+    <p style="margin:0 0 20px;font-size:9px;font-family:'Courier New',monospace;letter-spacing:.16em;text-transform:uppercase;color:rgba(188,228,25,0.4);">New contact message</p>
     <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#f3f2ec;letter-spacing:-.02em;">Message from %s</h2>
     <div style="background:#0b1520;border:1px solid #162030;border-radius:12px;padding:18px 20px;margin-bottom:20px;">
       <p style="margin:0;font-size:14px;line-height:1.8;color:#8a9ab0;white-space:pre-wrap;">%s</p>

@@ -73,7 +73,7 @@
 }
 
 .hudLabel {
-  font-family: 'Space Mono', 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.12em;
   color: rgba(80, 160, 255, 0.6);
@@ -81,7 +81,7 @@
 }
 
 .hudValue {
-  font-family: 'Space Mono', 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -111,7 +111,7 @@
 }
 
 .hudScaleLabel {
-  font-family: 'Space Mono', 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.06em;
   color: rgba(var(--ink-rgb), 0.65);

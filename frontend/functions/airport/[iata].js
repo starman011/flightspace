@@ -94,14 +94,14 @@ export async function onRequestGet({ params, request, next }) {
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px; background: #050a0f; color: #e8f4ff; }
-    a { color: #b2ff1a; }
+    a { color: #bce419; }
     h1 { font-size: 1.6rem; margin: 0 0 8px; }
-    h2 { font-size: 1.1rem; margin: 28px 0 10px; color: #b2ff1a; }
+    h2 { font-size: 1.1rem; margin: 28px 0 10px; color: #bce419; }
     p  { color: rgba(200,220,240,0.75); line-height: 1.6; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
     th, td { padding: 8px 12px; text-align: left; border: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem; }
     th { background: rgba(255,255,255,0.05); font-weight: 600; }
-    .cta { display: inline-block; margin-top: 8px; padding: 12px 24px; background: #b2ff1a; color: #000; font-weight: 700; border-radius: 8px; text-decoration: none; }
+    .cta { display: inline-block; margin-top: 8px; padding: 12px 24px; background: #bce419; color: #000; font-weight: 700; border-radius: 8px; text-decoration: none; }
     nav { margin-bottom: 20px; font-size: 0.85rem; }
   </style>
 </head>

@@ -9,7 +9,8 @@
   --overlay-bg: rgba(0, 0, 14, 0.92);
   --border: #1a3050;
 
-  --font-mono: 'Space Mono', 'Courier New', monospace;
+  /* Single-family system — see tokens.css. Kept as an alias only. */
+  --font-mono: 'Lexend Deca', ui-monospace, monospace;
   --dot-muted: #4a6a8a;
   --bp-mobile: 768px;
 

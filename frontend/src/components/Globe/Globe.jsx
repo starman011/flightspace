@@ -3604,7 +3604,7 @@ function AircraftTooltip({ x, y, data, dimmed }) {
         minWidth: '130px',
         backdropFilter: 'blur(6px)',
         boxShadow: '0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.12)',
-        fontFamily: "'Space Mono', 'Courier New', monospace",
+        fontFamily: "'Lexend Deca', system-ui, sans-serif",
       }}
     >
       {/* Callsign / ID row */}
@@ -3661,7 +3661,7 @@ function DESITooltip({ x, y, data }) {
       borderRadius: 'var(--r-tight)', padding: '7px 11px 8px', minWidth: '140px',
       backdropFilter: 'blur(6px)',
       boxShadow: `0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px ${borderColor.replace('0.55', '0.12')}`,
-      fontFamily: "'Space Mono', 'Courier New', monospace",
+      fontFamily: "'Lexend Deca', system-ui, sans-serif",
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '5px' }}>
         <span style={{

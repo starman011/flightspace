@@ -82,10 +82,29 @@
   --shadow-panel:    0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-elevated: 0 -4px 24px rgba(0, 0, 0, 0.4);
 
-  /* ── Typography — families (Stitch: Space Grotesk + IBM Plex Mono + Inter) */
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
-  --font-body:    'Inter', system-ui, sans-serif;
-  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+  /* ── Typography — families ─────────────────────────────────────────────────
+     One family everywhere: Lexend Deca, variable 100..900. The old three-family
+     split (Space Grotesk / Inter / IBM Plex Mono) is collapsed into weight
+     contrast on a single face, so every token below resolves to the same font
+     and hierarchy is carried by --fw-* rather than by switching typeface.
+     The aliases are kept so the ~500 existing call sites keep working. */
+  --font-display: 'Lexend Deca', system-ui, sans-serif;
+  --font-body:    'Lexend Deca', system-ui, sans-serif;
+  --font-sans:    'Lexend Deca', system-ui, sans-serif;
+  /* Telemetry readouts kept their own alias; Lexend Deca is proportional, so
+     tabular-nums (set on body in global.css) is what holds columns aligned. */
+  --font-mono:    'Lexend Deca', ui-monospace, monospace;
+
+  /* ── Typography — weights ──────────────────────────────────────────────────
+     Named steps so boldness stays deliberate across the UI instead of ad-hoc
+     numbers: hairline labels through to display headings. */
+  --fw-thin:      200;
+  --fw-light:     300;
+  --fw-regular:   400;
+  --fw-medium:    500;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+  --fw-heavy:     800;
 
   /* ── Typography — scale ────────────────────────────────────────────────── */
   --text-display-lg:  3.5rem;

@@ -750,11 +750,11 @@ async function renderLaunch(slug) {
     const d = Math.floor(msUntil / 86400000)
     const h = Math.floor((msUntil % 86400000) / 3600000)
     const m = Math.floor((msUntil % 3600000) / 60000)
-    countdownHtml = `<p style="font-size:1.1rem;color:#b2ff1a;margin:12px 0">
+    countdownHtml = `<p style="font-size:1.1rem;color:#bce419;margin:12px 0">
       T-${d}d ${h}h ${m}m until launch
     </p>`
   } else if (isPast) {
-    countdownHtml = `<p style="color:rgba(178,255,26,0.6);margin:12px 0">Launch completed · ${dateStr}</p>`
+    countdownHtml = `<p style="color:rgba(188,228,25,0.6);margin:12px 0">Launch completed · ${dateStr}</p>`
   }
 
   const rows = [
@@ -886,13 +886,13 @@ async function renderAsteroid(slug) {
     missKm       && `<tr><th>Miss Distance</th><td>${missKm} km <span style="opacity:.5">(${missLd} Lunar Distances)</span></td></tr>`,
     velKmh       && `<tr><th>Velocity</th><td>${velKmh} km/h <span style="opacity:.5">(${velKps} km/s)</span></td></tr>`,
     diamStr      && `<tr><th>Est. Diameter</th><td>${esc(diamStr)}</td></tr>`,
-    `<tr><th>Hazardous</th><td style="color:${isPHA ? '#ff6b6b' : '#b2ff1a'}">${isPHA ? 'Potentially Hazardous' : 'Not Hazardous'}</td></tr>`,
+    `<tr><th>Hazardous</th><td style="color:${isPHA ? '#ff6b6b' : '#bce419'}">${isPHA ? 'Potentially Hazardous' : 'Not Hazardous'}</td></tr>`,
     `<tr><th>NASA ID</th><td style="opacity:.5">${esc(asteroid.id)}</td></tr>`,
   ].filter(Boolean).join('\n')
 
   const body = `
     <h1>${esc(cleanName)}</h1>
-    ${isPHA ? `<p style="color:#ff6b6b;font-family:var(--font-mono);font-size:.85rem;letter-spacing:.1em;margin:0 0 16px">
+    ${isPHA ? `<p style="color:#ff6b6b;font-family:'Lexend Deca',system-ui,sans-serif;font-weight:600;font-size:.85rem;letter-spacing:.1em;margin:0 0 16px">
       POTENTIALLY HAZARDOUS ASTEROID
     </p>` : ''}
     <p>${esc(desc.split('.')[0])}.</p>
@@ -1679,21 +1679,21 @@ function renderHome() {
     <div class="ssr">
       <style>
         #ssr-shell{position:fixed;inset:0;z-index:99999;overflow:auto;background:#050a0f;transition:opacity .45s ease;overscroll-behavior:contain}
-        .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
+        .ssr{font-family:'Lexend Deca',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8f4ff}
         .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
         .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
         .ssr .lw{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center}
-        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(178,255,26,.8);border-right-color:rgba(178,255,26,.15);animation:ssrSpin 1.4s linear infinite}
-        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(178,255,26,.35);animation:ssrSpinR 2.2s linear infinite}
-        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(178,255,26,.9);box-shadow:0 0 12px rgba(178,255,26,.6),0 0 30px rgba(178,255,26,.2);animation:ssrPulse 1.4s ease-in-out infinite}
-        .ssr .lname{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
+        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(188,228,25,.8);border-right-color:rgba(188,228,25,.15);animation:ssrSpin 1.4s linear infinite}
+        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(188,228,25,.35);animation:ssrSpinR 2.2s linear infinite}
+        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(188,228,25,.9);box-shadow:0 0 12px rgba(188,228,25,.6),0 0 30px rgba(188,228,25,.2);animation:ssrPulse 1.4s ease-in-out infinite}
+        .ssr .lname{font-family:'Lexend Deca',system-ui,sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
         @keyframes ssrSpin{to{transform:rotate(360deg)}}
         @keyframes ssrSpinR{to{transform:rotate(-360deg)}}
         @keyframes ssrPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
         .ssr .doc{max-width:860px;margin:0 auto;padding:32px 20px}
-        .ssr a{color:#b2ff1a;text-decoration:none}.ssr h1{font-size:1.9rem;margin:0 0 12px}.ssr h2{font-size:1.15rem;margin:32px 0 12px;color:#b2ff1a}
+        .ssr a{color:#bce419;text-decoration:none}.ssr h1{font-size:1.9rem;margin:0 0 12px}.ssr h2{font-size:1.15rem;margin:32px 0 12px;color:#bce419}
         .ssr p{color:rgba(200,220,240,.72);line-height:1.6}
-        .ssr .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#b2ff1a;color:#050a0f;font-weight:700;border-radius:8px}
+        .ssr .cta{display:inline-block;margin-top:8px;padding:12px 26px;background:#bce419;color:#050a0f;font-weight:700;border-radius:8px}
         .ssr ul.cards{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
         .ssr ul.cards li a{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.02)}
         .ssr ul.cards li a strong{color:#fff;font-size:.98rem}
@@ -2105,7 +2105,7 @@ async function renderBlogPost(slug) {
   // embed; no NASA framing or credit. Journal posts unchanged.
   const videoEmbed = isEng && p.video_url ? blogVideoEmbed(p.video_url) : ''
   const body = isEng ? `
-    <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)} · ENGINEERING</p>
+    <p style="font-family:'Lexend Deca',system-ui,sans-serif;font-weight:500;color:rgba(188,228,25,0.7);font-size:.85rem">${esc(p.date)} · ENGINEERING</p>
     <h1>${esc(p.title)}</h1>
     <p style="font-size:.85rem;opacity:.75">By <strong>Md Saqlain Khan</strong>, Founder &amp; CTO, ObjectTracer</p>
     ${imgTag}
@@ -2115,7 +2115,7 @@ async function renderBlogPost(slug) {
     <p style="font-size:.8rem;opacity:.6">ObjectTracer Engineering · building in public</p>
     ${relatedBlogHtml(p, allPosts)}
     <p><a href="${SITE}/blog">← All posts</a></p>` : `
-    <p style="font-family:monospace;color:rgba(178,255,26,0.7);font-size:.85rem">${esc(p.date)}</p>
+    <p style="font-family:'Lexend Deca',system-ui,sans-serif;font-weight:500;color:rgba(188,228,25,0.7);font-size:.85rem">${esc(p.date)}</p>
     <h1>${esc(p.title)}</h1>
     ${imgTag}
     <p style="font-style:italic;color:rgba(200,220,240,0.9)">${esc(p.intro)}</p>
@@ -2331,7 +2331,7 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
     <div class="ssr">
       <style>
         #ssr-shell{position:fixed;inset:0;z-index:99999;overflow:auto;background:#050a0f;transition:opacity .45s ease;overscroll-behavior:contain}
-        .ssr{font-family:system-ui,sans-serif;color:#e8f4ff}
+        .ssr{font-family:'Lexend Deca',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8f4ff}
         /* First viewport: exact replica of the app's LoadingScreen (orbital
            ring + dot + wordmark) so the fade-out is invisible — same splash
            above and below the overlay. Article content sits below the fold
@@ -2339,20 +2339,20 @@ async function html(canonical, title, desc, jsonLd, body, ogBadge, ogImageOverri
         .ssr .boot{height:100dvh;display:flex;align-items:center;justify-content:center}
         .ssr .bootC{display:flex;flex-direction:column;align-items:center;gap:28px}
         .ssr .lw{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center}
-        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(178,255,26,.8);border-right-color:rgba(178,255,26,.15);animation:ssrSpin 1.4s linear infinite}
-        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(178,255,26,.35);animation:ssrSpinR 2.2s linear infinite}
-        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(178,255,26,.9);box-shadow:0 0 12px rgba(178,255,26,.6),0 0 30px rgba(178,255,26,.2);animation:ssrPulse 1.4s ease-in-out infinite}
-        .ssr .lname{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
+        .ssr .lring{position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(188,228,25,.8);border-right-color:rgba(188,228,25,.15);animation:ssrSpin 1.4s linear infinite}
+        .ssr .lring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(188,228,25,.35);animation:ssrSpinR 2.2s linear infinite}
+        .ssr .ldot{width:8px;height:8px;border-radius:50%;background:rgba(188,228,25,.9);box-shadow:0 0 12px rgba(188,228,25,.6),0 0 30px rgba(188,228,25,.2);animation:ssrPulse 1.4s ease-in-out infinite}
+        .ssr .lname{font-family:'Lexend Deca',system-ui,sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0;user-select:none}
         @keyframes ssrSpin{to{transform:rotate(360deg)}}
         @keyframes ssrSpinR{to{transform:rotate(-360deg)}}
         @keyframes ssrPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
         .ssr .doc{max-width:800px;margin:0 auto;padding:24px 16px}
-        .ssr a{color:#b2ff1a}.ssr h1{font-size:1.5rem;margin:0 0 8px}.ssr h2{font-size:1rem;margin:24px 0 8px;color:#b2ff1a}
+        .ssr a{color:#bce419}.ssr h1{font-size:1.5rem;margin:0 0 8px}.ssr h2{font-size:1rem;margin:24px 0 8px;color:#bce419}
         .ssr p{color:rgba(200,220,240,.75);line-height:1.6}
         .ssr table{border-collapse:collapse;width:100%;margin-bottom:20px}
         .ssr th,.ssr td{padding:7px 11px;text-align:left;border:1px solid rgba(255,255,255,.08);font-size:.875rem}
         .ssr th{background:rgba(255,255,255,.05);font-weight:600}
-        .ssr .cta{display:inline-block;margin-top:12px;padding:11px 22px;background:#b2ff1a;color:#000;font-weight:700;border-radius:8px;text-decoration:none}
+        .ssr .cta{display:inline-block;margin-top:12px;padding:11px 22px;background:#bce419;color:#000;font-weight:700;border-radius:8px;text-decoration:none}
         .ssr nav{margin-bottom:18px;font-size:.85rem}
       </style>
       <div class="boot">

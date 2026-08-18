@@ -183,7 +183,7 @@ func sendWaitlistEmail(to string) {
                    style="display:block;width:40px;height:40px;border-radius:8px;" />
             </td>
             <td valign="middle">
-              <p style="margin:0;font-size:11px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#b2ff1a;">OBJECTTRACER</p>
+              <p style="margin:0;font-size:11px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#bce419;">OBJECTTRACER</p>
             </td>
           </tr>
         </table>
@@ -191,7 +191,7 @@ func sendWaitlistEmail(to string) {
         <!-- Quote -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
           <tr>
-            <td style="border-left:3px solid rgba(178,255,26,0.3);padding:6px 0 6px 18px;">
+            <td style="border-left:3px solid rgba(188,228,25,0.3);padding:6px 0 6px 18px;">
               <p style="margin:0 0 8px;font-size:16px;line-height:1.65;color:#c8d8e4;font-style:italic;font-family:Georgia,'Times New Roman',serif;letter-spacing:.01em;">
                 "The cosmos is within us. We are made of star-stuff.<br>We are a way for the universe to know itself."
               </p>
@@ -236,7 +236,7 @@ func sendWaitlistEmail(to string) {
                 So here is our honest ask: what would make this the first tab you open every morning?
                 A feature you wish existed? Something that felt off? A wild idea?
               </p>
-              <p style="margin:0;font-size:13px;font-family:'Courier New',Courier,monospace;font-weight:700;color:#b2ff1a;letter-spacing:.04em;">
+              <p style="margin:0;font-size:13px;font-family:'Courier New',Courier,monospace;font-weight:700;color:#bce419;letter-spacing:.04em;">
                 Reply to this email. Not a form — just us. We read everything.
               </p>
             </td>
@@ -316,7 +316,7 @@ func sendWaitlistEmail(to string) {
             </td>
             <td width="2%" style="font-size:0;">&nbsp;</td>
             <td width="49%" valign="top" style="background-color:#0b1520;border:1px solid #162030;border-radius:10px;padding:16px 18px;">
-              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:-.01em;">Deep Space &nbsp;<span style="font-size:9px;font-family:'Courier New',Courier,monospace;font-weight:700;background:#0d1b0a;border:1px solid #2a4010;border-radius:3px;padding:2px 6px;color:#b2ff1a;letter-spacing:.1em;">BETA</span></p>
+              <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:-.01em;">Deep Space &nbsp;<span style="font-size:9px;font-family:'Courier New',Courier,monospace;font-weight:700;background:#0d1b0a;border:1px solid #2a4010;border-radius:3px;padding:2px 6px;color:#bce419;letter-spacing:.1em;">BETA</span></p>
               <p style="margin:0;font-size:12px;line-height:1.6;color:#506070;">2M+ galaxies — fly through the observable universe</p>
             </td>
           </tr>
@@ -397,7 +397,7 @@ func sendWaitlistEmail(to string) {
         <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;">
           <tr>
             <td style="font-size:10px;font-family:'Courier New',Courier,monospace;letter-spacing:.18em;text-transform:uppercase;color:#3d6018;">04 — DEEP SPACE</td>
-            <td style="padding-left:10px;"><span style="display:inline-block;font-size:9px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b2ff1a;background:#0d1b0a;border:1px solid #2a4010;border-radius:4px;padding:2px 7px;">BETA</span></td>
+            <td style="padding-left:10px;"><span style="display:inline-block;font-size:9px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#bce419;background:#0d1b0a;border:1px solid #2a4010;border-radius:4px;padding:2px 7px;">BETA</span></td>
           </tr>
         </table>
         <img src="https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=500&h=260&fit=crop&q=85"
@@ -505,7 +505,7 @@ func sendWaitlistEmail(to string) {
                 Every person who joins makes the platform better and the community stronger.
               </p>
               <p style="margin:0;font-size:13px;font-weight:600;color:#8a9ab0;">
-                Share: <a href="https://objecttracer.com" style="color:#b2ff1a;text-decoration:none;font-family:'Courier New',Courier,monospace;font-size:12px;">objecttracer.com</a>
+                Share: <a href="https://objecttracer.com" style="color:#bce419;text-decoration:none;font-family:'Courier New',Courier,monospace;font-size:12px;">objecttracer.com</a>
               </p>
             </td>
           </tr>
@@ -517,7 +517,7 @@ func sendWaitlistEmail(to string) {
     <tr>
       <td align="center" style="padding:0 40px 36px;">
         <a href="https://objecttracer.com"
-           style="display:inline-block;background-color:#13200a;border:1px solid #3a6010;border-radius:10px;padding:16px 52px;font-size:13px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#b2ff1a;text-decoration:none;">
+           style="display:inline-block;background-color:#13200a;border:1px solid #3a6010;border-radius:10px;padding:16px 52px;font-size:13px;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#bce419;text-decoration:none;">
           Open ObjectTracer
         </a>
       </td>

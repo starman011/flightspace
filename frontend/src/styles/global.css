@@ -15,8 +15,14 @@ body {
   overflow: hidden;
   background: #0f1419;  /* surface — Stitch design system */
   color: var(--on-surface);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 13px;
+  font-weight: var(--fw-regular);
+  /* Lexend Deca is proportional. Every altitude, speed and callsign column in
+     the app used to align because the family was monospace, so opt the whole
+     document into tabular figures -- digits keep a fixed advance width and the
+     readouts stay in column. */
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 

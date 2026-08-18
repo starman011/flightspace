@@ -90,17 +90,34 @@ function visualRadius(name) {
   )
 }
 
+// ── Label font ───────────────────────────────────────────────────────────────
+// Sprite labels are baked into a CanvasTexture once, so if Lexend Deca has not
+// finished loading at bake time the glyphs fall back to system-ui and stay that
+// way for the life of the scene. Redraw once the real face is available.
+const LABEL_FONT = '"Lexend Deca", system-ui, sans-serif'
+
+function onLabelFontReady(redraw) {
+  if (typeof document === 'undefined' || !document.fonts) return
+  if (document.fonts.check(`bold 22px ${LABEL_FONT}`)) return
+  document.fonts.load(`bold 22px ${LABEL_FONT}`).then(redraw).catch(() => {})
+}
+
 // ── Planet name label sprite ─────────────────────────────────────────────────
 function makeLabelSprite(text, color = '#c3f5ff') {
   const cv  = document.createElement('canvas')
   cv.width  = 256; cv.height = 64
   const ctx = cv.getContext('2d')
-  ctx.font  = 'bold 22px "IBM Plex Mono", monospace'
-  ctx.fillStyle = color
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(text, 128, 32)
+  const paint = () => {
+    ctx.clearRect(0, 0, cv.width, cv.height)
+    ctx.font  = `bold 22px ${LABEL_FONT}`
+    ctx.fillStyle = color
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, 128, 32)
+  }
+  paint()
   const tex  = new CanvasTexture(cv)
+  onLabelFontReady(() => { paint(); tex.needsUpdate = true })
   const mat  = new SpriteMaterial({ map: tex, transparent: true, opacity: 0.82, depthWrite: false })
   const sprite = new Sprite(mat)
   sprite.scale.set(4500, 1100, 1)  // WU — readable at solar camera ~5–15 AU
@@ -411,13 +428,18 @@ export function createSolarSystem(scene, renderer) {
     const cv = document.createElement('canvas')
     cv.width = 256; cv.height = 48
     const ctx = cv.getContext('2d')
-    ctx.font = 'bold 14px "IBM Plex Mono", monospace'
     const c = new Color(craft.color)
-    ctx.fillStyle = `rgb(${Math.round(c.r*255)},${Math.round(c.g*255)},${Math.round(c.b*255)})`
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(craft.label, 4, 24)
+    const paint = () => {
+      ctx.clearRect(0, 0, cv.width, cv.height)
+      ctx.font = `bold 14px ${LABEL_FONT}`
+      ctx.fillStyle = `rgb(${Math.round(c.r*255)},${Math.round(c.g*255)},${Math.round(c.b*255)})`
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(craft.label, 4, 24)
+    }
+    paint()
     const tex = new CanvasTexture(cv)
+    onLabelFontReady(() => { paint(); tex.needsUpdate = true })
     const mat = new SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthWrite: false })
     const sp  = new Sprite(mat)
     sp.scale.set(3200, 600, 1)
