@@ -5,7 +5,7 @@
 const BOT_RE =
   /googlebot|bingbot|yandexbot|duckduckbot|slurp|baiduspider|facebookexternalhit|twitterbot|linkedinbot|rogerbot|embedly|quora|outbrain|pinterestbot|semrushbot|ahrefsbot|mj12bot|dotbot/i
 
-const API  = 'https://project-x-production-1845.up.railway.app:8080'
+const API  = 'https://api.objecttracer.com'
 const SITE = 'https://www.objecttracer.com'
 
 export async function onRequestGet({ params, request, next }) {
