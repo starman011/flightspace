@@ -128,70 +128,105 @@ function ll2v(lat, lon, r) {
 
 // High-DPI pill label — crisp text on a translucent dark capsule with a
 // colored border. Returns { texture, aspect } so sprites can size correctly.
-// Elegant serif for a NASA-document / classic space-mission aesthetic.
-const LABEL_FONT = `500 32px "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif`
-const LABEL_FONT_SMALL = `500 26px "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif`
+// One family with the rest of the product (see styles/tokens.css); the old
+// serif asked for Cormorant Garamond, which nothing loads, so it only ever
+// rendered as Georgia.
+const LABEL_FAMILY     = '"Lexend Deca", system-ui, sans-serif'
+const LABEL_FONT       = `500 32px ${LABEL_FAMILY}`
+const LABEL_FONT_SMALL = `500 26px ${LABEL_FAMILY}`
+
+// A label bakes its text into a texture once, and its sprite width comes from a
+// measureText() taken at bake time. A scene built before Lexend Deca has
+// arrived therefore gets both the wrong glyphs and the wrong pill width, and
+// keeps them for the life of the scene — so re-bake once the face is real.
+function onLabelFontReady(fn) {
+  if (typeof document === 'undefined' || !document.fonts) return
+  if (document.fonts.check(LABEL_FONT)) return
+  document.fonts.load(LABEL_FONT).then(fn).catch(() => {})
+}
+
+// Re-bake a label and re-apply the sprite width the new measurement implies.
+function relabelOnFontLoad(lbl, sprite, heightWU) {
+  onLabelFontReady(() => {
+    lbl.rebuild()
+    sprite.scale.set(heightWU * lbl.aspect, heightWU, 1)
+  })
+}
 
 // Single warm ivory for every surface feature — evokes lunar dust lit by sun.
 const MOON_LABEL_COLOR = '#f5e8c4'
 
 function makeLabel(text, { small = false, color = '#ffffff', pill = true } = {}) {
-  const dpr = 2
+  const dpr  = 2
   const font = small ? LABEL_FONT_SMALL : LABEL_FONT
   const padX = small ? 14 : 18
   const padY = small ? 8  : 10
 
-  // Measure on a scratch ctx first
-  const scratch = document.createElement('canvas').getContext('2d')
-  scratch.font = font
-  const metrics = scratch.measureText(text)
-  const textW = Math.ceil(metrics.width)
-  const textH = small ? 26 : 32
-
-  const w = textW + padX * 2
-  const h = textH + padY * 2
-
   const canvas = document.createElement('canvas')
-  canvas.width = w * dpr
-  canvas.height = h * dpr
-  const ctx = canvas.getContext('2d')
-  ctx.scale(dpr, dpr)
+  const ctx    = canvas.getContext('2d')
+  const label  = { texture: null, aspect: 1, width: 0, height: 0 }
 
-  if (pill) {
-    // Subtle dark pill, no colored border — let the serif typography carry it.
-    const r = h / 2
-    ctx.beginPath()
-    ctx.moveTo(r, 0)
-    ctx.lineTo(w - r, 0)
-    ctx.arcTo(w, 0, w, r, r)
-    ctx.lineTo(w, h - r)
-    ctx.arcTo(w, h, w - r, h, r)
-    ctx.lineTo(r, h)
-    ctx.arcTo(0, h, 0, h - r, r)
-    ctx.lineTo(0, r)
-    ctx.arcTo(0, 0, r, 0, r)
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(6,8,14,0.62)'
-    ctx.fill()
-    ctx.lineWidth = 1
-    ctx.strokeStyle = 'rgba(245,232,196,0.22)'
-    ctx.stroke()
+  // Measure → size → draw. Repeatable, so a font that lands late can re-run it.
+  function paint() {
+    const scratch = document.createElement('canvas').getContext('2d')
+    scratch.font = font
+    const textW = Math.ceil(scratch.measureText(text).width)
+    const textH = small ? 26 : 32
+
+    const w = textW + padX * 2
+    const h = textH + padY * 2
+
+    // Assigning width/height also clears the canvas and resets the ctx state.
+    canvas.width  = w * dpr
+    canvas.height = h * dpr
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.scale(dpr, dpr)
+
+    if (pill) {
+      // Subtle dark pill, no colored border — let the typography carry it.
+      const r = h / 2
+      ctx.beginPath()
+      ctx.moveTo(r, 0)
+      ctx.lineTo(w - r, 0)
+      ctx.arcTo(w, 0, w, r, r)
+      ctx.lineTo(w, h - r)
+      ctx.arcTo(w, h, w - r, h, r)
+      ctx.lineTo(r, h)
+      ctx.arcTo(0, h, 0, h - r, r)
+      ctx.lineTo(0, r)
+      ctx.arcTo(0, 0, r, 0, r)
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(6,8,14,0.62)'
+      ctx.fill()
+      ctx.lineWidth = 1
+      ctx.strokeStyle = 'rgba(245,232,196,0.22)'
+      ctx.stroke()
+    }
+
+    // Soft ivory glow + text
+    ctx.font = font
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(255,240,200,0.9)'
+    ctx.shadowBlur = 8
+    ctx.fillStyle = color
+    ctx.fillText(text, w / 2, h / 2 + 1)
+
+    label.aspect = w / h
+    label.width  = w
+    label.height = h
   }
 
-  // Soft ivory glow + text
-  ctx.font = font
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.shadowColor = 'rgba(255,240,200,0.9)'
-  ctx.shadowBlur = 8
-  ctx.fillStyle = color
-  ctx.fillText(text, w / 2, h / 2 + 1)
+  paint()
 
   const tex = new CanvasTexture(canvas)
   tex.colorSpace = 'srgb'
   tex.anisotropy = 8
-  return { texture: tex, aspect: w / h, width: w, height: h }
+  label.texture = tex
+  label.rebuild = () => { paint(); tex.needsUpdate = true }
+  return label
 }
+
 
 // ── Two-body Kepler (state vector → orbital elements → propagation) ────────
 // Works in Moon-centered ICRF (km, km/s). µ_moon = 4902.8 km³/s².
@@ -354,6 +389,7 @@ export function createMoonScene(scene) {
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
     sprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
+    relabelOnFontLoad(lbl, sprite, LABEL_H_WU)
     sprite.userData = { siteId: site.id, alwaysOn: showLabelAlways }
     sprite.renderOrder = 5
     moonMesh.add(sprite)
@@ -378,6 +414,7 @@ export function createMoonScene(scene) {
     const sprite = new Sprite(spriteMat)
     sprite.position.copy(labelPos)
     sprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
+    relabelOnFontLoad(lbl, sprite, LABEL_H_WU)
     sprite.renderOrder = 4
     moonMesh.add(sprite)
     cullables.push({ obj: sprite, normal, baseOpacity: 0.55 })
@@ -462,6 +499,7 @@ export function createMoonScene(scene) {
     })
     const labelSprite = new Sprite(labelMat)
     labelSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
+    relabelOnFontLoad(lbl, labelSprite, LABEL_H_WU)
     labelSprite.userData = { orbiterId: o.id }
     labelSprite.renderOrder = 8
     moonGroup.add(labelSprite)
@@ -519,6 +557,7 @@ export function createMoonScene(scene) {
     const labelSprite = new Sprite(labelMat)
     labelSprite.position.copy(labelPos)
     labelSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
+    relabelOnFontLoad(lbl, labelSprite, LABEL_H_WU)
     labelSprite.renderOrder = 7
     moonMesh.add(labelSprite)
     cullables.push({ obj: labelSprite, normal, baseOpacity: 0.95 })
@@ -564,6 +603,7 @@ export function createMoonScene(scene) {
       const lSprite = new Sprite(lMat)
       lSprite.position.copy(lPos)
       lSprite.scale.set(LABEL_H_WU * lbl.aspect, LABEL_H_WU, 1)
+      relabelOnFontLoad(lbl, lSprite, LABEL_H_WU)
       lSprite.renderOrder = 6
       grp.add(lSprite)
       grp.userData.cullables.push({ obj: lSprite, normal, baseOpacity: 0.85 })

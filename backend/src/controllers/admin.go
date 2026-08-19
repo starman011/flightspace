@@ -184,15 +184,15 @@ func sendReplyEmail(to, name, reply, original string) error {
 
 	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#04080f;font-family:Arial,sans-serif;">
+<head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&amp;display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#04080f;font-family:'Lexend Deca',Arial,Helvetica,sans-serif;">
 <table width="100%%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:32px auto;">
   <tr><td style="padding:32px;background:#07101a;border:1px solid #1a2e10;border-radius:16px;">
-    <p style="margin:0 0 20px;font-size:10px;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#bce419;">&#9711; OBJECTTRACER</p>
+    <p style="margin:0 0 20px;font-size:10px;font-family:'Lexend Deca',Arial,Helvetica,sans-serif;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#bce419;">&#9711; OBJECTTRACER</p>
     <p style="margin:0 0 12px;font-size:14px;color:#c8d2e1;">%s</p>
     <div style="font-size:14px;line-height:1.8;color:#c8d2e1;white-space:pre-wrap;">%s</div>
     <hr style="border:none;border-top:1px solid #162030;margin:24px 0;" />
-    <p style="margin:0;font-size:11px;color:#3a5060;font-family:'Courier New',monospace;white-space:pre-wrap;">You wrote:\n%s</p>
+    <p style="margin:0;font-size:11px;color:#3a5060;font-family:'Lexend Deca',Arial,Helvetica,sans-serif;white-space:pre-wrap;">You wrote:\n%s</p>
   </td></tr>
 </table>
 </body>
