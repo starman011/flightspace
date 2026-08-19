@@ -98,7 +98,7 @@ first(imgs[0]);
 setInterval(function () { idx = (idx + 1) % imgs.length; cross(imgs[idx]); }, 7000);
 
 // Upgrade to the live, server-rotated featured set
-fetch('https://api.objecttracer.com/api/v1/blog/featured')
+fetch('https://project-x-production-1845.up.railway.app:8080/api/v1/blog/featured')
   .then(function (r) { return r.ok ? r.json() : null; })
   .then(function (d) {
     var ps = ((d && d.posts) || []).filter(function (p) { return p.media_type === 'image' && (p.image_url || p.hd_image_url); });

@@ -21,7 +21,7 @@ const BOT_RE =
 import { AIRPORTS } from './src/components/Globe/airportData.js'
 import { airlineFromCs, aircraftName } from './src/data/flightLabels.js'
 
-const API  = 'https://api.objecttracer.com'
+const API  = 'https://project-x-production-1845.up.railway.app:8080'
 const SITE = 'https://www.objecttracer.com'
 
 // ── Upstream deadline ────────────────────────────────────────────────────────
