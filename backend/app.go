@@ -129,11 +129,13 @@ func (a *App) Start() error {
 	// Start data retention cleanup
 	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
 
-	// Build handler chain: logging → CORS → routes
+	// Build handler chain: logging → security → CORS → gzip → routes
 	mux := http.NewServeMux()
 	routes.Setup(mux, a.db, a.redis, a.hub, launchPoller, issPoller, pushCtrl, a.cfg.JWTSecret, a.cfg.NASAAPIKey, a.cfg.GoogleClientID, a.cfg.AppleClientID)
 
-	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(mux)))
+	// Compress sits innermost so it sees the Content-Type the handlers set and
+	// compresses only the body, leaving CORS and security headers untouched.
+	handler := middlewares.RequestLogger(middlewares.SecurityHeaders(middlewares.CORS(middlewares.Compress(mux))))
 
 	// Graceful shutdown on SIGINT / SIGTERM
 	quit := make(chan os.Signal, 1)
