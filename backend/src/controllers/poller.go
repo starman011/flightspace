@@ -100,37 +100,60 @@ func NewPoller(pool *pgxpool.Pool, rdb *redis.Client, username, password string)
 	}
 }
 
+// nextDelay decides how long to wait before the next attempt. A failure backs
+// off geometrically up to maxBackoff; a success returns to the steady cadence
+// and resets the backoff.
+func nextDelay(failed bool, backoff *time.Duration) time.Duration {
+	if !failed {
+		*backoff = initialBackoff
+		return pollInterval
+	}
+	d := *backoff
+	*backoff = min2(*backoff*2, maxBackoff)
+	return d
+}
+
 // Start begins the polling loop. Call in a goroutine.
+//
+// This is a timer rescheduled after each attempt rather than a fixed ticker.
+// The previous version slept inside the tick handler, which was wrong twice
+// over: the ticker kept firing throughout the sleep, so backing off did not
+// actually slow the request rate down, and ctx.Done() could not be observed
+// for up to maxBackoff, so shutdown hung for minutes and the container had to
+// be killed rather than stopping cleanly.
 func (p *Poller) Start(ctx context.Context) {
 	backoff := initialBackoff
-	ticker := time.NewTicker(pollInterval)
-	defer ticker.Stop()
 
-	// First poll immediately
-	p.poll(ctx, &backoff)
+	// Fires immediately for the first poll, then carries the chosen delay.
+	timer := time.NewTimer(0)
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			p.poll(ctx, &backoff)
+		case <-timer.C:
+			failed := p.poll(ctx) != nil
+			delay := nextDelay(failed, &backoff)
+			if failed {
+				log.Printf(`{"level":"warn","service":"poller","msg":"retry scheduled","delay_s":%d}`,
+					int(delay.Seconds()))
+			}
+			timer.Reset(delay)
 		}
 	}
 }
 
-func (p *Poller) poll(ctx context.Context, backoff *time.Duration) {
+// poll runs one fetch-and-store cycle. It returns an error only when the fetch
+// itself failed — store failures are logged and tolerated, because dropping a
+// single cycle's writes is better than stalling the live feed.
+func (p *Poller) poll(ctx context.Context) error {
 	aircraft, err := p.fetchAdsbLol(ctx)
 	if err != nil {
 		RecordPoll(false)
-		log.Printf(`{"level":"error","service":"poller","msg":"fetch failed","error":%q,"backoff_s":%d}`,
-			err, int(backoff.Seconds()))
-		time.Sleep(*backoff)
-		*backoff = min2(*backoff*2, maxBackoff)
-		return
+		log.Printf(`{"level":"error","service":"poller","msg":"fetch failed","error":%q}`, err)
+		return err
 	}
-
-	*backoff = initialBackoff
 
 	// Fill adsb.lol's coverage holes from a second receiver network. Runs on
 	// the first poll and every supplementEvery-th one after, so the globe has
@@ -164,6 +187,7 @@ func (p *Poller) poll(ctx context.Context, backoff *time.Duration) {
 	RecordPoll(true)
 	log.Printf(`{"level":"info","service":"poller","msg":"poll complete","count":%d,"supplemented":%d}`,
 		len(aircraft), supplemented)
+	return nil
 }
 
 // supplementPoints are traffic hubs in the regions where adsb.lol coverage is
