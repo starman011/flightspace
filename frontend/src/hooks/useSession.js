@@ -38,24 +38,61 @@ export function useSession() {
   useEffect(() => {
     let mounted = true
     let retryTimer = null
+    let attempt = 0
+    let settled = false
 
-    async function initSession(attempt = 0) {
-      const token = await createAnonymousSession()
-      if (!mounted) return
-      if (token) {
-        setIsLoading(false)
-        return
-      }
-      // Retry with capped backoff — network blips recover, true DNS blocks don't.
-      setIsLoading(false)
-      const delay = Math.min(2000 * Math.pow(2, attempt), 30000)
-      retryTimer = setTimeout(() => initSession(attempt + 1), delay)
+    // A tab that cannot reach the API used to retry every 30s forever, in every
+    // open tab, including ones hidden in the background. When the cause was a
+    // misconfiguration rather than a blip that meant unbounded billable traffic
+    // that could never succeed. The ceiling is now 5 minutes, retries pause
+    // while the tab is hidden, and a real recovery signal restarts them at once
+    // — so recovery is faster than the old loop while costing far less.
+    const MAX_DELAY = 5 * 60_000
+
+    const clearTimer = () => {
+      if (retryTimer) { clearTimeout(retryTimer); retryTimer = null }
     }
 
-    initSession()
+    const schedule = () => {
+      clearTimer()
+      // A hidden tab is woken by the visibilitychange handler instead.
+      if (settled || document.hidden) return
+      const delay = Math.min(2000 * 2 ** attempt, MAX_DELAY)
+      attempt += 1
+      retryTimer = setTimeout(attemptSession, delay)
+    }
+
+    async function attemptSession() {
+      if (!mounted || settled) return
+      const token = await createAnonymousSession()
+      if (!mounted) return
+      setIsLoading(false)
+      if (token) {
+        settled = true
+        clearTimer()
+        return
+      }
+      schedule()
+    }
+
+    // Don't sit out a five-minute backoff when the tab is focused again or the
+    // browser reports the network is back: those are evidence worth acting on.
+    const retryNow = () => {
+      if (!mounted || settled || document.hidden) return
+      attempt = 0
+      clearTimer()
+      attemptSession()
+    }
+
+    attemptSession()
+    document.addEventListener('visibilitychange', retryNow)
+    window.addEventListener('online', retryNow)
+
     return () => {
       mounted = false
-      if (retryTimer) clearTimeout(retryTimer)
+      clearTimer()
+      document.removeEventListener('visibilitychange', retryNow)
+      window.removeEventListener('online', retryNow)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
