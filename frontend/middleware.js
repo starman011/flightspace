@@ -2258,12 +2258,26 @@ function ogImageUrl(title, subtitle, badge) {
 // Net effect: at most the FIRST request per isolate can wait on this, and
 // that one is bounded.
 const SHELL_MS = 1500
+
+// Where to scrape the built asset tags from.
+//
+// Scraping the public alias is unsafe. During a rollout the alias can still
+// resolve to the PREVIOUS deployment, so this deployment caches the old
+// entry-chunk name and then serves it to everyone. That chunk no longer
+// exists, the SPA rewrite answers its 404 with index.html, and the browser
+// refuses text/html as a module script — so the app never boots, on every SSR
+// route at once, and Vercel caches the bad asset response as immutable.
+//
+// VERCEL_URL is this deployment's own hostname, so the tags can only ever
+// describe the build that is actually serving them.
+const SHELL_ORIGIN = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : SITE
+
 let _spaAssets  = { tags: '', at: 0 }
 let _spaInflight = null
 
 async function refreshSpaAssets() {
   try {
-    const res = await fetch(`${SITE}/index.html`, {
+    const res = await fetch(`${SHELL_ORIGIN}/index.html`, {
       headers: { 'x-mw-internal': '1' },
       signal: AbortSignal.timeout(SHELL_MS),
     })

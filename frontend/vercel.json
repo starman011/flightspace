@@ -12,7 +12,7 @@
     { "source": "/robots.txt",  "destination": "/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
     { "source": "/home", "destination": "/home.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
