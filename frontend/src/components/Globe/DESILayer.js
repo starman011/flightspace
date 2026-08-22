@@ -16,8 +16,9 @@ import {
   LineBasicMaterial, LineLoop, SphereGeometry, MeshBasicMaterial, Mesh,
 } from 'three'
 import { createCosmicWebMesh } from './CosmicWebMesh.js'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 // ── Scale constants ──────────────────────────────────────────────────────────
 // NightSkyScene places stars at SKY_R * 0.95 ≈ 456 WU.

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { track } from '../../analytics.js'
 import { gsap } from 'gsap'
 import styles from './WaitlistPage.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
 /* ── Hero image pool ─────────────────────────────────────────────── */
 /* ── Feature icons (inline SVG, 16×16) ──────────────────────────── */
@@ -140,7 +141,7 @@ export default function WaitlistPage({ onClose }) {
     if (!email.trim()) return
     setStatus('loading')
     try {
-      const API = import.meta.env.VITE_API_URL || ''
+      const API = API_BASE
       const res = await fetch(`${API}/api/v1/waitlist`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

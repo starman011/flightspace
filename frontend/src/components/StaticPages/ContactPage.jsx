@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './StaticPages.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
 export default function ContactPage({ onClose }) {
   const [name,    setName]    = useState('')
@@ -13,7 +14,7 @@ export default function ContactPage({ onClose }) {
     if (message.trim().length < 5) { setErrMsg('Please write at least a few words'); setStatus('error'); return }
     setStatus('loading')
     try {
-      const API = import.meta.env.VITE_API_URL || ''
+      const API = API_BASE
       const res = await fetch(`${API}/api/v1/contact`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

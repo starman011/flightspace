@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './WaitlistPopup.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
 const STORAGE_KEY = 'fs_waitlist_dismissed'
 const ENGAGE_MS   = 40_000
@@ -90,7 +91,7 @@ export default function WaitlistPopup() {
     if (!email.trim()) return
     setStatus('loading')
     try {
-      const API = import.meta.env.VITE_API_URL || ''
+      const API = API_BASE
       const res = await fetch(`${API}/api/v1/waitlist`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

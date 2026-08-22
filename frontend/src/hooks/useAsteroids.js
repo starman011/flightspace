@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { API_ORIGIN } from '../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || `${location.protocol}//${location.host}`
+const API = API_ORIGIN
 
 /**
  * useAsteroids — fetches live near-earth object data from /api/v1/asteroids.

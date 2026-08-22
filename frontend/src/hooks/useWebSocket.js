@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { API_ORIGIN } from '../lib/apiBase.js'
 
-const _api = import.meta.env.VITE_API_URL || `${location.protocol}//${location.host}`
+const _api = API_ORIGIN
 const WS_URL = import.meta.env.VITE_WS_URL || (_api.replace(/^http/, 'ws') + '/ws')
 const PING_INTERVAL = 30_000
 const MAX_BACKOFF   = 30_000

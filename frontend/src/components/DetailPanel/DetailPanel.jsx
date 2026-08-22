@@ -3,8 +3,9 @@ import styles from './DetailPanel.module.css'
 import { track } from '../../analytics.js'
 import { formatAltitude, formatSpeed, formatHeading, formatCallsign } from '../../utils/formatters'
 import { PLACES } from '../Globe/placeData'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 /* ── Airport lookup table (built once) ─────────────────────────────────────── */
 const AIRPORTS = PLACES.filter(p => p.type === 'airport')

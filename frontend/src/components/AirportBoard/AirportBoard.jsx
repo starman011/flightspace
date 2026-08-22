@@ -3,8 +3,9 @@ import styles from './AirportBoard.module.css'
 import { AIRPORTS } from '../Globe/airportData.js'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels.js'
 import { cityFlavor } from '../../data/cityFlavor.js'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 const LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
 const peerLabel = (code) => {

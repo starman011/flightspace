@@ -3,8 +3,9 @@ import styles from './AirportPanel.module.css'
 import { AIRPORTS } from '../Globe/airportData.js'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels.js'
 import AirportBoard from '../AirportBoard/AirportBoard.jsx'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 const AIRPORT_LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 

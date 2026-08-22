@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import styles from '../FlightPage/FlightPage.module.css'
 import { aircraftName, airlineFromCs } from '../../data/flightLabels'
 import { COLUMNS as FOOTER_COLUMNS } from '../SiteFooter/SiteFooter'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 // Popular carriers (ICAO callsign prefix → display name) and aircraft types
 // (ICAO type code → friendly name). These drive the picker chips.

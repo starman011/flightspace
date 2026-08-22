@@ -7,8 +7,9 @@ import {
   Mesh, Sprite, SpriteMaterial, CanvasTexture,
 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 // ── Distance mapping (mirrors DESILayer) ─────────────────────────────────────
 const SKY_R   = 480

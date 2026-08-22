@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import styles from './LaunchPanel.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 /** Parse ISO date → { dd, hh, mm, ss } parts, or null if launched */
 function parseCountdown(netISO) {

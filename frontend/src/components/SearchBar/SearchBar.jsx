@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './SearchBar.module.css'
 import { AIRPORTS } from '../Globe/airportData.js'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 // Local airport/city match — instant, no API. Matches IATA code, city, or name.
 export function matchAirports(q) {

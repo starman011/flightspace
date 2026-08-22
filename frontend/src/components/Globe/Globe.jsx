@@ -39,6 +39,7 @@ import { pickVisibleLabels } from './skyLabelLayout.js'
 import { lstDeg, raDecToENU } from './celestialAlignment.js'
 import CompassBar from './CompassBar.jsx'
 import styles from './Globe.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -3284,7 +3285,7 @@ export const Globe = forwardRef(function Globe({ aircraft, selectedId, onAircraf
     if (showWeather) {
       int.current.windLayer.show()
       // Fetch wind data; retry every 30s if backend not ready yet
-      const API = import.meta.env.VITE_API_URL || ''
+      const API = API_BASE
       const fetchWind = () => {
         fetch(`${API}/api/v1/weather/wind`)
           .then(r => {

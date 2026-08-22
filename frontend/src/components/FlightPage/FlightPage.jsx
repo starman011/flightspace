@@ -4,8 +4,9 @@ import { AIRPORTS } from '../Globe/airportData'
 import { airlineFromCs, aircraftName } from '../../data/flightLabels'
 import { COLUMNS as FOOTER_COLUMNS } from '../SiteFooter/SiteFooter'
 import { CITY_FLAVOR } from '../../data/cityFlavor'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 const LOOKUP = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
 // Some city names are Wikipedia disambiguation pages (no photo) — map them to

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 export default function FlightLanding({ icao24, onEnable }) {
   const [callsign, setCallsign] = useState(null)

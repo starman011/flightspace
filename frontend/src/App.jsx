@@ -65,6 +65,7 @@ import SkyReticle from './components/SkyReticle/SkyReticle'
 import SiteFooter from './components/SiteFooter/SiteFooter'
 import WindLegend from './components/WindLegend/WindLegend'
 import { AIRPORTS } from './components/Globe/airportData'
+import { API_BASE } from './lib/apiBase.js'
 
 const AIRPORT_BY_IATA = Object.fromEntries(AIRPORTS.map(a => [a.iata, a]))
 
@@ -362,7 +363,7 @@ export default function App() {
   // so users see which locations it's passing over. Cleared on deselect.
   useEffect(() => {
     if (selectedIcao24 !== 'ISS') return
-    const API = import.meta.env.VITE_API_URL || ''
+    const API = API_BASE
     let cancelled = false, tries = 0
     const draw = () => {
       if (cancelled) return

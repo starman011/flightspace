@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './CommandCenterOverlay.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
 // ── Meteor shower annual calendar ─────────────────────────────────────────
 const SHOWERS = [
@@ -162,7 +163,7 @@ function useApod() {
   const [apod, setApod] = useState(_apodCache)
   useEffect(() => {
     if (_apodCache && Date.now() - _apodCachedAt < 3_600_000) { setApod(_apodCache); return }
-    fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/apod')
+    fetch(API_BASE + '/api/v1/apod')
       .then(r => r.json())
       .then(d => {
         const entry = (d.media_type === 'image') ? d : apodFallback()

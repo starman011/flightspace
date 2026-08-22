@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import styles from './BottomBar.module.css'
 import { matchAirports } from '../SearchBar/SearchBar'
+import { API_BASE } from '../../lib/apiBase.js'
 
 const FILTERS = [
   {
@@ -67,7 +68,6 @@ export default function BottomBar({
   const [q, setQ] = useState('')
   const [results, setResults] = useState([])
   const topRef = useRef(null)
-  const API_BASE = import.meta.env.VITE_API_URL || ''
   useEffect(() => {
     if (q.trim().length < 2) { setResults([]); return }
     // Airports/cities match locally and instantly; aircraft need the API. The

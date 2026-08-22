@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import styles from './GalaxyPanel.module.css'
+import { API_BASE } from '../../lib/apiBase.js'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = API_BASE
 
 // ── Cosmological computations (flat ΛCDM) ────────────────────────────────────
 
