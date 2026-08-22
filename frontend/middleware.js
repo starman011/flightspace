@@ -2261,16 +2261,25 @@ const SHELL_MS = 1500
 
 // Where to scrape the built asset tags from.
 //
-// Scraping the public alias is unsafe. During a rollout the alias can still
-// resolve to the PREVIOUS deployment, so this deployment caches the old
-// entry-chunk name and then serves it to everyone. That chunk no longer
-// exists, the SPA rewrite answers its 404 with index.html, and the browser
-// refuses text/html as a module script — so the app never boots, on every SSR
-// route at once, and Vercel caches the bad asset response as immutable.
-//
-// VERCEL_URL is this deployment's own hostname, so the tags can only ever
-// describe the build that is actually serving them.
-const SHELL_ORIGIN = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : SITE
+// This is the public alias deliberately. Fetching VERCEL_URL instead looks
+// safer but is not: that host answered with Vercel's own platform error page,
+// which is a Next.js document, so the scrape below happily lifted six
+// /_next/static stylesheet links out of it and injected them into every SSR
+// page — with no module script at all, which left the SPA unable to boot.
+const SHELL_ORIGIN = SITE
+
+// A scrape is only trusted if it actually looks like this app's built shell:
+// at least one module script, and every referenced URL under /assets/. Anything
+// else (a platform error page, an interstitial, a half-propagated rollout) is
+// discarded rather than cached and served to everyone.
+function validShellTags(tags) {
+  // The Google Fonts stylesheet is scraped too and is legitimately off-origin,
+  // so the test is not "everything is local" — it is that the SPA entry point
+  // is present and nothing from another framework's build snuck in.
+  if (!/<script type="module"[^>]*src="\/assets\//.test(tags)) return false
+  if (tags.includes('/_next/')) return false
+  return true
+}
 
 let _spaAssets  = { tags: '', at: 0 }
 let _spaInflight = null
@@ -2288,7 +2297,7 @@ async function refreshSpaAssets() {
         ...(shell.match(/<link rel="modulepreload"[^>]*>/g) || []),
         ...(shell.match(/<script type="module"[^>]*><\/script>/g) || []),
       ].join('\n  ')
-      if (tags) _spaAssets = { tags, at: Date.now() }
+      if (validShellTags(tags)) _spaAssets = { tags, at: Date.now() }
     }
   } catch (_) { /* SSR page still works as a plain document */ }
   _spaInflight = null
