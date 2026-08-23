@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+
+	"github.com/skydot/backend/src/models"
 	"testing"
 	"time"
 )
@@ -72,5 +74,40 @@ func TestStartReturnsPromptlyWhenCancelledWhileFailing(t *testing.T) {
 	case <-done:
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not return within 2s of cancellation; it is blocking on its backoff")
+	}
+}
+
+func strp(s string) *string { return &s }
+
+func TestDedupeLatestKeepsFreshestFixPerAircraft(t *testing.T) {
+	in := []models.LiveAircraft{
+		{ID: "abc123", TS: 100, Callsign: strp("OLD")},
+		{ID: "def456", TS: 50},
+		{ID: "abc123", TS: 200, Callsign: strp("NEW")}, // same aircraft, newer fix
+		{ID: "abc123", TS: 150, Callsign: strp("MID")},
+	}
+
+	out := dedupeLatest(in)
+
+	if len(out) != 2 {
+		t.Fatalf("got %d rows, want 2 distinct aircraft", len(out))
+	}
+	byID := map[string]models.LiveAircraft{}
+	for _, a := range out {
+		byID[a.ID] = a
+	}
+	got, ok := byID["abc123"]
+	if !ok {
+		t.Fatal("abc123 missing from deduped output")
+	}
+	if got.TS != 200 || got.Callsign == nil || *got.Callsign != "NEW" {
+		t.Fatalf("kept ts=%d callsign=%v, want the freshest fix (ts=200, NEW)", got.TS, got.Callsign)
+	}
+}
+
+func TestDedupeLatestPassesThroughDistinctAircraft(t *testing.T) {
+	in := []models.LiveAircraft{{ID: "a", TS: 1}, {ID: "b", TS: 2}, {ID: "c", TS: 3}}
+	if got := dedupeLatest(in); len(got) != 3 {
+		t.Fatalf("got %d rows, want 3", len(got))
 	}
 }

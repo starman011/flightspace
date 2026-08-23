@@ -440,21 +440,73 @@ func (p *Poller) storeInRedis(ctx context.Context, aircraft []models.LiveAircraf
 // storePositions upserts each aircraft into aircraft_latest — one row per ICAO24.
 // Bounded to ~10k rows regardless of poll frequency. Trail history lives in Redis (storeTrails)
 // to avoid unbounded Postgres disk growth.
+// dedupeLatest collapses repeated icao24s, keeping the freshest fix for each.
+//
+// The merged feed can carry the same aircraft from two receiver networks, and a
+// set-based upsert cannot touch the same conflict target twice in one statement
+// ("ON CONFLICT DO UPDATE command cannot affect row a second time"). The old
+// row-at-a-time loop tolerated duplicates simply because each was its own
+// statement.
+func dedupeLatest(aircraft []models.LiveAircraft) []models.LiveAircraft {
+	latest := make(map[string]models.LiveAircraft, len(aircraft))
+	for _, a := range aircraft {
+		if prev, ok := latest[a.ID]; !ok || a.TS >= prev.TS {
+			latest[a.ID] = a
+		}
+	}
+	out := make([]models.LiveAircraft, 0, len(latest))
+	for _, a := range latest {
+		out = append(out, a)
+	}
+	return out
+}
+
+// storePositions upserts the current fix for every live aircraft.
+//
+// This was a tx.Exec per aircraft inside a transaction: with ~25k aircraft on a
+// 15s cadence that is on the order of 1.5M round trips an hour to Postgres, and
+// the poller spent most of its cycle waiting on them. It is now a single
+// statement that unnests parallel arrays, so the cost is one round trip per
+// poll regardless of fleet size.
 func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircraft) error {
 	if len(aircraft) == 0 {
 		return nil
 	}
 
-	tx, err := p.pool.Begin(ctx)
-	if err != nil {
-		return err
+	rows := dedupeLatest(aircraft)
+	n := len(rows)
+
+	ids := make([]string, n)
+	callsigns := make([]*string, n)
+	lons := make([]float64, n)
+	lats := make([]float64, n)
+	alts := make([]*float64, n)
+	vels := make([]*float64, n)
+	hdgs := make([]*float64, n)
+	vrs := make([]*float64, n)
+	grnds := make([]bool, n)
+	tss := make([]int64, n)
+
+	for i, a := range rows {
+		ids[i] = a.ID
+		callsigns[i] = a.Callsign
+		lons[i] = a.Lon
+		lats[i] = a.Lat
+		alts[i] = a.Alt
+		vels[i] = a.Vel
+		hdgs[i] = a.Hdg
+		vrs[i] = a.VR
+		grnds[i] = a.Grnd
+		tss[i] = a.TS
 	}
-	defer tx.Rollback(ctx)
 
 	const upsertSQL = `
 		INSERT INTO aircraft_latest
 		  (icao24, callsign, longitude, latitude, baro_altitude, velocity, heading, vertical_rate, on_ground, time_position, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10), NOW())
+		SELECT u.icao24, u.callsign, u.lon, u.lat, u.alt, u.vel, u.hdg, u.vr, u.grnd, to_timestamp(u.ts), NOW()
+		  FROM unnest($1::text[], $2::text[], $3::float8[], $4::float8[], $5::float8[],
+		              $6::float8[], $7::float8[], $8::float8[], $9::bool[], $10::bigint[])
+		    AS u(icao24, callsign, lon, lat, alt, vel, hdg, vr, grnd, ts)
 		ON CONFLICT (icao24) DO UPDATE SET
 		  callsign      = EXCLUDED.callsign,
 		  longitude     = EXCLUDED.longitude,
@@ -467,16 +519,12 @@ func (p *Poller) storePositions(ctx context.Context, aircraft []models.LiveAircr
 		  time_position = EXCLUDED.time_position,
 		  updated_at    = NOW()`
 
-	for _, a := range aircraft {
-		_, err := tx.Exec(ctx, upsertSQL,
-			a.ID, a.Callsign, a.Lon, a.Lat, a.Alt, a.Vel, a.Hdg, a.VR, a.Grnd, a.TS,
-		)
-		if err != nil {
-			return fmt.Errorf("upsert aircraft_latest: %w", err)
-		}
+	if _, err := p.pool.Exec(ctx, upsertSQL,
+		ids, callsigns, lons, lats, alts, vels, hdgs, vrs, grnds, tss,
+	); err != nil {
+		return fmt.Errorf("upsert aircraft_latest: %w", err)
 	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 // storeTrails appends the latest position of each aircraft to a bounded Redis list.
