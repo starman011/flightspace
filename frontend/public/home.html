@@ -44,7 +44,7 @@
   .grain{ position:absolute; inset:0; opacity:.045; pointer-events:none; mix-blend-mode:overlay; z-index:1;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
-  .nav{ position:fixed; top:30px; left:0; right:0; z-index:50; display:flex; align-items:center; gap:8px; padding:0 46px; }
+  .nav{ position:absolute; top:30px; left:0; right:0; z-index:50; display:flex; align-items:center; gap:8px; padding:0 46px; }
   .brand{ display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:19px; letter-spacing:.01em; margin-right:34px; }
   .brand{ text-decoration:none; color:inherit; }
   /* Circular logo mark so the wordmark is recognisable at a glance. */
@@ -99,7 +99,12 @@
   [data-rise]{ opacity:0; transform:translateY(24px); transition:opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); }
   [data-rise].in{ opacity:1; transform:none; }
 
-  .credit{ position:fixed; bottom:30px; right:36px; left:auto; max-width:min(46ch,42vw); z-index:6; font-family:var(--mono); font-weight:500; font-size:9.5px; line-height:1.55; letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase; text-align:right; overflow-wrap:anywhere; }
+  /* Anchored to the hero, not the viewport: the page scrolls now, and a fixed
+     credit sat on top of the footer. */
+  .credit{ position:absolute; right:7vw; bottom:26px; left:auto; max-width:min(46ch,42vw);
+           z-index:6; font-family:var(--mono); font-weight:500; font-size:9.5px; line-height:1.55;
+           letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase;
+           text-align:right; overflow-wrap:anywhere; }
   .credit b{ color:rgba(188,228,25,.7); }
   /* ── Footer ───────────────────────────────────────────────────────────────
      Grouped by what a visitor is actually trying to do rather than a flat list
@@ -114,11 +119,16 @@
   .foot ul{ list-style:none; display:flex; flex-direction:column; gap:9px; }
   .foot a{ font-size:13px; color:rgba(238,245,255,.7); text-decoration:none; transition:color .18s; }
   .foot a:hover{ color:var(--lime); }
-  .foot-base{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
-              max-width:1220px; margin-top:44px; padding-top:20px; border-top:1px solid var(--line); }
-  .foot-base p{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:rgba(210,225,245,.45); }
-  .foot-base nav{ display:flex; gap:20px; flex-wrap:wrap; }
-  .foot-base nav a{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; }
+  .foot-base{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;
+              max-width:1220px; margin-top:44px; padding-top:22px; border-top:1px solid var(--line); }
+  .foot-id{ display:flex; flex-direction:column; gap:4px; }
+  /* The wordmark anchors the bottom bar so the footer closes on the brand. */
+  .foot-mark{ font-family:var(--display); font-weight:600; font-size:15px; letter-spacing:.01em;
+              color:rgba(238,245,255,.9); margin-bottom:2px; }
+  .foot-base p{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:rgba(210,225,245,.5); }
+  .foot-src{ color:rgba(210,225,245,.32) !important; }
+  .foot-base nav{ display:flex; gap:22px; flex-wrap:wrap; align-items:center; }
+  .foot-base nav a{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
 
   @media(max-width:860px){
     /* let the page scroll on mobile so nothing overlaps/clips */
@@ -154,18 +164,17 @@
        text, because the content is taller than the viewport. Anchor it to the
        bottom of the document instead -- body is positioned, so this is the end
        of the content -- and reserve room for it with the hero's bottom padding. */
-    .credit{ position:absolute; top:auto; bottom:14px; left:16px; right:16px;
-             max-width:none; text-align:right; }
+    .credit{ right:16px; left:16px; bottom:12px; max-width:none; }
     .foot{ padding:40px 22px 24px; }
     .foot-cols{ grid-template-columns:1fr 1fr; gap:28px; }
     .foot-about{ grid-column:1 / -1; }
-    .foot-base{ margin-top:32px; }
+    .foot-base{ margin-top:32px; align-items:flex-start; }
+    .foot-base nav{ gap:14px 18px; }
   }
 </style>
 </head>
 <body>
   <div class="stage"><div class="wall on" id="wallA"></div><div class="wall" id="wallB"></div><div class="grain"></div></div>
-  <div class="credit">Backdrop · <b id="credit">NASA APOD</b></div>
 
   <nav class="nav">
     <a class="brand" href="/"><span class="logo"><img src="/favicon.svg" alt="" width="21" height="21" loading="eager" decoding="async"></span>ObjectTracer</a>
@@ -207,6 +216,7 @@
       <div class="pillar"><div class="n">02 / DATA</div><h3>Real signals only</h3><p>Live ADS-B, AIS, NASA and orbital data — never simulated.</p></div>
       <div class="pillar"><div class="n">03 / WONDER</div><h3>Built to inspire</h3><p>A flight overhead or a galaxy far away — the same sense of awe.</p></div>
     </div>
+    <div class="credit">Backdrop · <b id="credit">NASA APOD</b></div>
   </div>
 
   <footer class="foot">
@@ -247,11 +257,18 @@
       </div>
     </div>
     <div class="foot-base">
-      <p>&copy; <span id="yr">2026</span> ObjectTracer · Data from ADS-B, AIS, NASA and open orbital sources</p>
+      <div class="foot-id">
+        <span class="foot-mark">ObjectTracer</span>
+        <p>&copy; <span id="yr">2026</span> ObjectTracer · Made in New York</p>
+        <p class="foot-src">Data from ADS-B, AIS, NASA and open orbital sources</p>
+      </div>
       <nav>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/faq">FAQ</a>
+        <a href="/waitlist">Waitlist</a>
+        <a href="/blog">Journal</a>
         <a href="/sitemap.xml">Sitemap</a>
-        <a href="/faq">Help</a>
-        <a href="/contact">Report an issue</a>
       </nav>
     </div>
   </footer>
