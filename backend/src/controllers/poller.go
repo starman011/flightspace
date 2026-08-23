@@ -421,18 +421,42 @@ func categoryToType(cat string) string {
 }
 
 // storeInRedis pipelines HSET for all aircraft into the aircraft:live hash.
+// hsetChunk caps how many field/value pairs go into a single HSET. One command
+// carrying every aircraft would be simplest, but a ~25k-field HSET is a large
+// multi-bulk that Redis executes as one blocking unit; chunking keeps each
+// command short enough to interleave with other clients.
+const hsetChunk = 1000
+
 func (p *Poller) storeInRedis(ctx context.Context, aircraft []models.LiveAircraft) error {
 	if len(aircraft) == 0 {
 		return nil
 	}
+
+	// One HSET per chunk rather than one per aircraft. The pipeline meant a
+	// single round trip either way, but it still built and parsed ~25k separate
+	// commands every 15s, which is most of the protocol work in this path.
 	pipe := p.rdb.Pipeline()
+	pairs := make([]interface{}, 0, hsetChunk*2)
+
+	flush := func() {
+		if len(pairs) > 0 {
+			pipe.HSet(ctx, aircraftLiveKey, pairs...)
+			pairs = make([]interface{}, 0, hsetChunk*2)
+		}
+	}
+
 	for _, a := range aircraft {
 		b, err := json.Marshal(a)
 		if err != nil {
 			continue
 		}
-		pipe.HSet(ctx, aircraftLiveKey, a.ID, string(b))
+		pairs = append(pairs, a.ID, string(b))
+		if len(pairs) >= hsetChunk*2 {
+			flush()
+		}
 	}
+	flush()
+
 	_, err := pipe.Exec(ctx)
 	return err
 }
