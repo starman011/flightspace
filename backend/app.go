@@ -231,6 +231,12 @@ func startCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
 	}
 }
 
+// Archived trails exist to answer "where did this aircraft go yesterday", so
+// they outlive the 6h session retention — but they were never purged at all.
+// Migration 000014 even created idx_flight_trails_created "(retention policy)"
+// for a DELETE that was never written, so the table grew without bound.
+const trailRetention = 48 * time.Hour
+
 func runCleanup(ctx context.Context, pool *pgxpool.Pool, _ int) {
 	// NOTE: the aircraft_positions purge that used to run here was removed.
 	// Migration 000010 dropped that table (trail history lives in Redis as a
@@ -243,4 +249,16 @@ func runCleanup(ctx context.Context, pool *pgxpool.Pool, _ int) {
 		return
 	}
 	log.Printf(`{"level":"info","service":"cleanup","msg":"sessions purged","rows":%d}`, result.RowsAffected())
+
+	// Deliberately after the sessions purge and with its own error handling: an
+	// early return here is what previously stopped the sessions purge from ever
+	// running, so neither cleanup may abort the other.
+	trails, err := pool.Exec(ctx,
+		`DELETE FROM flight_trails WHERE created_at < NOW() - $1::interval`,
+		trailRetention.String())
+	if err != nil {
+		log.Printf(`{"level":"error","service":"cleanup","msg":"trail cleanup failed","error":%q}`, err)
+		return
+	}
+	log.Printf(`{"level":"info","service":"cleanup","msg":"trails purged","rows":%d}`, trails.RowsAffected())
 }

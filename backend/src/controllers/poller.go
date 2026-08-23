@@ -53,6 +53,9 @@ const (
 	trailKeyPrefix = "aircraft:trail:"
 	trailMaxPoints = 200            // LTRIM keeps newest N points
 	trailTTL       = 4 * time.Hour  // auto-expire stale trails
+	// Polls between trail TTL refreshes: 20 x 15s = every 5 minutes, against a
+	// 4 hour expiry. Ample margin, at a twentieth of the commands.
+	expireEvery = 20
 )
 
 // adsbLolResponse is the response envelope from api.adsb.lol
@@ -560,6 +563,13 @@ func (p *Poller) storeTrails(ctx context.Context, aircraft []models.LiveAircraft
 		return nil
 	}
 
+	// The TTL is a safety net, not the cleanup path — removeStale deletes trail
+	// keys for aircraft that go stale. Re-arming a 4 hour expiry on every
+	// aircraft every 15s was about a third of all Redis traffic (~144M commands
+	// a day at current fleet size) spent pushing back a deadline nothing was
+	// near. Refresh it periodically instead.
+	refreshTTL := p.polls%expireEvery == 0
+
 	pipe := p.rdb.Pipeline()
 	for _, a := range aircraft {
 		tp := models.TrailPoint{
@@ -575,7 +585,9 @@ func (p *Poller) storeTrails(ctx context.Context, aircraft []models.LiveAircraft
 		key := trailKeyPrefix + a.ID
 		pipe.LPush(ctx, key, b)
 		pipe.LTrim(ctx, key, 0, trailMaxPoints-1)
-		pipe.Expire(ctx, key, trailTTL)
+		if refreshTTL {
+			pipe.Expire(ctx, key, trailTTL)
+		}
 	}
 	_, err := pipe.Exec(ctx)
 	return err
