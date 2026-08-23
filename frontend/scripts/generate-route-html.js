@@ -28,13 +28,15 @@ const BASE_URL = 'https://www.objecttracer.com'
 // drift. Only these static landing routes are prerendered here — dynamic and
 // middleware-SSR routes are handled elsewhere.
 const STATIC_ROUTES = [
-  '/', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids',
+  // '/globe' is the SPA's own root — '/' now serves the static marketing page,
+  // so the shell written to dist/index.html describes the globe.
+  '/globe', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids',
   '/faq', '/about', '/contact', '/waitlist', '/planes', '/flight',
 ]
 
 // Noscript content per route (meaningful text for non-JS crawlers)
 const NOSCRIPT_CONTENT = {
-  '/':             'ObjectTracer is a real-time interactive 3D globe for tracking live flights (ADS-B), ships (AIS), the ISS, satellites, rocket launches, near-Earth asteroids, and DESI deep-space galaxies. Free and open to everyone.',
+  '/globe':        'ObjectTracer is a real-time interactive 3D globe for tracking live flights (ADS-B), ships (AIS), the ISS, satellites, rocket launches, near-Earth asteroids, and DESI deep-space galaxies. Free and open to everyone.',
   '/launches':     'Track upcoming rocket launches with live countdowns, mission details, vehicle specs, and launch pad locations. Get push notifications before launches.',
   '/solar-system': 'Explore the solar system with real-time planet positions, orbital paths, and interactive 3D visualization of all major planets.',
   '/deep-space':   'Explore the DESI deep-space galaxy catalog featuring millions of galaxies, the cosmic web, and 3D visualization of large-scale structure.',
@@ -107,7 +109,7 @@ function generateRouteHtml(template, route, meta) {
   )
 
   // Add noscript content before closing </body>
-  const noscriptText = NOSCRIPT_CONTENT[route] || NOSCRIPT_CONTENT['/']
+  const noscriptText = NOSCRIPT_CONTENT[route] || NOSCRIPT_CONTENT['/globe']
   html = html.replace(
     '<div id="root"></div>',
     `<div id="root"></div>\n    <noscript><div style="padding:40px;max-width:720px;margin:auto;font-family:sans-serif;color:#ccc;background:#0a0e14"><h1>${escapedTitle}</h1><p>${escapeHtml(noscriptText)}</p><p>JavaScript is required to use ObjectTracer. Please enable JavaScript in your browser.</p><nav><a href="/" style="color:#bce419">Home</a> · <a href="/launches" style="color:#bce419">Launches</a> · <a href="/solar-system" style="color:#bce419">Solar System</a> · <a href="/deep-space" style="color:#bce419">Deep Space</a> · <a href="/moon" style="color:#bce419">Moon</a> · <a href="/asteroids" style="color:#bce419">Asteroids</a></nav></div></noscript>`
@@ -123,10 +125,11 @@ for (const route of STATIC_ROUTES) {
   const meta = ROUTE_META[route]
   const html = generateRouteHtml(template, route, meta)
 
-  if (route === '/') {
-    // Overwrite root index.html with noscript + canonical
+  if (route === '/globe') {
+    // dist/index.html is the shell the SPA rewrite serves for every app route,
+    // so the globe's metadata belongs on it.
     writeFileSync(join(DIST, 'index.html'), html)
-    console.log(`  ✓ / (root index.html)`)
+    console.log(`  ✓ /globe (SPA shell index.html)`)
   } else {
     // Create route directory + index.html
     const routeDir = join(DIST, route.slice(1)) // remove leading /

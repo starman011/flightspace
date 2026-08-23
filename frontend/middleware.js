@@ -3,7 +3,7 @@
 // Human visitors pass through to the Vite SPA (vercel.json rewrite → index.html).
 
 export const config = {
-  matcher: ['/', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss', '/planes'],
+  matcher: ['/globe', '/flight/:path*', '/airport/:path*', '/airline/:path*', '/launch/:path*', '/route/:path*', '/asteroid/:path*', '/city/:path*', '/satellite/:path*', '/flights/:path*', '/blog', '/blog/:path*', '/engineering', '/faq', '/about', '/feed.xml', '/rss.xml', '/blog/rss.xml', '/sitemap-launches.xml', '/sitemap-blog.xml', '/iss', '/planes'],
 }
 
 // Only /planes and /flight branch on this: every other route is true SSR and
@@ -255,7 +255,7 @@ async function route(request) {
   if (parts[0] === 'blog' && parts[1]) {
     return renderBlogPost(parts.slice(1).join('/'))
   }
-  if (pathname === '/') {
+  if (pathname === '/globe') {
     return renderHome()
   }
 }

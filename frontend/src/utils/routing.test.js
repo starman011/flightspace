@@ -121,8 +121,9 @@ describe('stateToPath', () => {
     expect(stateToPath(null, 'earth', false, 'asteroids', false, null)).toBe('/asteroids')
   })
 
-  it('returns / for default state', () => {
-    expect(stateToPath(null, 'earth', false, null, false, null)).toBe('/')
+  it('returns the globe root for default state', () => {
+    // '/' is the static marketing page now; the SPA's own root is /globe.
+    expect(stateToPath(null, 'earth', false, null, false, null)).toBe('/globe')
   })
 
   it('flight takes priority over scale', () => {
@@ -153,7 +154,9 @@ describe('routeKeyFromPath', () => {
 
   it('passes through simple routes', () => {
     expect(routeKeyFromPath('/launches')).toBe('/launches')
-    expect(routeKeyFromPath('/')).toBe('/')
+    // A stray '/' inside the SPA resolves to the globe rather than a dead key.
+    expect(routeKeyFromPath('/')).toBe('/globe')
+    expect(routeKeyFromPath('/globe')).toBe('/globe')
   })
 })
 
@@ -170,7 +173,9 @@ describe('ROUTE_META', () => {
   })
 
   it('every sitemap route has metadata', () => {
-    const sitemapRoutes = ['/', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids',
+    // '/' is deliberately absent: it is served statically by public/home.html,
+    // which carries its own <title> and meta, and never routes through the SPA.
+    const sitemapRoutes = ['/globe', '/launches', '/solar-system', '/deep-space', '/moon', '/asteroids',
       '/about', '/contact', '/faq', '/waitlist', '/donate']
     for (const route of sitemapRoutes) {
       expect(ROUTE_META[route], `${route} missing from ROUTE_META`).toBeDefined()

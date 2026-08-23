@@ -1,6 +1,6 @@
 /* Per-route SEO metadata */
 export const ROUTE_META = {
-  '/':             { title: 'ObjectTracer — Live Flight & Space Tracker',
+  '/globe':        { title: 'ObjectTracer — Live Flight & Space Tracker',
                      description: 'Track live flights, ships, the ISS (with 4K stream), satellites, rocket launches, near-Earth asteroids and deep-space galaxies — all on one real-time, interactive 3D globe. Free, no signup.' },
   '/launches':     { title: 'Rocket Launch Tracker — Live Countdown & Mission Manifest | ObjectTracer',
                      description: 'Track upcoming rocket launches with live countdowns, mission details, and launch pad locations on a 3D globe.' },
@@ -42,7 +42,12 @@ export const ROUTE_META = {
                      description: 'Track this satellite live: real-time orbital position, altitude, and ground track on a free interactive 3D globe.' },
 }
 
+// The globe used to live at '/'. That path is now the marketing page, served
+// statically outside the SPA, so the app's own root is /globe.
+export const GLOBE_ROOT = '/globe'
+
 export function routeKeyFromPath(path) {
+  if (path === '/') return GLOBE_ROOT
   if (path.startsWith('/flight/'))  return '/flight'
   if (path.startsWith('/airport/')) return '/airport'
   if (path.startsWith('/airline/')) return '/airline'
@@ -54,7 +59,7 @@ export function routeKeyFromPath(path) {
 export function updateRouteMeta(path) {
   const base = 'https://www.objecttracer.com'
   const routeKey = routeKeyFromPath(path)
-  const meta = ROUTE_META[routeKey] || ROUTE_META['/']
+  const meta = ROUTE_META[routeKey] || ROUTE_META[GLOBE_ROOT]
   const fullUrl = `${base}${path}`
 
   document.title = meta.title
@@ -106,7 +111,7 @@ export function stateToPath(selectedIcao24, activeScale, launchPanelOpen, active
   if (activeScale === 'solar')      return '/solar-system'
   if (activeScale === 'galaxy')     return '/deep-space'
   if (activeScale === 'moon')       return '/moon'
-  return '/'
+  return GLOBE_ROOT
 }
 
 // ── Landing-page lookup tables (mirror middleware.js for SPA behavior) ────────
@@ -161,6 +166,10 @@ export const REGION_FOCUS = {
   'uae':{lat:24.0,lon:54.0,n:'United Arab Emirates'}, 'singapore':{lat:1.35,lon:103.8,n:'Singapore'},
 }
 
+// Pages that are plain content: they do not need the globe, so they must not sit
+// behind its loading animation.
+export const STATIC_PAGES = new Set(['waitlist', 'about', 'contact', 'faq', 'donate', 'blog'])
+
 export function parseInitialState(pathname) {
   const base = {
     selectedIcao24: null,
@@ -195,7 +204,9 @@ export function parseInitialState(pathname) {
   if (pathname === '/moon')         return { ...base, activeScale: 'moon' }
   if (pathname === '/launches')     return { ...base, launchPanelOpen: true }
   if (pathname === '/asteroids')    return { ...base, activeFilter: 'asteroids' }
-  if (pathname === '/')             return base
+  // The globe's own root. '/' is kept as an alias: it is the marketing page in
+  // production, but a dev server or a direct link should still land somewhere.
+  if (pathname === GLOBE_ROOT || pathname === '/') return base
   if (pathname === '/waitlist') return { ...base, activePage: 'waitlist' }
   if (pathname === '/about')    return { ...base, activePage: 'about' }
   if (pathname === '/contact')  return { ...base, activePage: 'contact' }

@@ -2,7 +2,8 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <!-- ── Core pages ──────────────────────────────────────────────────────── -->
-  <url><loc>https://www.objecttracer.com/</loc><lastmod>2026-07-29</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://www.objecttracer.com/</loc><lastmod>2026-08-23</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://www.objecttracer.com/globe</loc><lastmod>2026-08-23</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
   <url><loc>https://www.objecttracer.com/flight</loc><lastmod>2026-07-29</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://www.objecttracer.com/planes</loc><lastmod>2026-07-29</lastmod><changefreq>daily</changefreq><priority>0.85</priority></url>
   <url><loc>https://www.objecttracer.com/launches</loc><lastmod>2026-06-01</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>

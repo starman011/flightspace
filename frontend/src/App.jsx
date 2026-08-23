@@ -55,7 +55,7 @@ import { useAircraft } from './hooks/useAircraft'
 import { useAsteroids } from './hooks/useAsteroids'
 import { usePins } from './hooks/usePins'
 import { usePWAInstall } from './hooks/usePWAInstall'
-import { parseInitialState, stateToPath, updateRouteMeta } from './utils/routing'
+import { parseInitialState, stateToPath, updateRouteMeta, STATIC_PAGES } from './utils/routing'
 import PWABanner from './components/PWABanner/PWABanner'
 import FlightLanding from './components/FlightLanding/FlightLanding'
 import ContextBanner from './components/ContextBanner/ContextBanner'
@@ -150,10 +150,19 @@ export default function App() {
   // Initialise from URL on first render — must be before any useState that reads it
   const init = parseInitialState(window.location.pathname)
 
-  const [showLoading, setShowLoading] = useState(true)
-  const showLoadingRef = useRef(true)
+  // Waitlist, About, Contact, FAQ, Donate and the Journal are plain content and
+  // do not need the globe, so they must not sit behind its boot animation —
+  // they render immediately instead.
+  const isStaticPage = STATIC_PAGES.has(init.activePage)
+
+  const [showLoading, setShowLoading] = useState(!isStaticPage)
+  const showLoadingRef = useRef(!isStaticPage)
   useEffect(() => { showLoadingRef.current = showLoading }, [showLoading])
-  const [authModalOpen, setAuthModalOpen] = useState(false)
+  // /globe?signin=1 — the marketing page's profile control links here, so the
+  // sign-in sheet opens on arrival rather than dropping the user on the globe.
+  const [authModalOpen, setAuthModalOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('signin') === '1'
+  )
   const [errorDismissed, setErrorDismissed] = useState(false)
   // Keep LIVE off on direct URL — DetailPanel fetches ISS/aircraft via REST first
   // WebSocket only connects when user explicitly enables LIVE (prevents session-not-ready lag)

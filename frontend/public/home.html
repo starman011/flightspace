@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>About ObjectTracer — Track Everything Above the Horizon, Live</title>
 <meta name="description" content="ObjectTracer tracks everything above the horizon in real time — flights, ships, the ISS, satellites, rocket launches, near-Earth asteroids and deep-space galaxies, on one interactive 3D globe. Free, no signup." />
-<link rel="canonical" href="https://www.objecttracer.com/home" />
+<link rel="canonical" href="https://www.objecttracer.com/" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://www.objecttracer.com/home" />
+<meta property="og:url" content="https://www.objecttracer.com/" />
 <meta property="og:title" content="ObjectTracer — Track Everything Above the Horizon, Live" />
 <meta property="og:description" content="Flights, ships, the ISS, satellites, rockets, asteroids and galaxies — all on one real-time 3D globe." />
 <meta property="og:image" content="https://www.objecttracer.com/og-image.png" />
@@ -19,7 +19,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"AboutPage","name":"About ObjectTracer","url":"https://www.objecttracer.com/home","description":"ObjectTracer is a real-time 3D globe tracking flights, ships, the ISS, satellites, rocket launches, asteroids and deep-space galaxies.","publisher":{"@type":"Organization","name":"ObjectTracer","url":"https://www.objecttracer.com/","logo":"https://www.objecttracer.com/favicon-512.png"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"ObjectTracer \u2014 Track Everything Above the Horizon, Live","url":"https://www.objecttracer.com/","description":"ObjectTracer is a real-time 3D globe tracking flights, ships, the ISS, satellites, rocket launches, asteroids and deep-space galaxies.","primaryTopicOf":{"@type":"WebApplication","name":"ObjectTracer","url":"https://www.objecttracer.com/globe"},"publisher":{"@type":"Organization","name":"ObjectTracer","url":"https://www.objecttracer.com/","logo":"https://www.objecttracer.com/favicon-512.png"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
@@ -30,10 +30,11 @@
   :root{ --lime:#bce419; --ink:#0f1419; --fg:#dfe3eb; --muted:#bac9cc; --line:rgba(255,255,255,.10);
     --display:'Lexend Deca',system-ui,sans-serif; --body:'Lexend Deca',system-ui,sans-serif; --mono:'Lexend Deca',system-ui,sans-serif; }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%; overflow:hidden}
-  body{ background:var(--ink); color:var(--fg); font-family:var(--body); -webkit-font-smoothing:antialiased; }
+  html{height:100%}
+  body{min-height:100%; overflow-x:hidden}
+  body{ position:relative; background:var(--ink); color:var(--fg); font-family:var(--body); -webkit-font-smoothing:antialiased; }
 
-  .stage{ position:fixed; inset:14px; border-radius:30px; overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.07);
+  .stage{ position:fixed; inset:0; border-radius:22px; overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.07);
     /* instant backdrop so there's never a blank wait while images load */
     background:radial-gradient(120% 100% at 25% 20%, #16263f 0%, #0a1422 45%, #050a0f 100%); }
   .wall{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity 1.4s ease; filter:saturate(1.06); transform:scale(1.04); }
@@ -45,7 +46,12 @@
 
   .nav{ position:fixed; top:30px; left:0; right:0; z-index:50; display:flex; align-items:center; gap:8px; padding:0 46px; }
   .brand{ display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:19px; letter-spacing:.01em; margin-right:34px; }
-  .brand .dot{ width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime); }
+  .brand{ text-decoration:none; color:inherit; }
+  /* Circular logo mark so the wordmark is recognisable at a glance. */
+  .brand .logo{ width:32px; height:32px; flex:0 0 32px; border-radius:50%; display:grid; place-items:center;
+    background:rgba(188,228,25,.10); border:1px solid rgba(188,228,25,.35);
+    box-shadow:0 0 18px rgba(188,228,25,.16); overflow:hidden; }
+  .brand .logo img{ width:21px; height:21px; display:block; border-radius:50%; }
   .navlink{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(238,245,255,.72); text-decoration:none; padding:8px 14px; border-radius:100px; transition:color .2s, background .2s; }
   .navlink:hover{ color:var(--lime); background:rgba(255,255,255,.04); }
   .spacer{ flex:1; }
@@ -72,7 +78,7 @@
   .mega-prev .meta h4{ font-family:var(--display); font-weight:600; font-size:17px; color:#fff; margin-bottom:4px; }
   .mega-prev .meta p{ font-size:12px; color:rgba(255,255,255,.7); line-height:1.45; font-weight:300; }
 
-  .hero{ position:relative; z-index:5; height:100vh; display:flex; flex-direction:column; justify-content:center; padding:0 7vw; max-width:1220px; }
+  .hero{ position:relative; z-index:5; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:0 7vw; max-width:1220px; }
   h1{ font-family:var(--display); font-weight:600; font-size:clamp(44px,7.2vw,100px); line-height:.98; letter-spacing:-.018em; margin-bottom:28px; }
   .cycler{ display:inline-flex; align-items:baseline; }
   .cyc-word{ color:var(--lime); font-style:italic; font-weight:600; display:inline-block; transition:opacity .34s ease, transform .42s cubic-bezier(.22,1,.36,1); }
@@ -95,11 +101,36 @@
 
   .credit{ position:fixed; bottom:30px; right:36px; left:auto; max-width:min(46ch,42vw); z-index:6; font-family:var(--mono); font-weight:500; font-size:9.5px; line-height:1.55; letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase; text-align:right; overflow-wrap:anywhere; }
   .credit b{ color:rgba(188,228,25,.7); }
+  /* ── Footer ───────────────────────────────────────────────────────────────
+     Grouped by what a visitor is actually trying to do rather than a flat list
+     of every URL, so the columns stay meaningful as pages are added. */
+  .foot{ position:relative; z-index:5; background:rgba(6,10,16,.82); backdrop-filter:blur(20px);
+         border-top:1px solid var(--line); padding:56px 7vw 28px; }
+  .foot-cols{ display:grid; grid-template-columns:1.4fr repeat(3, 1fr); gap:40px; max-width:1220px; }
+  .foot-about .brand{ margin-bottom:14px; display:inline-flex; }
+  .foot-about p{ font-size:13px; line-height:1.7; color:var(--muted); max-width:34ch; }
+  .foot h4{ font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+            color:var(--lime); margin-bottom:14px; font-weight:600; }
+  .foot ul{ list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .foot a{ font-size:13px; color:rgba(238,245,255,.7); text-decoration:none; transition:color .18s; }
+  .foot a:hover{ color:var(--lime); }
+  .foot-base{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+              max-width:1220px; margin-top:44px; padding-top:20px; border-top:1px solid var(--line); }
+  .foot-base p{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:rgba(210,225,245,.45); }
+  .foot-base nav{ display:flex; gap:20px; flex-wrap:wrap; }
+  .foot-base nav a{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; }
+
   @media(max-width:860px){
     /* let the page scroll on mobile so nothing overlaps/clips */
     html,body{ overflow-x:hidden; overflow-y:auto; }
-    .stage{ inset:8px; border-radius:22px; }
-    .nav{ padding:0 14px; gap:8px; }
+    .stage{ inset:0; border-radius:16px; }
+    /* The nav is a flex row; when its children are wider than the padding box
+       they overflow it and padding-right stops holding the profile inside the
+       screen. Shrink the brand here so the row genuinely fits. */
+    .nav{ padding:0 16px; gap:6px; }
+    .brand{ font-size:16px; margin-right:10px; gap:8px; min-width:0; }
+    .brand .logo{ width:28px; height:28px; flex-basis:28px; }
+    .brand .logo img{ width:18px; height:18px; }
     .navlink{ display:none; }                 /* declutter — in Explore + footer */
     .spacer{ flex:1; }
     .account{ width:34px; height:34px; flex-basis:34px; }
@@ -110,7 +141,7 @@
            max-height:calc(100dvh - 92px); overflow-y:auto; overflow-x:hidden; }
     .mega-list{ width:100%; }
     .mega-prev{ min-height:130px; }
-    .hero{ height:auto; min-height:100dvh; padding:120px 24px 64px; }
+    .hero{ height:auto; min-height:100dvh; padding:120px 24px 104px; }
     h1{ font-size:clamp(34px,9vw,56px); margin-bottom:20px; }
     .lede{ font-size:15px; margin-bottom:28px; }
     .cta{ margin-bottom:40px; }
@@ -118,12 +149,17 @@
     .pillars{ flex-direction:column; gap:22px; }
     .pillar{ max-width:100%; }
     /* Desktop never scrolls (html,body overflow:hidden), so a fixed credit sits
-       harmlessly over the hero. Mobile DOES scroll, and fixed meant it rode over
-       every section below -- landing on top of the pillar headings. Anchor it to
-       the bottom of the first screen instead so it scrolls away with the hero,
-       and give it both edges so a long APOD title wraps rather than running off. */
-    .credit{ position:absolute; top:calc(100dvh - 46px); bottom:auto; left:16px; right:16px;
+       harmlessly over the hero. Mobile DOES scroll. Pinning it to the first
+       screen (top:100dvh - 46px) dropped it straight onto the last pillar's
+       text, because the content is taller than the viewport. Anchor it to the
+       bottom of the document instead -- body is positioned, so this is the end
+       of the content -- and reserve room for it with the hero's bottom padding. */
+    .credit{ position:absolute; top:auto; bottom:14px; left:16px; right:16px;
              max-width:none; text-align:right; }
+    .foot{ padding:40px 22px 24px; }
+    .foot-cols{ grid-template-columns:1fr 1fr; gap:28px; }
+    .foot-about{ grid-column:1 / -1; }
+    .foot-base{ margin-top:32px; }
   }
 </style>
 </head>
@@ -132,12 +168,12 @@
   <div class="credit">Backdrop · <b id="credit">NASA APOD</b></div>
 
   <nav class="nav">
-    <span class="brand"><span class="dot"></span>ObjectTracer</span>
+    <a class="brand" href="/"><span class="logo"><img src="/favicon.svg" alt="" width="21" height="21" loading="eager" decoding="async"></span>ObjectTracer</a>
     <div class="explore">
       <button>Explore <svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
       <div class="mega">
         <div class="mega-list">
-          <a href="/"             data-k="earth">Flights &amp; Ships <span class="ar">→</span></a>
+          <a href="/globe"        data-k="earth">Flights &amp; Ships <span class="ar">→</span></a>
           <a href="/iss"          data-k="iss">ISS Tracker <span class="ar">→</span></a>
           <a href="/launches"     data-k="launch">Rocket Launches <span class="ar">→</span></a>
           <a href="/asteroids"    data-k="asteroid">Asteroids <span class="ar">→</span></a>
@@ -154,7 +190,7 @@
     <a class="navlink" href="/contact">Contact</a>
     <a class="navlink" href="/waitlist">Waitlist</a>
     <span class="spacer"></span>
-    <a class="account" href="/" title="Sign in" aria-label="Account">
+    <a class="account" href="/globe?signin=1" title="Sign in" aria-label="Account">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
     </a>
   </nav>
@@ -163,7 +199,7 @@
     <h1 data-rise>We track <span class="cycler"><span class="cyc-word" id="cyc">flights</span></span><br>above the horizon.</h1>
     <p class="lede" data-rise>From the plane passing overhead to galaxies billions of light-years away — ships, the ISS, satellites, rockets and asteroids — all on one live, interactive 3D globe. No signup. Just look up.</p>
     <div class="cta" data-rise>
-      <a class="btn btn-primary" href="/">Launch the globe →</a>
+      <a class="btn btn-primary" href="/globe">Launch the globe →</a>
       <a class="btn btn-ghost" href="/blog">Read the journal</a>
     </div>
     <div class="pillars" data-rise>
@@ -173,6 +209,54 @@
     </div>
   </div>
 
+  <footer class="foot">
+    <div class="foot-cols">
+      <div class="foot-about">
+        <a class="brand" href="/"><span class="logo"><img src="/favicon.svg" alt="" width="21" height="21" decoding="async"></span>ObjectTracer</a>
+        <p>A free, real-time 3D globe for everything above the horizon — aircraft, ships, the ISS, satellites, rocket launches and near-Earth asteroids. Real signals, never simulated.</p>
+      </div>
+      <div>
+        <h4>Track</h4>
+        <ul>
+          <li><a href="/globe">Flights &amp; Ships</a></li>
+          <li><a href="/iss">ISS Tracker</a></li>
+          <li><a href="/launches">Rocket Launches</a></li>
+          <li><a href="/asteroids">Asteroids</a></li>
+          <li><a href="/flight">Flights Near You</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="/solar-system">Solar System</a></li>
+          <li><a href="/deep-space">Deep Space</a></li>
+          <li><a href="/moon">Moon</a></li>
+          <li><a href="/planes">Fleet Tracker</a></li>
+          <li><a href="/blog">Space Journal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/engineering">Engineering Blog</a></li>
+          <li><a href="/faq">FAQ</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/waitlist">Waitlist</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-base">
+      <p>&copy; <span id="yr">2026</span> ObjectTracer · Data from ADS-B, AIS, NASA and open orbital sources</p>
+      <nav>
+        <a href="/sitemap.xml">Sitemap</a>
+        <a href="/faq">Help</a>
+        <a href="/contact">Report an issue</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>document.getElementById('yr').textContent = new Date().getFullYear()</script>
   <script src="/home.js"></script>
 </body>
 </html>
