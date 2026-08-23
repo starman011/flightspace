@@ -25,7 +25,7 @@ const (
 
 	// adsb.lol — free, no registration, global coverage
 	// point/lat/lon/radius — radius 21600nm covers the whole world
-	adsbLolURL    = "https://api.adsb.lol/v2/point/0/0/21600"
+	adsbLolURL      = "https://api.adsb.lol/v2/point/0/0/21600"
 	aircraftLiveKey = "aircraft:live"
 
 	// airplanes.live — a second free aggregator running a *different*
@@ -51,8 +51,8 @@ const (
 	// Trail storage in Redis — bounded per-aircraft list, zero disk growth.
 	// Key format: aircraft:trail:<icao24>. Values are JSON-encoded TrailPoint.
 	trailKeyPrefix = "aircraft:trail:"
-	trailMaxPoints = 200            // LTRIM keeps newest N points
-	trailTTL       = 4 * time.Hour  // auto-expire stale trails
+	trailMaxPoints = 200           // LTRIM keeps newest N points
+	trailTTL       = 4 * time.Hour // auto-expire stale trails
 	// Polls between trail TTL refreshes: 20 x 15s = every 5 minutes, against a
 	// 4 hour expiry. Ample margin, at a twentieth of the commands.
 	expireEvery = 20
@@ -68,17 +68,17 @@ type adsbLolResponse struct {
 type adsbAircraft struct {
 	Hex      string      `json:"hex"`
 	Flight   string      `json:"flight"`
-	R        string      `json:"r"`    // registration
-	T        string      `json:"t"`    // ICAO type code
-	Desc     string      `json:"desc"` // type description
+	R        string      `json:"r"`     // registration
+	T        string      `json:"t"`     // ICAO type code
+	Desc     string      `json:"desc"`  // type description
 	OwnOp    string      `json:"ownOp"` // operator name
 	Category string      `json:"category"`
 	AltBaro  interface{} `json:"alt_baro"` // float64 or "ground"
 	AltGeom  float64     `json:"alt_geom"`
-	GS       float64     `json:"gs"`           // ground speed (knots)
-	Track    float64     `json:"track"`        // true track (degrees)
-	GeomRate float64     `json:"geom_rate"`    // geometric vertical rate (ft/min)
-	BaroRate float64     `json:"baro_rate"`    // barometric vertical rate (ft/min)
+	GS       float64     `json:"gs"`        // ground speed (knots)
+	Track    float64     `json:"track"`     // true track (degrees)
+	GeomRate float64     `json:"geom_rate"` // geometric vertical rate (ft/min)
+	BaroRate float64     `json:"baro_rate"` // barometric vertical rate (ft/min)
 	Lat      float64     `json:"lat"`
 	Lon      float64     `json:"lon"`
 	Squawk   string      `json:"squawk"`
@@ -199,10 +199,10 @@ func (p *Poller) poll(ctx context.Context) error {
 // we already have.
 var supplementPoints = []struct{ Lat, Lon float64 }{
 	// South Asia
-	{28.5562, 77.1000},  // Delhi
-	{19.0887, 72.8679},  // Mumbai
-	{13.1986, 77.7066},  // Bengaluru
-	{23.8103, 90.4125},  // Dhaka
+	{28.5562, 77.1000}, // Delhi
+	{19.0887, 72.8679}, // Mumbai
+	{13.1986, 77.7066}, // Bengaluru
+	{23.8103, 90.4125}, // Dhaka
 	// Southeast Asia
 	{13.6900, 100.7501}, // Bangkok
 	{1.3644, 103.9915},  // Singapore
@@ -216,9 +216,9 @@ var supplementPoints = []struct{ Lat, Lon float64 }{
 	{35.5494, 139.7798}, // Tokyo
 	{37.4602, 126.4407}, // Seoul
 	// Middle East
-	{25.2532, 55.3657},  // Dubai
-	{25.2731, 51.6080},  // Doha
-	{41.2753, 28.7519},  // Istanbul
+	{25.2532, 55.3657}, // Dubai
+	{25.2731, 51.6080}, // Doha
+	{41.2753, 28.7519}, // Istanbul
 	// Africa
 	{30.1219, 31.4056},  // Cairo
 	{6.5774, 3.3212},    // Lagos
@@ -591,6 +591,81 @@ func (p *Poller) storeTrails(ctx context.Context, aircraft []models.LiveAircraft
 	}
 	_, err := pipe.Exec(ctx)
 	return err
+}
+
+// PurgeOrphanTrails deletes trail keys whose aircraft is no longer live.
+//
+// removeStale already deletes trails for aircraft it retires, so this is the
+// backstop for the ones it missed — a failed DEL, a crash between the two
+// writes, or a key left by an older build. Without it those keys sat until the
+// 4 hour TTL, and trails are the bulk of what this app keeps in Redis
+// (~25k aircraft x 200 points).
+//
+// Deliberately SCAN, never KEYS: KEYS blocks Redis for the whole keyspace.
+//
+// The live snapshot is taken AFTER the scan on purpose. An aircraft appearing
+// mid-scan would be absent from a snapshot taken first and its fresh trail
+// would be deleted; taking it afterwards means anything added during the scan
+// is in the snapshot and survives.
+func PurgeOrphanTrails(ctx context.Context, rdb *redis.Client) (int, error) {
+	var (
+		cursor     uint64
+		candidates []string
+	)
+	for {
+		keys, next, err := rdb.Scan(ctx, cursor, trailKeyPrefix+"*", 500).Result()
+		if err != nil {
+			return 0, fmt.Errorf("scan trail keys: %w", err)
+		}
+		candidates = append(candidates, keys...)
+		cursor = next
+		if cursor == 0 {
+			break
+		}
+	}
+	if len(candidates) == 0 {
+		return 0, nil
+	}
+
+	liveIDs, err := rdb.HKeys(ctx, aircraftLiveKey).Result()
+	if err != nil {
+		return 0, fmt.Errorf("read live aircraft: %w", err)
+	}
+	live := make(map[string]struct{}, len(liveIDs))
+	for _, id := range liveIDs {
+		live[id] = struct{}{}
+	}
+
+	removed := 0
+	batch := make([]string, 0, 500)
+	flush := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		n, err := rdb.Del(ctx, batch...).Result()
+		if err != nil {
+			return err
+		}
+		removed += int(n)
+		batch = batch[:0]
+		return nil
+	}
+
+	for _, key := range candidates {
+		if _, ok := live[strings.TrimPrefix(key, trailKeyPrefix)]; ok {
+			continue
+		}
+		batch = append(batch, key)
+		if len(batch) >= 500 {
+			if err := flush(); err != nil {
+				return removed, err
+			}
+		}
+	}
+	if err := flush(); err != nil {
+		return removed, err
+	}
+	return removed, nil
 }
 
 // removeStale removes aircraft from Redis that haven't been updated within staleThreshold seconds.

@@ -127,7 +127,7 @@ func (a *App) Start() error {
 	}
 
 	// Start data retention cleanup
-	go startCleanup(ctx, a.db, a.cfg.RetentionHours)
+	go startCleanup(ctx, a.db, a.redis, a.cfg.RetentionHours)
 
 	// Build handler chain: logging → security → CORS → gzip → routes
 	mux := http.NewServeMux()
@@ -215,7 +215,7 @@ func (a *App) Start() error {
 }
 
 // startCleanup periodically deletes old positions and expired sessions.
-func startCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
+func startCleanup(ctx context.Context, pool *pgxpool.Pool, rdb *redis.Client, retentionHours int) {
 	if retentionHours <= 0 {
 		retentionHours = 6
 	}
@@ -226,7 +226,7 @@ func startCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			runCleanup(ctx, pool, retentionHours)
+			runCleanup(ctx, pool, rdb, retentionHours)
 		}
 	}
 }
@@ -237,28 +237,34 @@ func startCleanup(ctx context.Context, pool *pgxpool.Pool, retentionHours int) {
 // for a DELETE that was never written, so the table grew without bound.
 const trailRetention = 48 * time.Hour
 
-func runCleanup(ctx context.Context, pool *pgxpool.Pool, _ int) {
-	// NOTE: the aircraft_positions purge that used to run here was removed.
-	// Migration 000010 dropped that table (trail history lives in Redis as a
-	// bounded per-aircraft list), so the DELETE errored every hour AND its
-	// early return meant the session cleanup below never ran at all —
-	// expired anonymous sessions accumulated indefinitely.
-	result, err := pool.Exec(ctx, `DELETE FROM anonymous_sessions WHERE expires_at < NOW()`)
-	if err != nil {
-		log.Printf(`{"level":"error","service":"cleanup","msg":"sessions cleanup failed","error":%q}`, err)
-		return
-	}
-	log.Printf(`{"level":"info","service":"cleanup","msg":"sessions purged","rows":%d}`, result.RowsAffected())
+func runCleanup(ctx context.Context, pool *pgxpool.Pool, rdb *redis.Client, _ int) {
+	// Session and user data is never deleted. anonymous_sessions used to be
+	// purged here; it is retained deliberately — it is the only record of who
+	// used the product and when, and it is not reconstructible. Note that this
+	// means the table grows without bound: if it ever needs bounding, aggregate
+	// it into daily counts and drop the rows, rather than deleting outright.
+	//
+	// Only derived, regenerable data is cleaned: archived trails in Postgres and
+	// orphaned trail keys in Redis. Both can be rebuilt from the live feed.
 
-	// Deliberately after the sessions purge and with its own error handling: an
-	// early return here is what previously stopped the sessions purge from ever
-	// running, so neither cleanup may abort the other.
 	trails, err := pool.Exec(ctx,
 		`DELETE FROM flight_trails WHERE created_at < NOW() - $1::interval`,
 		trailRetention.String())
 	if err != nil {
 		log.Printf(`{"level":"error","service":"cleanup","msg":"trail cleanup failed","error":%q}`, err)
+	} else {
+		log.Printf(`{"level":"info","service":"cleanup","msg":"trails purged","rows":%d}`, trails.RowsAffected())
+	}
+
+	// Redis needs the same treatment as Postgres: trails are the bulk of what
+	// this app holds in memory, and removeStale only covers aircraft it retires
+	// itself. Kept independent of the purge above so neither can abort the other
+	// — an early return in exactly this spot is what once stopped the second
+	// cleanup from ever running.
+	orphans, err := controllers.PurgeOrphanTrails(ctx, rdb)
+	if err != nil {
+		log.Printf(`{"level":"error","service":"cleanup","msg":"orphan trail purge failed","error":%q}`, err)
 		return
 	}
-	log.Printf(`{"level":"info","service":"cleanup","msg":"trails purged","rows":%d}`, trails.RowsAffected())
+	log.Printf(`{"level":"info","service":"cleanup","msg":"orphan trails purged","keys":%d}`, orphans)
 }

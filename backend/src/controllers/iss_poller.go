@@ -18,7 +18,11 @@ const (
 	issPositionURL  = "http://api.open-notify.org/iss-now.json"
 	issCrewURL      = "http://api.open-notify.org/astros.json"
 	issAltKM        = 408.0  // approximate ISS orbital altitude
-	issPollS        = 5      // seconds between position polls
+	// The ISS moves ~7.66 km/s, so a 30s fix is ~230 km of ground track — still
+	// far finer than the globe can show, and the client interpolates between
+	// fixes anyway. At 5s this was 17,280 upstream calls a day for detail
+	// nothing consumed.
+	issPollS        = 30     // seconds between position polls
 	crewPollMin     = 60     // minutes between crew polls
 	streamPollMin   = 30     // minutes between stream discovery polls
 	streamRedisKey  = "iss:stream"
