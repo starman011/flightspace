@@ -190,6 +190,15 @@ async function route(request) {
   // everyone, SPA scripts injected, React takes over after first paint.
   if (!isBot && (pathname === '/planes' || pathname === '/flight')) return
 
+  // Every renderer below fetches its data and only then calls html(), which
+  // awaits spaAssets(). On a cold isolate that put the shell fetch strictly
+  // after the data fetch — two round trips end to end for work that has no
+  // dependency between the halves. Starting it here lets it run alongside the
+  // data fetch, so html() finds it already resolved (or joins the same
+  // in-flight promise). Deliberately not awaited; spaAssets never rejects, and
+  // the catch is belt and braces against an unhandled rejection.
+  spaAssets().catch(() => {})
+
   if (parts[0] === 'flight' && parts[1]) {
     return renderFlight(parts[1])
   }
