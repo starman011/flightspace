@@ -98,7 +98,7 @@
 
 .heroPlaceholder {
   width: 100%;
-  height: 170px;
+  height: 210px;
   background: linear-gradient(145deg, rgba(var(--surface-deep-rgb), 1) 0%, rgba(12,18,30,1) 50%, rgba(var(--surface-deep-rgb), 1) 100%);
   display: flex;
   align-items: center;
@@ -106,8 +106,8 @@
 }
 
 .heroIcon {
-  font-size: 52px;
-  opacity: 0.12;
+  display: flex;
+  opacity: 0.16;
   color: rgba(var(--ink-rgb), 0.6);
 }
 

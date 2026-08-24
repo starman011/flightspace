@@ -4,6 +4,7 @@ import { track } from '../../analytics.js'
 import { formatAltitude, formatSpeed, formatHeading, formatCallsign } from '../../utils/formatters'
 import { PLACES } from '../Globe/placeData'
 import { API_BASE } from '../../lib/apiBase.js'
+import Skeleton from '../Skeleton/Skeleton'
 
 const API = API_BASE
 
@@ -372,6 +373,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [photo,   setPhoto]   = useState(null)
+  const [photoPending, setPhotoPending] = useState(false)
   const [route,   setRoute]   = useState(null)
   const [history, setHistory] = useState(null)
   const [playback, setPlayback] = useState(null) // { trail, index, playing }
@@ -384,6 +386,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   const panelRef = useRef(null)
   const scrollerRef = useRef(null)
   const photoTriedReg = useRef(false)
+  const photoHexDone  = useRef(false)
 
   // ISS detail can open without live WebSocket data (direct /iss URL).
   // Derive satellite category from the id so crew/stream/specs always render.
@@ -573,6 +576,10 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     setRoute(null)
     setError(null)
     photoTriedReg.current = false
+    photoHexDone.current = false
+    // Only aircraft have photos to wait for; anything else settles immediately
+    // so its hero never shows a skeleton for something that will never load.
+    setPhotoPending(isFlight)
     let cancelled = false
 
     if (fetchesDetail) {
@@ -591,7 +598,12 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           .catch(() => {})
 
         fetchPhotoFromUrl(`https://api.planespotters.net/pub/photos/hex/${icao24}`)
-          .then(p => { if (!cancelled) setPhoto(p) })
+          .then(p => {
+            if (cancelled) return
+            photoHexDone.current = true
+            if (p) { setPhoto(p); setPhotoPending(false) }
+            // No hit: stay pending, the registration attempt below may still land.
+          })
       }
 
       const iv = setInterval(refreshLive, 5000)
@@ -677,14 +689,24 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
     })
   }, [route, onTrailData])
 
-  // Fallback: try registration-based photo if hex returned nothing
+  // Fallback: try registration-based photo if hex returned nothing.
+  //
+  // This is also where the hero stops waiting. The skeleton has to clear on
+  // every path that ends without a photo, not just the happy one, or a plane
+  // with no photograph shimmers forever.
   useEffect(() => {
-    if (photo || !detail?.registration || photoTriedReg.current) return
+    if (photo || photoTriedReg.current) return
+    if (!photoHexDone.current) return          // hex still in flight
+    if (!detail) return                        // registration not known yet
+    if (!detail.registration) { setPhotoPending(false); return }  // nothing left to try
     photoTriedReg.current = true
     fetchPhotoFromUrl(
       `https://api.planespotters.net/pub/photos/reg/${detail.registration}`
-    ).then(p => { if (p) setPhoto(p) })
-  }, [photo, detail?.registration])
+    ).then(p => {
+      if (p) setPhoto(p)
+      setPhotoPending(false)
+    })
+  }, [photo, detail])
 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') requestClose() }
@@ -821,7 +843,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
           {cat === 'satellite' && icao24 === 'ISS' ? (
             <ISSStream />
           ) : (
-            <div className={styles.hero}>
+            <div className={styles.hero} aria-busy={photoPending || undefined}>
               {photo?.url ? (
                 <img
                   src={photo.url}
@@ -830,12 +852,27 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
                   loading="lazy"
                   referrerPolicy="no-referrer"
                   onLoad={e => e.currentTarget.classList.add(styles.imgLoaded)}
-                  onError={() => setPhoto(null)}
+                  onError={() => { setPhoto(null); setPhotoPending(false) }}
                 />
+              ) : photoPending ? (
+                // Sized to the photo it is standing in for, so the panel does not
+                // move when the image lands.
+                <Skeleton height="210px" radius="0" />
               ) : (
                 <div className={styles.heroPlaceholder}>
-                  <span className={styles.heroIcon}>
-                    {cat === 'satellite' ? '🛰' : cat === 'ship' ? '🚢' : cat === 'helicopter' ? '🚁' : '✈'}
+                  <span className={styles.heroIcon} aria-hidden="true">
+                    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                      {cat === 'satellite' ? (
+                        <><path d="M12 8 8 12l4 4 4-4-4-4Z"/><path d="m5 5 3 3M16 16l3 3"/><path d="M2 12h3M19 12h3"/></>
+                      ) : cat === 'ship' ? (
+                        <><path d="M3 17h18l-2 4H5l-2-4Z"/><path d="M5 17V9l7-4 7 4v8"/><path d="M12 5v12"/></>
+                      ) : cat === 'helicopter' ? (
+                        <><path d="M4 5h16M12 5v3"/><path d="M6 14h9l4-3v4a2 2 0 0 1-2 2H8l-2-3Z"/><path d="M8 18v2"/></>
+                      ) : (
+                        <><path d="M12 2c.9 0 1.6 1 1.6 2.2V9l7.4 4.3v2.1l-7.4-2.2v4.4l2.4 1.7v1.6L12 20l-4 .9v-1.6l2.4-1.7v-4.4L3 15.4v-2.1L10.4 9V4.2C10.4 3 11.1 2 12 2Z"/></>
+                      )}
+                    </svg>
                   </span>
                 </div>
               )}

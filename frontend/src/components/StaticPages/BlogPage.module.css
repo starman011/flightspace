@@ -210,3 +210,14 @@
   border-radius: 14px;
   margin: 0 0 18px;
 }
+
+/* Skeleton tiles reuse .tile for sizing so they occupy exactly the grid cells
+   the real posts will, but drop the interactive affordances — nothing here is
+   clickable yet. */
+.tileSkeleton {
+  cursor: default;
+  pointer-events: none;
+  padding: 0;
+  overflow: hidden;
+}
+.tileSkeleton:hover { transform: none; }

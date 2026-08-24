@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import styles from './BlogPage.module.css'
+import Skeleton from '../Skeleton/Skeleton'
 import { API_BASE } from '../../lib/apiBase.js'
 
 const API = API_BASE
@@ -174,7 +175,19 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
               <button className={`${styles.tabBtn} ${tab === 'engineering' ? styles.tabOn : ''}`} onClick={() => setTab('engineering')}>Engineering Blog</button>
             </div>
           </header>
-          {loading && <p className={styles.loading}>Loading…</p>}
+          {loading && (
+            // Placeholder tiles in the real bento shape, so the grid does not
+            // reflow when posts arrive — the reason for a skeleton rather than a
+            // line of text is that the layout is the slow part to settle, not
+            // the words.
+            <div className={styles.bento} aria-busy="true" aria-label="Loading posts">
+              {Array.from({ length: 7 }, (_, i) => (
+                <div key={i} className={`${styles.tile} ${styles[bentoSize(i)]} ${styles.tileSkeleton}`}>
+                  <Skeleton height="100%" radius="0" />
+                </div>
+              ))}
+            </div>
+          )}
           {!loading && tab === 'engineering' && posts.length === 0 && (
             <p className={styles.loading}>First engineering post lands soon. One deep dive a week.</p>
           )}

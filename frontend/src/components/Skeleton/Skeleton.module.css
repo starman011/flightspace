@@ -1,0 +1,49 @@
+/* Shared skeleton primitives.
+   A skeleton stands in for content that is *on its way*. It must never be used
+   for content that is absent — an empty state says something different and needs
+   its own treatment, or the user waits for something that will never arrive. */
+
+.base {
+  position: relative;
+  overflow: hidden;
+  background: rgba(var(--surface-raised-rgb), 0.38);
+  border-radius: var(--r-tight, 6px);
+}
+
+/* The sweep is a moving highlight rather than a pulsing opacity: pulsing reads
+   as a control flashing for attention, a sweep reads as loading. */
+.base::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(var(--gloss-rgb), 0) 0%,
+    rgba(var(--gloss-rgb), 0.07) 50%,
+    rgba(var(--gloss-rgb), 0) 100%
+  );
+  animation: sweep 1.35s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  100% { transform: translateX(100%); }
+}
+
+/* Motion is the decoration, not the message — without it the block still reads
+   as a placeholder, so drop the sweep entirely rather than slowing it down. */
+@media (prefers-reduced-motion: reduce) {
+  .base::after { animation: none; }
+  .base { background: rgba(var(--surface-raised-rgb), 0.45); }
+}
+
+.text {
+  height: 0.72em;
+  border-radius: 3px;
+}
+
+.circle { border-radius: 50%; }
+
+/* Successive lines of a paragraph are not all the same width; a block of
+   identical bars reads as a table, not as prose. */
+.lines { display: flex; flex-direction: column; gap: 0.55em; width: 100%; }
