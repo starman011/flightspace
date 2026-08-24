@@ -94,11 +94,16 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 // Perpetual 24/7 ISS live stream (verified embeddable). The channel-based
 // live_stream embed showed "unavailable" whenever the channel wasn't live;
 // a continuous 24/7 stream video stays up reliably.
-// Last-resort id, used only if /api/v1/iss/stream cannot be reached. The
-// previous value here (vytmBNhc9ig) went dead — YouTube returns 403 for it — and
-// because this component never asked the backend, the panel embedded a dead
-// video even while the API was serving a working one.
-const NASA_ISS_VIDEO = '21X5lGlDOfg'
+// Last-resort id, used only if /api/v1/iss/stream cannot be reached.
+//
+// Verify any replacement by loading it in an iframe from a real origin and
+// reading the frame's text. Nothing cheaper is trustworthy: oEmbed returns 200
+// with full metadata for videos that are private, and loading an embed URL as a
+// top-level page always fails with "Error 153" whether the video is good or not.
+// Both of the previous ids here were dead — vytmBNhc9ig is private,
+// 21X5lGlDOfg answers "this live stream recording is not available" — and so
+// are the channel-based live_stream embeds whenever NASA is not on air.
+const NASA_ISS_VIDEO = 'xAieE-QtOeM'
 const NASA_TV_FALLBACK = `https://www.youtube.com/embed/${NASA_ISS_VIDEO}?autoplay=1&mute=1&rel=0&modestbranding=1`
 const NASA_ISS_WATCH = `https://www.youtube.com/watch?v=${NASA_ISS_VIDEO}`
 

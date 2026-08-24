@@ -15,18 +15,18 @@ import (
 )
 
 const (
-	issPositionURL  = "http://api.open-notify.org/iss-now.json"
-	issCrewURL      = "http://api.open-notify.org/astros.json"
-	issAltKM        = 408.0  // approximate ISS orbital altitude
+	issPositionURL = "http://api.open-notify.org/iss-now.json"
+	issCrewURL     = "http://api.open-notify.org/astros.json"
+	issAltKM       = 408.0 // approximate ISS orbital altitude
 	// The ISS moves ~7.66 km/s, so a 30s fix is ~230 km of ground track — still
 	// far finer than the globe can show, and the client interpolates between
 	// fixes anyway. At 5s this was 17,280 upstream calls a day for detail
 	// nothing consumed.
-	issPollS        = 30     // seconds between position polls
-	crewPollMin     = 60     // minutes between crew polls
-	streamPollMin   = 30     // minutes between stream discovery polls
-	streamRedisKey  = "iss:stream"
-	streamRedisTTL  = 35 * time.Minute
+	issPollS       = 30 // seconds between position polls
+	crewPollMin    = 60 // minutes between crew polls
+	streamPollMin  = 30 // minutes between stream discovery polls
+	streamRedisKey = "iss:stream"
+	streamRedisTTL = 35 * time.Minute
 )
 
 // NASA YouTube channel IDs for RSS-based discovery (no HTML scraping)
@@ -77,8 +77,8 @@ func (p *ISSPoller) Start(ctx context.Context) {
 	crewCount := p.fetchCrew(ctx)
 	p.fetchStream(ctx)
 
-	crewTicker   := time.NewTicker(crewPollMin * time.Minute)
-	posTicker    := time.NewTicker(issPollS * time.Second)
+	crewTicker := time.NewTicker(crewPollMin * time.Minute)
+	posTicker := time.NewTicker(issPollS * time.Second)
 	streamTicker := time.NewTicker(streamPollMin * time.Minute)
 	defer crewTicker.Stop()
 	defer posTicker.Stop()
@@ -119,9 +119,9 @@ func (p *ISSPoller) fetchPosition(ctx context.Context, crewCount int) {
 	lat := parseFloat(pos.ISSPosition.Latitude)
 	lon := parseFloat(pos.ISSPosition.Longitude)
 
-	cs   := "ISS"
+	cs := "ISS"
 	name := "International Space Station"
-	alt  := issAltKM
+	alt := issAltKM
 
 	// Build a LiveAircraft entry for the ISS so it slots into the existing pipeline
 	iss := models.LiveAircraft{
@@ -209,7 +209,7 @@ func (p *ISSPoller) videosFromRSS(ctx context.Context, channelID string) []strin
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
 	xml := string(body)
 
-	idMatches    := ytRSSVideoIDRe.FindAllStringSubmatch(xml, -1)
+	idMatches := ytRSSVideoIDRe.FindAllStringSubmatch(xml, -1)
 	titleMatches := ytRSSTitleRe.FindAllStringSubmatch(xml, -1)
 
 	var ids []string
@@ -278,14 +278,15 @@ func (p *ISSPoller) isVideoLive(ctx context.Context, videoID string) bool {
 	return live
 }
 
-
-
 // GetStream serves the cached live stream URL.
 func (p *ISSPoller) GetStream(w http.ResponseWriter, r *http.Request) {
 	raw, err := p.rdb.Get(r.Context(), streamRedisKey).Result()
 	if err != nil {
 		// RSS found nothing — fall back to NASA TV's persistent live stream video
-		const nasaTVFallback = "21X5lGlDOfg"
+		// "Live Video from the International Space Station (Official NASA Stream)".
+		// Verified by framing it from a real origin — 21X5lGlDOfg, which was here
+		// before, now answers "this live stream recording is not available".
+		const nasaTVFallback = "xAieE-QtOeM"
 		fallback, _ := json.Marshal(map[string]string{
 			"video_id":  nasaTVFallback,
 			"embed_url": "https://www.youtube.com/embed/" + nasaTVFallback + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
