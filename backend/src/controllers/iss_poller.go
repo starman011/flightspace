@@ -26,6 +26,15 @@ const (
 	crewPollMin    = 60 // minutes between crew polls
 	streamPollMin  = 30 // minutes between stream discovery polls
 	streamRedisKey = "iss:stream"
+
+	// NASAFallbackVideo is "Live Video from the International Space Station
+	// (Official NASA Stream)". It is a candidate, not a guarantee — fetchStream
+	// verifies it like any other id before caching it.
+	NASAFallbackVideo = "xAieE-QtOeM"
+
+	// SiteOrigin is sent as the Referer on playability checks so the embed
+	// endpoint answers as it would for the real page rather than "Error 153".
+	SiteOrigin     = "https://www.objecttracer.com"
 	streamRedisTTL = 35 * time.Minute
 )
 
@@ -178,17 +187,26 @@ func (p *ISSPoller) fetchCrew(ctx context.Context) int {
 // RSS is lightweight XML — no JavaScript needed, no bot detection.
 func (p *ISSPoller) fetchStream(ctx context.Context) {
 	for _, channelID := range nasaChannelIDs {
-		vids := p.videosFromRSS(ctx, channelID)
-		for _, vid := range vids {
-			if p.isVideoLive(ctx, vid) {
+		for _, vid := range p.videosFromRSS(ctx, channelID) {
+			if p.isVideoPlayable(ctx, vid) {
 				p.cacheStream(ctx, vid, "rss")
 				return
 			}
 		}
 	}
-	// No live stream found — clear cache so frontend shows watch link
+
+	// Nothing from RSS. The fallback is checked rather than trusted: three
+	// hardcoded ids have gone dead here in turn, and serving one blind is what
+	// put an error card in the panel each time.
+	if p.isVideoPlayable(ctx, NASAFallbackVideo) {
+		p.cacheStream(ctx, NASAFallbackVideo, "fallback")
+		return
+	}
+
+	// Nothing playable at all. Clear the key so GetStream reports the stream as
+	// unavailable and the UI can say so honestly.
 	p.rdb.Del(ctx, streamRedisKey)
-	log.Println(`{"level":"warn","service":"iss_poller","msg":"no live stream found via RSS"}`)
+	log.Println(`{"level":"warn","service":"iss_poller","msg":"no playable stream found","fallback_video":"` + NASAFallbackVideo + `"}`)
 }
 
 // videosFromRSS fetches the YouTube RSS feed for a channel and returns recent video IDs.
@@ -239,7 +257,8 @@ func (p *ISSPoller) videosFromRSS(ctx context.Context, channelID string) []strin
 }
 
 func (p *ISSPoller) cacheStream(ctx context.Context, vid, source string) {
-	data, _ := json.Marshal(map[string]string{
+	data, _ := json.Marshal(map[string]any{
+		"available": true,
 		"video_id":  vid,
 		"embed_url": "https://www.youtube.com/embed/" + vid + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
 		"source":    source,
@@ -248,15 +267,35 @@ func (p *ISSPoller) cacheStream(ctx context.Context, vid, source string) {
 	log.Printf(`{"level":"info","service":"iss_poller","msg":"stream cached","video_id":%q,"source":%q}`, vid, source)
 }
 
-// isVideoLive fetches the YouTube watch page and confirms the video is currently live.
-// This prevents stale/ended stream IDs from being cached.
-func (p *ISSPoller) isVideoLive(ctx context.Context, videoID string) bool {
+// playabilityRe pulls the status out of the embed page's player response. The
+// body escapes its JSON, so quotes are unescaped before matching.
+var playabilityRe = regexp.MustCompile(`"previewPlayabilityStatus":\{"status":"([A-Z_]+)"`)
+
+// isVideoPlayable reports whether YouTube will actually play this id in an
+// iframe on our origin.
+//
+// It replaces a check for whether the video was *live*, which was the wrong
+// question twice over: it scraped the watch page for "isLive":true, which
+// datacenter IPs are generally bot-walled out of, and liveness is not what the
+// panel needs anyway — a 24/7 stream that YouTube classifies as a recording
+// plays perfectly well, while a private video does not.
+//
+// The Referer matters. Without one the embed endpoint returns "Error 153" for
+// every id, good or bad, which is what made earlier attempts at this check
+// useless. oEmbed is no substitute either: it returns 200 with full metadata
+// for videos that are private or unplayable.
+func (p *ISSPoller) isVideoPlayable(ctx context.Context, videoID string) bool {
 	reqCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
 
-	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, "https://www.youtube.com/watch?v="+videoID, nil)
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet,
+		"https://www.youtube.com/embed/"+videoID, nil)
+	if err != nil {
+		return false
+	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Referer", SiteOrigin)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -265,39 +304,37 @@ func (p *ISSPoller) isVideoLive(ctx context.Context, videoID string) bool {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB cap
-	lower := strings.ToLower(string(body))
-
-	// YouTube sets these in ytInitialData / ytInitialPlayerResponse when live
-	live := (strings.Contains(lower, `"islive":true`) ||
-		strings.Contains(lower, `"islivenow":true`) ||
-		strings.Contains(lower, `"livebadgerenderer"`)) &&
-		!strings.Contains(lower, `"live_stream_offline"`) &&
-		!strings.Contains(lower, `"playabilityStatus":{"status":"live_stream_not_live"`)
-
-	log.Printf(`{"level":"debug","service":"iss_poller","msg":"liveness check","video_id":%q,"live":%v}`, videoID, live)
-	return live
+	m := playabilityRe.FindSubmatch([]byte(strings.ReplaceAll(string(body), `\"`, `"`)))
+	status := ""
+	if m != nil {
+		status = string(m[1])
+	}
+	ok := status == "OK"
+	log.Printf(`{"level":"debug","service":"iss_poller","msg":"playability check","video_id":%q,"status":%q,"playable":%v}`,
+		videoID, status, ok)
+	return ok
 }
 
-// GetStream serves the cached live stream URL.
+// GetStream serves the verified stream, or says plainly that there is none.
+//
+// It used to answer a cache miss with a hardcoded embed URL. That is how a dead
+// video reached the panel: nothing had checked it, so the UI rendered YouTube's
+// error card and looked broken. A miss now means no playable stream was found,
+// and the client is told so it can show an honest offline state.
 func (p *ISSPoller) GetStream(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	raw, err := p.rdb.Get(r.Context(), streamRedisKey).Result()
 	if err != nil {
-		// RSS found nothing — fall back to NASA TV's persistent live stream video
-		// "Live Video from the International Space Station (Official NASA Stream)".
-		// Verified by framing it from a real origin — 21X5lGlDOfg, which was here
-		// before, now answers "this live stream recording is not available".
-		const nasaTVFallback = "xAieE-QtOeM"
-		fallback, _ := json.Marshal(map[string]string{
-			"video_id":  nasaTVFallback,
-			"embed_url": "https://www.youtube.com/embed/" + nasaTVFallback + "?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0",
-			"source":    "fallback",
+		unavailable, _ := json.Marshal(map[string]any{
+			"available": false,
+			"reason":    "no playable NASA stream found",
+			"watch_url": "https://www.youtube.com/@NASA/streams",
 		})
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(fallback)
+		w.Write(unavailable)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(raw))
 }

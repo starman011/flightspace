@@ -112,20 +112,26 @@ function ISSStream() {
   // and caches it, and carries its own verified fallback, so it tracks a
   // changing stream id in a way a constant compiled into the bundle cannot.
   // The constant stays as a last resort for when the API is unreachable.
-  const [stream, setStream] = useState(null)
+  // undefined = still asking, object = the API answered, null = it was unreachable.
+  const [stream, setStream] = useState(undefined)
   useEffect(() => {
     let alive = true
     fetch(`${API}/api/v1/iss/stream`)
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive && d?.embed_url) setStream(d) })
-      .catch(() => {})
+      .then(d => { if (alive) setStream(d) })
+      .catch(() => { if (alive) setStream(null) })
     return () => { alive = false }
   }, [])
 
-  const src = stream?.embed_url || NASA_TV_FALLBACK
+  // The API verifies playability before it offers an id, so when it says there
+  // is nothing, believe it and say so — embedding the constant anyway is how a
+  // dead video reached this panel three times over. The constant is only for
+  // the case where the API could not be reached at all.
+  const offline = stream != null && stream.available === false
+  const src = stream?.embed_url || (stream === null ? NASA_TV_FALLBACK : null)
   const watchUrl = stream?.video_id
     ? `https://www.youtube.com/watch?v=${stream.video_id}`
-    : NASA_ISS_WATCH
+    : (stream?.watch_url || NASA_ISS_WATCH)
   const [theater, setTheater] = useState(false)
   const wrapRef = useRef(null)
 
@@ -134,7 +140,24 @@ function ISSStream() {
     if (el?.requestFullscreen) el.requestFullscreen().catch(() => {})
   }
 
-  const iframe = (
+  const iframe = offline ? (
+    <div className={styles.issIframe} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 8, padding: 16, textAlign: 'center', background: 'rgba(var(--surface-rgb), 0.9)',
+    }}>
+      <span style={{
+        fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+        color: 'rgba(var(--ink-muted-rgb), 0.75)',
+      }}>Live stream offline</span>
+      <span style={{ fontSize: 12, lineHeight: 1.5, color: 'rgba(var(--ink-rgb), 0.75)', maxWidth: '32ch' }}>
+        NASA isn’t broadcasting an embeddable ISS stream right now.
+      </span>
+      <a href={watchUrl} target="_blank" rel="noopener noreferrer"
+         style={{ fontSize: 12, color: 'var(--green)', textDecoration: 'none' }}>
+        Check NASA on YouTube ↗
+      </a>
+    </div>
+  ) : src ? (
     <iframe
       src={src}
       className={styles.issIframe}
@@ -142,16 +165,22 @@ function ISSStream() {
       allowFullScreen
       title="NASA ISS Live"
     />
+  ) : (
+    // Still waiting on the API — an empty frame beats flashing a stream that
+    // may be about to be replaced or withdrawn.
+    <div className={styles.issIframe} style={{ background: 'rgba(var(--surface-rgb), 0.9)' }} />
   )
 
   return (
     <>
       <div className={styles.issStream} ref={wrapRef}>
         {iframe}
-        <div className={styles.streamBadge}>
-          <span className={styles.liveDot} />
-          LIVE · NASA TV
-        </div>
+        {!offline && (
+          <div className={styles.streamBadge}>
+            <span className={styles.liveDot} />
+            LIVE · NASA TV
+          </div>
+        )}
         <div className={styles.streamControls}>
           <button onClick={() => setTheater(true)} title="Theater / half-screen" aria-label="Theater mode">⤢</button>
           <button onClick={goFullscreen} title="Fullscreen" aria-label="Fullscreen">⛶</button>
