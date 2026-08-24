@@ -2295,7 +2295,7 @@ let _spaInflight = null
 
 async function refreshSpaAssets() {
   try {
-    const res = await fetch(`${SHELL_ORIGIN}/index.html`, {
+    const res = await fetch(`${SHELL_ORIGIN}/app.html`, {
       headers: { 'x-mw-internal': '1' },
       signal: AbortSignal.timeout(SHELL_MS),
     })

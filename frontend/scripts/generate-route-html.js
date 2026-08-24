@@ -14,7 +14,7 @@
  * over the catch-all "/(.*) → /index.html" rewrite.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { ROUTE_META } from '../src/utils/routing.js'
@@ -126,10 +126,14 @@ for (const route of STATIC_ROUTES) {
   const html = generateRouteHtml(template, route, meta)
 
   if (route === '/globe') {
-    // dist/index.html is the shell the SPA rewrite serves for every app route,
-    // so the globe's metadata belongs on it.
-    writeFileSync(join(DIST, 'index.html'), html)
-    console.log(`  ✓ /globe (SPA shell index.html)`)
+    // The SPA shell is written as app.html, NOT index.html.
+    //
+    // Vercel resolves the filesystem before it applies rewrites, so as long as
+    // dist/index.html existed, a request for "/" was answered with that file and
+    // the "/" -> /home.html rewrite never ran. Giving the shell its own name
+    // leaves "/" with no static match, so index.html can be the marketing page.
+    writeFileSync(join(DIST, 'app.html'), html)
+    console.log(`  ✓ /globe (SPA shell app.html)`)
   } else {
     // Create route directory + index.html
     const routeDir = join(DIST, route.slice(1)) // remove leading /
@@ -138,5 +142,10 @@ for (const route of STATIC_ROUTES) {
     console.log(`  ✓ ${route}`)
   }
 }
+
+// "/" is the marketing page. Vite copied public/home.html to dist/home.html;
+// index.html becomes that same document so the filesystem answers "/" with it.
+copyFileSync(join(DIST, 'home.html'), join(DIST, 'index.html'))
+console.log('  ✓ / (marketing page -> index.html)')
 
 console.log(`\n  Generated ${STATIC_ROUTES.length} route-specific HTML files`)

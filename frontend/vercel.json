@@ -11,9 +11,8 @@
   "rewrites": [
     { "source": "/robots.txt",  "destination": "/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/", "destination": "/home.html" },
     { "source": "/home", "destination": "/home.html" },
-    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/).*)", "destination": "/app.html" }
   ],
   "headers": [
     {
