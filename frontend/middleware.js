@@ -1531,7 +1531,10 @@ function renderPlanes() {
 }
 
 function renderHome() {
-  const canonical = `${SITE}/`
+  // The globe lives at /globe now. This said `${SITE}/`, which pointed the
+  // canonical and og:url of the app at the marketing page — telling Google the
+  // two are the same document and to drop this one from the index.
+  const canonical = `${SITE}/globe`
   const title = 'ObjectTracer — Live Flight & Space Tracker on a Real-Time 3D Globe'
   const desc  = 'Track live flights in real time on a free, interactive 3D globe — every aircraft\'s position, altitude, speed and route from open ADS-B data. Plus ships, the ISS, satellites and rocket launches.'
 
@@ -1574,7 +1577,7 @@ function renderHome() {
         '@type': 'Organization',
         '@id': `${SITE}/#org`,
         name: 'ObjectTracer',
-        url: canonical,
+        url: `${SITE}/`,
         logo: `${SITE}/favicon-512.png`,
         description: desc,
         sameAs: ['https://github.com/starman011', 'https://github.com/starman011/flightspace', 'https://www.linkedin.com/in/mdsaqlainkhan'],
@@ -1607,11 +1610,11 @@ function renderHome() {
         '@type': 'WebSite',
         '@id': `${SITE}/#website`,
         name: 'ObjectTracer',
-        url: canonical,
+        url: `${SITE}/`,
         publisher: { '@id': `${SITE}/#org` },
         potentialAction: {
           '@type': 'SearchAction',
-          target: `${SITE}/?q={search_term_string}`,
+          target: `${SITE}/globe?q={search_term_string}`,
           'query-input': 'required name=search_term_string',
         },
       },
