@@ -94,14 +94,33 @@ const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768
 // Perpetual 24/7 ISS live stream (verified embeddable). The channel-based
 // live_stream embed showed "unavailable" whenever the channel wasn't live;
 // a continuous 24/7 stream video stays up reliably.
-const NASA_ISS_VIDEO = 'vytmBNhc9ig'
+// Last-resort id, used only if /api/v1/iss/stream cannot be reached. The
+// previous value here (vytmBNhc9ig) went dead — YouTube returns 403 for it — and
+// because this component never asked the backend, the panel embedded a dead
+// video even while the API was serving a working one.
+const NASA_ISS_VIDEO = '21X5lGlDOfg'
 const NASA_TV_FALLBACK = `https://www.youtube.com/embed/${NASA_ISS_VIDEO}?autoplay=1&mute=1&rel=0&modestbranding=1`
 const NASA_ISS_WATCH = `https://www.youtube.com/watch?v=${NASA_ISS_VIDEO}`
 
 function ISSStream() {
-  // Use the reliable channel-based NASA ISS live embed directly. (The scraped
-  // backend video ID kept resolving to ended/non-live videos.)
-  const src = NASA_TV_FALLBACK
+  // Ask the backend first. iss_poller discovers the current NASA live stream
+  // and caches it, and carries its own verified fallback, so it tracks a
+  // changing stream id in a way a constant compiled into the bundle cannot.
+  // The constant stays as a last resort for when the API is unreachable.
+  const [stream, setStream] = useState(null)
+  useEffect(() => {
+    let alive = true
+    fetch(`${API}/api/v1/iss/stream`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive && d?.embed_url) setStream(d) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const src = stream?.embed_url || NASA_TV_FALLBACK
+  const watchUrl = stream?.video_id
+    ? `https://www.youtube.com/watch?v=${stream.video_id}`
+    : NASA_ISS_WATCH
   const [theater, setTheater] = useState(false)
   const wrapRef = useRef(null)
 
@@ -131,7 +150,7 @@ function ISSStream() {
         <div className={styles.streamControls}>
           <button onClick={() => setTheater(true)} title="Theater / half-screen" aria-label="Theater mode">⤢</button>
           <button onClick={goFullscreen} title="Fullscreen" aria-label="Fullscreen">⛶</button>
-          <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
+          <a href={watchUrl} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
         </div>
       </div>
 
@@ -145,7 +164,7 @@ function ISSStream() {
               </span>
               <span style={{ flex: 1 }} />
               <button onClick={goFullscreen} title="Fullscreen" aria-label="Fullscreen">⛶</button>
-              <a href={NASA_ISS_WATCH} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
+              <a href={watchUrl} target="_blank" rel="noopener noreferrer" title="Open on YouTube" aria-label="Open on YouTube">↗</a>
               <button onClick={() => setTheater(false)} title="Close" aria-label="Close theater">✕</button>
             </div>
           </div>
