@@ -62,10 +62,15 @@
   .explore > button{ display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(238,245,255,.82); background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:100px; padding:9px 16px; cursor:pointer; transition:border-color .2s, color .2s; }
   .explore:hover > button, .explore.open > button{ color:var(--lime); border-color:rgba(188,228,25,.4); }
   .explore > button .chev{ transition:transform .3s; }
-  .explore:hover > button .chev, .explore.open > button .chev{ transform:rotate(180deg); }
+  .explore.open > button .chev{ transform:rotate(180deg); }
   .mega{ position:absolute; top:calc(100% + 14px); left:0; width:600px; background:rgba(6,10,16,.94); backdrop-filter:blur(26px); border:1px solid rgba(188,228,25,.2); border-radius:22px; padding:10px; display:flex; gap:10px; overflow:hidden; opacity:0; visibility:hidden; transform:translateY(-8px) scale(.99); pointer-events:none; transition:opacity .3s, transform .3s cubic-bezier(.22,1,.36,1), visibility .3s; box-shadow:0 30px 70px rgba(0,0,0,.6); }
   .mega::before{ content:''; position:absolute; top:-16px; left:0; right:0; height:18px; }
-  .explore:hover .mega, .explore.open .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+  /* Visibility is driven by .open alone, never by :hover. home.js already opens
+     the panel on mouseenter, so hover still works — but while :hover was also a
+     visibility trigger, clicking the button to close it did nothing you could
+     see: the class was removed and the pointer was still over the menu, so the
+     :hover half of the rule kept it on screen. */
+  .explore.open .mega{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
   .mega-list{ width:230px; flex:none; display:flex; flex-direction:column; gap:1px; }
   .mega-list a{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 14px; border-radius:12px; font-family:var(--display); font-weight:500; font-size:15px; color:rgba(238,245,255,.78); text-decoration:none; transition:background .18s, color .18s; }
   .mega-list a .ar{ opacity:0; transform:translateX(-4px); transition:opacity .18s, transform .18s; font-family:var(--mono); font-size:12px; }
