@@ -697,7 +697,14 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
   useEffect(() => {
     if (photo || photoTriedReg.current) return
     if (!photoHexDone.current) return          // hex still in flight
-    if (!detail) return                        // registration not known yet
+    // Registration is not known yet. If the detail request has *finished*
+    // without producing one — it errored, or the aircraft is not in the
+    // database — there is nothing further to try and the hero must stop
+    // waiting, or it shimmers for as long as the panel is open.
+    if (!detail) {
+      if (!loading) setPhotoPending(false)
+      return
+    }
     if (!detail.registration) { setPhotoPending(false); return }  // nothing left to try
     photoTriedReg.current = true
     fetchPhotoFromUrl(
@@ -706,7 +713,7 @@ export default function DetailPanel({ icao24, liveData, onClose, onTrailData, is
       if (p) setPhoto(p)
       setPhotoPending(false)
     })
-  }, [photo, detail])
+  }, [photo, detail, loading])
 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') requestClose() }
