@@ -51,11 +51,34 @@ showMega('earth');
 // (moving from the button down into the panel no longer closes it).
 var explore = document.querySelector('.explore'), exTimer;
 if (explore) {
-  explore.addEventListener('mouseenter', function () { clearTimeout(exTimer); explore.classList.add('open'); });
-  explore.addEventListener('mouseleave', function () { exTimer = setTimeout(function () { explore.classList.remove('open'); }, 260); });
+  // Hover-to-open is bound only on devices that actually hover.
+  //
+  // A touch tap fires a synthetic mouseenter BEFORE click. With both bound, the
+  // first tap opened the menu (mouseenter) and then immediately closed it again
+  // (click toggling it back off), so it looked like the first tap did nothing —
+  // and the second worked only because mouseenter no longer re-fired.
+  var canHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   var exBtn = explore.querySelector('button');
-  if (exBtn) exBtn.addEventListener('click', function (e) { e.preventDefault(); explore.classList.toggle('open'); });
-  document.addEventListener('click', function (e) { if (!explore.contains(e.target)) explore.classList.remove('open'); });
+  // One place sets the state, so the announced state cannot drift from the
+  // visible one — hovering used to open the menu while still reporting closed.
+  function setOpen(open) {
+    explore.classList.toggle('open', open);
+    if (exBtn) exBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if (canHover) {
+    explore.addEventListener('mouseenter', function () { clearTimeout(exTimer); setOpen(true); });
+    explore.addEventListener('mouseleave', function () { exTimer = setTimeout(function () { setOpen(false); }, 260); });
+  }
+  if (exBtn) {
+    exBtn.setAttribute('aria-expanded', 'false');
+    exBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      setOpen(!explore.classList.contains('open'));
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (!explore.contains(e.target)) setOpen(false);
+  });
 }
 
 // ── Headline word-cycler: shows the breadth of what we track
