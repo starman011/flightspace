@@ -274,6 +274,13 @@
         <a href="/waitlist">Waitlist</a>
         <a href="/blog">Journal</a>
         <a href="/sitemap.xml">Sitemap</a>
+        <!-- Google Preferred Sources. Deliberately the deeplink form, not
+             Google's button library: the library would need a new script-src
+             entry in the CSP and a third-party script on the page, and the
+             deeplink reaches the same screen with neither. The feature itself
+             requires no markup at all — this is only a shortcut for readers. -->
+        <a href="https://www.google.com/preferences/source?q=www.objecttracer.com"
+           target="_blank" rel="noopener noreferrer">Prefer on Google</a>
       </nav>
     </div>
   </footer>

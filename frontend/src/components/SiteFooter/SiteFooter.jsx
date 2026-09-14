@@ -89,6 +89,8 @@ export default function SiteFooter({ active = true, dimmed = false }) {
           <span>© {new Date().getFullYear()} ObjectTracer — real-time 3D flight &amp; space tracker</span>
           <span className={styles.bottomLinks}>
             <a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a><a href="/donate">Donate</a>
+            <a href="https://www.google.com/preferences/source?q=www.objecttracer.com"
+               target="_blank" rel="noopener noreferrer">Prefer on Google</a>
           </span>
         </div>
       </footer>
