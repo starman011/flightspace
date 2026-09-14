@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import styles from './BottomBar.module.css'
 import { matchAirports } from '../SearchBar/SearchBar'
 import { API_BASE } from '../../lib/apiBase.js'
+import BrandHome from '../BrandHome/BrandHome'
 
 const FILTERS = [
   {
@@ -240,6 +241,7 @@ export default function BottomBar({
 
     <div className={`${styles.topArea}  ${topHidden ? styles.topGone : ''}`} ref={topRef}>
       <div className={styles.topRow}>
+        <BrandHome compact />
         <div className={styles.topSearch}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           {q === '' && <span className={styles.hintText} aria-hidden="true">{hint}<span className={styles.caret} /></span>}

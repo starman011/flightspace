@@ -1,0 +1,55 @@
+/* Returns to the marketing home at /.
+   Before this, nothing inside the app linked back there: the static pages
+   offered only a close button, and the bottom bar's "Home" means the Earth
+   view, so / was unreachable once you were in the app. */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: rgba(var(--ink-rgb), 0.92);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  border-radius: 100px;
+  transition: color 0.18s ease;
+  pointer-events: auto;
+}
+.brand:hover { color: var(--green); }
+.brand:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+
+.mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(var(--green-rgb), 0.10);
+  border: 1px solid rgba(var(--green-rgb), 0.32);
+  box-shadow: 0 0 16px rgba(var(--green-rgb), 0.14);
+}
+.mark img { width: 22px; height: 22px; display: block; border-radius: 50%; }
+
+/* Floating placement for surfaces with no row to sit in (the content pages). */
+.floating {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 95;
+}
+
+/* On the globe the mark shares a 520px row with search and chips, so the
+   wordmark is dropped rather than squeezing the search field. */
+.compact .word { display: none; }
+.compact .mark { width: 42px; height: 42px; flex-basis: 42px; }
+.compact .mark img { width: 24px; height: 24px; }
+
+@media (max-width: 640px) {
+  .word { display: none; }
+  .mark { width: 38px; height: 38px; flex-basis: 38px; }
+}
