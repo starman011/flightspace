@@ -221,3 +221,33 @@
   overflow: hidden;
 }
 .tileSkeleton:hover { transform: none; }
+
+/* Image tiles carry their own placeholder.
+   .tileImg fades in from opacity 0, but what sat behind it was a flat block, so
+   a tile whose photo was still downloading looked identical to one that had no
+   photo at all. The shimmer is removed the moment the image decodes, and only
+   ever applies to tiles that actually have an image on the way. */
+.hasImg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(var(--surface-raised-rgb), 0.38);
+}
+.hasImg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+    rgba(var(--gloss-rgb), 0) 0%,
+    rgba(var(--gloss-rgb), 0.07) 50%,
+    rgba(var(--gloss-rgb), 0) 100%);
+  animation: tileSweep 1.35s ease-in-out infinite;
+}
+@keyframes tileSweep { 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hasImg::after { animation: none; }
+}

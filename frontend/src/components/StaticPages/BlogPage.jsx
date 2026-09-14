@@ -61,6 +61,17 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [total, setTotal] = useState(0)
   const [settled, setSettled] = useState(false)
+  // Which tiles have their image. Kept in state rather than toggled with
+  // classList: the tile's className is React-controlled and changes when
+  // `settled` flips, so React rewrites the attribute and silently drops any
+  // class added imperatively.
+  const [imgReady, setImgReady] = useState(() => new Set())
+  const markImgReady = slug => setImgReady(prev => {
+    if (prev.has(slug)) return prev
+    const next = new Set(prev)
+    next.add(slug)
+    return next
+  })
 
   // After the first entrance completes, stop the tile animation so it never
   // replays on tab switch / topic filter / load-more (keyframe-replay bug class).
@@ -211,12 +222,13 @@ export default function BlogPage({ onClose, initialSlug, initialTab }) {
             {(topic ? posts.filter(p => postTopics(p).includes(topic)) : posts).map((p, i) => (
               <button
                 key={p.slug}
-                className={`${styles.tile} ${styles[bentoSize(i)]} ${settled ? styles.tileSettled : ''}`}
+                className={`${styles.tile} ${styles[bentoSize(i)]} ${settled ? styles.tileSettled : ''} ${p.image_url && !imgReady.has(p.slug) ? styles.hasImg : ''}`}
                 style={settled ? undefined : { animationDelay: `${Math.min(i, 12) * 45}ms` }}
                 onClick={() => openPost(p.slug)}
               >
                 {p.image_url
-                  ? <img className={styles.tileImg} src={p.image_url} alt={p.title} loading="lazy" onLoad={e => e.currentTarget.classList.add(styles.imgLoaded)} />
+                  ? <img className={styles.tileImg} src={p.image_url} alt={p.title} loading="lazy" onLoad={e => { e.currentTarget.classList.add(styles.imgLoaded); markImgReady(p.slug) }}
+                      onError={() => markImgReady(p.slug)} />
                   : p.category === 'engineering'
                     ? <div className={styles.tileEng}>{'{ }'}</div>
                     : <div className={styles.tileVideo}>▶</div>}
