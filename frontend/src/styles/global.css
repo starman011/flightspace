@@ -191,3 +191,12 @@ body[data-modal-open] [class*="topArea"] { opacity: 0 !important; }
 }
 button:not(:disabled), a[href], [role="button"] { cursor: pointer; }
 button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+
+/* Landing directly on a content page (/about, /faq, /contact, /waitlist...).
+   Those pages are code-split, so for the few hundred ms their chunk takes to
+   arrive the only thing painted is the globe behind them — which is why opening
+   one looked like the app loaded Earth first and then swapped to the page.
+   The globe is left mounted (it is wired to ~40 call sites and unmounting it is
+   a far bigger change); it is simply not shown until the user actually goes
+   there, at which point App drops the attribute. */
+html[data-direct-landing] canvas { visibility: hidden; }

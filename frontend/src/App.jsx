@@ -155,6 +155,13 @@ export default function App() {
   // they render immediately instead.
   const isStaticPage = STATIC_PAGES.has(init.activePage)
 
+  // Marks a direct landing on a content page so its entrance animation is
+  // skipped (see StaticPages.module.css). Set during render, before first paint,
+  // because an effect would run a frame too late to suppress the fade.
+  if (isStaticPage && typeof document !== 'undefined' && !document.documentElement.hasAttribute('data-direct-landing')) {
+    document.documentElement.setAttribute('data-direct-landing', '')
+  }
+
   const [showLoading, setShowLoading] = useState(!isStaticPage)
   const showLoadingRef = useRef(!isStaticPage)
   useEffect(() => { showLoadingRef.current = showLoading }, [showLoading])
@@ -205,6 +212,26 @@ export default function App() {
   const [selectedGalaxy, setSelectedGalaxy] = useState(null)
   const [guideHidden, setGuideHidden]       = useState(false)
   const [activePage, setActivePage]         = useState(init.activePage)
+
+  // Must sit below activePage's declaration: the dependency array is evaluated
+  // during render, so referencing it earlier is a temporal dead zone crash that
+  // takes the whole app down, not just this effect.
+  useEffect(() => {
+    if (activePage !== init.activePage) {
+      document.documentElement.removeAttribute('data-direct-landing')
+    }
+  }, [activePage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Safety net. The marker hides the globe so it cannot flash behind a
+  // code-split page that has not mounted yet, but that must never be able to
+  // stick: if the route change above somehow does not fire, the globe would
+  // stay invisible for the session. Once the page has had time to mount it is
+  // covering the globe anyway, so revealing it again costs nothing.
+  useEffect(() => {
+    if (!isStaticPage) return
+    const t = setTimeout(() => document.documentElement.removeAttribute('data-direct-landing'), 1500)
+    return () => clearTimeout(t)
+  }, [isStaticPage])
   const [flightApt, setFlightApt]           = useState(init.flightAirport || null)  // airport shown in the flight board (drives /flights/{iata} URL)
   const [coneExpanded, setConeExpanded]     = useState(false)
   const [scaleReady, setScaleReady]         = useState(init.activeScale === 'earth' ? 'earth' : null)

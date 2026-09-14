@@ -14,6 +14,16 @@
 }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
+/* Landing straight on a content page has nothing to transition from, and the
+   overlay's own background is opaque — so fading it in from zero just exposes
+   the globe behind it for 300ms, which reads as the app opening Earth and then
+   opening the page. Skip both entrance animations in that case; navigating here
+   later still animates, because the attribute is dropped on the first route
+   change. */
+:global(html[data-direct-landing]) .overlay,
+:global(html[data-direct-landing]) .panel,
+:global(html[data-direct-landing]) .panelWide { animation: none; }
+
 /* page wrapper (keeps old class names so the 4 pages need no structural change) */
 .panel,
 .panelWide {
