@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="intro-on attract">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,12 +37,157 @@
   .stage{ position:fixed; inset:0; border-radius:22px; overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.07);
     /* instant backdrop so there's never a blank wait while images load */
     background:radial-gradient(120% 100% at 25% 20%, #16263f 0%, #0a1422 45%, #050a0f 100%); }
-  .wall{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity 1.4s ease; filter:saturate(1.06); transform:scale(1.04); }
-  .wall.on{ opacity:1; }
+  /* The orbit scene (home.js) paints into this canvas over the gradient
+     above, which is also what remains if WebGL is unavailable. The fade is
+     short: the intro reveals the particles itself. html starts .intro-on so
+     the card and hint never flash before the script takes over. */
+  .stage canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; opacity:0; transition:opacity .4s ease; }
+  .stage canvas.on{ opacity:1; }
+  /* Keeps the headline legible where dust and outer rings pass behind it. */
   .stage::after{ content:''; position:absolute; inset:0; pointer-events:none;
-    background:linear-gradient(105deg, rgba(5,10,15,.88) 0%, rgba(5,10,15,.55) 44%, rgba(5,10,15,.28) 72%, rgba(5,10,15,.5) 100%); }
-  .grain{ position:absolute; inset:0; opacity:.045; pointer-events:none; mix-blend-mode:overlay; z-index:1;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    background:linear-gradient(90deg, rgba(0,0,0,.6) 0%, rgba(0,0,0,.3) 36%, rgba(0,0,0,0) 58%),
+               radial-gradient(140% 110% at 65% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); }
+
+  /* Soft glow behind the centre of the scene, one layer per form; home.js
+     moves it with the camera and cross-fades the layers with the form. */
+  .glow{ position:absolute; left:0; top:0; width:200px; height:200px; transform-origin:0 0; pointer-events:none;
+    opacity:0; transition:opacity 1.2s ease; will-change:transform; }
+  .glow.on{ opacity:1; }
+  .glow i{ position:absolute; inset:0; border-radius:50%; opacity:0; mix-blend-mode:screen; }
+  .glow i:nth-child(1){ background:radial-gradient(closest-side, rgba(150,190,255,.07) 40%, rgba(150,190,255,.025) 70%, transparent); }
+  .glow i:nth-child(2){ background:radial-gradient(closest-side, rgba(255,220,150,.42), rgba(255,175,85,.12) 35%, rgba(255,140,60,.03) 65%, transparent); }
+  .glow i:nth-child(3){ background:radial-gradient(closest-side, rgba(255,180,110,.08) 40%, rgba(255,150,80,.025) 70%, transparent); }
+
+  /* Until the visitor first moves, the page is only the animation: the nav,
+     the copy and the corner notes wait (home.js removes .attract). */
+  .nav{ transition:opacity 1.2s ease .15s, visibility 1.2s; }
+  .attract .nav, .attract .hud-note, .attract .hud-clock, .attract .hud-hint{ opacity:0; visibility:hidden; }
+  .hud-note, .hud-clock{ transition:opacity 1s ease .6s, visibility 1s; }
+
+  /* Instrument frame: hairline border with corner ticks. */
+  .frame{ position:fixed; inset:18px; z-index:2; pointer-events:none; border-radius:10px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05); --tk:rgba(238,245,255,.42);
+    background:
+      linear-gradient(var(--tk),var(--tk)) left top / 14px 1px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) left top / 1px 14px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) right top / 14px 1px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) right top / 1px 14px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) left bottom / 14px 1px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) left bottom / 1px 14px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) right bottom / 14px 1px no-repeat,
+      linear-gradient(var(--tk),var(--tk)) right bottom / 1px 14px no-repeat; }
+
+  /* ── HUD over the scene: orbit labels, the lit-orbit card, scale note, clock.
+     Above the hero so labels stay clickable; home.js hides any label that
+     would land on the copy, and fades the whole layer once you scroll. */
+  .hud{ position:fixed; inset:0; z-index:6; pointer-events:none; transition:opacity .4s ease, visibility .4s; }
+  .hud.away{ opacity:0; visibility:hidden; }
+  .hud.away *{ visibility:hidden !important; }
+  .no-gl .olabels{ display:none; }
+  .ol{ position:absolute; left:0; top:0; display:flex; flex-direction:column; align-items:center;
+    text-decoration:none; color:rgba(238,245,255,.86); opacity:0; pointer-events:none;
+    text-shadow:0 0 6px #000, 0 0 14px #000, 0 0 2px #000;
+    transition:opacity .45s ease; will-change:transform; }
+  .ol.show{ opacity:1; pointer-events:auto; }
+  .ol:focus-visible{ opacity:1; pointer-events:auto; outline:1px solid var(--lime); outline-offset:8px; border-radius:4px; }
+  .ol-eb{ font-size:9.5px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:rgba(210,225,245,.45); white-space:nowrap; transition:color .3s; }
+  .ol-t{ font-size:12.5px; font-weight:600; letter-spacing:.3em; text-transform:uppercase; white-space:nowrap; margin-top:5px; padding-left:.3em; transition:color .3s; }
+  .ol-stem{ width:1px; height:34px; margin-top:9px; background:linear-gradient(rgba(238,245,255,.4), rgba(238,245,255,.08)); transition:background .3s; }
+  .ol-dot{ width:7px; height:7px; margin-top:-1px; border:1px solid rgba(238,245,255,.6); transform:rotate(45deg); transition:border-color .3s, background .3s; }
+  /* Hanging variant, for orbits so tight that a standing label would cover Earth. */
+  .ol.down .ol-dot{ order:0; margin:0 0 -1px; }
+  .ol.down .ol-stem{ order:1; margin:0 0 9px; background:linear-gradient(rgba(238,245,255,.08), rgba(238,245,255,.4)); }
+  .ol.down .ol-eb{ order:2; }
+  .ol.down .ol-t{ order:3; }
+  .ol.down.on .ol-stem{ background:linear-gradient(rgba(188,228,25,.15), var(--lime)); }
+  .ol:hover .ol-t, .ol.on .ol-t{ color:var(--lime); }
+  .ol.on .ol-eb{ color:rgba(188,228,25,.75); }
+  .ol.on .ol-stem{ background:linear-gradient(var(--lime), rgba(188,228,25,.15)); }
+  .ol.on .ol-dot{ border-color:var(--lime); background:rgba(188,228,25,.4); }
+
+  .ocard{ position:absolute; right:clamp(40px,4.4vw,68px); bottom:84px; width:min(360px,28vw); min-width:300px; padding:16px 20px 14px;
+    color:#eef5ff; text-decoration:none; pointer-events:auto; background-color:rgba(2,4,8,.5);
+    transition:opacity .5s ease, visibility .5s;
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); --c:rgba(238,245,255,.55);
+    background-image:
+      linear-gradient(var(--c),var(--c)), linear-gradient(var(--c),var(--c)),
+      linear-gradient(var(--c),var(--c)), linear-gradient(var(--c),var(--c)),
+      linear-gradient(var(--c),var(--c)), linear-gradient(var(--c),var(--c)),
+      linear-gradient(var(--c),var(--c)), linear-gradient(var(--c),var(--c));
+    background-repeat:no-repeat;
+    background-size:12px 1px, 1px 12px, 12px 1px, 1px 12px, 12px 1px, 1px 12px, 12px 1px, 1px 12px;
+    background-position:left top, left top, right top, right top, left bottom, left bottom, right bottom, right bottom; }
+  .ocard:hover, .ocard:focus-visible{ --c:var(--lime); outline:none; }
+  .oc-h{ display:flex; align-items:center; gap:10px; font-size:9.5px; font-weight:500; letter-spacing:.2em; text-transform:uppercase; color:rgba(210,225,245,.5); }
+  .oc-rule{ flex:1; height:1px; background:rgba(238,245,255,.14); }
+  .oc-st{ display:inline-flex; align-items:center; gap:6px; }
+  .oc-st::before{ content:''; width:5px; height:5px; border-radius:50%; border:1px solid rgba(210,225,245,.55); }
+  .oc-st.live{ color:#22ef7e; }
+  .oc-st.live::before{ border-color:#22ef7e; background:#22ef7e; box-shadow:0 0 8px rgba(34,239,126,.7); }
+  .oc-t{ margin-top:12px; font-size:19px; font-weight:600; letter-spacing:.24em; text-transform:uppercase; }
+  .oc-d{ margin-top:9px; min-height:3.1em; font-size:12.5px; line-height:1.55; font-weight:300; color:rgba(225,233,245,.82); }
+  .oc-gt{ color:var(--lime); margin-right:6px; }
+  .caret{ display:inline-block; width:7px; height:13px; margin-left:2px; vertical-align:-2px; background:rgba(238,245,255,.8); animation:blink 1.05s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .oc-f{ display:flex; justify-content:space-between; gap:12px; margin-top:12px; font-size:9.5px; font-weight:500; letter-spacing:.2em; text-transform:uppercase; color:rgba(210,225,245,.42); }
+  .ocard:hover .oc-go{ color:var(--lime); }
+  .hud-note, .hud-clock, .hud-hint{ position:absolute; bottom:26px; font-size:9.5px; font-weight:500; letter-spacing:.2em; text-transform:uppercase; color:rgba(210,225,245,.38); }
+  .hud-note{ left:clamp(40px,4.4vw,68px); }
+  .hud-note span{ display:none; }
+  html:not(.bh-on):not(.sun-on) .hud-note .earth, .sun-on .hud-note .sun, .bh-on .hud-note .bh{ display:inline; }
+  .hud-clock{ right:clamp(40px,4.4vw,68px); color:rgba(210,225,245,.55); }
+  .hud-hint{ left:50%; transform:translateX(-50%); white-space:nowrap; color:rgba(210,225,245,.55); transition:opacity .5s; }
+  @media (prefers-reduced-motion: reduce){ .caret{ animation:none; } }
+
+  /* Intro: a reticle marks the centre while the scene assembles. */
+  .reticle{ position:absolute; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%;
+    border:1px solid rgba(238,245,255,.35); opacity:0; transition:opacity .8s ease; }
+  .intro-on .reticle{ opacity:1; }
+
+  /* Scroll tour: the page scrolls through this empty stretch while the camera
+     flies out through the orbits, one step per 60vh (home.js STEPS). */
+  .tour{ height:calc(8 * 60vh + 40vh); }
+  .no-gl .tour, .no-gl .rail{ display:none; }
+
+  /* Step rail, tour only. */
+  .rail{ position:absolute; left:clamp(40px,4.4vw,68px); top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:4px; opacity:0; visibility:hidden; transition:opacity .5s, visibility .5s; }
+  .rail button{ pointer-events:auto; display:flex; align-items:center; gap:12px; padding:6px 0; background:none; border:0; cursor:pointer; text-align:left;
+    font:inherit; font-size:10px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:rgba(210,225,245,.4); transition:color .25s; }
+  .rail button span{ font-variant-numeric:tabular-nums; color:rgba(210,225,245,.28); }
+  .rail button:hover, .rail button:focus-visible{ color:rgba(238,245,255,.85); outline:none; }
+  .rail button.on{ color:var(--lime); }
+  .rail button.on span{ color:rgba(188,228,25,.6); }
+
+  /* Last step: pulled back past every orbit. */
+  .outro{ position:absolute; left:50%; bottom:15vh; transform:translateX(-50%); width:min(640px,86vw); text-align:center;
+    opacity:0; visibility:hidden; transition:opacity .7s ease, visibility .7s; }
+  .outro-k{ font-size:10px; font-weight:500; letter-spacing:.24em; text-transform:uppercase; color:rgba(210,225,245,.5); }
+  .outro-t{ margin:14px 0 26px; font-size:clamp(24px,3vw,40px); font-weight:300; line-height:1.2; letter-spacing:-.01em; color:#eef5ff; }
+  .outro .btn{ pointer-events:auto; display:inline-block; }
+
+  /* Buttons wait for the first scroll: the opening screen is the scene and
+     the headline only. Then the calls to action pin to the bottom, and the
+     orbit labels and card come in with them. Without WebGL there is no scene
+     or tour, so the hero keeps its own buttons. */
+  html:not(.no-gl) .hero .cta{ display:none; }
+  .hud-cta{ position:absolute; left:50%; bottom:20px; display:flex; gap:12px; transform:translate(-50%, 12px);
+    opacity:0; visibility:hidden; transition:opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1), visibility .5s; }
+  .hud-cta .btn{ pointer-events:auto; white-space:nowrap; }
+  .hud-cta .btn-ghost{ background:rgba(4,6,10,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .scrolled .hud-cta{ opacity:1; visibility:visible; transform:translate(-50%, 0); }
+  .outro-on .hud-cta, .no-gl .hud-cta{ opacity:0; visibility:hidden; }
+  html:not(.scrolled) .olabels, html:not(.scrolled) .ocard{ opacity:0; visibility:hidden; }
+  .scrolled .hud-hint{ opacity:0; }
+  @media(max-width:1180px){ .scrolled .hud-note{ opacity:0; } }
+
+  /* Which HUD pieces show in which part of the page. */
+  .intro-on .ocard, .intro-on .hud-hint{ opacity:0; visibility:hidden; }
+  .tour-on .hud-hint{ opacity:0; }
+  .tour-on .rail{ opacity:1; visibility:visible; }
+  .outro-on .rail, .outro-on .ocard{ opacity:0; visibility:hidden; }
+  .outro-on .outro{ opacity:1; visibility:visible; }
+  .no-gl .hud-hint{ display:none; }
 
   .nav{ position:absolute; top:30px; left:0; right:0; z-index:50; display:flex; align-items:center; gap:8px; padding:0 46px; }
   .brand{ display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:19px; letter-spacing:.01em; margin-right:34px; }
@@ -84,7 +229,7 @@
   .mega-prev .meta p{ font-size:12px; color:rgba(255,255,255,.7); line-height:1.45; font-weight:300; }
 
   .hero{ position:relative; z-index:5; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:0 7vw; max-width:1220px; }
-  h1{ font-family:var(--display); font-weight:600; font-size:clamp(44px,7.2vw,100px); line-height:.98; letter-spacing:-.018em; margin-bottom:28px; }
+  h1{ font-family:var(--display); font-weight:600; font-size:clamp(40px,5.6vw,84px); line-height:.98; letter-spacing:-.018em; margin-bottom:28px; }
   .cycler{ display:inline-flex; align-items:baseline; }
   .cyc-word{ color:var(--lime); font-style:italic; font-weight:600; display:inline-block; transition:opacity .34s ease, transform .42s cubic-bezier(.22,1,.36,1); }
   .lede{ font-size:clamp(15px,1.55vw,20px); color:var(--muted); max-width:600px; line-height:1.65; margin-bottom:38px; font-weight:300; }
@@ -101,16 +246,10 @@
   .pillar p{ font-size:12.5px; color:var(--muted); line-height:1.5; font-weight:300; }
 
   /* reveal-on-load (CSS only, no GSAP) */
-  [data-rise]{ opacity:0; transform:translateY(24px); transition:opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); }
-  [data-rise].in{ opacity:1; transform:none; }
+  [data-rise]{ opacity:0; transform:translateY(28px); filter:blur(10px);
+    transition:opacity 1.2s ease, transform 1.4s cubic-bezier(.22,1,.36,1), filter 1.2s ease; }
+  [data-rise].in{ opacity:1; transform:none; filter:none; }
 
-  /* Anchored to the hero, not the viewport: the page scrolls now, and a fixed
-     credit sat on top of the footer. */
-  .credit{ position:absolute; right:7vw; bottom:26px; left:auto; max-width:min(46ch,42vw);
-           z-index:6; font-family:var(--mono); font-weight:500; font-size:9.5px; line-height:1.55;
-           letter-spacing:.1em; color:rgba(210,225,245,.4); text-transform:uppercase;
-           text-align:right; overflow-wrap:anywhere; }
-  .credit b{ color:rgba(188,228,25,.7); }
   /* ── Footer ───────────────────────────────────────────────────────────────
      Grouped by what a visitor is actually trying to do rather than a flat list
      of every URL, so the columns stay meaningful as pages are added. */
@@ -135,6 +274,7 @@
   .foot-base nav{ display:flex; gap:22px; flex-wrap:wrap; align-items:center; }
   .foot-base nav a{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
 
+  @media(max-width:1180px){ html:not(.tour-on) .ocard{ opacity:0; visibility:hidden; } }
   @media(max-width:860px){
     /* let the page scroll on mobile so nothing overlaps/clips */
     html,body{ overflow-x:hidden; overflow-y:auto; }
@@ -163,13 +303,18 @@
     .btn{ padding:13px 22px; }
     .pillars{ flex-direction:column; gap:22px; }
     .pillar{ max-width:100%; }
-    /* Desktop never scrolls (html,body overflow:hidden), so a fixed credit sits
-       harmlessly over the hero. Mobile DOES scroll. Pinning it to the first
-       screen (top:100dvh - 46px) dropped it straight onto the last pillar's
-       text, because the content is taller than the viewport. Anchor it to the
-       bottom of the document instead -- body is positioned, so this is the end
-       of the content -- and reserve room for it with the hero's bottom padding. */
-    .credit{ right:16px; left:16px; bottom:12px; max-width:none; }
+    /* Orbit labels, the rail and the corner notes need room a phone does not
+       have. The card comes back during the tour, full width at the bottom. */
+    .olabels, .rail, .hud-note, .hud-clock{ display:none; }
+    .ocard{ left:16px; right:16px; bottom:76px; width:auto; min-width:0; }
+    .hud-cta{ bottom:16px; gap:10px; }
+    .hud-cta .btn{ padding:12px 16px; font-size:11px; }
+    html:not(.tour-on) .ocard{ opacity:0; visibility:hidden; }
+    .hud-hint{ bottom:18px; }
+    .outro{ bottom:12vh; }
+    .frame{ inset:10px; }
+    /* The copy runs over the scene on a phone, top to bottom: dim it evenly. */
+    .stage::after{ background:linear-gradient(180deg, rgba(0,0,0,.6) 0%, rgba(0,0,0,.42) 50%, rgba(0,0,0,.62) 100%); }
     .foot{ padding:40px 22px 24px; }
     .foot-cols{ grid-template-columns:1fr 1fr; gap:28px; }
     .foot-about{ grid-column:1 / -1; }
@@ -179,7 +324,8 @@
 </style>
 </head>
 <body>
-  <div class="stage"><div class="wall on" id="wallA"></div><div class="wall" id="wallB"></div><div class="grain"></div></div>
+  <div class="stage"><div class="glow" aria-hidden="true"><i></i><i></i><i></i></div></div>
+  <div class="frame" aria-hidden="true"></div>
 
   <nav class="nav">
     <a class="brand" href="/"><span class="logo"><img src="/favicon.svg" alt="" width="21" height="21" loading="eager" decoding="async"></span>ObjectTracer</a>
@@ -221,7 +367,32 @@
       <div class="pillar"><div class="n">02 / DATA</div><h3>Real signals only</h3><p>Live ADS-B, AIS, NASA and orbital data. Never simulated.</p></div>
       <div class="pillar"><div class="n">03 / WONDER</div><h3>Built to inspire</h3><p>A flight overhead or a galaxy far away. The same sense of awe.</p></div>
     </div>
-    <div class="credit">Backdrop · <b id="credit">NASA APOD</b></div>
+  </div>
+
+  <div class="tour" id="tour" aria-hidden="true"></div>
+
+  <div class="hud" id="hud">
+    <div class="reticle" aria-hidden="true"></div>
+    <nav class="rail" id="rail" aria-label="Orbit tour"></nav>
+    <nav class="olabels" id="olabels" aria-label="Orbits"></nav>
+    <a class="ocard" id="ocard" href="/globe">
+      <div class="oc-h"><span id="ocN"></span><span class="oc-rule"></span><span class="oc-st" id="ocS"></span></div>
+      <div class="oc-t" id="ocT"></div>
+      <div class="oc-d"><span class="oc-gt">&gt;</span><span id="ocD"></span><span class="caret" aria-hidden="true"></span></div>
+      <div class="oc-f"><span id="ocF"></span><span class="oc-go">[ Open &#8629; ]</span></div>
+    </a>
+    <div class="hud-note"><span class="earth">Not to scale &middot; distances compressed</span><span class="sun">Illustration &middot; not real positions</span><span class="bh">Illustration &middot; not live data</span></div>
+    <div class="hud-hint" aria-hidden="true">&darr;&nbsp; Scroll &middot; fly out through the orbits</div>
+    <div class="hud-cta">
+      <a class="btn btn-primary" href="/globe">Launch the globe &rarr;</a>
+      <a class="btn btn-ghost" href="/blog">Read the journal</a>
+    </div>
+    <div class="outro">
+      <p class="outro-k">Past the last orbit</p>
+      <p class="outro-t">From the skies above Earth<br>to the edges of space.</p>
+      <a class="btn btn-primary" href="/globe">Launch the globe &rarr;</a>
+    </div>
+    <div class="hud-clock" id="clock" aria-hidden="true"></div>
   </div>
 
   <footer class="foot">
